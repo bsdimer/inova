@@ -1,0 +1,123 @@
+/**
+ * Auth-flow suite: password login, invite-code activation (B7), refresh
+ * rotation with reuse detection. Runs against a dedicated database with real
+ * migrations, as the RLS-enforced app role.
+ */
+import type { INestApplication } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import request from 'supertest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { createTestDb } from './db-helper';
+
+let app: INestApplication;
+
+const post = (url: string, body: object) =>
+  request(app.getHttpServer()).post(url).send(body).set('content-type', 'application/json');
+
+beforeAll(async () => {
+  const { appUrl } = await createTestDb('sosedo_test_auth');
+  process.env.DATABASE_URL = appUrl;
+  process.env.JWT_PRIVATE_KEY_PATH = path.join(mkdtempSync(path.join(tmpdir(), 'sosedo-jwt-')), 'test.pem');
+  process.env.AUTH_THROTTLE_STRICT = '1000'; // throttling is not under test here
+
+  // Dynamic import so env vars above are read at module evaluation time.
+  const { AppModule } = await import('../src/app.module');
+  const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+  app = moduleRef.createNestApplication();
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  await app.init();
+});
+
+afterAll(async () => {
+  await app?.close();
+});
+
+describe('password login', () => {
+  it('returns tokens and membership claims for valid credentials', async () => {
+    const res = await post('/auth/login', { email: 'maria@sosedo.bg', password: 'sosedo-owner' });
+    expect(res.status).toBe(200);
+    expect(res.body.accessToken).toBeTruthy();
+    expect(res.body.refreshToken).toBeTruthy();
+    expect(res.body.memberships).toHaveLength(1);
+    expect(res.body.memberships[0].r).toBe('admin');
+    expect(res.body.memberships[0].tenantKey).toBe('sosedo');
+  });
+
+  it('rejects wrong passwords and unknown emails identically (401)', async () => {
+    const wrong = await post('/auth/login', { email: 'maria@sosedo.bg', password: 'nope' });
+    const unknown = await post('/auth/login', { email: 'ghost@sosedo.bg', password: 'nope' });
+    expect(wrong.status).toBe(401);
+    expect(unknown.status).toBe(401);
+    expect(wrong.body.message).toBe(unknown.body.message);
+  });
+});
+
+describe('invite-code activation (B7)', () => {
+  it('activates a manager-created account and returns a session', async () => {
+    const res = await post('/auth/activate', { code: '482913' });
+    expect(res.status).toBe(200);
+    expect(res.body.user.fullName).toBe('Elena Petrova');
+    expect(res.body.user.mustSetPassword).toBe(true);
+    expect(res.body.memberships[0].r).toBe('resident');
+  });
+
+  it('rejects the same code a second time (single use)', async () => {
+    const res = await post('/auth/activate', { code: '482913' });
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects unknown codes with the same error (no oracle)', async () => {
+    const res = await post('/auth/activate', { code: '000000' });
+    expect(res.status).toBe(401);
+  });
+
+  it('lets the activated user set a password via their access token', async () => {
+    const session = await post('/auth/activate', { code: '735026' });
+    expect(session.status).toBe(200);
+    const res = await request(app.getHttpServer())
+      .post('/auth/password')
+      .set('Authorization', `Bearer ${session.body.accessToken}`)
+      .send({ password: 'brand-new-password' });
+    expect(res.status).toBe(204);
+
+    const me = await request(app.getHttpServer())
+      .get('/auth/me')
+      .set('Authorization', `Bearer ${session.body.accessToken}`);
+    expect(me.status).toBe(200);
+    expect(me.body.user.mustSetPassword).toBe(false);
+  });
+});
+
+describe('refresh rotation', () => {
+  it('rotates tokens, and reuse of a rotated token revokes the whole family', async () => {
+    const login = await post('/auth/login', { email: 'ivan@demo.bg', password: 'demo-owner' });
+    expect(login.status).toBe(200);
+    const first = login.body.refreshToken;
+
+    const rotated = await post('/auth/refresh', { refreshToken: first });
+    expect(rotated.status).toBe(200);
+    const second = rotated.body.refreshToken;
+    expect(second).not.toBe(first);
+
+    // Replay of the already-rotated token → reuse detected.
+    const replay = await post('/auth/refresh', { refreshToken: first });
+    expect(replay.status).toBe(401);
+
+    // Family revocation must also kill the newest token.
+    const afterReplay = await post('/auth/refresh', { refreshToken: second });
+    expect(afterReplay.status).toBe(401);
+  });
+
+  it('logout revokes the refresh token', async () => {
+    const login = await post('/auth/login', { email: 'ivan@demo.bg', password: 'demo-owner' });
+    const token = login.body.refreshToken;
+    const out = await post('/auth/logout', { refreshToken: token });
+    expect(out.status).toBe(204);
+    const reuse = await post('/auth/refresh', { refreshToken: token });
+    expect(reuse.status).toBe(401);
+  });
+});

@@ -1,7 +1,10 @@
 # Sosedo — Multi-Tenant White-Label Property Management Platform
 ## Implementation Plan (v1.0 — planning only, no code written)
 
----
+--- 
+
+
+
 
 ## Executive summary
 
@@ -18,7 +21,33 @@ Key recommendations, detailed and justified below:
 - **White-label:** one shared mobile codebase, two distribution modes — (A) dedicated per-partner apps compiled from brand config with unique bundle IDs, submitted from the *partner's own* Apple/Google developer accounts, and (B) a shared multi-brand app with runtime tenant selection for smaller partners. A store-compliance program (differentiation records, partner-as-provider onboarding) mitigates Apple 4.3 Spam / Google Repetitive Content risk.
 - **Tenant isolation:** every request is authorized by authenticated tenant membership; PostgreSQL RLS enforces `tenant_id` scoping at the database layer as a second line of defense. Bundle ID / client config is never a security boundary.
 - **Financial correctness:** immutable ledger-style records (charges, payments, allocations); corrections happen only via reversal/credit-note entries; gapless per-tenant document numbering; idempotent payment webhooks.
-- **Pilot path:** milestones are ordered so a thin end-to-end slice (admin creates building → resident registers, links, sees obligations, pays by bank reference → admin records payment) is testable as early as milestone M5, before online payments, surveys, or white-label tooling.
+- **Pilot path:** milestones are ordered so a thin end-to-end slice (admin creates building + resident accounts → resident activates via invite code, sees obligations, pays by bank reference → admin records payment) is testable as early as milestone M5, before online payments, surveys, or white-label tooling.
+- **Resident onboarding (decided by stakeholder):** residents do **not** self-register. The tenant (house manager) creates the resident account with the verified apartment/address data, and the platform sends a one-time **invite code via SMS or Viber**; the resident activates the account by entering the code. This guarantees address correctness and removes form-filling friction for end users.
+
+---
+
+## Brand identity
+
+The platform's own brand (and the pilot brand) is **Sosedo** — "Community management for
+apartment buildings and neighborhoods." Brand values: neighborly, trustworthy, organized,
+tech-forward. The concept board below is the visual reference for all UI work:
+
+![Sosedo brand concept — logo lockups, icon explorations, color palette](../brands/sosedo/assets/brand-concept.jpg)
+
+| Token | Hex | Usage |
+|---|---|---|
+| Navy | `#0F1D3A` | Primary text, dark surfaces, hero backgrounds, wordmark |
+| Blue | `#356DFF` | Primary actions, links, gradient start |
+| Green | `#22B88F` | Success, the "E" in the wordmark, gradient end |
+| Purple | `#7A6CFF` | Accent, tertiary highlights |
+| Mist | `#EEF2F7` | Light app background |
+
+- Primary gradient: blue → green (`#356DFF` → `#22B88F`); used for the logo ring and primary CTAs.
+- Tagline: **"Together. Better. Home."** — the three periods carry blue/green/purple respectively.
+- Machine-readable source of truth: [brands/sosedo/brand.json](../brands/sosedo/brand.json)
+  (palette, gradients, light/dark theme tokens, radii, feature flags). UI code must consume
+  these tokens — mobile via `apps/mobile/src/theme/tokens.ts`, admin via the Tailwind
+  `@theme` block in `apps/admin/src/styles.css` — never hardcoded hex values.
 
 ---
 
@@ -47,6 +76,7 @@ Key recommendations, detailed and justified below:
 | B4 | **RESOLVED — pilot data lives in Excel / Google Sheets.** Import tooling = spreadsheet importers (buildings, apartments, residents, opening balances) with dry-run and row-level error reporting. Remaining detail: obtain sample files early to fix column mappings before M2's bulk import is built. | M2 (import shape), M-Pilot | Opening-balance correctness is the #1 pilot trust factor. |
 | B5 | **RESOLVED — the pilot runs in the shared app under the platform's own Sosedo brand.** Dedicated white-label apps (M10) start when the first external white-label partner signs. | — | Removes store-review risk from the pilot's critical path entirely. |
 | B6 | **RESOLVED — billable end customer = apartment (real-estate entity) associated with a tenant.** The platform fee is **paid by the tenant (management company), never by the end customer/resident** — residents only pay their building fees, which flow to the tenant via Stripe Connect. The per-unit price is **configurable per tenant through the UI** by a platform-level `super_admin` role, with a **bulk update** option to set the price across all tenants at once. Default 0.80 EUR. | — | Decided by stakeholder. Metering counts managed apartments; price read from tenant billing config; invoice goes to the tenant via Stripe Billing. |
+| B7 | **RESOLVED — invite-code resident onboarding.** The house manager creates the resident account (with verified apartment/address) in the tenant realm; the platform sends a one-time activation code via **SMS or Viber**; the resident enters the code in the app to activate. No resident self-registration; the self-service link-request flow becomes an admin-verified fallback. Remaining detail: choose SMS/Viber gateway (e.g. Twilio, Infobip — both support Viber Business Messages in BG) before M1 ships. | M1 (auth flows), M2 (occupancy model) | Decided by stakeholder. Ensures address truth and removes signup friction. |
 
 ### 2.2 Decisions that can safely use defaults (recommended defaults for the Bulgarian pilot)
 
@@ -90,7 +120,7 @@ Key recommendations, detailed and justified below:
 |---|---|
 | Tenant + brand + staff accounts, granular roles | Foundation for everything |
 | Buildings → entrances → apartments hierarchy | Core inventory |
-| Resident registration, login, apartment link request + admin verification | Core resident onboarding |
+| Manager-created resident accounts + invite-code activation (SMS/Viber), login | Core resident onboarding — manager owns address truth (B7) |
 | Resident profile (contacts, occupants, pets) | Needed for building records; simple CRUD |
 | Recurring monthly fee rules (per apartment / per m² / per occupant / fixed) + fee generation job | The product's economic heart |
 | One-time and temporary charges | Managers need it in week one |
@@ -387,7 +417,7 @@ erDiagram
 ### 6.2 Authorization
 
 - **Platform-level roles (cross-tenant):** a `super_admin` role held by platform-operator users, carried as a separate `platform_role` claim in the JWT (never mixed with tenant memberships). super_admin provisions and initializes tenants through the UI, configures per-tenant billing (unit price, entitlements) and bulk price updates, and can enter any tenant's context for support — every such access sets the tenant context explicitly, is RLS-scoped like any other request, and writes an audit record flagged `platform_access`. super_admin accounts require mandatory TOTP 2FA and are the only accounts allowed on platform-console endpoints.
-- Permission keys grouped by module (`property.read`, `billing.write`, `payments.record`, `issues.manage`, `notifications.send`, `settings.roles`, …). Tenants compose custom roles from keys; seeded templates: Owner-Admin, Accountant, Building Manager, Support Agent, Read-only Auditor.
+- Permission keys grouped by module (`property.read`, `billing.write`, `payments.record`, `issues.manage`, `notifications.send`, `settings.roles`, …). **Roles are per-tenant**: each tenant composes its own custom roles from the fixed permission-key catalog; the seeded starter set (Administrator, House Manager, Resident — later Accountant, Support Agent, Read-only Auditor) is just each tenant's starting point and can be edited per tenant. **The first user created for a tenant is always assigned that tenant's `admin` role** (full permissions within the tenant). `super_admin` is never a tenant role — it is the platform_role claim held by the handful of platform operators who administer the whole system (all tenants, brands, configuration) per §6.2 above.
 - Guards run in order: authenticated → tenant membership → permission key → (for residents) occupancy-scoped resource check (a resident sees only apartments they occupy and their building-level aggregates).
 - All list endpoints are tenant-scoped by construction (RLS backstop, §4.4).
 
@@ -471,23 +501,23 @@ flowchart TD
 - **Risks:** none material.
 
 #### M1 — Identity, tenancy, RBAC (L)
-- **Goal:** staff can be invited to a tenant and log in to the admin shell; residents can register (unlinked); RLS proven.
+- **Goal:** staff can be invited to a tenant and log in to the admin shell; residents activate manager-created accounts with an invite code (B7); RLS proven.
 - **Dependencies:** M0.
 - **DB:** `tenants, brands, users, staff_memberships, roles, permissions, refresh_tokens, audit_records`; RLS enabled + policies; seed script (2 tenants for isolation tests).
-- **Backend:** **auth-service** as its own deployable: register/login/refresh rotation/logout, email OTP (MailHog locally, SES later), JWT issuance with membership claims + `platform_role` claim, JWKS endpoint, revocation denylist; **core-api**: JWKS verification, tenant context middleware (claim-based + DB re-check for sensitive ops), permission guards, **super_admin platform guard + tenant provisioning endpoints (tenants are created through the UI, not scripts)**, audit-record writer, invitation flow, tenant entitlement flags (settings only — billing wiring comes in M-Bill).
+- **Backend:** **auth-service** as its own deployable: login/refresh rotation/logout, **invite-code activation** (manager pre-creates the resident user; one-time code hashed at rest, expiring, rate-limited; delivery via SMS/Viber through the worker — MailHog/console fallback locally), JWT issuance with membership claims + `platform_role` claim, JWKS endpoint, revocation denylist; **core-api**: JWKS verification, tenant context middleware (claim-based + DB re-check for sensitive ops), permission guards, **super_admin platform guard + tenant provisioning endpoints (tenants are created through the UI, not scripts)**, audit-record writer, invitation flow, tenant entitlement flags (settings only — billing wiring comes in M-Bill).
 - **Admin:** login, tenant switcher (staff in multiple tenants), staff & roles management screens; **super_admin console shell: tenant provisioning/initialization wizard** (billing config screens follow in M-Bill).
-- **Mobile:** register/login/verification screens.
+- **Mobile:** invite-code activation + login screens (wire the existing UI to real APIs).
 - **Tests:** auth unit tests; **tenant-isolation suite v1** (cross-tenant 403s) — becomes a permanent CI gate; RLS policy tests at SQL level.
 - **Acceptance:** demo: two tenants, staff of A cannot read B by any endpoint; audit rows written for role changes.
 - **Risks:** getting RLS + connection pooling right (use transaction-scoped `SET LOCAL app.tenant_id`); decide session pooling mode early.
 
 #### M2 — Property hierarchy and resident linking (M)
-- **Goal:** admin builds the Sosedo portfolio; residents request apartment links; admin verifies.
+- **Goal:** admin builds the Sosedo portfolio and creates resident accounts on apartments (primary onboarding per B7); self-service link requests exist as an admin-verified fallback.
 - **Dependencies:** M1.
 - **DB:** `buildings, entrances, apartments, occupancies, pets, occupancy_requests` (+ soft delete columns).
-- **Backend:** CRUD + bulk import endpoint (CSV/XLSX) for buildings/apartments; occupancy request/verify/reject; occupancy-scoped resident guards.
-- **Admin:** portfolio tree UI, apartment detail, resident verification queue, resident lifecycle (end occupancy, move).
-- **Mobile:** "add my apartment" flow (search building by code/address → request), profile screens (contacts, occupants, pets).
+- **Backend:** CRUD + bulk import endpoint (CSV/XLSX) for buildings/apartments; **create-resident-on-apartment endpoint (creates user + occupancy + triggers invite code)**; occupancy request/verify/reject (fallback path); occupancy-scoped resident guards.
+- **Admin:** portfolio tree UI, apartment detail, **"add resident" flow (enters resident data, sends invite code, shows delivery/activation status)**, verification queue for fallback requests, resident lifecycle (end occupancy, move).
+- **Mobile:** profile screens (contacts, occupants, pets); fallback "add my apartment" request flow.
 - **Tests:** import edge cases; occupancy state machine; resident cannot see unlinked apartments.
 - **Acceptance:** Sosedo's real structure importable from spreadsheet; verification round-trip works end to end.
 - **Risks:** source data is spreadsheets (B4 resolved) — obtain sample files early to fix column mappings for the bulk importer.
@@ -604,7 +634,7 @@ REST, versioned under `/v1`, OpenAPI-first (spec drives typed clients for admin 
 
 | Module | Representative endpoints |
 |---|---|
-| `auth` | register, login, refresh, logout, verify-email, password-reset, 2FA |
+| `auth` | activate (invite code), resend-code, login, refresh, logout, password-reset, 2FA; staff invitation acceptance |
 | `me` | profile, occupancies, devices (push tokens), notification feed, GDPR export/erasure request |
 | `platform` (super_admin only) | tenant provisioning/initialization, brand config CRUD, per-tenant + bulk billing-price config, entitlement management, subscription/usage overview |
 | `staff` | invitations, memberships, roles, permissions |
@@ -679,7 +709,7 @@ Worker consumes `notifications.dispatch` queue → resolves audience → batches
 | Security | Dependency + container scanning in CI; upload abuse tests (EICAR, polyglots); auth brute-force tests; pre-launch external pen test (P1 budget item) | Mixed |
 
 **Critical E2E pilot scenarios (automated where possible):**
-1. Admin imports building portfolio → resident registers → requests link → admin verifies → resident sees correct obligations.
+1. Admin imports building portfolio → admin creates resident account on an apartment → invite code delivered (SMS/Viber) → resident activates → resident sees correct obligations.
 2. Fee generation for a period → amounts match oracle → resident notified.
 3. Resident views IBAN/reference → admin records bank payment → allocation → receipt → resident push + history update.
 4. Issue with photo → admin plans → resolves → resident sees status trail.
@@ -925,15 +955,15 @@ Foundation
 8. [ ] Terraform bootstrap: state bucket, ECR, GitHub OIDC role
 
 Identity & tenancy
-9. [ ] Migration: tenants, brands, users, staff_memberships, roles, permissions, refresh_tokens, audit_records (+RLS policies; tenant-leading composite PKs/indexes; audit_records partitioned from day 1 per §4.7)
-10. [ ] auth-service: register, login, refresh rotation, logout, email OTP (MailHog); JWT with membership claims (RS256/ES256), JWKS endpoint, Redis revocation denylist
-11. [ ] core-api: JWKS verification middleware, tenant-context middleware (`X-Tenant-Id` validated against membership claims, DB re-check for sensitive ops) + `SET LOCAL app.tenant_id`
-12. [ ] Permission catalog + guards + seeded role templates + tenant entitlement flags (feature-key guard)
-12a. [ ] super_admin platform role: `platform_role` JWT claim, platform guard, tenant provisioning/initialization endpoints + console wizard UI (audited `platform_access`)
-13. [ ] Audit-record writer (transactional) + coverage on role/permission changes
-14. [ ] Seed script: two demo tenants + tenant-isolation test suite (CI blocker)
-15. [ ] Admin: login, tenant switcher, staff invitations, role management screens
-16. [ ] Mobile: register/login/verify screens
+9. [x] Migration: tenants, brands, users, staff_memberships, roles, permissions, refresh_tokens, audit_records (+RLS policies; tenant-leading composite PKs/indexes; audit_records partitioned from day 1 per §4.7)
+10. [x] auth-service: invite-code activation (hashed one-time codes, expiry, rate limits, SMS/Viber delivery via worker), login, refresh rotation, logout; JWT with membership claims (RS256/ES256), JWKS endpoint, Redis revocation denylist *(done except: delivery is a logged MOCK until the worker lands; Redis denylist pending)*
+11. [x] core-api: JWKS verification middleware, tenant-context middleware (`X-Tenant-Id` validated against membership claims, DB re-check for sensitive ops) + `SET LOCAL app.tenant_id`
+12. [ ] Permission catalog + guards + seeded role templates + tenant entitlement flags *(catalog, guards and role templates done; entitlement flags pending)*
+12a. [ ] super_admin platform role: `platform_role` JWT claim, platform guard, tenant provisioning/initialization endpoints + console wizard UI (audited `platform_access`) *(all done except the wizard UI)*
+13. [ ] Audit-record writer (transactional) + coverage on role/permission changes *(writer done + used by provisioning; role-change coverage lands with the staff screens)*
+14. [x] Seed script: two demo tenants + tenant-isolation test suite (CI blocker)
+15. [ ] Admin: login *(done)*, tenant switcher, staff invitations, role management screens
+16. [x] Mobile: invite-code activation + login screens wired to auth-service
 
 Property
 17. [ ] Migration: buildings, entrances, apartments, occupancies, pets, occupancy_requests

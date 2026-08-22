@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "Sosedo",
+    "slug": "sosedo",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "sosedo",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "bg.sosedo.resident"
+    },
+    "android": {
+      "package": "bg.sosedo.resident",
+      "adaptiveIcon": {
+        "backgroundColor": "#0F1D3A",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "backgroundColor": "#0F1D3A",
+          "imageWidth": 180
+        }
+      ]
+    ]
+  }
+}

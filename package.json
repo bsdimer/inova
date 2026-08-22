@@ -1,0 +1,24 @@
+{
+  "name": "sosedo",
+  "private": true,
+  "packageManager": "pnpm@10.34.5",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "db:migrate": "node db/migrate.mjs",
+    "db:seed": "node db/seed.mjs",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json,yml,yaml}\""
+  },
+  "devDependencies": {
+    "bcryptjs": "^3.0.3",
+    "pg": "^8.23.0",
+    "prettier": "^3.6.0",
+    "turbo": "^2.5.0"
+  }
+}

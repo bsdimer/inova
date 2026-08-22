@@ -1,0 +1,82 @@
+{
+  "$schema": "./brand.schema.json",
+  "key": "sosedo",
+  "name": "Sosedo",
+  "displayName": "Sosedo",
+  "tagline": "Together. Better. Home.",
+  "description": "Community management for apartment buildings and neighborhoods.",
+  "values": ["neighborly", "trustworthy", "organized", "tech-forward"],
+  "locales": {
+    "default": "bg",
+    "supported": ["bg", "en"]
+  },
+  "colors": {
+    "navy": "#0F1D3A",
+    "blue": "#356DFF",
+    "green": "#22B88F",
+    "purple": "#7A6CFF",
+    "mist": "#EEF2F7",
+    "white": "#FFFFFF"
+  },
+  "gradients": {
+    "primary": ["#356DFF", "#22B88F"],
+    "accent": ["#7A6CFF", "#356DFF"],
+    "hero": ["#0F1D3A", "#16294F"]
+  },
+  "theme": {
+    "light": {
+      "background": "#EEF2F7",
+      "surface": "#FFFFFF",
+      "surfaceMuted": "#F7F9FC",
+      "textPrimary": "#0F1D3A",
+      "textSecondary": "#5A6B8C",
+      "border": "#E1E8F2",
+      "primary": "#356DFF",
+      "success": "#22B88F",
+      "accent": "#7A6CFF",
+      "danger": "#E5484D"
+    },
+    "dark": {
+      "background": "#0A1428",
+      "surface": "#0F1D3A",
+      "surfaceMuted": "#16294F",
+      "textPrimary": "#F2F6FC",
+      "textSecondary": "#93A3C4",
+      "border": "#1E3158",
+      "primary": "#5C8AFF",
+      "success": "#2FD3A6",
+      "accent": "#937FFF",
+      "danger": "#FF6369"
+    }
+  },
+  "radius": {
+    "sm": 10,
+    "md": 16,
+    "lg": 24,
+    "pill": 999
+  },
+  "distribution": {
+    "mode": "shared",
+    "ios": {
+      "bundleId": "bg.sosedo.resident"
+    },
+    "android": {
+      "package": "bg.sosedo.resident"
+    },
+    "deepLinkDomain": "app.sosedo.bg",
+    "scheme": "sosedo"
+  },
+  "features": {
+    "payments": true,
+    "issues": true,
+    "notices": true,
+    "surveys": false,
+    "privileges": false,
+    "aiIntegration": false,
+    "documentSigning": false
+  },
+  "support": {
+    "email": "support@sosedo.bg",
+    "phone": "+359 000 000 000"
+  }
+}
