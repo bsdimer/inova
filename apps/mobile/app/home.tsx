@@ -105,7 +105,7 @@ export default function Home() {
         </Animated.View>
 
         {/* Balance card */}
-        <Animated.View entering={FadeInUp.springify().damping(16).delay(120)}>
+        <Animated.View entering={FadeInUp.duration(400).delay(120)}>
           <LinearGradient
             colors={isDark ? gradients.card : gradients.hero}
             start={{ x: 0, y: 0 }}
@@ -254,6 +254,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: rs(22, 18),
     gap: rs(16, 12),
+    // Solid fallback so the card never flashes white before the gradient paints
+    // during the entering animation.
+    backgroundColor: palette.navy,
   },
   balanceTop: {
     flexDirection: 'row',

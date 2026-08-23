@@ -4,7 +4,7 @@
 > **Rule for agents and developers: update this file in the same change set as any
 > implementation work.** Newest session entries go on top of the Work Log.
 
-**Last updated:** 2026-08-22
+**Last updated:** 2026-08-23
 **Current focus:** M1 backend core done (auth, tenancy, RLS, isolation suite) →
 remaining M1: admin staff/roles screens, provisioning wizard UI, Redis denylist, worker
 
@@ -61,6 +61,24 @@ Legend: ✅ done · 🟡 partially done · ⬜ not started
 ---
 
 ## Work log (newest first)
+
+### 2026-08-23 — Hide Expo dev-menu gear button overlaying app UI (session 8)
+
+- The "settings" gear reported on the welcome and home screens was **not app code** —
+  it is Expo's dev-menu floating action button, an overlay Expo Go draws on every
+  screen (it collided visually with the profile avatar on home). It never ships in
+  production builds.
+- `app/_layout.tsx` now disables it via `DevMenuPreferences.setPreferencesAsync`
+  (`__DEV__`-guarded) — effective in dev-client builds. Expo Go doesn't expose that
+  module to app code, so on the dev simulator it was turned off with:
+  `xcrun simctl spawn booted defaults write host.exp.Exponent EXDevMenuShowFloatingActionButton -bool NO`
+  (on a physical device: dev menu → toggle "Show menu button"). Dev menu remains
+  reachable via shake / Cmd+D.
+- Verified on iPhone 16 Pro Max simulator; `@sosedo/mobile` typecheck green.
+- Home balance card polish: replaced the springy `FadeInUp.springify()` entrance (visible
+  overshoot "pop") with the same timed `FadeInUp` the other cards use, and gave the card
+  a solid navy `backgroundColor` behind the gradient so it can't flash white while the
+  gradient paints during the entering animation.
 
 ### 2026-08-22 — Role model clarified: per-tenant roles, first user = admin (session 7)
 
