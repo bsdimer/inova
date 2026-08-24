@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getSession } from '../src/api/client';
+import { getSession, logout } from '../src/api/client';
 import { GradientButton } from '../src/components/GradientButton';
 import { PressableScale } from '../src/components/PressableScale';
 import { useTheme } from '../src/theme/ThemeContext';
@@ -95,12 +95,15 @@ export default function Home() {
           </View>
           <PressableScale
             haptic={false}
-            onPress={() => router.replace('/')}
+            onPress={() => {
+              // TODO(M5): profile screen — for now this signs out.
+              void logout().finally(() => router.replace('/'));
+            }}
             style={[styles.avatar, { backgroundColor: colors.surface }]}
             accessibilityRole="button"
-            accessibilityLabel="Profile"
+            accessibilityLabel="Sign out"
           >
-            <Ionicons name="person-outline" size={rs(22, 20)} color={colors.primary} />
+            <Ionicons name="log-out-outline" size={rs(22, 20)} color={colors.primary} />
           </PressableScale>
         </Animated.View>
 

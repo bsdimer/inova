@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
@@ -14,6 +14,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { bootstrapSession } from '../src/api/client';
 import { GradientButton } from '../src/components/GradientButton';
 import { SosedoMark, SosedoWordmark } from '../src/components/SosedoLogo';
 import { metrics, rs, screen } from '../src/theme/responsive';
@@ -23,6 +24,21 @@ export default function Welcome() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const float = useSharedValue(0);
+  // The hero doubles as a splash while we restore a persisted session; the
+  // CTAs only appear once we know the user actually has to log in.
+  const [needsAuth, setNeedsAuth] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    void bootstrapSession().then((session) => {
+      if (!mounted) return;
+      if (session) router.replace('/home');
+      else setNeedsAuth(true);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [router]);
 
   useEffect(() => {
     float.value = withRepeat(
@@ -84,18 +100,23 @@ export default function Welcome() {
       </View>
 
       {/* Bottom action panel — subtle fade-up, no full-screen slide */}
-      <Animated.View
-        entering={FadeInUp.duration(500).delay(700)}
-        style={[styles.actions, { paddingBottom: insets.bottom + rs(24, 16) }]}
-      >
-        <GradientButton label="I have an invite code" onPress={() => router.push('/activate')} />
-        <GradientButton
-          label="I already have an account"
-          variant="ghost"
-          onDark
-          onPress={() => router.push('/login')}
-        />
-      </Animated.View>
+      {needsAuth && (
+        <Animated.View
+          entering={FadeInUp.duration(500).delay(200)}
+          style={[styles.actions, { paddingBottom: insets.bottom + rs(24, 16) }]}
+        >
+          <GradientButton
+            label="I have an invite code"
+            onPress={() => router.push('/activate')}
+          />
+          <GradientButton
+            label="I already have an account"
+            variant="ghost"
+            onDark
+            onPress={() => router.push('/login')}
+          />
+        </Animated.View>
+      )}
     </LinearGradient>
   );
 }

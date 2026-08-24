@@ -5,8 +5,8 @@
 > implementation work.** Newest session entries go on top of the Work Log.
 
 **Last updated:** 2026-08-23
-**Current focus:** M1 backend core done (auth, tenancy, RLS, isolation suite) →
-remaining M1: admin staff/roles screens, provisioning wizard UI, Redis denylist, worker
+**Current focus:** mobile-first (stakeholder decision) → M2 property hierarchy next,
+feeding the mobile app real data. M1 remainder (denylist, worker) deferred to pre-pilot.
 
 ---
 
@@ -15,7 +15,7 @@ remaining M1: admin staff/roles screens, provisioning wizard UI, Redis denylist,
 | Milestone | Scope (short) | Status |
 |---|---|---|
 | M0 Foundations | Monorepo, CI, docker-compose, app shells, brand system | ✅ **Done** |
-| M1 Identity, tenancy, RBAC | auth-service (JWT+JWKS), tenants, memberships, RLS | 🟡 Backend core + tests done; admin screens, wizard UI, Redis denylist pending |
+| M1 Identity, tenancy, RBAC | auth-service (JWT+JWKS), tenants, memberships, RLS | 🟡 Backend + admin screens (staff/roles/wizard) done; Redis denylist, worker pending |
 | M2 Property hierarchy | Buildings/entrances/apartments, occupancy verification, imports | ⬜ Not started |
 | M3 Fee engine | Fee rules, charge generation, obligations views | ⬜ Not started |
 | M4 Manual payments | Payments, allocations, ledger, cash accounts, receipts | ⬜ Not started |
@@ -53,14 +53,78 @@ Legend: ✅ done · 🟡 partially done · ⬜ not started
     provisioning: tenant + starter roles + first-user admin invite + audit record)
   - Brands endpoint + health as before
 - Mobile (Expo Go): invite-code activation and login hit the real auth-service
-  (seeded codes work in the app); home greets the logged-in user.
+  (seeded codes work in the app); home greets the logged-in user. Sessions persist
+  across app launches (refresh token in the keychain, rotated at every launch);
+  the home avatar signs out.
 - Admin: real login against auth-service, session in localStorage, route guard on the
   shell, user chip shows the real name/role, sign-out clears the session.
+- Admin management screens on real APIs: **tenant switcher** (memberships, or all
+  tenants for super_admin), **Staff** (invite with activation code, role change,
+  suspend/reactivate/revoke), **Roles** (permission-matrix editor, create/edit/delete
+  custom roles), **Tenants** (super_admin provisioning wizard).
+- Core API staff/roles management: `GET|POST /v1/tenant/staff`,
+  `PATCH /v1/tenant/staff/:userId`, `GET /v1/tenant/permissions`,
+  `GET|POST /v1/tenant/roles`, `PATCH|DELETE /v1/tenant/roles/:key` — all audited,
+  with admin-role lock + last-active-admin lockout guard (13 e2e tests).
 - GitHub Actions CI: install → build → typecheck → **tests with Postgres service**.
 
 ---
 
 ## Work log (newest first)
+
+### 2026-08-23 — Mobile: secure-store session persistence + refresh-at-launch (session 8)
+
+- Stakeholder decision: prioritize mobile over remaining admin polish; next up is M2
+  (property hierarchy) so the app gets real data.
+- `apps/mobile/src/api/client.ts`: only the rotating **refresh token** is persisted
+  (expo-secure-store keychain); access tokens stay in memory. `bootstrapSession()`
+  exchanges the stored token for a fresh session at every launch (rotation re-reads
+  memberships server-side); dead/reused tokens clear the keychain, offline keeps it.
+  `logout()` revokes server-side (best-effort) and clears the keychain.
+  `refreshSession()` exported for silent refresh once mobile calls core-api.
+- Welcome screen doubles as splash: CTAs render only after the session check decides
+  the user actually needs to log in; a restored session goes straight to `/home`.
+- Home avatar is now an explicit sign-out (log-out icon, `TODO(M5)` profile screen).
+- Verified: app boots clean on the simulator with no stored session (CTAs appear);
+  root build + typecheck green. Login → relaunch → straight-to-home needs a manual
+  device test (typing in the simulator).
+
+### 2026-08-23 — M1: staff & roles APIs + admin management screens (session 8)
+
+**core-api (`apps/api/src/modules/tenant`)**
+- New `TenantService` + endpoints (all guarded by JWT + tenant context + permissions,
+  every mutation writes an audit record in the same transaction):
+  - `GET /v1/tenant/permissions` (roles.read) — fixed platform permission catalog.
+  - `GET /v1/tenant/roles` (roles.read) — roles with permissions + member counts.
+  - `POST|PATCH|DELETE /v1/tenant/roles[/:key]` (roles.manage) — custom roles;
+    **the `admin` role is locked** (always all permissions, cannot be edited/deleted);
+    system roles editable but not deletable; delete blocked while assigned.
+  - `POST /v1/tenant/staff` (staff.manage) — invite: reuses/creates the user, membership
+    `invited`/`active`, 6-digit activation code (`TODO(M1)` gateway — MOCK: logged).
+  - `PATCH /v1/tenant/staff/:userId` (staff.manage) — role change, suspend/reactivate/
+    revoke; **cannot edit own membership; last-active-admin lockout guard**; invited
+    members can only be revoked (they activate via code).
+- Note: `PermissionsGuard` caches role→permissions for 60s, so permission edits can
+  take up to a minute to apply to in-flight sessions.
+- Tests: `apps/api/test/staff-roles.e2e.test.ts` (13) — RBAC per role, admin-role lock,
+  catalog validation, invite + duplicate conflict, self/lockout guards, cross-tenant
+  denial, audit rows. Full api suite now 24 green.
+
+**Admin (`apps/admin`)**
+- `src/lib/api.ts` — core-api client (Bearer + `X-Tenant-Id`; 401 clears session,
+  `TODO(M1)` silent refresh). `src/lib/tenant.ts` — selected-tenant store
+  (localStorage + `useSyncExternalStore`) and tenant options (memberships, or
+  `/platform/tenants` for super_admin).
+- `TenantSwitcher` in the sidebar; selection drives every tenant-scoped query.
+- **Staff page** (`/staff`): table on real data, role dropdown (PATCH), suspend/
+  reactivate/revoke, invite modal (dev note: code printed in api console).
+- **Roles page** (`/roles`): role cards with permission chips + member counts, locked
+  Administrator card, permission-matrix editor modal, create/delete custom roles.
+- **Tenants page** (`/tenants`, super_admin-only route): tenant list + 3-step
+  provisioning wizard (organization → optional first admin → review → done, with
+  "switch to tenant" on success). Shared UI primitives in `src/components/ui.tsx`.
+- `pnpm build`, `pnpm typecheck`, `pnpm --filter @sosedo/api test` all green; flows
+  verified against running services (login → roles CRUD → staff list).
 
 ### 2026-08-23 — Hide Expo dev-menu gear button overlaying app UI (session 8)
 
@@ -238,17 +302,13 @@ Legend: ✅ done · 🟡 partially done · ⬜ not started
 
 ---
 
-## Next up (finish M1, then M2)
+## Next up (mobile-first per stakeholder, 2026-08-23)
 
-1. Admin: tenant switcher, staff & roles management screens, super_admin provisioning
-   wizard UI (endpoints exist).
-2. auth-service: Redis revocation denylist for access tokens; staff email invitation
-   flow; password reset.
-3. Worker skeleton (BullMQ) + real SMS/Viber invite-code delivery (gateway decision
-   pending — Twilio vs Infobip, see plan B7).
-4. Mobile: secure-store session persistence + silent refresh; phone-entry step for
-   resend-code.
-5. Audit coverage on role/permission changes (writer exists; wire into staff endpoints
-   when the management screens land).
-6. Then M2: property hierarchy, manager "add resident" flow (creates user + occupancy +
-   sends invite code), spreadsheet import.
+1. **M2: property hierarchy** — buildings/entrances/apartments + occupancy, manager
+   "add resident" flow (creates user + occupancy + sends invite code), spreadsheet
+   import. This is what starts feeding the mobile app real data.
+2. Mobile: wire "My building" and resident data to M2 APIs as they land.
+3. Deferred M1 remainder (do before pilot): auth-service Redis revocation denylist,
+   staff email invitation flow, password reset; worker skeleton (BullMQ) + real
+   SMS/Viber invite delivery (gateway decision pending — Twilio vs Infobip, plan B7);
+   admin silent token refresh + audit-trail viewer page.

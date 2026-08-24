@@ -14,6 +14,9 @@ import { AppShell } from './pages/AppShell';
 import { ComingSoonPage } from './pages/ComingSoon';
 import { DashboardPage } from './pages/Dashboard';
 import { LoginPage } from './pages/Login';
+import { RolesPage } from './pages/Roles';
+import { StaffPage } from './pages/Staff';
+import { TenantsPage } from './pages/Tenants';
 import './styles.css';
 
 const rootRoute = createRootRoute({
@@ -73,6 +76,29 @@ const noticesRoute = createRoute({
   component: () => <ComingSoonPage title="Notices" milestone="M7" />,
 });
 
+const staffRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: '/staff',
+  component: StaffPage,
+});
+
+const rolesRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: '/roles',
+  component: RolesPage,
+});
+
+const tenantsRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: '/tenants',
+  component: TenantsPage,
+  beforeLoad: () => {
+    if (getSession()?.user.platformRole !== 'super_admin') {
+      throw redirect({ to: '/' });
+    }
+  },
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   shellRoute.addChildren([
@@ -82,6 +108,9 @@ const routeTree = rootRoute.addChildren([
     financeRoute,
     issuesRoute,
     noticesRoute,
+    staffRoute,
+    rolesRoute,
+    tenantsRoute,
   ]),
 ]);
 

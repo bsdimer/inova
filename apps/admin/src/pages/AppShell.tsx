@@ -4,14 +4,19 @@ import {
   Banknote,
   Bell,
   Building2,
+  Globe,
   LayoutDashboard,
   LogOut,
   Search,
+  ShieldCheck,
+  UserCog,
   Users,
   Wrench,
 } from 'lucide-react';
 import { SosedoMark, SosedoWordmark } from '../components/Logo';
+import { TenantSwitcher } from '../components/TenantSwitcher';
 import { clearSession, getSession } from '../lib/auth';
+import { clearSelectedTenantId } from '../lib/tenant';
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -20,23 +25,31 @@ const NAV = [
   { to: '/finance', label: 'Finance', icon: Banknote },
   { to: '/issues', label: 'Issues', icon: Wrench },
   { to: '/notices', label: 'Notices', icon: Bell },
+  { to: '/staff', label: 'Staff', icon: UserCog },
+  { to: '/roles', label: 'Roles', icon: ShieldCheck },
 ] as const;
+
+const PLATFORM_NAV = [{ to: '/tenants', label: 'Tenants', icon: Globe }] as const;
 
 export function AppShell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const session = getSession();
+  const nav =
+    session?.user.platformRole === 'super_admin' ? [...NAV, ...PLATFORM_NAV] : [...NAV];
 
   return (
     <div className="flex min-h-full">
       {/* Sidebar */}
       <aside className="flex w-64 shrink-0 flex-col bg-navy p-5 text-white">
-        <div className="mb-10 flex items-center gap-3 px-2">
+        <div className="mb-6 flex items-center gap-3 px-2">
           <SosedoMark size={40} />
           <SosedoWordmark size={16} />
         </div>
 
+        <TenantSwitcher />
+
         <nav className="flex flex-1 flex-col gap-1.5">
-          {NAV.map(({ to, label, icon: Icon }) => {
+          {nav.map(({ to, label, icon: Icon }) => {
             const active = pathname === to;
             return (
               <Link
@@ -62,7 +75,10 @@ export function AppShell() {
 
         <Link
           to="/login"
-          onClick={() => clearSession()}
+          onClick={() => {
+            clearSession();
+            clearSelectedTenantId();
+          }}
           className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-white/55 transition-colors hover:bg-white/5 hover:text-white/85"
         >
           <LogOut size={18} />
