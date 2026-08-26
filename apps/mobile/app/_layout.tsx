@@ -19,7 +19,8 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>
-        <StatusBar style="auto" />
+        {/* White status bar content: every screen sits on the photo backdrop. */}
+        <StatusBar style="light" />
         <Stack
           screenOptions={{
             headerShown: false,
@@ -29,7 +30,18 @@ export default function RootLayout() {
         >
           <Stack.Screen name="index" />
           <Stack.Screen name="(auth)" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="home" options={{ animation: 'fade', gestureEnabled: false }} />
+          <Stack.Screen name="(tabs)" options={{ animation: 'fade', gestureEnabled: false }} />
+          <Stack.Screen
+            name="menu"
+            options={{ presentation: 'transparentModal', animation: 'fade', animationDuration: 200 }}
+          />
+          <Stack.Screen name="messages" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="surveys" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="how-to-pay" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="contacts" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="cash" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="history" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="documents" options={{ animation: 'slide_from_right' }} />
         </Stack>
       </ThemeProvider>
     </GestureHandlerRootView>

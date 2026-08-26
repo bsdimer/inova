@@ -4,7 +4,7 @@
 > **Rule for agents and developers: update this file in the same change set as any
 > implementation work.** Newest session entries go on top of the Work Log.
 
-**Last updated:** 2026-08-23
+**Last updated:** 2026-08-26
 **Current focus:** mobile-first (stakeholder decision) → M2 property hierarchy next,
 feeding the mobile app real data. M1 remainder (denylist, worker) deferred to pre-pilot.
 
@@ -71,6 +71,162 @@ Legend: ✅ done · 🟡 partially done · ⬜ not started
 ---
 
 ## Work log (newest first)
+
+### 2026-08-26 — Mobile: photo-backdrop redesign to stakeholder mockups, Bulgarian UI (session 11)
+
+- **Stakeholder-provided mockups implemented 1:1** — the whole app now sits on a
+  photographic backdrop (`assets/images/building-photo.jpg`, stakeholder image):
+  new `src/components/AppBackground.tsx` with two variants — `hero` (building visible
+  up top, dissolving into warm haze; home/building tabs) and `blur` (fully blurred
+  glow; auth, menu, secondary screens). All user-facing strings are now **Bulgarian**.
+- `GlassView` reworked for the photo backdrop: frosted white-translucent fill +
+  hairline highlight, white typography (new `glass` tokens in `theme/tokens.ts`);
+  accepts overlay/border overrides (menu sheet uses a near-opaque warm frost).
+- **Home** rebuilt per mock: brand lockup + glass "…" menu button, "Добре дошли, Иван",
+  building name/address, "Текущо задължение 20 €" glass card with black "Плащане" pill,
+  2×2 quick grid (Каса / Анкети / История / Известия with unread badge), white
+  arrow-bubble affordances (`ArrowBubble`).
+- **Building (Сграда)** rebuilt per mock: title + address, SVG **arc gauge**
+  (`ApartmentsGauge`, react-native-svg 15.15.4 added) — 32 общо / 24 платили /
+  8 неплатили with progress dot; Каса cards (месечни разходи 6 270 €, депозит 9 100 €),
+  "Как се оформя таксата" card, Сигнали cards (Паркинг/Оправена, ВиК/В процес) and
+  "Документи към сградата" (12 документа) with "Виж всички" links.
+- **Activation screen** per mock: back/help glass circles, centered lockup, title with
+  orange dash, glass card wrapping the 6-digit `CodeInput` (frosted boxes with
+  underscore placeholders) + "Изпрати отново", black "Активирай акаунта" CTA and glass
+  "Пропусни засега". Same treatment for login and welcome (Bulgarian copy, dark/glass
+  `GradientButton` variants, glass `TextField`).
+- **Menu** is now a right-side frosted sheet over the dimmed screen (transparentModal +
+  slide-in): Начало/Сгради/Сигнали/Известия/Анкети, divider, Избор на език (BG/EN
+  cycle, TODO i18n), Как да платя?, Контакти, Тема (cycles system/light/dark), black
+  "Излез от профила" button.
+- **Tab bar**: Начало / Сграда / Привилегии / Сигнали; active tab in a black pill,
+  white icons/labels. `market` tab replaced by `privileges`.
+- Everything not in the mocks is a **"Очаквайте скоро"** placeholder on the same
+  backdrop (`ComingSoon`, `TabComingSoon`, restyled `SubScreen`): Привилегии, Сигнали,
+  Каса, История, Известия, Анкети, Как да платя?, Контакти, Документи.
+- Removed now-unused: `BuildingDetail`, `ScreenHeader`, `homeOverlay`, 3D render +
+  ground-shadow assets, old wordmark/mark (replaced by `BrandLockup`).
+- Follow-up: home scroll snaps back to its rest position on tab refocus (a leftover
+  offset/frozen bounce used to leave a stray gap between the cards and the tab bar);
+  home now fits the viewport via a stretchy hero spacer (no scroll on tall screens).
+- Follow-up 2 (stakeholder review): lockup switched to the client's **"inova — by
+  White Nova Technology"** mark (gold rule + dot); Сграда tab uses the fully blurred
+  backdrop (no building photo); gauge side stats inset from the arc geometry so
+  Платили/Неплатили never collide with the stroke.
+- Root `pnpm build` + `pnpm typecheck` green.
+
+### 2026-08-25 — Mobile: home simplified, building "recedes" on scroll (session 10, follow-up 6)
+
+- Home screen no longer shows the Activity section (header, filter chips, feed) — the
+  activity feed now lives exclusively in the expanded building detail view. Home is a
+  single non-scrolling composition: greeting, building hero, balance card, pay button.
+- Expanded view scroll behavior reworked: instead of lingering half-visible between the
+  feed cards, the building now **recedes into the distance** — drifts up at 0.4x, shrinks
+  to ~72%, fully fades out over ~260pt of scroll, with a growing depth-of-field blur
+  layer (iOS) so it drops out of focus before it disappears.
+- Swapped deprecated `experimentalBlurMethod` → `blurMethod` on all BlurViews.
+
+### 2026-08-25 — Mobile: hero expand transition, EUR, lower tab bar (session 10, follow-up 5)
+
+- **Building hero expand:** tapping the home 3D building expands it shared-element style
+  into a full-screen detail view (`src/components/BuildingDetail.tsx`): measured source
+  frame → settled frame near the top via spring (stiffness 195 / damping 23 ≈ SwiftUI
+  response 0.45 / dampingFraction 0.82), blurred + dimmed backdrop, floating tab bar
+  animates out (UI-thread shared value in `src/state/homeOverlay.ts`), and an activity
+  feed (typed `BuildingActivityItem[]` prop, stubbed from home mock data) scrolls over
+  the building with ~0.4x parallax + shrink/fade. Drag down >120pt or fast flick
+  dismisses (rubber-band below), soft haptics on expand/dismiss, reduce-motion falls
+  back to a plain crossfade, VoiceOver reads the building as a button, Android hardware
+  back closes it. The request spec was written for SwiftUI/matchedGeometryEffect; this
+  is the Reanimated/gesture-handler equivalent (the app is Expo/React Native).
+- Currency switched BGN → EUR across all mock data (home, building, market, messages).
+- Floating tab bar moved a bit lower (bottom padding `insets.bottom - 6` clamped).
+
+### 2026-08-25 — Mobile: visible shadows on balance card + pay button (session 10, follow-up 4)
+
+- Fixed clipped shadows: `GlassView` and `GradientButton` set `overflow: 'hidden'` on the
+  same view the shadow styles landed on, which silently swallowed iOS shadows. The
+  balance card's shadow now lives on an un-clipped wrapper with a solid surface backing,
+  and `GradientButton` moved clipping to its inner fill so caller shadows render. Both
+  card and Pay-fee button now cast soft drop shadows on iOS and Android (elevation).
+- Building hero got a ground shadow: a pre-blurred ellipse asset
+  (`assets/images/ground-shadow.png`, generated with Pillow) rendered under the 3D
+  render's base — identical on iOS and Android, where view shadows can't follow a
+  transparent PNG's silhouette.
+
+### 2026-08-25 — Mobile: flat backgrounds, ambient orbs removed (session 10, follow-up 3)
+
+- Stakeholder feedback: removed the decorative background circles ("ambient orbs") from
+  every screen — welcome, home, building, market, issues, menu, and the `SubScreen`
+  scaffold. Screens now sit on a single flat theme background (`colors.background`;
+  welcome uses cold foam directly). The welcome screen's hero gradient was replaced by
+  the same flat color. Glass surfaces still blur real content behind them (hero image,
+  scrolling cards).
+
+### 2026-08-25 — Mobile: EntryPay-style balance card (session 10, follow-up 2)
+
+- Balance card restyled 1:1 to the stakeholder's reference: building + apartment title,
+  "Monthly maintenance fee" subtitle, divider, orange card-icon tile with "Fee:" +
+  amount, "Secure payment" shield chip — nothing else (IBAN/deposit details removed
+  from home; IBAN + copy remain on the "How do I pay?" screen). "Pay fee" CTA below
+  the card with leading card icon, trailing chevron and a warm shadow — now fully
+  visible above the tab bar. `GradientButton` supports `icon`/`trailingIcon`.
+
+### 2026-08-25 — Mobile: 3D building hero (session 10, follow-up)
+
+- Home hero swapped from the framed photo to a stakeholder-provided **3D render**
+  (`assets/images/building-3d.png`), floating free over the warm background at full
+  ~86% content width — matching the reference mock. The render's black background was
+  removed via border flood fill (dark building details kept); transparency holes the
+  fill punched through the ground-floor vent slats were re-filled dark, and edge fringe
+  cleaned. Old photo asset removed.
+
+### 2026-08-25 — Mobile: liquid-glass tab navigation + competitor feature parity (session 10)
+
+- Feature-parity pass against a competitor resident app (LIVO): unit feed, building
+  finances, marketplace listings, issue reporting, messages/surveys/contacts/how-to-pay,
+  language + theme switches — all in the warm Sosedo design, **all on mock data**
+  (marked `TODO(M2/M3/M6/M7)` for the real APIs).
+- New **floating liquid-glass bottom tab bar** (`app/(tabs)/_layout.tsx`, custom
+  `tabBar` on expo-router Tabs): Home / Building / Market / Issues, orange active pill.
+  Home moved to `app/(tabs)/home.tsx` (URL stays `/home`).
+- Home additions: deposit + monthly-fee mini stats in the balance card, **activity feed
+  with filter chips** (charges, payments, listings, issues, notices, surveys), header
+  menu button.
+- New tabs: **Building** (households-with-dues progress, cash balance, total dues,
+  monthly budget, issues carousel, documents), **Market** (create-listing form
+  offering/seeking, notify toggle, filters incl. "only mine"), **Issues** (report form
+  with title/description/photo mock + history with status chips).
+- New **menu modal** (`app/menu.tsx`): Messages, Surveys, How do I pay?, Contacts
+  screens (shared `SubScreen` scaffold), language BG/EN chips (TODO i18n), **theme
+  System/Light/Dark switch** (ThemeContext now has a mode override), sign out.
+- Added `@react-navigation/bottom-tabs` (types for the custom tab bar) — one cast where
+  expo-router's bundled copy differs nominally.
+- Verified home + building tabs on the simulator; mobile typecheck green.
+
+### 2026-08-25 — Rebrand: warm "Santiago Orange" palette + liquid-glass mobile UI (session 9)
+
+- **Stakeholder decision: new brand direction** — warm neutrals + orange, Apple/Claude
+  vibe, frosted "liquid glass" surfaces, building photo as the home hero. New palette:
+  Santiago Orange `#EB5E28`, cold foam `#EFECE3`, gold black `#1D1D1F`, warm dark
+  `#2C2324`, landmark `#766754`, stone `#A79D90`.
+- `brands/sosedo/brand.json` + `apps/mobile/src/theme/tokens.ts` rewritten (palette,
+  gradients, light/dark themes, tagline accents, slightly larger radii). Splash and
+  Android adaptive-icon backgrounds switched to cold foam in `app.json`.
+- New `apps/mobile/src/components/GlassView.tsx` — expo-blur frosted surface (iOS blur
+  tint + Android `dimezisBlurView`, warm translucent overlay + hairline highlight).
+- Welcome: light warm hero, orange logo mark, glass CTA panel. Login/activate inherit
+  the theme (they were already token-driven).
+- Home redesigned to the reference mockup: greeting header + glass sign-out button,
+  **generated building photo hero centered** (`assets/images/building-hero.png`),
+  liquid-glass balance card overlapping the hero, glass quick-action tiles and notice
+  cards, warm ambient orbs behind the scroll for the blur to refract.
+  Fixed a real layout bug: `width:'100%'` on the hero image resolved against auto-sized
+  scroll content and blew up to the image's natural 2048px — now explicit dimensions.
+- Verified on iPhone 16 Pro simulator (light + dark), root build/typecheck green.
+- **Admin dashboard still uses the old navy palette** — restyle to the warm brand is a
+  follow-up.
 
 ### 2026-08-23 — Mobile: secure-store session persistence + refresh-at-launch (session 8)
 

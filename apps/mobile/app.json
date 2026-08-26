@@ -15,7 +15,7 @@
     "android": {
       "package": "bg.sosedo.resident",
       "adaptiveIcon": {
-        "backgroundColor": "#0F1D3A",
+        "backgroundColor": "#EFECE3",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -31,7 +31,7 @@
         "expo-splash-screen",
         {
           "image": "./assets/splash-icon.png",
-          "backgroundColor": "#0F1D3A",
+          "backgroundColor": "#EFECE3",
           "imageWidth": 180
         }
       ],

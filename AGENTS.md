@@ -74,7 +74,10 @@ Dev machine note: if port 4000 is taken, run the API with `API_PORT=4100`.
 - **Branding:** all colors/gradients come from brand tokens — mobile:
   `apps/mobile/src/theme/tokens.ts` (mirror of `brands/sosedo/brand.json`), admin:
   Tailwind `@theme` in `apps/admin/src/styles.css`. Never hardcode hex values in screens.
-  Palette: navy `#0F1D3A`, blue `#356DFF`, green `#22B88F`, purple `#7A6CFF`, mist `#EEF2F7`.
+  Palette (2026-08 rebrand): Santiago Orange `#EB5E28`, cold foam `#EFECE3`, gold black
+ `#1D1D1F`, warm dark `#2C2324`, landmark `#766754`, stone `#A79D90`. Frosted "liquid
+ glass" surfaces via `apps/mobile/src/components/GlassView.tsx` (expo-blur). The admin
+ panel still carries the old navy palette until its restyle lands.
 - **Mobile responsive rule (project convention):** size values conditionally for screens
   wider than 375pt using `rs(wide, narrow)` from `src/theme/responsive.ts` — fonts,
   paddings, margins, control heights. Example: `fontSize: rs(24, 20)`.

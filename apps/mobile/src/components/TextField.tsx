@@ -7,9 +7,8 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { useTheme } from '../theme/ThemeContext';
 import { metrics, rs } from '../theme/responsive';
-import { radius } from '../theme/tokens';
+import { glass, palette, radius } from '../theme/tokens';
 
 interface Props extends TextInputProps {
   label: string;
@@ -17,37 +16,25 @@ interface Props extends TextInputProps {
   secure?: boolean;
 }
 
-/** Input with an animated focus ring and optional secure-text toggle. */
+/** Frosted glass input with an animated focus ring and optional secure-text toggle. */
 export function TextField({ label, icon, secure = false, ...inputProps }: Props) {
-  const { colors } = useTheme();
   const [hidden, setHidden] = useState(secure);
   const focus = useSharedValue(0);
 
   const borderStyle = useAnimatedStyle(() => ({
-    borderColor: interpolateColor(focus.value, [0, 1], [colors.border, colors.primary]),
-    shadowOpacity: focus.value * 0.12,
+    borderColor: interpolateColor(focus.value, [0, 1], [glass.stroke, palette.orangeBright]),
+    shadowOpacity: focus.value * 0.2,
   }));
 
   return (
     <View style={styles.wrapper}>
-      <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
-      <Animated.View
-        style={[
-          styles.field,
-          {
-            backgroundColor: colors.surface,
-            shadowColor: colors.primary,
-          },
-          borderStyle,
-        ]}
-      >
-        {icon ? (
-          <Ionicons name={icon} size={rs(20, 18)} color={colors.textSecondary} />
-        ) : null}
+      <Text style={styles.label}>{label}</Text>
+      <Animated.View style={[styles.field, borderStyle]}>
+        {icon ? <Ionicons name={icon} size={rs(20, 18)} color={glass.textSecondary} /> : null}
         <TextInput
           {...inputProps}
           secureTextEntry={hidden}
-          placeholderTextColor={colors.textSecondary}
+          placeholderTextColor={glass.textMuted}
           onFocus={(e) => {
             focus.value = withTiming(1, { duration: 180 });
             inputProps.onFocus?.(e);
@@ -56,14 +43,14 @@ export function TextField({ label, icon, secure = false, ...inputProps }: Props)
             focus.value = withTiming(0, { duration: 180 });
             inputProps.onBlur?.(e);
           }}
-          style={[styles.input, { color: colors.textPrimary }]}
+          style={styles.input}
         />
         {secure ? (
           <Pressable onPress={() => setHidden((v) => !v)} hitSlop={12}>
             <Ionicons
               name={hidden ? 'eye-outline' : 'eye-off-outline'}
               size={rs(20, 18)}
-              color={colors.textSecondary}
+              color={glass.textSecondary}
             />
           </Pressable>
         ) : null}
@@ -81,6 +68,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.6,
+    color: glass.textSecondary,
   },
   field: {
     flexDirection: 'row',
@@ -89,7 +77,9 @@ const styles = StyleSheet.create({
     height: metrics.inputHeight,
     borderRadius: radius.md,
     borderWidth: 1.5,
+    backgroundColor: glass.fill,
     paddingHorizontal: rs(16, 14),
+    shadowColor: palette.orange,
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 12,
     elevation: 2,
@@ -98,5 +88,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: metrics.bodySize,
     fontWeight: '500',
+    color: glass.textPrimary,
   },
 });

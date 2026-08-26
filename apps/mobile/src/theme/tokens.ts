@@ -2,23 +2,29 @@
  * Sosedo design tokens — mirror of /brands/sosedo/brand.json.
  * In the shared multi-brand app these are eventually hydrated at runtime from
  * GET /v1/brands/:key/config; this file provides the compiled-in default brand.
+ *
+ * Brand direction (2026-08-25): warm neutrals + Santiago Orange, light and
+ * airy "liquid glass" surfaces — Apple-clean with a warm Claude-like calm.
  */
 export const palette = {
-  navy: '#0F1D3A',
-  navyDeep: '#0A1428',
-  navySoft: '#16294F',
-  blue: '#356DFF',
-  green: '#22B88F',
-  purple: '#7A6CFF',
-  mist: '#EEF2F7',
+  orange: '#EB5E28', // Santiago Orange — primary brand color
+  orangeBright: '#FF7E47',
+  ember: '#C24A17',
+  foam: '#EFECE3', // Cold Foam — light background
+  cream: '#F7F4EC',
+  sand: '#E4DDCF',
+  goldBlack: '#1D1D1F', // primary text / dark background
+  espresso: '#2C2324', // warm dark surface
+  landmark: '#766754', // warm secondary text
+  stone: '#A79D90',
   white: '#FFFFFF',
 } as const;
 
 export const gradients = {
-  primary: ['#356DFF', '#22B88F'] as const,
-  accent: ['#7A6CFF', '#356DFF'] as const,
-  hero: ['#0F1D3A', '#16294F'] as const,
-  card: ['#16294F', '#0F1D3A'] as const,
+  primary: ['#FF7E47', '#EB5E28'] as const,
+  accent: ['#EB5E28', '#C24A17'] as const,
+  hero: ['#F7F4EC', '#EFECE3'] as const,
+  card: ['#2C2324', '#1D1D1F'] as const,
 };
 
 export interface ThemeColors {
@@ -35,40 +41,59 @@ export interface ThemeColors {
 }
 
 export const lightTheme: ThemeColors = {
-  background: '#EEF2F7',
+  background: '#EFECE3',
   surface: '#FFFFFF',
-  surfaceMuted: '#F7F9FC',
-  textPrimary: '#0F1D3A',
-  textSecondary: '#5A6B8C',
-  border: '#E1E8F2',
-  primary: '#356DFF',
-  success: '#22B88F',
-  accent: '#7A6CFF',
-  danger: '#E5484D',
+  surfaceMuted: '#F7F4EC',
+  textPrimary: '#1D1D1F',
+  textSecondary: '#766754',
+  border: '#E4DDCF',
+  primary: '#EB5E28',
+  success: '#2E9E6B',
+  accent: '#A79D90',
+  danger: '#D64545',
 };
 
 export const darkTheme: ThemeColors = {
-  background: '#0A1428',
-  surface: '#0F1D3A',
-  surfaceMuted: '#16294F',
-  textPrimary: '#F2F6FC',
-  textSecondary: '#93A3C4',
-  border: '#1E3158',
-  primary: '#5C8AFF',
-  success: '#2FD3A6',
-  accent: '#937FFF',
-  danger: '#FF6369',
+  background: '#1D1D1F',
+  surface: '#2C2324',
+  surfaceMuted: '#3A322E',
+  textPrimary: '#F5F1E8',
+  textSecondary: '#A79D90',
+  border: '#3E3733',
+  primary: '#FF7E47',
+  success: '#4CBF8B',
+  accent: '#A79D90',
+  danger: '#FF6B61',
 };
 
 export const radius = {
-  sm: 10,
-  md: 16,
-  lg: 24,
+  sm: 12,
+  md: 18,
+  lg: 28,
   pill: 999,
+} as const;
+
+/**
+ * Tokens for content rendered over the photographic "liquid glass" background
+ * (2026-08 redesign): white typography on frosted translucent surfaces.
+ */
+export const glass = {
+  textPrimary: '#FFFFFF',
+  textSecondary: 'rgba(255,255,255,0.78)',
+  textMuted: 'rgba(255,255,255,0.6)',
+  fill: 'rgba(255,255,255,0.14)',
+  fillStrong: 'rgba(255,255,255,0.24)',
+  stroke: 'rgba(255,255,255,0.32)',
+  danger: '#FFB0A6',
+  /** Near-opaque warm frost for the side menu sheet (dark text on top). */
+  sheetFill: 'rgba(239,236,227,0.78)',
+  sheetStroke: 'rgba(255,255,255,0.55)',
+  /** Warm haze the background photo dissolves into towards the bottom. */
+  haze: '#8A8177',
 } as const;
 
 export const brand = {
   name: 'Sosedo',
   tagline: ['Together', 'Better', 'Home'] as const,
-  taglineAccents: [palette.blue, palette.green, palette.purple] as const,
+  taglineAccents: [palette.orange, palette.stone, palette.ember] as const,
 } as const;

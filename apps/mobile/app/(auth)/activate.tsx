@@ -1,31 +1,25 @@
-import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ApiError, activate } from '../../src/api/client';
+import { AppBackground } from '../../src/components/AppBackground';
 import { CodeInput } from '../../src/components/CodeInput';
+import { GlassCircleButton } from '../../src/components/GlassCircleButton';
+import { GlassView } from '../../src/components/GlassView';
 import { GradientButton } from '../../src/components/GradientButton';
 import { PressableScale } from '../../src/components/PressableScale';
-import { useTheme } from '../../src/theme/ThemeContext';
+import { BrandLockup } from '../../src/components/SosedoLogo';
 import { metrics, rs } from '../../src/theme/responsive';
-import { palette } from '../../src/theme/tokens';
+import { glass, palette } from '../../src/theme/tokens';
 
 const CODE_LENGTH = 6;
 
 export default function Activate() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,10 +36,10 @@ export default function Activate() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       setError(
         e instanceof ApiError && e.status === 401
-          ? 'Invalid or expired code. Ask your house manager for a new one.'
+          ? 'Невалиден или изтекъл код. Поискайте нов от домоуправителя си.'
           : e instanceof Error
             ? e.message
-            : 'Something went wrong',
+            : 'Нещо се обърка',
       );
     } finally {
       setLoading(false);
@@ -62,7 +56,8 @@ export default function Activate() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={styles.container}>
+      <AppBackground variant="blur" />
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -72,61 +67,56 @@ export default function Activate() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <PressableScale
-            haptic={false}
-            onPress={() => router.back()}
-            style={[styles.back, { backgroundColor: colors.surface }]}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
-          </PressableScale>
+          <View style={styles.topBar}>
+            <GlassCircleButton
+              icon="arrow-back"
+              onPress={() => router.back()}
+              accessibilityLabel="Назад"
+            />
+            <BrandLockup align="center" />
+            <GlassCircleButton
+              icon="help"
+              onPress={() => router.push('/how-to-pay')}
+              accessibilityLabel="Помощ"
+            />
+          </View>
 
           <Animated.View entering={FadeInDown.duration(420).delay(80)} style={styles.header}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>
-              Enter your invite code
-            </Text>
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              Your house manager has registered your apartment. We sent a {CODE_LENGTH}-digit
-              code to your phone by SMS or Viber.
+            <Text style={styles.title}>Въведете код{'\n'}за покана</Text>
+            <View style={styles.titleDash} />
+            <Text style={styles.subtitle}>
+              Вашият домоуправител е регистрирал апартамента ви. Изпратихме {CODE_LENGTH}-цифрен
+              код на телефона ви чрез SMS или Viber.
             </Text>
           </Animated.View>
 
           <Animated.View entering={FadeInUp.duration(420).delay(200)}>
-            <CodeInput
-              length={CODE_LENGTH}
-              value={code}
-              onChange={(next) => {
-                setCode(next);
-                if (error) setError(null);
-              }}
-            />
+            <GlassView contentStyle={styles.codeCard}>
+              <Text style={styles.codeLabel}>Код за покана</Text>
+              <CodeInput
+                length={CODE_LENGTH}
+                value={code}
+                onChange={(next) => {
+                  setCode(next);
+                  if (error) setError(null);
+                }}
+              />
+              <View style={styles.resendRow}>
+                <Text style={styles.resendHint}>Не получихте код?</Text>
+                <PressableScale haptic={false} onPress={resend} accessibilityRole="button">
+                  <Text style={[styles.resendAction, resent && styles.resendDone]}>
+                    {resent ? 'Кодът е изпратен ✓' : 'Изпрати отново'}
+                  </Text>
+                </PressableScale>
+              </View>
+            </GlassView>
           </Animated.View>
 
           {error ? (
-            <Animated.Text
-              entering={FadeIn.duration(200)}
-              style={[styles.error, { color: colors.danger }]}
-            >
+            <Animated.Text entering={FadeIn.duration(200)} style={styles.error}>
               {error}
             </Animated.Text>
           ) : null}
-
-          <Animated.View entering={FadeInUp.duration(420).delay(280)} style={styles.resendRow}>
-            <Text style={[styles.resendHint, { color: colors.textSecondary }]}>
-              Didn't get a code?
-            </Text>
-            <PressableScale haptic={false} onPress={resend} accessibilityRole="button">
-              <Text
-                style={[
-                  styles.resendAction,
-                  { color: resent ? colors.success : colors.primary },
-                ]}
-              >
-                {resent ? 'Code sent again ✓' : 'Resend code'}
-              </Text>
-            </PressableScale>
-          </Animated.View>
         </ScrollView>
 
         <Animated.View
@@ -134,20 +124,18 @@ export default function Activate() {
           style={[styles.cta, { paddingBottom: insets.bottom + rs(20, 14) }]}
         >
           <GradientButton
-            label="Activate account"
+            label="Активирай акаунта"
+            variant="dark"
+            trailingIcon="arrow-forward"
             onPress={submit}
             loading={loading}
             disabled={code.length !== CODE_LENGTH}
           />
-          <PressableScale
-            haptic={false}
+          <GradientButton
+            label="Пропусни засега"
+            variant="glass"
             onPress={() => router.replace('/home')}
-            style={styles.skip}
-            accessibilityRole="button"
-            accessibilityLabel="Skip for now"
-          >
-            <Text style={[styles.skipText, { color: colors.textSecondary }]}>Skip for now</Text>
-          </PressableScale>
+          />
         </Animated.View>
       </KeyboardAvoidingView>
     </View>
@@ -161,60 +149,69 @@ const styles = StyleSheet.create({
     paddingHorizontal: metrics.screenPadding,
     gap: rs(28, 20),
   },
-  back: {
-    width: rs(44, 40),
-    height: rs(44, 40),
-    borderRadius: 999,
+  topBar: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: palette.navy,
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
+    justifyContent: 'space-between',
   },
   header: {
-    gap: rs(12, 8),
+    marginTop: rs(28, 18),
+    gap: rs(16, 12),
   },
   title: {
-    fontSize: metrics.titleSize,
+    fontSize: rs(36, 31),
+    lineHeight: rs(42, 37),
     fontWeight: '800',
     letterSpacing: -0.5,
+    color: glass.textPrimary,
+  },
+  titleDash: {
+    width: rs(38, 32),
+    height: rs(4, 4),
+    borderRadius: 2,
+    backgroundColor: palette.orange,
   },
   subtitle: {
     fontSize: metrics.subtitleSize,
-    lineHeight: rs(24, 21),
+    lineHeight: rs(25, 22),
+    color: glass.textSecondary,
+  },
+  codeCard: {
+    padding: rs(18, 15),
+    gap: rs(16, 12),
+  },
+  codeLabel: {
+    fontSize: rs(15, 14),
+    color: glass.textSecondary,
   },
   resendRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: rs(8, 6),
+    paddingVertical: rs(2, 1),
   },
   resendHint: {
     fontSize: metrics.bodySize,
+    color: glass.textSecondary,
   },
   resendAction: {
     fontSize: metrics.bodySize,
     fontWeight: '700',
+    color: glass.textPrimary,
+  },
+  resendDone: {
+    color: palette.orangeBright,
   },
   error: {
     fontSize: metrics.bodySize,
     fontWeight: '600',
     textAlign: 'center',
+    color: glass.danger,
   },
   cta: {
     paddingHorizontal: metrics.screenPadding,
     paddingTop: rs(12, 8),
-    gap: rs(14, 10),
-  },
-  skip: {
-    alignSelf: 'center',
-    paddingVertical: rs(6, 4),
-    paddingHorizontal: rs(12, 10),
-  },
-  skipText: {
-    fontSize: metrics.bodySize,
-    fontWeight: '600',
+    gap: rs(12, 9),
   },
 });

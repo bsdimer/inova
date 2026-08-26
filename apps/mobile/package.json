@@ -12,7 +12,9 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",
+    "@react-navigation/bottom-tabs": "^7.18.17",
     "expo": "~57.0.15",
+    "expo-blur": "~57.0.2",
     "expo-clipboard": "~57.0.1",
     "expo-constants": "~57.0.13",
     "expo-haptics": "~57.0.1",
@@ -28,7 +30,8 @@
     "react-native-gesture-handler": "~2.32.0",
     "react-native-reanimated": "4.5.1",
     "react-native-safe-area-context": "~5.7.0",
-    "react-native-screens": "~4.26.2"
+    "react-native-screens": "~4.26.2",
+    "react-native-svg": "15.15.4"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",

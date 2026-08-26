@@ -1,9 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { useTheme } from '../theme/ThemeContext';
 import { rs } from '../theme/responsive';
-import { radius } from '../theme/tokens';
+import { glass } from '../theme/tokens';
 
 interface Props {
   length?: number;
@@ -14,11 +13,11 @@ interface Props {
 }
 
 /**
- * One-time-code input rendered as digit boxes over a single hidden TextInput,
- * so the system keyboard, paste and SMS autofill all behave natively.
+ * One-time-code input rendered as frosted glass digit boxes over a single
+ * hidden TextInput, so the system keyboard, paste and SMS autofill all behave
+ * natively. Empty boxes show the mockup's underscore placeholder.
  */
 export function CodeInput({ length = 6, value, onChange, onFilled }: Props) {
-  const { colors } = useTheme();
   const inputRef = useRef<TextInput>(null);
   const [focused, setFocused] = useState(false);
 
@@ -33,33 +32,20 @@ export function CodeInput({ length = 6, value, onChange, onFilled }: Props) {
   const activeIndex = Math.min(value.length, length - 1);
 
   return (
-    <Pressable onPress={() => inputRef.current?.focus()} accessibilityLabel="Invite code">
+    <Pressable onPress={() => inputRef.current?.focus()} accessibilityLabel="Код за покана">
       <View style={styles.row}>
         {Array.from({ length }).map((_, i) => {
           const digit = value[i] ?? '';
           const isActive = focused && i === activeIndex && value.length < length;
           return (
-            <View
-              key={i}
-              style={[
-                styles.box,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: isActive ? colors.primary : colors.border,
-                  borderWidth: isActive ? 2 : 1.5,
-                },
-              ]}
-            >
+            <View key={i} style={[styles.box, isActive && styles.boxActive]}>
               {digit ? (
-                <Animated.Text
-                  entering={FadeIn.duration(120)}
-                  style={[styles.digit, { color: colors.textPrimary }]}
-                >
+                <Animated.Text entering={FadeIn.duration(120)} style={styles.digit}>
                   {digit}
                 </Animated.Text>
-              ) : isActive ? (
-                <Text style={[styles.cursor, { color: colors.primary }]}>|</Text>
-              ) : null}
+              ) : (
+                <View style={styles.underscore} />
+              )}
             </View>
           );
         })}
@@ -85,23 +71,34 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: rs(10, 8),
+    gap: rs(9, 7),
   },
   box: {
     flex: 1,
-    aspectRatio: 0.82,
-    maxHeight: rs(64, 56),
-    borderRadius: radius.md,
+    aspectRatio: 0.78,
+    maxHeight: rs(72, 62),
+    borderRadius: rs(16, 14),
+    borderWidth: 1.2,
+    borderColor: glass.stroke,
+    backgroundColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  boxActive: {
+    borderColor: 'rgba(255,255,255,0.9)',
   },
   digit: {
     fontSize: rs(26, 22),
     fontWeight: '700',
+    color: glass.textPrimary,
   },
-  cursor: {
-    fontSize: rs(24, 20),
-    fontWeight: '300',
+  underscore: {
+    position: 'absolute',
+    bottom: rs(10, 8),
+    width: rs(14, 12),
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: 'rgba(255,255,255,0.55)',
   },
   hidden: {
     position: 'absolute',

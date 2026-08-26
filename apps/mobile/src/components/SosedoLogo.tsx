@@ -1,86 +1,63 @@
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { rs } from '../theme/responsive';
-import { gradients, palette } from '../theme/tokens';
+import { glass } from '../theme/tokens';
 
-interface MarkProps {
+// Logo lockups carry their own fixed colors (client-provided mark).
+const LOGO_GOLD = '#C9A26B';
+
+interface Props {
+  /** Wordmark letter size. */
   size?: number;
-  /** Inner disc color — navy on dark hero, white on light surfaces. */
-  discColor?: string;
-  iconColor?: string;
+  color?: string;
+  align?: 'flex-start' | 'center';
 }
 
-/** Circular gradient-ring mark with the "home" glyph, echoing the brand lockup. */
-export function SosedoMark({
-  size = rs(112, 96),
-  discColor = palette.navy,
-  iconColor = palette.white,
-}: MarkProps) {
-  const ring = size * 0.055;
+/**
+ * "inova — by White Nova Technology" lockup (client brand): lowercase
+ * letterspaced wordmark with a thin gold rule ending in a dot, tiny caps
+ * byline underneath.
+ */
+export function BrandLockup({
+  size = rs(24, 21),
+  color = glass.textPrimary,
+  align = 'flex-start',
+}: Props) {
   return (
-    <LinearGradient
-      colors={gradients.primary}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={{
-        width: size,
-        height: size,
-        borderRadius: size / 2,
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <View
-        style={{
-          width: size - ring * 2,
-          height: size - ring * 2,
-          borderRadius: (size - ring * 2) / 2,
-          backgroundColor: discColor,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Ionicons name="home" size={size * 0.42} color={iconColor} />
+    <View style={{ alignItems: align }}>
+      <View style={styles.row}>
+        <Text
+          style={{
+            fontSize: size,
+            fontWeight: '400',
+            letterSpacing: size * 0.42,
+            color,
+          }}
+        >
+          inova
+        </Text>
+        <View style={[styles.rule, { width: size * 1.05, marginLeft: size * 0.1 }]} />
         <View
           style={{
-            position: 'absolute',
-            top: size * 0.16,
-            right: size * 0.18,
-            width: size * 0.09,
-            height: size * 0.09,
-            borderRadius: size * 0.05,
-            backgroundColor: palette.green,
+            width: size * 0.18,
+            height: size * 0.18,
+            borderRadius: size * 0.09,
+            backgroundColor: LOGO_GOLD,
           }}
         />
       </View>
-    </LinearGradient>
-  );
-}
-
-interface WordmarkProps {
-  size?: number;
-  color?: string;
-}
-
-/** "SOSEDO" wordmark — the E carries the brand green, as in the primary lockup. */
-export function SosedoWordmark({ size = rs(40, 34), color = palette.white }: WordmarkProps) {
-  return (
-    <View style={styles.row}>
-      {['S', 'O', 'S', 'E', 'D', 'O'].map((letter, i) => (
-        <Text
-          key={`${letter}-${i}`}
-          style={{
-            fontSize: size,
-            fontWeight: '800',
-            letterSpacing: size * 0.14,
-            color: letter === 'E' ? palette.green : color,
-          }}
-        >
-          {letter}
-        </Text>
-      ))}
+      <Text
+        style={{
+          fontSize: size * 0.3,
+          fontWeight: '500',
+          letterSpacing: size * 0.1,
+          color,
+          opacity: 0.85,
+          marginTop: size * 0.3,
+        }}
+      >
+        BY WHITE NOVA TECHNOLOGY
+      </Text>
     </View>
   );
 }
@@ -89,5 +66,9 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  rule: {
+    height: 1,
+    backgroundColor: LOGO_GOLD,
   },
 });

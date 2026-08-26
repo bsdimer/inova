@@ -1,12 +1,13 @@
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { metrics, rs } from '../theme/responsive';
-import { gradients, palette, radius } from '../theme/tokens';
+import { glass, gradients, palette, radius } from '../theme/tokens';
 import { PressableScale } from './PressableScale';
 
-type Variant = 'gradient' | 'ghost' | 'surface';
+type Variant = 'gradient' | 'ghost' | 'surface' | 'dark' | 'glass';
 
 interface Props {
   label: string;
@@ -17,6 +18,10 @@ interface Props {
   style?: ViewStyle;
   /** Light label/border for use on dark hero backgrounds. */
   onDark?: boolean;
+  /** Leading icon shown next to the label. */
+  icon?: keyof typeof Ionicons.glyphMap;
+  /** Trailing icon pinned to the right edge (e.g. a chevron). */
+  trailingIcon?: keyof typeof Ionicons.glyphMap;
 }
 
 export function GradientButton({
@@ -27,25 +32,41 @@ export function GradientButton({
   disabled = false,
   style,
   onDark = false,
+  icon,
+  trailingIcon,
 }: Props) {
   const { colors } = useTheme();
+
+  const contentColor =
+    variant === 'gradient' || variant === 'dark' || variant === 'glass'
+      ? palette.white
+      : variant === 'ghost'
+        ? onDark
+          ? palette.white
+          : colors.primary
+        : colors.textPrimary;
 
   const content = (
     <View style={styles.content}>
       {loading ? (
-        <ActivityIndicator color={variant === 'gradient' ? palette.white : colors.primary} />
+        <ActivityIndicator
+          color={
+            variant === 'gradient' || variant === 'dark' || variant === 'glass'
+              ? palette.white
+              : colors.primary
+          }
+        />
       ) : (
-        <Text
-          style={[
-            styles.label,
-            variant === 'gradient' && { color: palette.white },
-            variant === 'ghost' && { color: onDark ? palette.white : colors.primary },
-            variant === 'surface' && { color: colors.textPrimary },
-          ]}
-        >
-          {label}
-        </Text>
+        <>
+          {icon ? <Ionicons name={icon} size={rs(20, 18)} color={contentColor} /> : null}
+          <Text style={[styles.label, { color: contentColor }]}>{label}</Text>
+        </>
       )}
+      {trailingIcon && !loading ? (
+        <View style={styles.trailing}>
+          <Ionicons name={trailingIcon} size={rs(18, 16)} color={contentColor} />
+        </View>
+      ) : null}
     </View>
   );
 
@@ -76,6 +97,12 @@ export function GradientButton({
               backgroundColor: 'transparent',
             },
             variant === 'surface' && { backgroundColor: colors.surface },
+            variant === 'dark' && { backgroundColor: palette.goldBlack },
+            variant === 'glass' && {
+              backgroundColor: glass.fillStrong,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: glass.stroke,
+            },
           ]}
         >
           {content}
@@ -89,22 +116,30 @@ const styles = StyleSheet.create({
   base: {
     height: metrics.buttonHeight,
     borderRadius: radius.pill,
-    overflow: 'hidden',
+    // No overflow:'hidden' here — it would clip caller-provided iOS shadows.
+    // The inner fill clips the gradient to the pill shape instead.
   },
   fill: {
     flex: 1,
     borderRadius: radius.pill,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
   },
   content: {
+    alignSelf: 'stretch',
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
   },
   label: {
     fontSize: rs(17, 16),
     fontWeight: '700',
     letterSpacing: 0.2,
+  },
+  trailing: {
+    position: 'absolute',
+    right: rs(20, 16),
   },
 });
