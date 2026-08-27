@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter, type Href } from 'expo-router';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn, SlideInRight } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, SlideInRight } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { logout } from '../src/api/client';
 import { GlassView } from '../src/components/GlassView';
@@ -74,8 +74,10 @@ export default function Menu() {
         />
       </Animated.View>
 
+      {/* Timed ease-out slide: a spring here overshoots the resting position
+          and briefly detaches the sheet from the screen edge. */}
       <Animated.View
-        entering={SlideInRight.springify().damping(21).stiffness(190)}
+        entering={SlideInRight.duration(320).easing(Easing.out(Easing.cubic))}
         style={styles.sheetWrap}
       >
         <GlassView

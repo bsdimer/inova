@@ -1,7 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { ActivityIndicator, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import {
+  ActivityIndicator,
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+  type ViewStyle,
+} from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { metrics, rs } from '../theme/responsive';
 import { glass, gradients, palette, radius } from '../theme/tokens';
@@ -74,7 +82,13 @@ export function GradientButton({
     <PressableScale
       onPress={onPress}
       disabled={disabled || loading}
-      style={[styles.base, { opacity: disabled ? 0.6 : 1 }, style ?? {}]}
+      style={[
+        styles.base,
+        // Soft drop shadows need a backing color on the shadow-casting view.
+        variant === 'dark' ? styles.darkShadow : variant === 'glass' ? styles.glassShadow : {},
+        { opacity: disabled ? 0.6 : 1 },
+        style ?? {},
+      ]}
       accessibilityRole="button"
       accessibilityLabel={label}
     >
@@ -97,14 +111,26 @@ export function GradientButton({
               backgroundColor: 'transparent',
             },
             variant === 'surface' && { backgroundColor: colors.surface },
-            variant === 'dark' && { backgroundColor: palette.goldBlack },
+            variant === 'dark' && {
+              backgroundColor: 'rgba(24,24,26,0.94)',
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: 'rgba(255,255,255,0.12)',
+            },
             variant === 'glass' && {
-              backgroundColor: glass.fillStrong,
+              backgroundColor: 'rgba(255,255,255,0.16)',
               borderWidth: StyleSheet.hairlineWidth,
               borderColor: glass.stroke,
             },
           ]}
         >
+          {variant === 'glass' && (
+            <BlurView
+              intensity={35}
+              tint="light"
+              blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : 'none'}
+              style={StyleSheet.absoluteFill}
+            />
+          )}
           {content}
         </View>
       )}
@@ -118,6 +144,22 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     // No overflow:'hidden' here — it would clip caller-provided iOS shadows.
     // The inner fill clips the gradient to the pill shape instead.
+  },
+  darkShadow: {
+    backgroundColor: palette.goldBlack,
+    shadowColor: '#000000',
+    shadowOpacity: 0.38,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 9,
+  },
+  glassShadow: {
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    shadowColor: '#000000',
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
   },
   fill: {
     flex: 1,

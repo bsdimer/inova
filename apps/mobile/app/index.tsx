@@ -1,15 +1,13 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { bootstrapSession } from '../src/api/client';
 import { AppBackground } from '../src/components/AppBackground';
-import { GlassView } from '../src/components/GlassView';
 import { GradientButton } from '../src/components/GradientButton';
 import { BrandLockup } from '../src/components/SosedoLogo';
-import { metrics, rs } from '../src/theme/responsive';
-import { glass } from '../src/theme/tokens';
+import { metrics, rs, screen } from '../src/theme/responsive';
 
 export default function Welcome() {
   const router = useRouter();
@@ -32,37 +30,27 @@ export default function Welcome() {
 
   return (
     <View style={styles.container}>
-      <AppBackground variant="hero" />
+      <AppBackground variant="welcome" />
 
-      <View style={[styles.content, { paddingTop: insets.top + rs(72, 52) }]}>
-        <Animated.View entering={FadeInDown.springify().damping(15).delay(120)}>
-          <BrandLockup size={rs(38, 32)} align="center" />
-        </Animated.View>
+      <Animated.View
+        entering={FadeInDown.duration(600).delay(150)}
+        style={[styles.lockup, { top: insets.top + screen.height * 0.055 }]}
+      >
+        <BrandLockup size={rs(44, 38)} stacked />
+      </Animated.View>
 
-        <Animated.Text entering={FadeInUp.duration(500).delay(500)} style={styles.subtitle}>
-          Вашата сграда, вашите съседи, вашите плащания — на едно спокойно място.
-        </Animated.Text>
-      </View>
-
-      {/* Bottom action panel — liquid glass */}
       {needsAuth && (
         <Animated.View
-          entering={FadeInUp.duration(500).delay(200)}
-          style={[styles.actionsWrap, { paddingBottom: insets.bottom + rs(20, 14) }]}
+          entering={FadeInUp.duration(500).delay(250)}
+          style={[styles.actions, { paddingBottom: insets.bottom + rs(24, 18) }]}
         >
-          <GlassView contentStyle={styles.actions}>
-            <GradientButton
-              label="Имам код за покана"
-              variant="dark"
-              trailingIcon="arrow-forward"
-              onPress={() => router.push('/activate')}
-            />
-            <GradientButton
-              label="Вече имам акаунт"
-              variant="glass"
-              onPress={() => router.push('/login')}
-            />
-          </GlassView>
+          <GradientButton label="Вход" variant="dark" onPress={() => router.push('/login')} />
+          {/* Residents onboard via manager-issued invite codes (B7). */}
+          <GradientButton
+            label="Регистрация"
+            variant="glass"
+            onPress={() => router.push('/activate')}
+          />
         </Animated.View>
       )}
     </View>
@@ -73,24 +61,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
-    flex: 1,
+  lockup: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
     alignItems: 'center',
-    gap: rs(24, 18),
-    paddingHorizontal: metrics.screenPadding,
-  },
-  subtitle: {
-    color: glass.textSecondary,
-    fontSize: metrics.subtitleSize,
-    lineHeight: rs(26, 22),
-    textAlign: 'center',
-    maxWidth: 320,
-  },
-  actionsWrap: {
-    paddingHorizontal: metrics.screenPadding,
   },
   actions: {
-    padding: rs(16, 12),
-    gap: rs(12, 10),
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: metrics.screenPadding,
+    gap: rs(14, 11),
   },
 });

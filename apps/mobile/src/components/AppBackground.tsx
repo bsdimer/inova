@@ -4,7 +4,7 @@ import { Image, StyleSheet, View } from 'react-native';
 import { screen } from '../theme/responsive';
 import { glass } from '../theme/tokens';
 
-type Variant = 'hero' | 'blur';
+type Variant = 'hero' | 'blur' | 'welcome';
 
 interface Props {
   /**
@@ -12,6 +12,8 @@ interface Props {
    * into warm haze below (home / building tabs).
    * blur — the same photo fully blurred into a warm glow (auth, menu,
    * secondary screens).
+   * welcome — the crisp photo full-screen with dark cinematic scrims top and
+   * bottom (entry screen).
    */
   variant?: Variant;
 }
@@ -19,6 +21,16 @@ interface Props {
 const PHOTO = require('../../assets/images/building-photo.jpg');
 // Vertical stops where the photo dissolves into the flat haze color.
 const HAZE_TRANSPARENT = 'rgba(138,129,119,0)';
+
+// Welcome variant: the photo is narrower than the screen ratio, so it is laid
+// out at its natural width-fit size (whole building visible, no zoom) and the
+// hazy sky/fog at its edges is extended with matching gradient fills.
+const WELCOME_SKY = '#8F8D8C';
+const WELCOME_SKY_CLEAR = 'rgba(143,141,140,0)';
+const WELCOME_FOG = '#8D857A';
+const WELCOME_FOG_CLEAR = 'rgba(141,133,122,0)';
+const WELCOME_IMG_TOP = Math.round(screen.height * 0.21);
+const WELCOME_IMG_HEIGHT = Math.round(screen.width * (1024 / 819));
 
 /**
  * Full-screen photographic backdrop shared by every screen: the brand
@@ -45,6 +57,39 @@ export function AppBackground({ variant = 'hero' }: Props) {
           <LinearGradient
             colors={['rgba(29,29,31,0.44)', 'rgba(29,29,31,0.08)', 'rgba(29,29,31,0.26)']}
             locations={[0, 0.45, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+        </>
+      ) : variant === 'welcome' ? (
+        <>
+          <LinearGradient
+            colors={[WELCOME_SKY, WELCOME_SKY, WELCOME_FOG, WELCOME_FOG]}
+            locations={[0, 0.3, 0.72, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+          <Image
+            source={PHOTO}
+            style={styles.welcomeImage}
+            resizeMode="cover"
+            accessibilityIgnoresInvertColors
+          />
+          {/* Blend the photo's top/bottom edges into the extended sky/fog. */}
+          <LinearGradient
+            colors={[WELCOME_SKY, WELCOME_SKY_CLEAR]}
+            style={styles.welcomeTopBlend}
+          />
+          <LinearGradient
+            colors={[WELCOME_FOG_CLEAR, WELCOME_FOG]}
+            style={styles.welcomeBottomBlend}
+          />
+          <LinearGradient
+            colors={[
+              'rgba(8,8,10,0.55)',
+              'rgba(8,8,10,0.16)',
+              'rgba(8,8,10,0.08)',
+              'rgba(8,8,10,0.5)',
+            ]}
+            locations={[0, 0.32, 0.55, 1]}
             style={StyleSheet.absoluteFill}
           />
         </>
@@ -81,6 +126,29 @@ const styles = StyleSheet.create({
   heroImage: {
     width: '100%',
     height: Math.round(screen.height * 0.66),
+  },
+  welcomeImage: {
+    position: 'absolute',
+    top: WELCOME_IMG_TOP,
+    left: 0,
+    right: 0,
+    height: WELCOME_IMG_HEIGHT,
+  },
+  // Blends stay in the photo's own sky/fog margins so they never eat into
+  // the building itself.
+  welcomeTopBlend: {
+    position: 'absolute',
+    top: WELCOME_IMG_TOP,
+    left: 0,
+    right: 0,
+    height: 64,
+  },
+  welcomeBottomBlend: {
+    position: 'absolute',
+    top: WELCOME_IMG_TOP + WELCOME_IMG_HEIGHT - 84,
+    left: 0,
+    right: 0,
+    height: 84,
   },
   blurVeil: {
     backgroundColor: 'rgba(178,166,151,0.28)',

@@ -114,6 +114,13 @@ Legend: ✅ done · 🟡 partially done · ⬜ not started
   White Nova Technology"** mark (gold rule + dot); Сграда tab uses the fully blurred
   backdrop (no building photo); gauge side stats inset from the arc geometry so
   Платили/Неплатили never collide with the stroke.
+- Follow-up 3: welcome screen rebuilt to the entry mock — crisp photo with dark
+  cinematic scrims (new `welcome` background variant), large centered stacked lockup
+  (gold underline + dot), bottom CTAs **Вход** (black) / **Регистрация** (glass,
+  routes to invite-code activation per B7). Photo is laid out width-fit (whole
+  building, no zoom) with the hazy sky/fog extended via blended gradient fills;
+  dark/glass buttons got depth — translucent dark fill + hairline highlight, real
+  blur inside the glass pill, soft drop shadows on both.
 - Root `pnpm build` + `pnpm typecheck` green.
 
 ### 2026-08-25 — Mobile: home simplified, building "recedes" on scroll (session 10, follow-up 6)
