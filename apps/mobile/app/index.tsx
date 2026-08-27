@@ -1,13 +1,12 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { bootstrapSession } from '../src/api/client';
 import { AppBackground } from '../src/components/AppBackground';
 import { GradientButton } from '../src/components/GradientButton';
-import { BrandLockup } from '../src/components/SosedoLogo';
-import { metrics, rs, screen } from '../src/theme/responsive';
+import { metrics, rs } from '../src/theme/responsive';
 
 export default function Welcome() {
   const router = useRouter();
@@ -30,14 +29,8 @@ export default function Welcome() {
 
   return (
     <View style={styles.container}>
+      {/* The welcome artwork already carries the inova wordmark. */}
       <AppBackground variant="welcome" />
-
-      <Animated.View
-        entering={FadeInDown.duration(600).delay(150)}
-        style={[styles.lockup, { top: insets.top + screen.height * 0.055 }]}
-      >
-        <BrandLockup size={rs(44, 38)} stacked />
-      </Animated.View>
 
       {needsAuth && (
         <Animated.View
@@ -60,12 +53,6 @@ export default function Welcome() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  lockup: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    alignItems: 'center',
   },
   actions: {
     position: 'absolute',

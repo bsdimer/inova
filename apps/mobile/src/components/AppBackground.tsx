@@ -12,25 +12,27 @@ interface Props {
    * into warm haze below (home / building tabs).
    * blur — the same photo fully blurred into a warm glow (auth, menu,
    * secondary screens).
-   * welcome — the crisp photo full-screen with dark cinematic scrims top and
-   * bottom (entry screen).
+   * welcome — the dedicated hero artwork (wordmark included) full-screen
+   * with a soft bottom scrim (entry screen).
    */
   variant?: Variant;
 }
 
 const PHOTO = require('../../assets/images/building-photo.jpg');
+// Dedicated welcome artwork with the inova wordmark already composited in.
+// Laid out width-fit (never cropped) and bottom-anchored; taller screens get
+// the sky color extended above the photo's top edge.
+const WELCOME_PHOTO = require('../../assets/images/welcome-hero.jpg');
+const WELCOME_SKY = '#51555D';
+const WELCOME_SKY_CLEAR = 'rgba(81,85,93,0)';
+const WELCOME_FOG = '#7D7572';
+const WELCOME_FOG_CLEAR = 'rgba(125,117,114,0)';
+const WELCOME_IMG_HEIGHT = Math.ceil(screen.width * (2347 / 1320));
+// Sit the artwork near the top of the leftover space (wordmark higher on the
+// screen); the remaining gap below is filled with the photo's own fog color.
+const WELCOME_IMG_TOP = Math.max(0, Math.round((screen.height - WELCOME_IMG_HEIGHT) * 0.1));
 // Vertical stops where the photo dissolves into the flat haze color.
 const HAZE_TRANSPARENT = 'rgba(138,129,119,0)';
-
-// Welcome variant: the photo is narrower than the screen ratio, so it is laid
-// out at its natural width-fit size (whole building visible, no zoom) and the
-// hazy sky/fog at its edges is extended with matching gradient fills.
-const WELCOME_SKY = '#8F8D8C';
-const WELCOME_SKY_CLEAR = 'rgba(143,141,140,0)';
-const WELCOME_FOG = '#8D857A';
-const WELCOME_FOG_CLEAR = 'rgba(141,133,122,0)';
-const WELCOME_IMG_TOP = Math.round(screen.height * 0.21);
-const WELCOME_IMG_HEIGHT = Math.round(screen.width * (1024 / 819));
 
 /**
  * Full-screen photographic backdrop shared by every screen: the brand
@@ -62,34 +64,27 @@ export function AppBackground({ variant = 'hero' }: Props) {
         </>
       ) : variant === 'welcome' ? (
         <>
-          <LinearGradient
-            colors={[WELCOME_SKY, WELCOME_SKY, WELCOME_FOG, WELCOME_FOG]}
-            locations={[0, 0.3, 0.72, 1]}
-            style={StyleSheet.absoluteFill}
-          />
+          <View style={[StyleSheet.absoluteFill, styles.welcomeSky]} />
           <Image
-            source={PHOTO}
+            source={WELCOME_PHOTO}
             style={styles.welcomeImage}
             resizeMode="cover"
             accessibilityIgnoresInvertColors
           />
-          {/* Blend the photo's top/bottom edges into the extended sky/fog. */}
+          {/* Dissolve the photo's edges into the extended sky/fog fills. */}
           <LinearGradient
             colors={[WELCOME_SKY, WELCOME_SKY_CLEAR]}
             style={styles.welcomeTopBlend}
           />
+          <View style={styles.welcomeFogFill} />
           <LinearGradient
             colors={[WELCOME_FOG_CLEAR, WELCOME_FOG]}
             style={styles.welcomeBottomBlend}
           />
+          {/* Soft bottom scrim so the CTAs stay legible over the fog. */}
           <LinearGradient
-            colors={[
-              'rgba(8,8,10,0.55)',
-              'rgba(8,8,10,0.16)',
-              'rgba(8,8,10,0.08)',
-              'rgba(8,8,10,0.5)',
-            ]}
-            locations={[0, 0.32, 0.55, 1]}
+            colors={['rgba(8,8,10,0)', 'rgba(8,8,10,0.35)']}
+            locations={[0.62, 1]}
             style={StyleSheet.absoluteFill}
           />
         </>
@@ -127,28 +122,39 @@ const styles = StyleSheet.create({
     width: '100%',
     height: Math.round(screen.height * 0.66),
   },
+  welcomeSky: {
+    backgroundColor: WELCOME_SKY,
+  },
+  // Explicit width/height (not left+right constraints): RN's Fabric Image can
+  // fall back to the bitmap's intrinsic size when width is only implied.
   welcomeImage: {
     position: 'absolute',
     top: WELCOME_IMG_TOP,
     left: 0,
-    right: 0,
+    width: screen.width,
     height: WELCOME_IMG_HEIGHT,
   },
-  // Blends stay in the photo's own sky/fog margins so they never eat into
-  // the building itself.
   welcomeTopBlend: {
     position: 'absolute',
     top: WELCOME_IMG_TOP,
     left: 0,
     right: 0,
-    height: 64,
+    height: 150,
+  },
+  welcomeFogFill: {
+    position: 'absolute',
+    top: WELCOME_IMG_TOP + WELCOME_IMG_HEIGHT,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: WELCOME_FOG,
   },
   welcomeBottomBlend: {
     position: 'absolute',
-    top: WELCOME_IMG_TOP + WELCOME_IMG_HEIGHT - 84,
+    top: WELCOME_IMG_TOP + WELCOME_IMG_HEIGHT - 110,
     left: 0,
     right: 0,
-    height: 84,
+    height: 110,
   },
   blurVeil: {
     backgroundColor: 'rgba(178,166,151,0.28)',

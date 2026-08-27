@@ -4,7 +4,7 @@
 > **Rule for agents and developers: update this file in the same change set as any
 > implementation work.** Newest session entries go on top of the Work Log.
 
-**Last updated:** 2026-08-26
+**Last updated:** 2026-08-27
 **Current focus:** mobile-first (stakeholder decision) → M2 property hierarchy next,
 feeding the mobile app real data. M1 remainder (denylist, worker) deferred to pre-pilot.
 
@@ -71,6 +71,20 @@ Legend: ✅ done · 🟡 partially done · ⬜ not started
 ---
 
 ## Work log (newest first)
+
+### 2026-08-27 — Mobile: welcome screen uses composited hero artwork (session 11, follow-up)
+
+- Welcome screen backdrop replaced with stakeholder-provided artwork that has the
+  inova wordmark composited in (`apps/mobile/assets/images/welcome-hero.jpg`,
+  source of truth copied to `brands/sosedo/assets/welcome-hero.jpg` and referenced
+  in the plan's Brand identity section). The separately rendered `BrandLockup`
+  overlay was removed from `app/index.tsx`; CTAs unchanged.
+- `AppBackground` `welcome` variant: artwork laid out width-fit and bottom-anchored
+  (never cropped); taller screens get the photo's sky color (`#51555D`, sampled)
+  extended above the top edge with a 150pt dissolve; soft bottom scrim for CTA
+  legibility. Note: the image needs explicit `width`/`height` — with only
+  `left`+`right` constraints, Fabric's `Image` rendered the bitmap at intrinsic
+  size and ignored `resizeMode="cover"`.
 
 ### 2026-08-26 — Mobile: photo-backdrop redesign to stakeholder mockups, Bulgarian UI (session 11)
 

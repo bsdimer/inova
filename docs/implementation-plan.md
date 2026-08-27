@@ -34,6 +34,12 @@ tech-forward. The concept board below is the visual reference for all UI work:
 
 ![Sosedo brand concept — logo lockups, icon explorations, color palette](../brands/sosedo/assets/brand-concept.jpg)
 
+The mobile welcome screen uses this hero artwork (inova wordmark composited in); it is the
+source image for `apps/mobile/assets/images/welcome-hero.jpg` and must be shown uncropped,
+width-fit and bottom-anchored:
+
+![Welcome hero — inova wordmark over the misty building shot](../brands/sosedo/assets/welcome-hero.jpg)
+
 | Token | Hex | Usage |
 |---|---|---|
 | Navy | `#0F1D3A` | Primary text, dark surfaces, hero backgrounds, wordmark |
