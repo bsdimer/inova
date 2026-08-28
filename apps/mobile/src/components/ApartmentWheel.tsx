@@ -13,7 +13,7 @@ import Animated, {
   withSpring,
   type SharedValue,
 } from 'react-native-reanimated';
-import Svg, { Circle } from 'react-native-svg';
+import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { rs, screen } from '../theme/responsive';
 import { glass } from '../theme/tokens';
 
@@ -179,9 +179,12 @@ function WheelCard({ item, index, progress, cx, cy, radius }: CardProps) {
   return (
     <>
       <Animated.View style={[styles.card, cardStyle]} pointerEvents="none">
-        <View style={styles.iconBox}>
-          <MaterialCommunityIcons name="door" size={rs(22, 19)} color="#4A4440" />
-        </View>
+        <MaterialCommunityIcons
+          name="door"
+          size={rs(30, 26)}
+          color="rgba(255,255,255,0.92)"
+          style={styles.doorIcon}
+        />
         <View style={styles.cardTexts}>
           <Text style={styles.cardLabel} numberOfLines={1}>
             {item.label}
@@ -192,15 +195,31 @@ function WheelCard({ item, index, progress, cx, cy, radius }: CardProps) {
         </View>
       </Animated.View>
       <Animated.View style={[styles.dotWrap, dotStyle]} pointerEvents="none">
-        <View style={styles.dotGlowOuter} />
-        <View style={styles.dotGlowInner} />
+        {/* Real radial-gradient glow: bright warm center dissolving to nothing.
+            View shadows can't emit this much light from a 10px dot. */}
+        <Svg width={DOT_WRAP} height={DOT_WRAP} style={StyleSheet.absoluteFill}>
+          <Defs>
+            <RadialGradient id={`glow-${item.id}`} cx="50%" cy="50%" r="50%">
+              <Stop offset="0%" stopColor="#FFD9A8" stopOpacity="0.95" />
+              <Stop offset="35%" stopColor="#FFB46B" stopOpacity="0.55" />
+              <Stop offset="70%" stopColor="#FF9C4A" stopOpacity="0.18" />
+              <Stop offset="100%" stopColor="#FF9C4A" stopOpacity="0" />
+            </RadialGradient>
+          </Defs>
+          <Circle
+            cx={DOT_WRAP / 2}
+            cy={DOT_WRAP / 2}
+            r={DOT_WRAP / 2}
+            fill={`url(#glow-${item.id})`}
+          />
+        </Svg>
         <View style={styles.dotCore} />
       </Animated.View>
     </>
   );
 }
 
-const DOT_WRAP = 34;
+const DOT_WRAP = 52;
 
 const styles = StyleSheet.create({
   wrap: {
@@ -219,16 +238,11 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: rs(10, 8),
+    paddingHorizontal: rs(16, 13),
     gap: rs(12, 10),
   },
-  iconBox: {
-    width: rs(46, 40),
-    height: rs(46, 40),
-    borderRadius: rs(14, 12),
-    backgroundColor: 'rgba(255,255,255,0.85)',
-    alignItems: 'center',
-    justifyContent: 'center',
+  doorIcon: {
+    opacity: 0.95,
   },
   cardTexts: {
     flex: 1,
@@ -255,30 +269,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dotGlowOuter: {
-    position: 'absolute',
-    width: DOT_WRAP,
-    height: DOT_WRAP,
-    borderRadius: DOT_WRAP / 2,
-    backgroundColor: 'rgba(235,94,40,0.22)',
-  },
-  dotGlowInner: {
-    position: 'absolute',
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255,126,71,0.45)',
-  },
   dotCore: {
-    width: 9,
-    height: 9,
+    width: 10,
+    height: 10,
     borderRadius: 5,
-    backgroundColor: '#FFD9BE',
-    shadowColor: '#FF7E47',
-    shadowOpacity: 0.9,
+    backgroundColor: '#FFF7EA',
+    shadowColor: '#FFB46B',
+    shadowOpacity: 1,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 0 },
-    elevation: 6,
   },
   emptyWrap: {
     alignItems: 'center',
