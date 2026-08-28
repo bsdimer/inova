@@ -65,17 +65,9 @@ export default function Building() {
       {/* The mockup sits on a deeper, moodier glass — darken the shared blur. */}
       <View style={styles.darkScrim} pointerEvents="none" />
 
-      <View style={[styles.content, { paddingTop: insets.top + rs(10, 6) }]}>
+      <View style={[styles.content, { paddingTop: insets.top + rs(22, 16) }]}>
         <Animated.View entering={FadeInDown.duration(380)} style={styles.headerRow}>
-          <Pressable
-            onPress={() => router.push('/home')}
-            hitSlop={12}
-            accessibilityRole="button"
-            accessibilityLabel="Назад към началото"
-            style={styles.backBtn}
-          >
-            <Ionicons name="arrow-back" size={rs(26, 23)} color={glass.textPrimary} />
-          </Pressable>
+          <Text style={styles.title}>Апартаменти</Text>
           <GlassCircleButton
             icon="ellipsis-horizontal"
             onPress={() => router.push('/menu')}
@@ -84,13 +76,18 @@ export default function Building() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.duration(420).delay(90)} style={styles.titleBlock}>
-          <Text style={styles.title}>Апартаменти</Text>
           <Text style={styles.building}>{MOCK.building}</Text>
           <Text style={styles.address}>{MOCK.address}</Text>
         </Animated.View>
 
-        <Animated.View entering={FadeInUp.duration(430).delay(150)}>
-          <GlassView rounded={radius.lg} contentStyle={styles.counterCard}>
+        <Animated.View entering={FadeInUp.duration(430).delay(150)} style={styles.counterWrap}>
+          <GlassView
+            rounded={radius.lg}
+            intensity={65}
+            overlayColor="rgba(255,255,255,0.1)"
+            borderColor="rgba(255,255,255,0.45)"
+            contentStyle={styles.counterCard}
+          >
             <View style={styles.counterTexts}>
               <Text style={styles.counterLabel}>Имат задължения</Text>
               <Text style={styles.counterValue}>
@@ -193,16 +190,13 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: metrics.screenPadding,
   },
-  backBtn: {
-    paddingVertical: rs(4, 3),
-  },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   titleBlock: {
-    marginTop: rs(12, 9),
+    marginTop: rs(16, 12),
     gap: rs(4, 3),
   },
   title: {
@@ -210,7 +204,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: -0.4,
     color: glass.textPrimary,
-    marginBottom: rs(10, 8),
   },
   building: {
     fontSize: rs(17, 15),
@@ -221,28 +214,31 @@ const styles = StyleSheet.create({
     fontSize: rs(14, 13),
     color: glass.textSecondary,
   },
+  counterWrap: {
+    marginTop: rs(24, 18),
+  },
   counterCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: rs(18, 15),
-    marginTop: rs(18, 14),
+    paddingVertical: rs(12, 10),
+    paddingHorizontal: rs(18, 15),
   },
   counterTexts: {
-    gap: rs(4, 3),
+    gap: rs(2, 1),
   },
   counterLabel: {
-    fontSize: rs(14, 13),
+    fontSize: rs(13, 12),
     color: glass.textSecondary,
   },
   counterValue: {
-    fontSize: rs(34, 29),
+    fontSize: rs(28, 24),
     fontWeight: '800',
-    letterSpacing: -0.5,
+    letterSpacing: -0.4,
     color: glass.textPrimary,
   },
   counterTotal: {
-    fontSize: rs(22, 19),
+    fontSize: rs(18, 16),
     fontWeight: '600',
     color: glass.textMuted,
   },
