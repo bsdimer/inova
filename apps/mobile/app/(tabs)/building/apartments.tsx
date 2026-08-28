@@ -4,13 +4,13 @@ import React, { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ApartmentWheel, type WheelItem } from '../../src/components/ApartmentWheel';
-import { AppBackground } from '../../src/components/AppBackground';
-import { GlassCircleButton } from '../../src/components/GlassCircleButton';
-import { GlassView } from '../../src/components/GlassView';
-import { PressableScale } from '../../src/components/PressableScale';
-import { metrics, rs } from '../../src/theme/responsive';
-import { glass, palette, radius } from '../../src/theme/tokens';
+import { ApartmentWheel, type WheelItem } from '../../../src/components/ApartmentWheel';
+import { AppBackground } from '../../../src/components/AppBackground';
+import { GlassCircleButton } from '../../../src/components/GlassCircleButton';
+import { GlassView } from '../../../src/components/GlassView';
+import { PressableScale } from '../../../src/components/PressableScale';
+import { metrics, rs } from '../../../src/theme/responsive';
+import { glass, palette, radius } from '../../../src/theme/tokens';
 
 // TODO(M2/M3): building info and per-apartment obligation status come from the
 // property/fees APIs.
@@ -45,7 +45,7 @@ const INFO_TEXT =
 const FILTERS = ['Всички', 'Вход А', 'Вход Б', 'Вход В'] as const;
 type Filter = (typeof FILTERS)[number];
 
-export default function Building() {
+export default function Apartments() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [filter, setFilter] = useState<Filter>('Всички');
@@ -67,7 +67,17 @@ export default function Building() {
 
       <View style={[styles.content, { paddingTop: insets.top + rs(22, 16) }]}>
         <Animated.View entering={FadeInDown.duration(380)} style={styles.headerRow}>
-          <Text style={styles.title}>Апартаменти</Text>
+          <View style={styles.headerLeft}>
+            <Pressable
+              onPress={() => router.back()}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="Назад към сградата"
+            >
+              <Ionicons name="arrow-back" size={rs(26, 23)} color={glass.textPrimary} />
+            </Pressable>
+            <Text style={styles.title}>Апартаменти</Text>
+          </View>
           <GlassCircleButton
             icon="ellipsis-horizontal"
             onPress={() => router.push('/menu')}
@@ -194,6 +204,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: rs(12, 10),
   },
   titleBlock: {
     marginTop: rs(16, 12),
