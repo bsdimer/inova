@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import React, { useEffect, useState } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
@@ -20,21 +20,30 @@ import { glass } from '../theme/tokens';
 export interface WheelItem {
   id: string;
   label: string;
-  sub: string;
+  sub?: string;
 }
+
+type IconName = keyof typeof MaterialCommunityIcons.glyphMap;
 
 interface Props {
   items: WheelItem[];
   /** Measured height is preferred; this is the fallback before layout. */
   fallbackHeight?: number;
+  /** Left icon on each card. Defaults to the apartment door. */
+  icon?: IconName;
+  /** Show a trailing chevron (documents mock). */
+  showChevron?: boolean;
+  /** Wider cards for longer labels (documents). */
+  cardWidth?: number;
+  emptyText?: string;
 }
 
 // Angular distance between neighboring cards on the arc.
 const STEP = 0.3;
 // Drag pixels that move the wheel by one item.
 const PX_PER_ITEM = 84;
-const CARD_W = rs(224, 196);
 const CARD_H = rs(66, 58);
+const DEFAULT_CARD_W = rs(224, 196);
 // Gap between a card's right edge and its dot on the arc.
 const GAP = rs(22, 18);
 
@@ -45,12 +54,18 @@ function selectionTick() {
 }
 
 /**
- * "Spinning wheel" list from the Апартаменти mockup: cards fan out along a
- * circular arc whose center sits off-screen to the right; each card has a
- * glowing dot on the arc. Vertical drags rotate the wheel and it snaps to the
- * nearest apartment.
+ * "Spinning wheel" list: cards fan out along a circular arc whose center sits
+ * off-screen to the right; each card has a glowing dot on the arc. Vertical
+ * drags rotate the wheel and it snaps to the nearest item.
  */
-export function ApartmentWheel({ items, fallbackHeight = rs(430, 360) }: Props) {
+export function ApartmentWheel({
+  items,
+  fallbackHeight = rs(430, 360),
+  icon = 'door',
+  showChevron = false,
+  cardWidth = DEFAULT_CARD_W,
+  emptyText = 'Няма апартаменти със задължения',
+}: Props) {
   const [height, setHeight] = useState(fallbackHeight);
   const progress = useSharedValue(Math.min(2, Math.max(items.length - 1, 0)));
   const dragStart = useSharedValue(0);
@@ -114,11 +129,14 @@ export function ApartmentWheel({ items, fallbackHeight = rs(430, 360) }: Props) 
             cx={cx}
             cy={cy}
             radius={radius}
+            icon={icon}
+            showChevron={showChevron}
+            cardWidth={cardWidth}
           />
         ))}
         {items.length === 0 && (
           <View style={[styles.emptyWrap, { height }]}>
-            <Text style={styles.emptyText}>Няма апартаменти със задължения</Text>
+            <Text style={styles.emptyText}>{emptyText}</Text>
           </View>
         )}
       </View>
@@ -133,9 +151,22 @@ interface CardProps {
   cx: number;
   cy: number;
   radius: number;
+  icon: IconName;
+  showChevron: boolean;
+  cardWidth: number;
 }
 
-function WheelCard({ item, index, progress, cx, cy, radius }: CardProps) {
+function WheelCard({
+  item,
+  index,
+  progress,
+  cx,
+  cy,
+  radius,
+  icon,
+  showChevron,
+  cardWidth,
+}: CardProps) {
   const cardStyle = useAnimatedStyle(() => {
     const theta = (index - progress.value) * STEP;
     const abs = Math.abs(theta);
@@ -156,7 +187,7 @@ function WheelCard({ item, index, progress, cx, cy, radius }: CardProps) {
       ),
       transform: [
         // Keep the card's right edge anchored to its dot while it scales.
-        { translateX: dotX - GAP - (CARD_W / 2) * scale },
+        { translateX: dotX - GAP - (cardWidth / 2) * scale },
         { translateY: dotY },
         { scale },
       ],
@@ -178,21 +209,33 @@ function WheelCard({ item, index, progress, cx, cy, radius }: CardProps) {
 
   return (
     <>
-      <Animated.View style={[styles.card, cardStyle]} pointerEvents="none">
+      <Animated.View
+        style={[
+          styles.card,
+          { width: cardWidth, marginLeft: -cardWidth / 2 },
+          cardStyle,
+        ]}
+        pointerEvents="none"
+      >
         <MaterialCommunityIcons
-          name="door"
-          size={rs(30, 26)}
+          name={icon}
+          size={rs(28, 24)}
           color="rgba(255,255,255,0.92)"
-          style={styles.doorIcon}
+          style={styles.leadingIcon}
         />
         <View style={styles.cardTexts}>
-          <Text style={styles.cardLabel} numberOfLines={1}>
+          <Text style={styles.cardLabel} numberOfLines={item.sub ? 1 : 2}>
             {item.label}
           </Text>
-          <Text style={styles.cardSub} numberOfLines={1}>
-            {item.sub}
-          </Text>
+          {item.sub ? (
+            <Text style={styles.cardSub} numberOfLines={1}>
+              {item.sub}
+            </Text>
+          ) : null}
         </View>
+        {showChevron ? (
+          <Ionicons name="chevron-forward" size={rs(18, 16)} color="rgba(255,255,255,0.7)" />
+        ) : null}
       </Animated.View>
       <Animated.View style={[styles.dotWrap, dotStyle]} pointerEvents="none">
         {/* Real radial-gradient glow: bright warm center dissolving to nothing.
@@ -230,18 +273,16 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     top: 0,
-    width: CARD_W,
     height: CARD_H,
-    marginLeft: -CARD_W / 2,
     marginTop: -CARD_H / 2,
     borderRadius: CARD_H / 2,
     borderWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: rs(16, 13),
-    gap: rs(12, 10),
+    gap: rs(10, 8),
   },
-  doorIcon: {
+  leadingIcon: {
     opacity: 0.95,
   },
   cardTexts: {
@@ -249,9 +290,9 @@ const styles = StyleSheet.create({
     gap: rs(2, 1),
   },
   cardLabel: {
-    fontSize: rs(17, 15),
+    fontSize: rs(16, 14),
     fontWeight: '700',
-    letterSpacing: 0.2,
+    letterSpacing: 0.1,
     color: glass.textPrimary,
   },
   cardSub: {

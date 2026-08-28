@@ -210,7 +210,7 @@ export default function BuildingOverview() {
         {/* Documents */}
         <Animated.View entering={FadeInUp.duration(400).delay(660)} style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Документи към сградата</Text>
-          <PressableScale haptic={false} onPress={() => router.push('/documents')}>
+          <PressableScale haptic={false} onPress={() => router.push('/building/documents')}>
             <Text style={styles.sectionLink}>Виж всички</Text>
           </PressableScale>
         </Animated.View>
@@ -218,7 +218,7 @@ export default function BuildingOverview() {
         <Animated.View entering={FadeInUp.duration(400).delay(720)}>
           <PressableScale
             haptic={false}
-            onPress={() => router.push('/documents')}
+            onPress={() => router.push('/building/documents')}
             accessibilityRole="button"
             accessibilityLabel="Документи"
           >

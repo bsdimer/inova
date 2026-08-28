@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 import React from 'react';
 
-/** Building tab hosts its own stack: overview (gauge) → apartments (wheel). */
+/** Building tab stack: overview → apartments / documents (wheel screens). */
 export default function BuildingLayout() {
   return (
     <Stack
