@@ -9,7 +9,6 @@ import { AppBackground } from '../../src/components/AppBackground';
 import { GlassCircleButton } from '../../src/components/GlassCircleButton';
 import { GlassView } from '../../src/components/GlassView';
 import { PressableScale } from '../../src/components/PressableScale';
-import { BrandLockup } from '../../src/components/SosedoLogo';
 import { metrics, rs } from '../../src/theme/responsive';
 import { glass, palette, radius } from '../../src/theme/tokens';
 
@@ -67,7 +66,7 @@ export default function Building() {
       <View style={styles.darkScrim} pointerEvents="none" />
 
       <View style={[styles.content, { paddingTop: insets.top + rs(10, 6) }]}>
-        <Animated.View entering={FadeInDown.duration(380)}>
+        <Animated.View entering={FadeInDown.duration(380)} style={styles.headerRow}>
           <Pressable
             onPress={() => router.push('/home')}
             hitSlop={12}
@@ -77,10 +76,6 @@ export default function Building() {
           >
             <Ionicons name="arrow-back" size={rs(26, 23)} color={glass.textPrimary} />
           </Pressable>
-        </Animated.View>
-
-        <Animated.View entering={FadeInDown.duration(400).delay(40)} style={styles.headerRow}>
-          <BrandLockup />
           <GlassCircleButton
             icon="ellipsis-horizontal"
             onPress={() => router.push('/menu')}
@@ -138,7 +133,10 @@ export default function Building() {
           })}
         </Animated.View>
 
-        <Animated.View entering={FadeInUp.duration(450).delay(280)} style={styles.wheelArea}>
+        <Animated.View
+          entering={FadeInUp.duration(450).delay(280)}
+          style={[styles.wheelArea, { marginBottom: insets.bottom + rs(72, 62) }]}
+        >
           <ApartmentWheel items={wheelItems} />
         </Animated.View>
       </View>
@@ -194,21 +192,17 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: metrics.screenPadding,
-    // The wheel bleeds over the tab bar zone on purpose (like the mock),
-    // so no bottom padding here.
   },
   backBtn: {
-    alignSelf: 'flex-start',
     paddingVertical: rs(4, 3),
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: rs(8, 6),
   },
   titleBlock: {
-    marginTop: rs(20, 15),
+    marginTop: rs(12, 9),
     gap: rs(4, 3),
   },
   title: {
@@ -286,7 +280,8 @@ const styles = StyleSheet.create({
   wheelArea: {
     flex: 1,
     marginTop: rs(10, 8),
-    // Bleed to the screen edge so the arc runs off the right side.
+    // Bleed to the screen edge so the arc runs off the right side; the bottom
+    // margin (set inline with insets) keeps the arc above the tab bar.
     marginHorizontal: -metrics.screenPadding,
   },
   modalBackdrop: {
