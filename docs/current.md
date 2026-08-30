@@ -14,7 +14,7 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
 - Core API (`:4000`): JWKS JWT verify, `X-Tenant-Id` + DB membership re-check, permission guards, RLS via `SET LOCAL app.tenant_id`. Tenant profile/staff/audit, staff+roles CRUD (admin-role lock, last-admin guard), super_admin tenant provisioning, public brand config, health.
 - Mobile: real activate + login; session in keychain (refresh only); home greets the user. Building/home/dues/issues still MOCK (`TODO(M2/M3/…)`).
 - Admin: real login, tenant switcher, Staff / Roles / Tenants (provisioning wizard) on live APIs. Dashboard stats still mock.
-- Quality gates: `pnpm verify` (format, lint, typecheck, unit, integration, architecture contracts, build).
+- Quality gates: `pnpm verify` (format, lint, typecheck, unit, integration, architecture contracts, build). GitHub Actions CI installs pnpm from `package.json` `packageManager` (`pnpm@10.34.5`); do not also pass `version` to `pnpm/action-setup`.
 
 ## Tests (release blockers)
 
