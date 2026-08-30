@@ -17,13 +17,15 @@ import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { rs, screen } from '../theme/responsive';
 import { glass } from '../theme/tokens';
 
+type IconName = keyof typeof MaterialCommunityIcons.glyphMap;
+
 export interface WheelItem {
   id: string;
   label: string;
   sub?: string;
+  /** Overrides the wheel-level default icon for this card. */
+  icon?: IconName;
 }
-
-type IconName = keyof typeof MaterialCommunityIcons.glyphMap;
 
 interface Props {
   items: WheelItem[];
@@ -129,7 +131,7 @@ export function ApartmentWheel({
             cx={cx}
             cy={cy}
             radius={radius}
-            icon={icon}
+            icon={item.icon ?? icon}
             showChevron={showChevron}
             cardWidth={cardWidth}
           />

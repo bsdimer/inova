@@ -4,15 +4,15 @@ import React, { useCallback, useRef } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getSession } from '../../src/api/client';
-import { AppBackground } from '../../src/components/AppBackground';
-import { ArrowBubble } from '../../src/components/ArrowBubble';
-import { GlassCircleButton } from '../../src/components/GlassCircleButton';
-import { GlassView } from '../../src/components/GlassView';
-import { PressableScale } from '../../src/components/PressableScale';
-import { BrandLockup } from '../../src/components/SosedoLogo';
-import { metrics, rs } from '../../src/theme/responsive';
-import { glass, palette, radius } from '../../src/theme/tokens';
+import { getSession } from '../../../src/api/client';
+import { AppBackground } from '../../../src/components/AppBackground';
+import { ArrowBubble } from '../../../src/components/ArrowBubble';
+import { GlassCircleButton } from '../../../src/components/GlassCircleButton';
+import { GlassView } from '../../../src/components/GlassView';
+import { PressableScale } from '../../../src/components/PressableScale';
+import { BrandLockup } from '../../../src/components/SosedoLogo';
+import { metrics, rs } from '../../../src/theme/responsive';
+import { glass, palette, radius } from '../../../src/theme/tokens';
 
 // TODO(M2/M3): resident name, building and balance come from the API.
 const MOCK = {
@@ -48,7 +48,7 @@ const QUICK_CARDS: QuickCard[] = [
     icon: 'time-outline',
     title: 'История',
     description: 'Хронология на ключовите събития',
-    route: '/history',
+    route: '/home/history',
   },
   {
     icon: 'notifications-outline',
