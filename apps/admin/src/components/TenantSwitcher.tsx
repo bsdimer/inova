@@ -1,11 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Building, Check, ChevronsUpDown } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import {
-  setSelectedTenantId,
-  useSelectedTenantId,
-  useTenantOptions,
-} from '../lib/tenant';
+import { setSelectedTenantId, useSelectedTenantId, useTenantOptions } from '../lib/tenant';
 
 /** Sidebar dropdown to pick the active tenant (drives X-Tenant-Id). */
 export function TenantSwitcher() {

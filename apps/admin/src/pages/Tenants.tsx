@@ -29,8 +29,8 @@ export function TenantsPage() {
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight">Tenants</h1>
           <p className="mt-1 text-sm text-ink-secondary">
-            Property-management companies on the platform. Provisioning seeds the starter roles
-            and invites the first administrator.
+            Property-management companies on the platform. Provisioning seeds the starter roles and
+            invites the first administrator.
           </p>
         </div>
         <PrimaryButton onClick={() => setWizardOpen(true)}>

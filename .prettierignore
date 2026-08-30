@@ -1,0 +1,12 @@
+node_modules
+dist
+.turbo
+.expo
+.tooling
+coverage
+pnpm-lock.yaml
+*.tsbuildinfo
+ios
+android
+docs/work-log
+docs/implementation-plan.md

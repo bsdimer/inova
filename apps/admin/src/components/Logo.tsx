@@ -34,12 +34,15 @@ export function SosedoMark({ size = 56, disc = '#0F1D3A', icon = '#FFFFFF' }: Ma
 }
 
 /** "SOSEDO" wordmark — the E carries the brand green. */
-export function SosedoWordmark({ size = 28, color = '#FFFFFF' }: { size?: number; color?: string }) {
+export function SosedoWordmark({
+  size = 28,
+  color = '#FFFFFF',
+}: {
+  size?: number;
+  color?: string;
+}) {
   return (
-    <span
-      className="font-extrabold"
-      style={{ fontSize: size, letterSpacing: size * 0.14, color }}
-    >
+    <span className="font-extrabold" style={{ fontSize: size, letterSpacing: size * 0.14, color }}>
       SOS<span className="text-brand-green">E</span>DO
     </span>
   );

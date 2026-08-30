@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   JWT_AUDIENCE,
   JWT_ISSUER,
@@ -80,8 +80,7 @@ export class TokenService {
     tx: IdentityTx,
     raw: string,
   ): Promise<
-    | { ok: true; userId: string; familyId: string }
-    | { ok: false; reusedFamilyId?: string }
+    { ok: true; userId: string; familyId: string } | { ok: false; reusedFamilyId?: string }
   > {
     const [row] = await tx
       .select()

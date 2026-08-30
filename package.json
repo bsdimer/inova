@@ -8,17 +8,32 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
-    "lint": "turbo lint",
+    "lint": "node scripts/assert-lint-ran.mjs && turbo lint",
     "typecheck": "turbo typecheck",
-    "test": "turbo test",
+    "test": "pnpm test:unit && pnpm test:integration",
+    "test:unit": "turbo test:unit",
+    "test:integration": "turbo test:integration",
+    "check:stubs": "node scripts/check-stubs.mjs",
+    "check:brands": "node scripts/check-brands.mjs",
+    "check:routes": "node scripts/check-routes.mjs",
+    "check:migrations": "node scripts/check-migrations.mjs",
+    "verify": "node scripts/verify.mjs",
+    "doctor": "node scripts/doctor.mjs",
     "db:migrate": "node db/migrate.mjs",
     "db:seed": "node db/seed.mjs",
-    "format": "prettier --write \"**/*.{ts,tsx,md,json,yml,yaml}\""
+    "format": "prettier --write \"**/*.{ts,tsx,md,json,yml,yaml,mjs,cjs,css}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,md,json,yml,yaml,mjs,cjs,css}\""
   },
   "devDependencies": {
+    "@eslint/js": "^9.35.0",
     "bcryptjs": "^3.0.3",
+    "eslint": "9.35.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-unused-imports": "^4.2.0",
     "pg": "^8.23.0",
     "prettier": "^3.6.0",
-    "turbo": "^2.5.0"
+    "turbo": "^2.5.0",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.44.0"
   }
 }

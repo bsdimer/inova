@@ -12,14 +12,20 @@ export interface TestDb {
   migratorUrl: string;
   /** RLS-enforced `sosedo_app` connection — what the services actually use. */
   appUrl: string;
+  dispose: () => Promise<void>;
 }
 
-/** Drops/recreates a dedicated database, then runs real migrations + seeds. */
-export async function createTestDb(name: string): Promise<TestDb> {
+function uniqueName(prefix: string): string {
+  const suffix = `${process.pid}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  return `${prefix}_${suffix}`;
+}
+
+/** Creates a unique database, then runs real migrations + seeds. */
+export async function createTestDb(prefix: string): Promise<TestDb> {
+  const name = uniqueName(prefix);
   const admin = new pg.Client({ connectionString: `${clusterUrl}/postgres` });
   await admin.connect();
   try {
-    await admin.query(`DROP DATABASE IF EXISTS ${name} WITH (FORCE)`);
     await admin.query(`CREATE DATABASE ${name}`);
   } finally {
     await admin.end();
@@ -34,5 +40,17 @@ export async function createTestDb(name: string): Promise<TestDb> {
   });
 
   const appUrl = `${migratorUrl.replace(/\/\/[^@]+@/, '//sosedo_app:sosedo_app@')}`;
-  return { migratorUrl, appUrl };
+  return {
+    migratorUrl,
+    appUrl,
+    async dispose() {
+      const drop = new pg.Client({ connectionString: `${clusterUrl}/postgres` });
+      await drop.connect();
+      try {
+        await drop.query(`DROP DATABASE IF EXISTS ${name} WITH (FORCE)`);
+      } finally {
+        await drop.end();
+      }
+    },
+  };
 }

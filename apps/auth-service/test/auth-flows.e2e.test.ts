@@ -14,14 +14,19 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestDb } from './db-helper';
 
 let app: INestApplication;
+let disposeDb: () => Promise<void>;
 
 const post = (url: string, body: object) =>
   request(app.getHttpServer()).post(url).send(body).set('content-type', 'application/json');
 
 beforeAll(async () => {
-  const { appUrl } = await createTestDb('sosedo_test_auth');
+  const { appUrl, dispose } = await createTestDb('sosedo_test_auth');
+  disposeDb = dispose;
   process.env.DATABASE_URL = appUrl;
-  process.env.JWT_PRIVATE_KEY_PATH = path.join(mkdtempSync(path.join(tmpdir(), 'sosedo-jwt-')), 'test.pem');
+  process.env.JWT_PRIVATE_KEY_PATH = path.join(
+    mkdtempSync(path.join(tmpdir(), 'sosedo-jwt-')),
+    'test.pem',
+  );
   process.env.AUTH_THROTTLE_STRICT = '1000'; // throttling is not under test here
 
   // Dynamic import so env vars above are read at module evaluation time.
@@ -34,6 +39,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await app?.close();
+  await disposeDb?.();
 });
 
 describe('password login', () => {

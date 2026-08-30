@@ -1,6 +1,11 @@
 # Sosedo — Multi-Tenant White-Label Property Management Platform
 ## Implementation Plan (v1.0 — planning only, no code written)
 
+> **Progress does not live here.** Current state: [current.md](current.md).
+> Milestone acceptance: [milestones/](milestones/). Architecture extract:
+> [architecture.md](architecture.md). The checklist in §15 is a planning
+> backlog, not a living tracker — do not tick boxes here.
+
 --- 
 
 

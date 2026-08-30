@@ -2,14 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Lock, Pencil, Plus, Trash2, Users } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
-import {
-  ErrorNote,
-  Field,
-  GhostButton,
-  Modal,
-  PrimaryButton,
-  inputClass,
-} from '../components/ui';
+import { ErrorNote, Field, GhostButton, Modal, PrimaryButton, inputClass } from '../components/ui';
 import { api, ApiError, type Permission, type Role } from '../lib/api';
 import { useSelectedTenantId } from '../lib/tenant';
 import { AccessNote } from './Staff';
@@ -51,8 +44,8 @@ export function RolesPage() {
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight">Roles</h1>
           <p className="mt-1 text-sm text-ink-secondary">
-            Each role maps to a set of permissions. The Administrator role is locked and always
-            has every permission.
+            Each role maps to a set of permissions. The Administrator role is locked and always has
+            every permission.
           </p>
         </div>
         <PrimaryButton onClick={() => setEditorRole('new')}>
@@ -258,9 +251,7 @@ function RoleEditor({
                 />
                 <span>
                   <span className="block text-sm font-bold">{permission.key}</span>
-                  <span className="block text-xs text-ink-secondary">
-                    {permission.description}
-                  </span>
+                  <span className="block text-xs text-ink-secondary">{permission.description}</span>
                 </span>
               </label>
             ))}

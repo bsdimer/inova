@@ -5,8 +5,10 @@
   "scripts": {
     "dev": "nest start --watch",
     "build": "nest build",
+    "lint": "node ../../scripts/run-eslint.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
+    "test:integration": "vitest run",
     "start": "node dist/main.js"
   },
   "dependencies": {

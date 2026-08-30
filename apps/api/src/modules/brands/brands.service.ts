@@ -9,8 +9,7 @@ import { join, resolve } from 'node:path';
  */
 @Injectable()
 export class BrandsService {
-  private readonly brandsDir =
-    process.env.BRANDS_DIR ?? resolve(process.cwd(), '../../brands');
+  private readonly brandsDir = process.env.BRANDS_DIR ?? resolve(process.cwd(), '../../brands');
 
   private readonly cache = new Map<string, BrandConfig>();
 

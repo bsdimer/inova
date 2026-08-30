@@ -138,7 +138,9 @@ export default function Documents() {
                   accessibilityLabel={`Филтър ${f.label}`}
                 >
                   <View style={[styles.chip, active ? styles.chipActive : styles.chipIdle]}>
-                    <Text style={[styles.chipText, active && styles.chipTextActive]}>{f.label}</Text>
+                    <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                      {f.label}
+                    </Text>
                   </View>
                 </PressableScale>
               );

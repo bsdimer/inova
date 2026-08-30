@@ -85,8 +85,8 @@ export default function Activate() {
             <Text style={styles.title}>Въведете код{'\n'}за покана</Text>
             <View style={styles.titleDash} />
             <Text style={styles.subtitle}>
-              Вашият домоуправител е регистрирал апартамента ви. Изпратихме {CODE_LENGTH}-цифрен
-              код на телефона ви чрез SMS или Viber.
+              Вашият домоуправител е регистрирал апартамента ви. Изпратихме {CODE_LENGTH}-цифрен код
+              на телефона ви чрез SMS или Viber.
             </Text>
           </Animated.View>
 

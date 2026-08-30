@@ -1,9 +1,4 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JWT_AUDIENCE, JWT_ISSUER, type AccessTokenClaims } from '@sosedo/shared';
 import type { Request } from 'express';
 import { createLocalJWKSet, createRemoteJWKSet, jwtVerify } from 'jose';

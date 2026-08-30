@@ -2,14 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import {
-  ActivityIndicator,
-  Platform,
-  StyleSheet,
-  Text,
-  View,
-  type ViewStyle,
-} from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { metrics, rs } from '../theme/responsive';
 import { glass, gradients, palette, radius } from '../theme/tokens';

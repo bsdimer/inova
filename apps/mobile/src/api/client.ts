@@ -100,8 +100,7 @@ export async function resendCode(phone: string): Promise<void> {
  * as silent refresh when an access token expires mid-session.
  */
 export async function refreshSession(): Promise<Session | null> {
-  const refreshToken =
-    session?.refreshToken ?? (await SecureStore.getItemAsync(REFRESH_TOKEN_KEY));
+  const refreshToken = session?.refreshToken ?? (await SecureStore.getItemAsync(REFRESH_TOKEN_KEY));
   if (!refreshToken) return null;
   try {
     return await storeSession(await post<Session>('/auth/refresh', { refreshToken }));
@@ -123,8 +122,7 @@ export async function bootstrapSession(): Promise<Session | null> {
 }
 
 export async function logout(): Promise<void> {
-  const refreshToken =
-    session?.refreshToken ?? (await SecureStore.getItemAsync(REFRESH_TOKEN_KEY));
+  const refreshToken = session?.refreshToken ?? (await SecureStore.getItemAsync(REFRESH_TOKEN_KEY));
   if (refreshToken) {
     // Best-effort server-side revocation; local sign-out must never fail.
     await post('/auth/logout', { refreshToken }).catch(() => undefined);

@@ -16,6 +16,7 @@ import { createTestDb } from './db-helper';
 
 let app: INestApplication;
 let adminPool: pg.Pool;
+let disposeDb: () => Promise<void>;
 
 let tenantA: string; // sosedo
 let tenantB: string; // demo
@@ -70,7 +71,8 @@ let manager: ReturnType<typeof as>;
 let resident: ReturnType<typeof as>;
 
 beforeAll(async () => {
-  const { migratorUrl, appUrl } = await createTestDb('sosedo_test_api_mgmt');
+  const { migratorUrl, appUrl, dispose } = await createTestDb('sosedo_test_api_mgmt');
+  disposeDb = dispose;
   process.env.DATABASE_URL = appUrl;
 
   const pair = await generateKeyPair('RS256');
@@ -90,10 +92,10 @@ beforeAll(async () => {
   const tenants = await adminPool.query('SELECT id, key FROM tenants ORDER BY key');
   tenantA = tenants.rows.find((r) => r.key === 'sosedo').id;
   tenantB = tenants.rows.find((r) => r.key === 'demo').id;
-  mariaId = (await adminPool.query(`SELECT id FROM users WHERE email = 'maria@sosedo.bg'`))
-    .rows[0].id;
-  elenaId = (await adminPool.query(`SELECT id FROM users WHERE phone = '+359881000001'`))
-    .rows[0].id;
+  mariaId = (await adminPool.query(`SELECT id FROM users WHERE email = 'maria@sosedo.bg'`)).rows[0]
+    .id;
+  elenaId = (await adminPool.query(`SELECT id FROM users WHERE phone = '+359881000001'`)).rows[0]
+    .id;
   await adminPool.query(
     `UPDATE staff_memberships SET status = 'active' WHERE user_id = $1 AND tenant_id = $2`,
     [elenaId, tenantA],
@@ -118,6 +120,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await app?.close();
   await adminPool?.end();
+  await disposeDb?.();
 });
 
 describe('Roles endpoints', () => {

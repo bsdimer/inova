@@ -9,10 +9,63 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+env:
+  TEST_PG_URL: postgres://sosedo:sosedo@localhost:5432
 
+jobs:
+  static:
+    name: static
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm check:stubs
+      - run: pnpm check:brands
+      - run: pnpm check:routes
+
+  unit:
+    name: unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:unit
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+  migrations:
+    name: migrations
+    runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:16-alpine
@@ -27,30 +80,78 @@ jobs:
           --health-interval 5s
           --health-timeout 3s
           --health-retries 10
-
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v4
         with:
           version: 10
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check:migrations
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build packages and services
-        run: pnpm build
-
-      - name: Typecheck
-        run: pnpm typecheck
-
-      # Tenant-isolation and auth-flow suites are release blockers (AGENTS.md).
-      - name: Tests
-        run: pnpm test
+  auth:
+    name: auth
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
         env:
-          TEST_PG_URL: postgres://sosedo:sosedo@localhost:5432
+          POSTGRES_USER: sosedo
+          POSTGRES_PASSWORD: sosedo
+          POSTGRES_DB: sosedo
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sosedo"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @sosedo/shared build
+      - name: Auth flows
+        run: pnpm --filter @sosedo/auth-service test
+      - name: Staff / roles RBAC
+        run: pnpm --filter @sosedo/api exec vitest run test/staff-roles.e2e.test.ts
+
+  tenant-isolation:
+    name: tenant-isolation
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: sosedo
+          POSTGRES_PASSWORD: sosedo
+          POSTGRES_DB: sosedo
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sosedo"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @sosedo/shared build
+      - name: Isolation + schema contract
+        run: pnpm --filter @sosedo/api test:isolation

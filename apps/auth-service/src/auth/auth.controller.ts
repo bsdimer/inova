@@ -1,17 +1,10 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  Post,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Post, Req, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { ActivateDto, LoginDto, RefreshDto, ResendCodeDto, SetPasswordDto } from './dto';
 import { JwtGuard, type AuthedRequest } from './jwt.guard';
+import { Public } from './public.decorator';
 
 // Brute-force protection on credential/code endpoints (tunable for tests).
 const STRICT = {
@@ -23,6 +16,7 @@ const STRICT = {
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
 
+  @Public()
   @Post('login')
   @HttpCode(200)
   @Throttle(STRICT)
@@ -31,6 +25,7 @@ export class AuthController {
     return this.auth.login(dto.email, dto.password);
   }
 
+  @Public()
   @Post('activate')
   @HttpCode(200)
   @Throttle(STRICT)
@@ -39,6 +34,7 @@ export class AuthController {
     return this.auth.activate(dto.code);
   }
 
+  @Public()
   @Post('resend-code')
   @HttpCode(202)
   @Throttle(STRICT)
@@ -48,6 +44,7 @@ export class AuthController {
     return { status: 'ok' };
   }
 
+  @Public()
   @Post('refresh')
   @HttpCode(200)
   @ApiOperation({ summary: 'Rotate a refresh token (reuse revokes the token family)' })
@@ -55,6 +52,7 @@ export class AuthController {
     return this.auth.refresh(dto.refreshToken);
   }
 
+  @Public()
   @Post('logout')
   @HttpCode(204)
   @ApiOperation({ summary: 'Revoke a refresh token family' })

@@ -126,7 +126,12 @@ export async function seed(url = databaseUrl, { quiet = false } = {}) {
 
     // First user of each tenant gets the per-tenant 'admin' role
     const admins = [
-      { tenant: 'sosedo', email: 'maria@sosedo.bg', fullName: 'Maria Ivanova', password: 'sosedo-owner' },
+      {
+        tenant: 'sosedo',
+        email: 'maria@sosedo.bg',
+        fullName: 'Maria Ivanova',
+        password: 'sosedo-owner',
+      },
       { tenant: 'demo', email: 'ivan@demo.bg', fullName: 'Ivan Petrov', password: 'demo-owner' },
     ];
     for (const o of admins) {
@@ -168,10 +173,9 @@ export async function seed(url = databaseUrl, { quiet = false } = {}) {
       );
 
       // Fresh, never-expiring-soon code on each seed run
-      await client.query(
-        `DELETE FROM invite_codes WHERE user_id = $1 AND consumed_at IS NULL`,
-        [userId],
-      );
+      await client.query(`DELETE FROM invite_codes WHERE user_id = $1 AND consumed_at IS NULL`, [
+        userId,
+      ]);
       await client.query(
         `INSERT INTO invite_codes (tenant_id, user_id, code_hash, channel, phone, expires_at)
          VALUES ($1, $2, $3, 'sms', $4, now() + interval '30 days')`,

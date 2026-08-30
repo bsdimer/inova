@@ -1,0 +1,37 @@
+---
+description: Sosedo session harness — what to read, how to finish, where status lives
+alwaysApply: true
+---
+
+# Sosedo harness
+
+This rule is the shareable development harness. It does not override
+`AGENTS.md` or milestone scope.
+
+## Start of every task
+
+1. Read `AGENTS.md` (already in context) and `docs/current.md`.
+2. Open only one extra file: the relevant `docs/milestones/M*.md`, an ADR, or
+   `.cursor/skills/sosedo-frontend/SKILL.md` for larger UI work.
+3. Check `git status`. Do not build ahead of the current milestone in
+   `docs/current.md`.
+
+## Finish of every task
+
+1. Run `pnpm verify` from the repo root. That is the Definition of Done.
+2. Update `docs/current.md` (what works, blockers, Next up).
+3. Add a short entry to `docs/work-log/YYYY-MM.md`: what changed, how it was
+   verified, what remains.
+4. Mark mocks with `TODO(M<n>)` or `MOCK`. Never commit secrets or `.env`.
+
+## Do not
+
+- Load `docs/implementation-plan.md` unless you need a stakeholder decision
+  or domain rule.
+- Skip, weaken, or delete tenant-isolation or financial tests.
+- Use client-supplied brand/bundle/tenant config as authorization.
+- Import another core-api module's schema/tables.
+- Use floats for money.
+
+Small visual fixes: edit in place. Do not start brainstorming, worktrees, or
+subagents unless the user asked or the frontend skill was invoked.

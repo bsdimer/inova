@@ -35,19 +35,14 @@ export default function Menu() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { mode, setMode } = useTheme();
-  // TODO(i18n): wire to packages/i18n once bg/en extraction lands.
+  // TODO(M5): wire to packages/i18n once bg/en extraction lands.
   const [language, setLanguage] = useState<'bg' | 'en'>('bg');
 
   const cycleTheme = () => {
     setMode(THEME_ORDER[(THEME_ORDER.indexOf(mode) + 1) % THEME_ORDER.length]);
   };
 
-  const row = (
-    icon: IconName,
-    label: string,
-    onPress: () => void,
-    trailing?: React.ReactNode,
-  ) => (
+  const row = (icon: IconName, label: string, onPress: () => void, trailing?: React.ReactNode) => (
     <PressableScale
       key={label}
       haptic={false}

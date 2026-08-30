@@ -3,7 +3,9 @@
 Multi-tenant, white-label SaaS platform for professional property-management companies.
 **Together. Better. Home.**
 
-Full architecture, milestones, and scope: [docs/implementation-plan.md](docs/implementation-plan.md).
+Living status: [docs/current.md](docs/current.md). Docs index: [docs/README.md](docs/README.md).
+Architecture and stakeholder decisions: [docs/implementation-plan.md](docs/implementation-plan.md).
+Agent/developer harness: [AGENTS.md](AGENTS.md).
 
 ## Repository layout
 
@@ -19,7 +21,7 @@ brands/
   sosedo/         Non-secret brand config + assets (white-label source of truth)
 db/               Plain SQL migrations (drizzle-kit; wired in M1)
 infra/docker/     Local docker-compose: Postgres, Redis, MinIO, MailHog
-docs/             Implementation plan, ADRs, runbooks
+docs/             current.md, architecture, milestones, work-log, plan, ADRs
 ```
 
 ## Getting started
@@ -35,13 +37,20 @@ docker compose -f infra/docker/docker-compose.yml up -d
 
 # 3. Environment
 cp .env.example .env
+pnpm doctor                           # Node/pnpm, Docker, Postgres, Redis, migrations
 
-# 4. Run everything (or filter per app)
+# 4. Schema + seed
+pnpm db:migrate && pnpm db:seed
+
+# 5. Run everything (or filter per app)
 pnpm dev                              # all apps via turborepo
 pnpm --filter @sosedo/api dev         # core API      → http://localhost:4000/docs
 pnpm --filter @sosedo/auth-service dev # auth service → http://localhost:4001/docs
 pnpm --filter @sosedo/admin dev       # admin panel   → http://localhost:5173
 pnpm --filter @sosedo/mobile dev      # Expo dev server (scan QR with Expo Go)
+
+# Definition of Done before you finish a task
+pnpm verify                           # format, lint, typecheck, tests, contracts, build
 ```
 
 ## Brand / white-label

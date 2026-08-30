@@ -84,8 +84,8 @@ export function LoginPage() {
             transition={{ duration: 0.6, delay: 0.9 }}
             className="max-w-md text-lg leading-relaxed text-white/60"
           >
-            The admin panel for professional property managers — buildings, fees, payments,
-            issues and neighbors in one calm place.
+            The admin panel for professional property managers — buildings, fees, payments, issues
+            and neighbors in one calm place.
           </motion.p>
         </div>
 
@@ -150,7 +150,10 @@ export function LoginPage() {
             </label>
 
             <div className="flex justify-end">
-              <button type="button" className="text-sm font-semibold text-brand-blue hover:underline">
+              <button
+                type="button"
+                className="text-sm font-semibold text-brand-blue hover:underline"
+              >
                 Forgot password?
               </button>
             </div>

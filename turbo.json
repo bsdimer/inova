@@ -14,7 +14,15 @@
       "dependsOn": ["^build"]
     },
     "test": {
+      "dependsOn": ["^build"],
+      "env": ["TEST_PG_URL"]
+    },
+    "test:unit": {
       "dependsOn": ["^build"]
+    },
+    "test:integration": {
+      "dependsOn": ["^build"],
+      "env": ["TEST_PG_URL"]
     }
   }
 }

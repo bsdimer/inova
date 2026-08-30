@@ -158,9 +158,7 @@ export function StaffPage() {
                       {member.status === 'suspended' && (
                         <GhostButton
                           disabled={update.isPending}
-                          onClick={() =>
-                            update.mutate({ userId: member.userId, status: 'active' })
-                          }
+                          onClick={() => update.mutate({ userId: member.userId, status: 'active' })}
                         >
                           <span className="flex items-center gap-1.5">
                             <RotateCcw size={14} /> Reactivate
@@ -265,8 +263,8 @@ function InviteModal({
             They activate their account from the mobile or web app using the code.
           </p>
           <p className="rounded-xl bg-brand-blue/8 px-3.5 py-2.5 text-xs font-medium text-brand-blue">
-            Dev note: SMS/Viber delivery is mocked until the gateway lands — the code is printed
-            in the core-api console.
+            Dev note: SMS/Viber delivery is mocked until the gateway lands — the code is printed in
+            the core-api console.
           </p>
           <div className="flex justify-end">
             <PrimaryButton onClick={reset}>Done</PrimaryButton>

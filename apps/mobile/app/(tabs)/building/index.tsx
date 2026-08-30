@@ -147,8 +147,8 @@ export default function BuildingOverview() {
               <View style={styles.feeTexts}>
                 <Text style={styles.feeTitle}>Как се оформя таксата</Text>
                 <Text style={styles.feeBody}>
-                  Месечната такса се изчислява на база квадратура и общи части, съгласно решение
-                  на Общо събрание.
+                  Месечната такса се изчислява на база квадратура и общи части, съгласно решение на
+                  Общо събрание.
                 </Text>
               </View>
               <ArrowBubble />

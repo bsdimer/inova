@@ -13,12 +13,7 @@ interface Props {
 }
 
 /** Round frosted icon button used in screen headers (menu, back, help). */
-export function GlassCircleButton({
-  icon,
-  onPress,
-  accessibilityLabel,
-  size = rs(46, 42),
-}: Props) {
+export function GlassCircleButton({ icon, onPress, accessibilityLabel, size = rs(46, 42) }: Props) {
   return (
     <GlassView rounded={999} overlayColor={glass.fillStrong}>
       <PressableScale

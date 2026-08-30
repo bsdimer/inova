@@ -210,11 +210,7 @@ function WheelCard({
   return (
     <>
       <Animated.View
-        style={[
-          styles.card,
-          { width: cardWidth, marginLeft: -cardWidth / 2 },
-          cardStyle,
-        ]}
+        style={[styles.card, { width: cardWidth, marginLeft: -cardWidth / 2 }, cardStyle]}
         pointerEvents="none"
       >
         <MaterialCommunityIcons

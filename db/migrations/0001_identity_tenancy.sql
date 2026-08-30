@@ -5,14 +5,13 @@
 --   core-api (domain):        tenants, brands, permissions, roles, role_permissions, audit_records
 --
 -- RLS model:
---   * Tenant-owned tables carry tenant_id as the LEADING PK/index column and enable RLS.
+--   * Tenant-owned tables carry tenant_id as the LEADING PK/tenant-scoped index column.
+--     Identity-scope lookup indexes are explicit exceptions because auth starts without a tenant.
 --   * The application connects as `sosedo_app` (no BYPASSRLS). Queries must run inside a
 --     transaction that sets `app.tenant_id` via SET LOCAL.
 --   * Identity tables additionally allow `app.identity_scope = 'auth'` — auth-service must
 --     read a user's memberships across ALL tenants to mint JWT claims. This is a policy-based
 --     allowance for the identity service only, never a role-level RLS bypass.
-
-BEGIN;
 
 -- ---------------------------------------------------------------------------
 -- Application role (login role used by auth-service and core-api).
@@ -23,6 +22,9 @@ BEGIN
   IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'sosedo_app') THEN
     CREATE ROLE sosedo_app LOGIN PASSWORD 'sosedo_app';
   END IF;
+EXCEPTION
+  -- Roles are cluster-wide; parallel test DBs can race the IF NOT EXISTS check.
+  WHEN duplicate_object THEN NULL;
 END
 $$;
 
@@ -231,5 +233,3 @@ GRANT SELECT ON permissions TO sosedo_app;
 
 -- Audit records are append-only: no UPDATE/DELETE for the app role, ever.
 GRANT SELECT, INSERT ON audit_records TO sosedo_app;
-
-COMMIT;

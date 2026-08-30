@@ -59,9 +59,7 @@ export class PermissionsGuard implements CanActivate {
       tx
         .select({ key: rolePermissions.permissionKey })
         .from(rolePermissions)
-        .where(
-          and(eq(rolePermissions.tenantId, tenantId), eq(rolePermissions.roleKey, roleKey)),
-        ),
+        .where(and(eq(rolePermissions.tenantId, tenantId), eq(rolePermissions.roleKey, roleKey))),
     );
     const permissions = new Set(rows.map((r) => r.key));
     this.cache.set(cacheKey, { permissions, expiresAt: Date.now() + CACHE_TTL_MS });

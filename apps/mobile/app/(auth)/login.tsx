@@ -62,9 +62,7 @@ export default function Login() {
           <Animated.View entering={FadeInDown.duration(420).delay(80)} style={styles.header}>
             <Text style={styles.title}>Добре дошли{'\n'}отново</Text>
             <View style={styles.titleDash} />
-            <Text style={styles.subtitle}>
-              Влезте, за да видите своята сграда, такси и съседи.
-            </Text>
+            <Text style={styles.subtitle}>Влезте, за да видите своята сграда, такси и съседи.</Text>
           </Animated.View>
 
           <Animated.View entering={FadeInUp.duration(420).delay(200)} style={styles.form}>

@@ -45,10 +45,38 @@ const STATS = [
 ] as const;
 
 const RECENT_PAYMENTS = [
-  { id: 'p1', resident: 'Maria Ivanova', building: 'Iztok 24 · Apt 12', amount: '86.40 лв', method: 'Bank transfer', time: 'Today 14:05' },
-  { id: 'p2', resident: 'Georgi Petrov', building: 'Mladost 7 · Apt 3', amount: '54.00 лв', method: 'Cash', time: 'Today 11:42' },
-  { id: 'p3', resident: 'Elena Dimitrova', building: 'Iztok 24 · Apt 8', amount: '112.20 лв', method: 'Bank transfer', time: 'Yesterday' },
-  { id: 'p4', resident: 'Stefan Kolev', building: 'Center 3 · Apt 21', amount: '73.60 лв', method: 'Bank transfer', time: 'Yesterday' },
+  {
+    id: 'p1',
+    resident: 'Maria Ivanova',
+    building: 'Iztok 24 · Apt 12',
+    amount: '86.40 лв',
+    method: 'Bank transfer',
+    time: 'Today 14:05',
+  },
+  {
+    id: 'p2',
+    resident: 'Georgi Petrov',
+    building: 'Mladost 7 · Apt 3',
+    amount: '54.00 лв',
+    method: 'Cash',
+    time: 'Today 11:42',
+  },
+  {
+    id: 'p3',
+    resident: 'Elena Dimitrova',
+    building: 'Iztok 24 · Apt 8',
+    amount: '112.20 лв',
+    method: 'Bank transfer',
+    time: 'Yesterday',
+  },
+  {
+    id: 'p4',
+    resident: 'Stefan Kolev',
+    building: 'Center 3 · Apt 21',
+    amount: '73.60 лв',
+    method: 'Bank transfer',
+    time: 'Yesterday',
+  },
 ] as const;
 
 export function DashboardPage() {

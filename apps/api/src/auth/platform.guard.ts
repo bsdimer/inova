@@ -1,9 +1,4 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  ForbiddenException,
-  Injectable,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import type { AuthedRequest } from './jwt.guard';
 
 /** Restricts platform endpoints (tenant provisioning etc.) to super_admin. */

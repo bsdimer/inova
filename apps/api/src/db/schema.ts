@@ -1,12 +1,4 @@
-import {
-  boolean,
-  jsonb,
-  pgTable,
-  primaryKey,
-  text,
-  timestamp,
-  uuid,
-} from 'drizzle-orm/pg-core';
+import { boolean, jsonb, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 /** Domain tables owned by core-api (see db/migrations/0001). */
 

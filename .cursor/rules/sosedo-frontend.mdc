@@ -1,0 +1,15 @@
+---
+description: Load the Sosedo frontend skill for larger admin/mobile UI work
+globs: apps/admin/**/*.{ts,tsx,css},apps/mobile/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Frontend files
+
+For a **new screen, layout pass, or multi-component change**, read
+`.cursor/skills/sosedo-frontend/SKILL.md` and the one reference you need
+(admin / mobile / react / testing / visual-qa).
+
+For a typo, a single token, or a one-line style fix: skip the skill.
+
+`AGENTS.md` and `docs/current.md` still win on scope and architecture.

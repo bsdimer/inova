@@ -1,9 +1,4 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  ForbiddenException,
-  Injectable,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { and, eq } from 'drizzle-orm';
 import { DbService } from '../db/db.service';
 import { staffMemberships } from '../db/schema';
@@ -40,10 +35,7 @@ export class TenantContextGuard implements CanActivate {
           .select({ status: staffMemberships.status, roleKey: staffMemberships.roleKey })
           .from(staffMemberships)
           .where(
-            and(
-              eq(staffMemberships.tenantId, tenantId),
-              eq(staffMemberships.userId, req.auth.sub),
-            ),
+            and(eq(staffMemberships.tenantId, tenantId), eq(staffMemberships.userId, req.auth.sub)),
           );
         return row;
       });

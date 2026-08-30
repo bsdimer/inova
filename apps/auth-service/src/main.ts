@@ -18,7 +18,6 @@ async function bootstrap(): Promise<void> {
 
   const port = Number(process.env.AUTH_SERVICE_PORT ?? 4001);
   await app.listen(port);
-  // eslint-disable-next-line no-console
   console.log(`auth-service listening on http://localhost:${port} (docs at /docs)`);
 }
 

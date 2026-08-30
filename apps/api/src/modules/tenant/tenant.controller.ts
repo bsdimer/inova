@@ -10,34 +10,14 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiHeader,
-  ApiOperation,
-  ApiProperty,
-  ApiTags,
-} from '@nestjs/swagger';
-import {
-  IsArray,
-  IsEmail,
-  IsIn,
-  IsOptional,
-  IsString,
-  Matches,
-  MinLength,
-} from 'class-validator';
+import { ApiBearerAuth, ApiHeader, ApiOperation, ApiProperty, ApiTags } from '@nestjs/swagger';
+import { IsArray, IsEmail, IsIn, IsOptional, IsString, Matches, MinLength } from 'class-validator';
 import { and, desc, eq } from 'drizzle-orm';
 import { JwtGuard, type AuthedRequest } from '../../auth/jwt.guard';
 import { PermissionsGuard, RequirePermissions } from '../../auth/permissions.guard';
 import { TenantContextGuard } from '../../auth/tenant-context.guard';
 import { DbService } from '../../db/db.service';
-import {
-  auditRecords,
-  rolePermissions,
-  staffMemberships,
-  tenants,
-  users,
-} from '../../db/schema';
+import { auditRecords, rolePermissions, staffMemberships, tenants, users } from '../../db/schema';
 import { TenantService } from './tenant.service';
 
 class CreateRoleDto {
@@ -122,10 +102,7 @@ export class TenantController {
   @ApiOperation({ summary: 'Current tenant profile, caller role and permissions' })
   async current(@Req() req: AuthedRequest) {
     const tenantId = req.tenantId!;
-    const [tenant] = await this.dbService.db
-      .select()
-      .from(tenants)
-      .where(eq(tenants.id, tenantId));
+    const [tenant] = await this.dbService.db.select().from(tenants).where(eq(tenants.id, tenantId));
     if (!tenant) throw new NotFoundException('Tenant not found');
 
     const permissions = await this.dbService.withTenant(tenantId, (tx) =>
@@ -133,10 +110,7 @@ export class TenantController {
         .select({ key: rolePermissions.permissionKey })
         .from(rolePermissions)
         .where(
-          and(
-            eq(rolePermissions.tenantId, tenantId),
-            eq(rolePermissions.roleKey, req.roleKey!),
-          ),
+          and(eq(rolePermissions.tenantId, tenantId), eq(rolePermissions.roleKey, req.roleKey!)),
         ),
     );
 

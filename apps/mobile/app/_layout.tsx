@@ -33,7 +33,11 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" options={{ animation: 'fade', gestureEnabled: false }} />
           <Stack.Screen
             name="menu"
-            options={{ presentation: 'transparentModal', animation: 'fade', animationDuration: 200 }}
+            options={{
+              presentation: 'transparentModal',
+              animation: 'fade',
+              animationDuration: 200,
+            }}
           />
           <Stack.Screen name="messages" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="surveys" options={{ animation: 'slide_from_right' }} />

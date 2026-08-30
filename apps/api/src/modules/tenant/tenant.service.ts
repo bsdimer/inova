@@ -258,9 +258,7 @@ export class TenantService {
       const [membership] = await tx
         .select()
         .from(staffMemberships)
-        .where(
-          and(eq(staffMemberships.tenantId, tenantId), eq(staffMemberships.userId, user.id)),
-        );
+        .where(and(eq(staffMemberships.tenantId, tenantId), eq(staffMemberships.userId, user.id)));
       if (membership && membership.status !== 'revoked') {
         throw new ConflictException('This person is already a member of the tenant');
       }
@@ -328,9 +326,7 @@ export class TenantService {
       const [membership] = await tx
         .select()
         .from(staffMemberships)
-        .where(
-          and(eq(staffMemberships.tenantId, tenantId), eq(staffMemberships.userId, userId)),
-        );
+        .where(and(eq(staffMemberships.tenantId, tenantId), eq(staffMemberships.userId, userId)));
       if (!membership) throw new NotFoundException('Membership not found');
 
       if (input.roleKey) await this.assertRoleExists(tx, tenantId, input.roleKey);
@@ -369,9 +365,7 @@ export class TenantService {
       await tx
         .update(staffMemberships)
         .set({ roleKey: nextRole, status: nextStatus, updatedAt: new Date() })
-        .where(
-          and(eq(staffMemberships.tenantId, tenantId), eq(staffMemberships.userId, userId)),
-        );
+        .where(and(eq(staffMemberships.tenantId, tenantId), eq(staffMemberships.userId, userId)));
 
       await this.audit.record(tx, {
         tenantId,

@@ -34,8 +34,7 @@ const PLATFORM_NAV = [{ to: '/tenants', label: 'Tenants', icon: Globe }] as cons
 export function AppShell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const session = getSession();
-  const nav =
-    session?.user.platformRole === 'super_admin' ? [...NAV, ...PLATFORM_NAV] : [...NAV];
+  const nav = session?.user.platformRole === 'super_admin' ? [...NAV, ...PLATFORM_NAV] : [...NAV];
 
   return (
     <div className="flex min-h-full">

@@ -18,6 +18,7 @@ import { createTestDb } from './db-helper';
 let app: INestApplication;
 let adminPool: pg.Pool;
 let appPool: pg.Pool;
+let disposeDb: () => Promise<void>;
 
 let tenantA: string; // sosedo
 let tenantB: string; // demo
@@ -49,7 +50,8 @@ async function sign(
 }
 
 beforeAll(async () => {
-  const { migratorUrl, appUrl } = await createTestDb('sosedo_test_api');
+  const { migratorUrl, appUrl, dispose } = await createTestDb('sosedo_test_api');
+  disposeDb = dispose;
   process.env.DATABASE_URL = appUrl;
 
   // Local JWKS instead of a running auth-service.
@@ -72,10 +74,10 @@ beforeAll(async () => {
   const tenants = await adminPool.query('SELECT id, key FROM tenants ORDER BY key');
   tenantB = tenants.rows.find((r) => r.key === 'demo').id;
   tenantA = tenants.rows.find((r) => r.key === 'sosedo').id;
-  mariaId = (await adminPool.query(`SELECT id FROM users WHERE email = 'maria@sosedo.bg'`))
-    .rows[0].id;
-  elenaId = (await adminPool.query(`SELECT id FROM users WHERE phone = '+359881000001'`))
-    .rows[0].id;
+  mariaId = (await adminPool.query(`SELECT id FROM users WHERE email = 'maria@sosedo.bg'`)).rows[0]
+    .id;
+  elenaId = (await adminPool.query(`SELECT id FROM users WHERE phone = '+359881000001'`)).rows[0]
+    .id;
 
   // Elena is seeded as 'invited'; activate her so the permission layer (not the
   // membership re-check) is what rejects her staff-listing request.
@@ -89,6 +91,7 @@ afterAll(async () => {
   await app?.close();
   await adminPool?.end();
   await appPool?.end();
+  await disposeDb?.();
 });
 
 describe('RLS at the SQL layer (sosedo_app role)', () => {
@@ -117,10 +120,9 @@ describe('RLS at the SQL layer (sosedo_app role)', () => {
       await client.query('BEGIN');
       await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [tenantA]);
       await expect(
-        client.query(
-          `INSERT INTO roles (tenant_id, key, name) VALUES ($1, 'sneaky', 'Sneaky')`,
-          [tenantB],
-        ),
+        client.query(`INSERT INTO roles (tenant_id, key, name) VALUES ($1, 'sneaky', 'Sneaky')`, [
+          tenantB,
+        ]),
       ).rejects.toMatchObject({ code: '42501' });
       await client.query('ROLLBACK');
     } finally {
