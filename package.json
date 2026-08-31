@@ -17,6 +17,8 @@
     "check:brands": "node scripts/check-brands.mjs",
     "check:routes": "node scripts/check-routes.mjs",
     "check:migrations": "node scripts/check-migrations.mjs",
+    "check:agent-harness": "node scripts/check-agent-harness.mjs",
+    "check:admin": "pnpm --filter @sosedo/admin lint && pnpm --filter @sosedo/admin typecheck && pnpm --filter @sosedo/admin build",
     "verify": "node scripts/verify.mjs",
     "doctor": "node scripts/doctor.mjs",
     "db:migrate": "node db/migrate.mjs",

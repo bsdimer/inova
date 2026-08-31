@@ -10,8 +10,10 @@ pilot under the platform's own "Sosedo" brand.
 
 1. Read this file.
 2. Read [docs/current.md](docs/current.md) — the only living status document.
-3. Open **one** relevant extra file: a milestone under `docs/milestones/`, an ADR
-   under `docs/decisions/`, or the frontend skill (see below).
+3. Start with **one** relevant extra file: a milestone under `docs/milestones/`,
+   an ADR under `docs/decisions/`, the linked feature brief under
+   `docs/features/`, or the frontend skill (see below). Load a linked reference
+   later only when the task stage needs it.
 4. Check `git status`.
 5. State the task's acceptance criteria before editing.
 
@@ -19,9 +21,10 @@ pilot under the platform's own "Sosedo" brand.
 
 1. Run `pnpm verify` (the executable Definition of Done).
 2. Confirm no secrets and no unmarked mocks (`TODO(M<n>)` or `MOCK`).
-3. Update [docs/current.md](docs/current.md) (what works, blockers, Next up).
-4. Add a short entry to `docs/work-log/YYYY-MM.md`: what changed, how it was
-   verified, what remains.
+3. Update [docs/current.md](docs/current.md) only when what works, blockers, or
+   Next up actually changed.
+4. Add one short change-set entry to `docs/work-log/YYYY-MM.md`: what changed,
+   how it was verified, what remains.
 5. Keep Next up accurate.
 
 Do **not** load the full implementation plan or old status files unless the task
@@ -72,6 +75,7 @@ brands/<key>/       White-label brand config + assets (non-secret)
 db/migrations       Plain SQL migrations
 infra/docker        Postgres, Redis, MinIO, MailHog
 docs/               See docs/README.md
+docs/features/      Optional briefs when milestone/issue context is insufficient
 ```
 
 ## Commands
@@ -81,6 +85,7 @@ pnpm install
 pnpm doctor                         # toolchain + local infra
 docker compose -f infra/docker/docker-compose.yml up -d
 pnpm db:migrate && pnpm db:seed
+pnpm check:admin                    # fast admin lint + typecheck + build loop
 pnpm verify                         # format, lint, typecheck, tests, contracts, build
 pnpm --filter @sosedo/api dev       # or: auth-service, admin, mobile
 ```
@@ -101,9 +106,10 @@ If port 4000 is taken: `API_PORT=4100`.
   pressables use `PressableScale`.
 - Keep user-facing strings extractable for `packages/i18n` (bg/en).
 
-Larger frontend work: invoke the project skill
-[`.cursor/skills/sosedo-frontend/SKILL.md`](.cursor/skills/sosedo-frontend/SKILL.md).
-Small visual fixes do not need that skill, worktrees, or extra subagents.
+For larger frontend work, read and follow the canonical
+[`sosedo-frontend`](.cursor/skills/sosedo-frontend/SKILL.md) workflow. Cursor may
+invoke it directly; Claude has a thin adapter; Codex follows this link. Small
+visual fixes do not need it.
 
 ## Code style
 
@@ -121,7 +127,8 @@ integration tests, architecture contracts, and build. Also:
 
 1. New behavior has tests where the plan requires them (finance, isolation, auth).
 2. Mocks/stubs are marked `TODO(M<n>)` or `MOCK`.
-3. `docs/current.md` and the monthly work-log are updated.
+3. `docs/current.md` is updated when living state changed; the monthly work-log
+   has one concise entry for the change set.
 4. No secrets, no commented-out code, no unrelated refactors.
 
 ## Where to read more
@@ -133,4 +140,5 @@ integration tests, architecture contracts, and build. Also:
 | Stakeholder decisions, full domain | [docs/implementation-plan.md](docs/implementation-plan.md) |
 | Milestone scope + acceptance       | [docs/milestones/](docs/milestones/)                       |
 | Session history                    | [docs/work-log/](docs/work-log/)                           |
+| Feature scope + acceptance         | [docs/features/](docs/features/)                           |
 | Frontend workflow                  | `.cursor/skills/sosedo-frontend/SKILL.md`                  |
