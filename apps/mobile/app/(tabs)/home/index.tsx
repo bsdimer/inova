@@ -27,7 +27,7 @@ interface QuickCard {
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
   description: string;
-  route: Href;
+  route: Href | null;
   badge?: number;
 }
 
@@ -36,7 +36,8 @@ const QUICK_CARDS: QuickCard[] = [
     icon: 'card-outline',
     title: 'Каса',
     description: 'Всички плащания и отчети на едно място.',
-    route: '/cash',
+    // Home Каса is a separate flow from building "месечни разходи".
+    route: null,
   },
   {
     icon: 'stats-chart-outline',
@@ -117,9 +118,9 @@ export default function Home() {
               <Text style={styles.duesLabel}>Текущо задължение</Text>
               <Text style={styles.duesValue}>{MOCK.outstanding}</Text>
             </View>
-            {/* TODO(M3): launches the real payment flow once billing lands. */}
+            {/* TODO: home payment / Каса flow — not monthly building expenses. */}
             <PressableScale
-              onPress={() => router.push('/cash')}
+              onPress={() => undefined}
               style={styles.payButton}
               accessibilityRole="button"
               accessibilityLabel="Плащане"
@@ -141,7 +142,9 @@ export default function Home() {
             >
               <PressableScale
                 haptic={false}
-                onPress={() => router.push(card.route)}
+                onPress={() => {
+                  if (card.route) router.push(card.route);
+                }}
                 accessibilityRole="button"
                 accessibilityLabel={card.title}
               >

@@ -26,12 +26,15 @@ const MOCK = {
       title: 'Каса — месечни разходи',
       value: '6 270 €',
       caption: 'Текущи месечни разходи',
+      route: '/cash' as const,
     },
     {
       id: 'deposit',
       title: 'Каса — депозит',
       value: '9 100 €',
       caption: 'За извънредни разходи',
+      // Deposit screen comes next — not the monthly-expenses flow.
+      route: null,
     },
   ],
   issues: [
@@ -118,7 +121,9 @@ export default function BuildingOverview() {
             >
               <PressableScale
                 haptic={false}
-                onPress={() => router.push('/cash')}
+                onPress={() => {
+                  if (box.route) router.push(box.route);
+                }}
                 accessibilityRole="button"
                 accessibilityLabel={box.title}
               >

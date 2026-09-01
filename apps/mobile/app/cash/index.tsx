@@ -4,31 +4,18 @@ import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AppBackground } from '../src/components/AppBackground';
-import { ArrowBubble } from '../src/components/ArrowBubble';
-import { GlassCircleButton } from '../src/components/GlassCircleButton';
-import { GlassView } from '../src/components/GlassView';
-import { PressableScale } from '../src/components/PressableScale';
-import { metrics, rs } from '../src/theme/responsive';
-import { glass, radius } from '../src/theme/tokens';
+import { AppBackground } from '../../src/components/AppBackground';
+import { ArrowBubble } from '../../src/components/ArrowBubble';
+import { GlassCircleButton } from '../../src/components/GlassCircleButton';
+import { GlassView } from '../../src/components/GlassView';
+import { PressableScale } from '../../src/components/PressableScale';
+import { CASH_EXPENSES, formatEuro } from '../../src/data/cashExpenses';
+import { metrics, rs } from '../../src/theme/responsive';
+import { glass, radius } from '../../src/theme/tokens';
 
-type ExpenseIcon = keyof typeof Ionicons.glyphMap;
-
-// TODO(M3): monthly cash-box expenses from the billing API.
 const MOCK = {
   building: 'Резиденция Оборище',
   address: 'ул. Оборище 12, София',
-  expenses: [
-    { id: 'e1', name: 'Ток', amount: 850, icon: 'flash-outline' as ExpenseIcon },
-    { id: 'e2', name: 'Вода', amount: 420, icon: 'water-outline' as ExpenseIcon },
-    { id: 'e3', name: 'Асансьор', amount: 1200, icon: 'swap-vertical-outline' as ExpenseIcon },
-    { id: 'e4', name: 'Почистване', amount: 980, icon: 'sparkles-outline' as ExpenseIcon },
-    { id: 'e5', name: 'Охрана', amount: 1500, icon: 'shield-checkmark-outline' as ExpenseIcon },
-    { id: 'e6', name: 'Ремонти', amount: 740, icon: 'construct-outline' as ExpenseIcon },
-    { id: 'e7', name: 'Озеленяване', amount: 320, icon: 'leaf-outline' as ExpenseIcon },
-    { id: 'e8', name: 'Интернет', amount: 180, icon: 'wifi-outline' as ExpenseIcon },
-    { id: 'e9', name: 'Снегопочистване', amount: 80, icon: 'snow-outline' as ExpenseIcon },
-  ],
 };
 
 const MONTHS_BG = [
@@ -46,10 +33,6 @@ const MONTHS_BG = [
   'декември',
 ] as const;
 
-function formatEuro(value: number) {
-  return `${value.toLocaleString('bg-BG')} €`;
-}
-
 function monthLabel(year: number, monthIndex: number) {
   return `${MONTHS_BG[monthIndex]} ${year}`;
 }
@@ -61,7 +44,7 @@ export default function Cash() {
   const [cursor, setCursor] = useState({ year: 2026, month: 2 });
 
   const total = useMemo(
-    () => MOCK.expenses.reduce((sum, item) => sum + item.amount, 0),
+    () => CASH_EXPENSES.reduce((sum, item) => sum + item.amount, 0),
     [],
   );
 
@@ -83,8 +66,8 @@ export default function Cash() {
         contentContainerStyle={[
           styles.scroll,
           {
-            paddingTop: insets.top + rs(18, 14),
-            paddingBottom: insets.bottom + rs(36, 28),
+            paddingTop: insets.top + rs(22, 16),
+            paddingBottom: insets.bottom + rs(40, 32),
           },
         ]}
         showsVerticalScrollIndicator={false}
@@ -97,10 +80,11 @@ export default function Cash() {
             accessibilityLabel="Назад"
             style={styles.backBtn}
           >
-            <Ionicons name="arrow-back" size={rs(26, 23)} color={glass.textPrimary} />
+            <Ionicons name="arrow-back" size={rs(28, 25)} color={glass.textPrimary} />
           </Pressable>
           <GlassCircleButton
             icon="ellipsis-horizontal"
+            size={rs(50, 46)}
             onPress={() => router.push('/menu')}
             accessibilityLabel="Отвори менюто"
           />
@@ -118,14 +102,14 @@ export default function Cash() {
           <View style={styles.monthRow}>
             <GlassCircleButton
               icon="chevron-back"
-              size={rs(36, 32)}
+              size={rs(42, 38)}
               onPress={() => shiftMonth(-1)}
               accessibilityLabel="Предишен месец"
             />
             <Text style={styles.monthLabel}>{label}</Text>
             <GlassCircleButton
               icon="chevron-forward"
-              size={rs(36, 32)}
+              size={rs(42, 38)}
               onPress={() => shiftMonth(1)}
               accessibilityLabel="Следващ месец"
             />
@@ -133,11 +117,11 @@ export default function Cash() {
         </Animated.View>
 
         <View style={styles.list}>
-          {MOCK.expenses.map((item, i) => (
+          {CASH_EXPENSES.map((item, i) => (
             <Animated.View key={item.id} entering={FadeInUp.duration(380).delay(160 + i * 40)}>
               <PressableScale
                 haptic={false}
-                onPress={() => undefined}
+                onPress={() => router.push(`/cash/${item.id}`)}
                 accessibilityRole="button"
                 accessibilityLabel={`${item.name}, ${formatEuro(item.amount)}`}
               >
@@ -148,11 +132,11 @@ export default function Cash() {
                   borderColor="rgba(255,255,255,0.35)"
                   contentStyle={styles.row}
                 >
-                  <Ionicons name={item.icon} size={rs(20, 18)} color={glass.textPrimary} />
+                  <Ionicons name={item.icon} size={rs(24, 21)} color={glass.textPrimary} />
                   <Text style={styles.rowLabel} numberOfLines={1}>
                     {item.name} — {formatEuro(item.amount)}
                   </Text>
-                  <ArrowBubble size={rs(28, 26)} />
+                  <ArrowBubble size={rs(34, 30)} />
                 </GlassView>
               </PressableScale>
             </Animated.View>
@@ -185,38 +169,38 @@ const styles = StyleSheet.create({
     paddingVertical: rs(4, 3),
   },
   titleBlock: {
-    marginTop: rs(16, 12),
-    gap: rs(3, 2),
+    marginTop: rs(20, 15),
+    gap: rs(4, 3),
   },
   title: {
-    fontSize: rs(30, 26),
+    fontSize: rs(34, 30),
     fontWeight: '700',
     letterSpacing: -0.4,
     color: glass.textPrimary,
-    marginBottom: rs(6, 4),
+    marginBottom: rs(8, 6),
   },
   building: {
-    fontSize: rs(16, 14),
+    fontSize: rs(18, 16),
     fontWeight: '600',
     color: glass.textPrimary,
   },
   address: {
-    fontSize: rs(14, 13),
+    fontSize: rs(15, 14),
     color: glass.textSecondary,
   },
   summary: {
-    marginTop: rs(22, 18),
-    marginBottom: rs(18, 14),
-    gap: rs(4, 3),
+    marginTop: rs(26, 20),
+    marginBottom: rs(22, 17),
+    gap: rs(6, 4),
     alignItems: 'center',
   },
   summaryLabel: {
-    fontSize: rs(14, 13),
+    fontSize: rs(16, 14),
     color: glass.textSecondary,
     textAlign: 'center',
   },
   summaryValue: {
-    fontSize: rs(36, 30),
+    fontSize: rs(42, 36),
     fontWeight: '800',
     letterSpacing: -0.5,
     color: glass.textPrimary,
@@ -226,33 +210,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: rs(14, 12),
-    marginTop: rs(6, 4),
+    gap: rs(16, 14),
+    marginTop: rs(8, 6),
   },
   monthLabel: {
-    fontSize: rs(15, 14),
+    fontSize: rs(17, 15),
     fontWeight: '500',
     color: glass.textSecondary,
-    minWidth: rs(110, 100),
+    minWidth: rs(124, 112),
     textAlign: 'center',
   },
   list: {
-    // Standard spacing — denser than the previous thick cards, not as
-    // cramped as the design render.
-    gap: rs(10, 8),
+    gap: rs(12, 10),
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: rs(52, 48),
-    paddingVertical: rs(10, 9),
-    paddingLeft: rs(16, 14),
-    paddingRight: rs(10, 9),
-    gap: rs(12, 10),
+    minHeight: rs(60, 54),
+    paddingVertical: rs(12, 11),
+    paddingLeft: rs(18, 16),
+    paddingRight: rs(12, 10),
+    gap: rs(14, 12),
   },
   rowLabel: {
     flex: 1,
-    fontSize: rs(15, 14),
+    fontSize: rs(17, 15),
     fontWeight: '600',
     color: glass.textPrimary,
   },
