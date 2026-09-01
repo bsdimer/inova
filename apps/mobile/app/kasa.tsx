@@ -267,8 +267,14 @@ export default function KasaHub() {
               <Text style={styles.cardTitle}>Месечни разходи</Text>
               <ExpensesDonut total={MOCK.monthlyTotal} slices={MOCK.slices} size={rs(220, 200)} />
               <View style={styles.breakdown}>
-                {MOCK.slices.map((slice) => (
-                  <View key={slice.id} style={styles.breakdownRow}>
+                {MOCK.slices.map((slice, i) => (
+                  <View
+                    key={slice.id}
+                    style={[
+                      styles.breakdownRow,
+                      ...(i < MOCK.slices.length - 1 ? [styles.breakdownRowBorder] : []),
+                    ]}
+                  >
                     <Ionicons name={slice.icon} size={rs(18, 16)} color={glass.textPrimary} />
                     <Text style={styles.breakdownLabel} numberOfLines={1}>
                       {slice.label}
@@ -423,7 +429,7 @@ const styles = StyleSheet.create({
   },
   expensesCard: {
     padding: rs(18, 15),
-    paddingBottom: rs(22, 18),
+    paddingBottom: rs(16, 14),
     gap: rs(12, 10),
   },
   cardTitle: {
@@ -497,13 +503,17 @@ const styles = StyleSheet.create({
     color: glass.textPrimary,
   },
   breakdown: {
-    gap: rs(12, 10),
     marginTop: rs(4, 2),
   },
   breakdownRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: rs(10, 8),
+    paddingVertical: rs(12, 10),
+  },
+  breakdownRowBorder: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255,255,255,0.22)',
   },
   breakdownLabel: {
     flex: 1,
@@ -517,16 +527,15 @@ const styles = StyleSheet.create({
     color: glass.textPrimary,
   },
   breakdownPct: {
-    width: rs(36, 32),
+    width: rs(40, 36),
     textAlign: 'right',
     fontSize: rs(14, 13),
     fontWeight: '600',
     color: glass.textSecondary,
   },
   cardArrow: {
-    position: 'absolute',
-    right: rs(16, 14),
-    bottom: rs(14, 12),
+    alignSelf: 'flex-end',
+    marginTop: rs(4, 2),
   },
   depositCard: {
     padding: rs(18, 15),
