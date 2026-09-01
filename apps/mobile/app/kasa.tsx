@@ -1,7 +1,8 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, type Href } from 'expo-router';
 import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, G, Path } from 'react-native-svg';
@@ -102,7 +103,7 @@ function arcPath(
 
 function ExpensesDonut({ total, slices, size }: { total: number; slices: Slice[]; size: number }) {
   // Extra room around the ring so the icon/percent callouts never clip.
-  const pad = rs(40, 36);
+  const pad = rs(48, 42);
   const box = size + pad * 2;
   const cx = box / 2;
   const cy = box / 2;
@@ -119,8 +120,9 @@ function ExpensesDonut({ total, slices, size }: { total: number; slices: Slice[]
     return { ...slice, start, end, mid: (start + end) / 2 };
   });
 
-  const bubble = rs(30, 27);
-  const calloutR = rOuter + pad * 0.55;
+  const bubble = rs(40, 36);
+  const iconSize = rs(20, 18);
+  const calloutR = rOuter + pad * 0.52;
 
   return (
     <View style={{ width: box, height: box, alignSelf: 'center' }}>
@@ -162,8 +164,40 @@ function ExpensesDonut({ total, slices, size }: { total: number; slices: Slice[]
             ]}
             pointerEvents="none"
           >
-            <View style={[styles.calloutBubble, { width: bubble, height: bubble }]}>
-              <Ionicons name={a.icon} size={rs(15, 13)} color={glass.textPrimary} />
+            <View style={[styles.calloutBubbleShell, { width: bubble, height: bubble }]}>
+              <View style={styles.calloutBubble}>
+                <LinearGradient
+                  colors={[
+                    'rgba(255,255,255,0.55)',
+                    'rgba(255,255,255,0.22)',
+                    'rgba(255,255,255,0.12)',
+                  ]}
+                  locations={[0, 0.45, 1]}
+                  start={{ x: 0.2, y: 0 }}
+                  end={{ x: 0.8, y: 1 }}
+                  style={StyleSheet.absoluteFill}
+                />
+                {/* Specular highlight — top rim shine for a glass disc feel. */}
+                <LinearGradient
+                  colors={['rgba(255,255,255,0.7)', 'rgba(255,255,255,0)']}
+                  start={{ x: 0.5, y: 0 }}
+                  end={{ x: 0.5, y: 0.55 }}
+                  style={styles.calloutHighlight}
+                />
+                {/* Soft bloom behind the glyph for the shiny glow. */}
+                <Ionicons
+                  name={a.icon}
+                  size={iconSize + 2}
+                  color="rgba(255,255,255,0.35)"
+                  style={styles.calloutIconGlow}
+                />
+                <Ionicons
+                  name={a.icon}
+                  size={iconSize}
+                  color="#FFFFFF"
+                  style={styles.calloutIcon}
+                />
+              </View>
             </View>
             <Text style={styles.calloutPct}>{a.pct}%</Text>
           </View>
@@ -422,19 +456,60 @@ const styles = StyleSheet.create({
   callout: {
     position: 'absolute',
     alignItems: 'center',
-    gap: rs(5, 4),
+    gap: rs(7, 6),
+  },
+  calloutBubbleShell: {
+    borderRadius: 999,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#FFFFFF',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.45,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+      default: {},
+    }),
   },
   calloutBubble: {
+    flex: 1,
     borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.45)',
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth * 1.5,
+    borderColor: 'rgba(255,255,255,0.65)',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.16)',
+  },
+  calloutHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: '12%',
+    right: '12%',
+    height: '42%',
+    borderBottomLeftRadius: 999,
+    borderBottomRightRadius: 999,
+  },
+  calloutIconGlow: {
+    position: 'absolute',
+  },
+  calloutIcon: {
+    ...Platform.select({
+      ios: {
+        shadowColor: '#FFFFFF',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.95,
+        shadowRadius: 6,
+      },
+      default: {},
+    }),
   },
   calloutPct: {
-    fontSize: rs(11, 10),
-    fontWeight: '700',
+    fontSize: rs(15, 13),
+    fontWeight: '800',
+    letterSpacing: -0.2,
     color: glass.textPrimary,
   },
   breakdown: {
