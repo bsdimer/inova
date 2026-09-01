@@ -33,8 +33,8 @@ const MOCK = {
       title: 'Каса — депозит',
       value: '9 100 €',
       caption: 'За извънредни разходи',
-      // Deposit screen comes next — not the monthly-expenses flow.
-      route: null,
+      // Deposit fund screen.
+      route: '/deposit' as const,
     },
   ],
   issues: [
