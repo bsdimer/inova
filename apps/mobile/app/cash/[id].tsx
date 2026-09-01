@@ -9,11 +9,7 @@ import { GlassCircleButton } from '../../src/components/GlassCircleButton';
 import { GlassView } from '../../src/components/GlassView';
 import { GradientButton } from '../../src/components/GradientButton';
 import { BrandLockup } from '../../src/components/SosedoLogo';
-import {
-  formatEuro,
-  getExpenseById,
-  type ExpenseDetail,
-} from '../../src/data/cashExpenses';
+import { formatEuro, getExpenseById, type ExpenseDetail } from '../../src/data/cashExpenses';
 import { metrics, rs } from '../../src/theme/responsive';
 import { darkTheme, glass, radius } from '../../src/theme/tokens';
 
@@ -133,11 +129,7 @@ export default function CashExpenseDetail() {
             <DetailRow label="Период" value={expense.period} />
             <DetailRow label="Доставчик" value={expense.supplier} />
             <DetailRow label="Номер на фактура" value={expense.invoiceNumber} />
-            <DetailRow
-              label="Статус"
-              value={statusLabel}
-              statusDot={expense.status === 'paid'}
-            />
+            <DetailRow label="Статус" value={statusLabel} statusDot={expense.status === 'paid'} />
             <DetailRow label="Начин на плащане" value={expense.paymentMethod} />
             <DetailRow label="Дата на плащане" value={expense.paymentDate} last />
           </GlassView>
@@ -157,11 +149,7 @@ export default function CashExpenseDetail() {
         </Animated.View>
 
         <Animated.View entering={FadeInUp.duration(420).delay(260)} style={styles.cta}>
-          <GradientButton
-            label="Виж фактура"
-            variant="dark"
-            onPress={() => undefined}
-          />
+          <GradientButton label="Виж фактура" variant="dark" onPress={() => undefined} />
         </Animated.View>
       </ScrollView>
     </View>
@@ -189,7 +177,11 @@ const styles = StyleSheet.create({
     minHeight: rs(56, 50),
   },
   brandCenter: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -158,10 +158,7 @@ export default function Deposit() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const progress = useMemo(
-    () => Math.min(MOCK.balance / MOCK.goal, 1),
-    [],
-  );
+  const progress = useMemo(() => Math.min(MOCK.balance / MOCK.goal, 1), []);
   const progressPct = Math.round(progress * 100);
   const chartWidth = screen.width - metrics.screenPadding * 2 - rs(36, 30);
 
@@ -262,7 +259,7 @@ export default function Deposit() {
                   accessibilityLabel={`${item.title}, ${formatEuro(item.amount)}`}
                   style={[
                     styles.movementRow,
-                    i < MOCK.movements.length - 1 && styles.movementRowBorder,
+                    ...(i < MOCK.movements.length - 1 ? [styles.movementRowBorder] : []),
                   ]}
                 >
                   <GlassView
@@ -288,11 +285,7 @@ export default function Deposit() {
                   <Text style={styles.movementAmount}>
                     {inflow ? '+' : '−'} {formatEuro(item.amount)}
                   </Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={rs(18, 16)}
-                    color={glass.textMuted}
-                  />
+                  <Ionicons name="chevron-forward" size={rs(18, 16)} color={glass.textMuted} />
                 </PressableScale>
               );
             })}
@@ -346,7 +339,11 @@ const styles = StyleSheet.create({
     minHeight: rs(56, 50),
   },
   brandCenter: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -45,8 +45,7 @@ export const CASH_EXPENSES: ExpenseDetail[] = [
     status: 'paid',
     paymentMethod: 'Директен дебит',
     paymentDate: '07.03.2026',
-    description:
-      'Водоснабдяване и отвеждане на отпадни води за общите части на сградата.',
+    description: 'Водоснабдяване и отвеждане на отпадни води за общите части на сградата.',
   },
   {
     id: 'e3',
@@ -73,8 +72,7 @@ export const CASH_EXPENSES: ExpenseDetail[] = [
     status: 'paid',
     paymentMethod: 'Банков превод',
     paymentDate: '02.03.2026',
-    description:
-      'Ежедневно почистване на стълбища, фоайета и периодично на подземния паркинг.',
+    description: 'Ежедневно почистване на стълбища, фоайета и периодично на подземния паркинг.',
   },
   {
     id: 'e5',
@@ -87,8 +85,7 @@ export const CASH_EXPENSES: ExpenseDetail[] = [
     status: 'paid',
     paymentMethod: 'Банков превод',
     paymentDate: '01.03.2026',
-    description:
-      '24-часова охрана и видеонаблюдение на входовете и общия паркинг.',
+    description: '24-часова охрана и видеонаблюдение на входовете и общия паркинг.',
   },
   {
     id: 'e6',
@@ -101,8 +98,7 @@ export const CASH_EXPENSES: ExpenseDetail[] = [
     status: 'pending',
     paymentMethod: '—',
     paymentDate: '—',
-    description:
-      'Текущи ремонти по общи части — врати, осветление и дребни строителни дейности.',
+    description: 'Текущи ремонти по общи части — врати, осветление и дребни строителни дейности.',
   },
   {
     id: 'e7',
@@ -115,8 +111,7 @@ export const CASH_EXPENSES: ExpenseDetail[] = [
     status: 'paid',
     paymentMethod: 'Карта',
     paymentDate: '10.03.2026',
-    description:
-      'Поддръжка на зелените площи около сградата и сезонно засаждане.',
+    description: 'Поддръжка на зелените площи около сградата и сезонно засаждане.',
   },
   {
     id: 'e8',
@@ -129,8 +124,7 @@ export const CASH_EXPENSES: ExpenseDetail[] = [
     status: 'paid',
     paymentMethod: 'Директен дебит',
     paymentDate: '04.03.2026',
-    description:
-      'Интернет връзка за домофонната система и камерите за видеонаблюдение.',
+    description: 'Интернет връзка за домофонната система и камерите за видеонаблюдение.',
   },
   {
     id: 'e9',
@@ -143,8 +137,7 @@ export const CASH_EXPENSES: ExpenseDetail[] = [
     status: 'paid',
     paymentMethod: 'Банков превод',
     paymentDate: '12.03.2026',
-    description:
-      'Еднократно снегопочистване на входовете и алеите след снеговалеж.',
+    description: 'Еднократно снегопочистване на входовете и алеите след снеговалеж.',
   },
 ];
 

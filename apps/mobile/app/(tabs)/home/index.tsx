@@ -36,8 +36,8 @@ const QUICK_CARDS: QuickCard[] = [
     icon: 'card-outline',
     title: 'Каса',
     description: 'Всички плащания и отчети на едно място.',
-    // Home Каса is a separate flow from building "месечни разходи".
-    route: null,
+    // Home Каса hub → monthly expenses / deposit / unpaid from there.
+    route: '/kasa',
   },
   {
     icon: 'stats-chart-outline',

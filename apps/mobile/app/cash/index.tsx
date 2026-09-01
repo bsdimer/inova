@@ -43,10 +43,7 @@ export default function Cash() {
   // Mock starts on March 2026 to match the design.
   const [cursor, setCursor] = useState({ year: 2026, month: 2 });
 
-  const total = useMemo(
-    () => CASH_EXPENSES.reduce((sum, item) => sum + item.amount, 0),
-    [],
-  );
+  const total = useMemo(() => CASH_EXPENSES.reduce((sum, item) => sum + item.amount, 0), []);
 
   const label = monthLabel(cursor.year, cursor.month);
 
