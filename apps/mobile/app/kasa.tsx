@@ -168,21 +168,14 @@ function ExpensesDonut({ total, slices, size }: { total: number; slices: Slice[]
               <View style={styles.calloutBubble}>
                 <LinearGradient
                   colors={[
-                    'rgba(255,255,255,0.55)',
-                    'rgba(255,255,255,0.22)',
-                    'rgba(255,255,255,0.12)',
+                    'rgba(255,255,255,0.38)',
+                    'rgba(255,255,255,0.2)',
+                    'rgba(255,255,255,0.14)',
                   ]}
-                  locations={[0, 0.45, 1]}
+                  locations={[0, 0.5, 1]}
                   start={{ x: 0.2, y: 0 }}
                   end={{ x: 0.8, y: 1 }}
                   style={StyleSheet.absoluteFill}
-                />
-                {/* Specular highlight — top rim shine for a glass disc feel. */}
-                <LinearGradient
-                  colors={['rgba(255,255,255,0.7)', 'rgba(255,255,255,0)']}
-                  start={{ x: 0.5, y: 0 }}
-                  end={{ x: 0.5, y: 0.55 }}
-                  style={styles.calloutHighlight}
                 />
                 {/* Soft bloom behind the glyph for the shiny glow. */}
                 <Ionicons
@@ -482,15 +475,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.16)',
-  },
-  calloutHighlight: {
-    position: 'absolute',
-    top: 0,
-    left: '12%',
-    right: '12%',
-    height: '42%',
-    borderBottomLeftRadius: 999,
-    borderBottomRightRadius: 999,
   },
   calloutIconGlow: {
     position: 'absolute',
