@@ -5,6 +5,9 @@ node_modules/
 # local tooling (workspace-local pnpm)
 .tooling/
 
+# Claude local permissions (skills under .claude/ are shareable)
+.claude/settings.local.json
+
 # builds
 dist/
 build/

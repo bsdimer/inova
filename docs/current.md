@@ -58,9 +58,3 @@ Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migr
 3. Deferred M1 (before pilot): Redis denylist, worker skeleton, real invite delivery, admin silent refresh, audit viewer.
 4. Admin restyle to the warm 2026-08 brand (still on the old navy palette).
 5. Self-contained Testcontainers for integration tests (harness Phase 2 remainder).
-
-## Harness (shareable)
-
-Session ritual and invariants: root `AGENTS.md`. Frontend workflow:
-`.cursor/skills/sosedo-frontend/SKILL.md` (explicit invoke for larger UI work).
-Cursor always-on rule: `.cursor/rules/sosedo-harness.mdc`.

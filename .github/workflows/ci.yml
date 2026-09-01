@@ -33,6 +33,7 @@ jobs:
       - run: pnpm check:stubs
       - run: pnpm check:brands
       - run: pnpm check:routes
+      - run: pnpm check:agent-harness
 
   unit:
     name: unit
