@@ -118,7 +118,7 @@ export default function Home() {
               <Text style={styles.duesLabel}>Текущо задължение</Text>
               <Text style={styles.duesValue}>{MOCK.outstanding}</Text>
             </View>
-            {/* TODO: home payment / Каса flow — not monthly building expenses. */}
+            {/* TODO(M4): home payment / Каса flow — not monthly building expenses. */}
             <PressableScale
               onPress={() => undefined}
               style={styles.payButton}
