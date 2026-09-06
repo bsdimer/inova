@@ -4,13 +4,13 @@ import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Circle, Defs, FeGaussianBlur, Filter, Path } from 'react-native-svg';
 import { AppBackground } from '../src/components/AppBackground';
 import { ArrowBubble } from '../src/components/ArrowBubble';
 import { GlassCircleButton } from '../src/components/GlassCircleButton';
 import { GlassView } from '../src/components/GlassView';
 import { PressableScale } from '../src/components/PressableScale';
 import { BrandLockup } from '../src/components/SosedoLogo';
+import { VoteRing } from '../src/components/VoteRing';
 import { metrics, rs } from '../src/theme/responsive';
 import { glass, radius } from '../src/theme/tokens';
 
@@ -69,92 +69,13 @@ const MOCK = {
   ] satisfies FinishedSurvey[],
 };
 
-function polar(cx: number, cy: number, r: number, deg: number) {
-  const rad = ((deg - 90) * Math.PI) / 180;
-  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
-}
-
-/** Clockwise arc on the same circle as the track. 0deg = 12 o'clock. */
-function progressArc(cx: number, cy: number, r: number, pct: number) {
-  const sweep = (Math.max(0, Math.min(100, pct)) / 100) * 360;
-  if (sweep <= 0) return '';
-  const start = polar(cx, cy, r, 0);
-  if (sweep >= 359.9) {
-    const mid = polar(cx, cy, r, 180);
-    return `M ${start.x} ${start.y} A ${r} ${r} 0 1 1 ${mid.x} ${mid.y} A ${r} ${r} 0 1 1 ${start.x} ${start.y}`;
-  }
-  const end = polar(cx, cy, r, sweep);
-  const large = sweep > 180 ? 1 : 0;
-  return `M ${start.x} ${start.y} A ${r} ${r} 0 ${large} 1 ${end.x} ${end.y}`;
-}
-
-function VoteRing({ pct, size, filterId }: { pct: number; size: number; filterId: string }) {
-  const stroke = rs(5, 4.5);
-  const pad = rs(16, 14);
-  const box = size + pad * 2;
-  const r = (size - stroke) / 2;
-  const cx = box / 2;
-  const cy = box / 2;
-  const clamped = Math.max(0, Math.min(100, pct));
-  const d = progressArc(cx, cy, r, clamped);
-
-  return (
-    <View style={{ width: box, height: box, alignItems: 'center', justifyContent: 'center' }}>
-      <Svg width={box} height={box} style={StyleSheet.absoluteFill}>
-        <Defs>
-          <Filter
-            id={filterId}
-            x={0}
-            y={0}
-            width={box}
-            height={box}
-            filterUnits="userSpaceOnUse"
-          >
-            <FeGaussianBlur in="SourceGraphic" stdDeviation="3.5" />
-          </Filter>
-        </Defs>
-        <Circle
-          cx={cx}
-          cy={cy}
-          r={r}
-          stroke="rgba(255,255,255,0.16)"
-          strokeWidth={stroke}
-          fill="none"
-        />
-        {d ? (
-          <>
-            <Path
-              d={d}
-              stroke="#FFFFFF"
-              strokeWidth={stroke}
-              fill="none"
-              strokeLinecap="round"
-              opacity={0.7}
-              filter={`url(#${filterId})`}
-            />
-            <Path
-              d={d}
-              stroke="#FFFFFF"
-              strokeWidth={stroke}
-              fill="none"
-              strokeLinecap="round"
-            />
-          </>
-        ) : null}
-      </Svg>
-      <Text style={styles.ringPct}>{clamped}%</Text>
-      <Text style={styles.ringCaption}>гласували</Text>
-    </View>
-  );
-}
-
-function ActiveCard({ survey }: { survey: ActiveSurvey }) {
+function ActiveCard({ survey, onPress }: { survey: ActiveSurvey; onPress: () => void }) {
   const ringSize = rs(92, 84);
 
   return (
     <PressableScale
       haptic={false}
-      onPress={() => undefined}
+      onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={survey.question}
     >
@@ -274,7 +195,12 @@ export default function Surveys() {
           <Text style={styles.sectionTitle}>Активни анкети</Text>
           <View style={styles.sectionList}>
             {MOCK.active.map((survey) => (
-              <ActiveCard key={survey.id} survey={survey} />
+              <ActiveCard
+                key={survey.id}
+                survey={survey}
+                // TODO(M7+): non-voted surveys open the voting flow instead.
+                onPress={() => router.push(`/survey/${survey.id}`)}
+              />
             ))}
           </View>
         </Animated.View>
@@ -401,18 +327,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: glass.textPrimary,
     flexShrink: 1,
-  },
-  ringPct: {
-    fontSize: rs(22, 19),
-    fontWeight: '800',
-    letterSpacing: -0.3,
-    color: glass.textPrimary,
-  },
-  ringCaption: {
-    marginTop: rs(1, 0),
-    fontSize: rs(11, 10),
-    fontWeight: '500',
-    color: glass.textSecondary,
   },
   finishedRow: {
     flexDirection: 'row',

@@ -10,6 +10,7 @@ import { AppBackground } from '../src/components/AppBackground';
 import { ArrowBubble } from '../src/components/ArrowBubble';
 import { GlassCircleButton } from '../src/components/GlassCircleButton';
 import { GlassView } from '../src/components/GlassView';
+import { GlowBar } from '../src/components/GlowBar';
 import { PressableScale } from '../src/components/PressableScale';
 import { BrandLockup } from '../src/components/SosedoLogo';
 import { metrics, rs } from '../src/theme/responsive';
@@ -310,8 +311,8 @@ export default function KasaHub() {
                 <View style={styles.depositTexts}>
                   <Text style={styles.cardTitle}>Депозит</Text>
                   <Text style={styles.depositValue}>{formatEuro(MOCK.deposit.balance)}</Text>
-                  <View style={styles.progressTrack}>
-                    <View style={[styles.progressFill, { width: `${depositPct}%` }]} />
+                  <View style={styles.progressBar}>
+                    <GlowBar pct={depositPct} filterId="deposit-glow" />
                   </View>
                   <Text style={styles.progressMeta}>
                     {depositPct}% от {formatEuro(MOCK.deposit.goal)} цел
@@ -555,17 +556,8 @@ const styles = StyleSheet.create({
     letterSpacing: -0.4,
     color: glass.textPrimary,
   },
-  progressTrack: {
-    height: rs(10, 9),
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.14)',
-    overflow: 'hidden',
+  progressBar: {
     marginTop: rs(4, 2),
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 999,
-    backgroundColor: '#FFFFFF',
   },
   progressMeta: {
     fontSize: rs(13, 12),
