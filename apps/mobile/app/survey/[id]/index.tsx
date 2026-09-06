@@ -1,18 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AppBackground } from '../../src/components/AppBackground';
-import { GlassCircleButton } from '../../src/components/GlassCircleButton';
-import { GlassView } from '../../src/components/GlassView';
-import { GlowBar } from '../../src/components/GlowBar';
-import { PressableScale } from '../../src/components/PressableScale';
-import { BrandLockup } from '../../src/components/SosedoLogo';
-import { VoteRing } from '../../src/components/VoteRing';
-import { metrics, rs } from '../../src/theme/responsive';
-import { glass, palette, radius } from '../../src/theme/tokens';
+import { AppBackground } from '../../../src/components/AppBackground';
+import { GlassCircleButton } from '../../../src/components/GlassCircleButton';
+import { GlassView } from '../../../src/components/GlassView';
+import { GlowBar } from '../../../src/components/GlowBar';
+import { PressableScale } from '../../../src/components/PressableScale';
+import { BrandLockup } from '../../../src/components/SosedoLogo';
+import { VoteRing } from '../../../src/components/VoteRing';
+import { metrics, rs } from '../../../src/theme/responsive';
+import { glass, palette, radius } from '../../../src/theme/tokens';
 
 interface SurveyOption {
   id: string;
@@ -53,14 +53,34 @@ const MOCK_DETAILS: Record<string, SurveyDetail> = {
 
 const FALLBACK = MOCK_DETAILS.a1;
 
-function OptionRow({ option, selected }: { option: SurveyOption; selected: boolean }) {
+function OptionRow({
+  option,
+  selected,
+  onSelect,
+}: {
+  option: SurveyOption;
+  selected: boolean;
+  onSelect: () => void;
+}) {
   return (
-    <View style={[styles.optionRow, selected && styles.optionRowSelected]}>
+    <PressableScale
+      haptic={false}
+      onPress={onSelect}
+      accessibilityRole="radio"
+      accessibilityState={{ selected }}
+      accessibilityLabel={`${option.label}, ${option.pct}%`}
+      style={[styles.optionRow, ...(selected ? [styles.optionRowSelected] : [])]}
+    >
       <View style={styles.optionTop}>
         <View style={[styles.radioOuter, selected && styles.radioOuterSelected]}>
           {selected ? <View style={styles.radioDot} /> : null}
         </View>
-        <Text style={styles.optionLabel} numberOfLines={2}>
+        <Text
+          style={styles.optionLabel}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.75}
+        >
           {option.label}
         </Text>
         <Text style={styles.optionPct}>{option.pct}%</Text>
@@ -68,7 +88,7 @@ function OptionRow({ option, selected }: { option: SurveyOption; selected: boole
       <View style={styles.optionBar}>
         <GlowBar pct={option.pct} filterId={`option-glow-${option.id}`} />
       </View>
-    </View>
+    </PressableScale>
   );
 }
 
@@ -78,6 +98,8 @@ export default function SurveyDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const detail = MOCK_DETAILS[id ?? ''] ?? FALLBACK;
   const ringSize = rs(120, 108);
+  // TODO(M7+): selection persists via the surveys API; local-only for now.
+  const [myVote, setMyVote] = useState(detail.myVote);
 
   return (
     <View style={styles.container}>
@@ -98,7 +120,8 @@ export default function SurveyDetail() {
           <GlassCircleButton
             icon="arrow-back"
             size={rs(50, 46)}
-            onPress={() => router.back()}
+            // Deep links land here without history — fall back to the list.
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/surveys'))}
             accessibilityLabel="Назад"
           />
           <View style={styles.brandCenter} pointerEvents="none">
@@ -164,7 +187,12 @@ export default function SurveyDetail() {
 
             <View style={styles.options}>
               {detail.options.map((option) => (
-                <OptionRow key={option.id} option={option} selected={option.id === detail.myVote} />
+                <OptionRow
+                  key={option.id}
+                  option={option}
+                  selected={option.id === myVote}
+                  onSelect={() => setMyVote(option.id)}
+                />
               ))}
             </View>
 

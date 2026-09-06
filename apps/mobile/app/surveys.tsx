@@ -172,7 +172,8 @@ export default function Surveys() {
           <GlassCircleButton
             icon="arrow-back"
             size={rs(50, 46)}
-            onPress={() => router.back()}
+            // No history when opened via deep link — fall back to home.
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/home'))}
             accessibilityLabel="Назад"
           />
           <View style={styles.brandCenter} pointerEvents="none">
@@ -198,8 +199,11 @@ export default function Surveys() {
               <ActiveCard
                 key={survey.id}
                 survey={survey}
-                // TODO(M7+): non-voted surveys open the voting flow instead.
-                onPress={() => router.push(`/survey/${survey.id}`)}
+                onPress={() =>
+                  router.push(
+                    survey.hasVoted ? `/survey/${survey.id}` : `/survey/${survey.id}/vote`,
+                  )
+                }
               />
             ))}
           </View>

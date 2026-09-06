@@ -35,7 +35,14 @@
           "imageWidth": 180
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Приложението използва галерията, за да прикачите снимка към сигнал.",
+          "cameraPermission": "Приложението използва камерата, за да заснемете снимка към сигнал."
+        }
+      ]
     ]
   }
 }

@@ -41,7 +41,8 @@ export default function RootLayout() {
           />
           <Stack.Screen name="messages" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="surveys" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="survey/[id]" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="survey/[id]/index" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="survey/[id]/vote" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="how-to-pay" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="contacts" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="cash" options={{ animation: 'slide_from_right' }} />
