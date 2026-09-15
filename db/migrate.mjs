@@ -3,7 +3,7 @@
  * Plain-SQL migration runner (see AGENTS.md: migrations are hand-written SQL).
  * Applies db/migrations/*.sql in filename order, tracking applied files in
  * schema_migrations. Connects as the privileged migrator role — the runtime
- * `sosedo_app` role must never own or alter schema.
+ * `inova_app` role must never own or alter schema.
  *
  * - PostgreSQL advisory lock so two runners cannot interleave.
  * - SHA-256 checksum of each file; changing an already-applied file fails.
@@ -28,7 +28,7 @@ const urlFlag = process.argv.indexOf('--url');
 const databaseUrl =
   urlFlag !== -1
     ? process.argv[urlFlag + 1]
-    : (process.env.DATABASE_URL_MIGRATOR ?? 'postgres://sosedo:sosedo@localhost:5432/sosedo');
+    : (process.env.DATABASE_URL_MIGRATOR ?? 'postgres://inova:inova@localhost:5432/inova');
 
 function checksum(sql) {
   return createHash('sha256').update(sql).digest('hex');

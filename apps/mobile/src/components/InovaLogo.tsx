@@ -20,7 +20,7 @@ interface Props {
 }
 
 /**
- * "inova — by White Nova Technology" lockup (client brand): lowercase
+ * "inova — by WhiteNova Technology" lockup (client brand): lowercase
  * letterspaced wordmark with a thin gold rule ending in a dot, tiny caps
  * byline underneath.
  */
@@ -65,7 +65,7 @@ export function BrandLockup({
         marginTop,
       }}
     >
-      BY WHITE NOVA TECHNOLOGY
+      BY WHITENOVA TECHNOLOGY
     </Text>
   );
 

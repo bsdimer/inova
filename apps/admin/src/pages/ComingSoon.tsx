@@ -8,12 +8,12 @@ export function ComingSoonPage({ title, milestone }: { title: string; milestone:
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', damping: 14 }}
-        className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-blue/15 to-brand-green/15"
+        className="flex h-16 w-16 items-center justify-center rounded-3xl border border-orange/15 bg-gradient-to-br from-orange/15 to-orange-bright/5 shadow-lg shadow-orange/10"
       >
-        <Hammer size={28} className="text-brand-blue" />
+        <Hammer size={28} className="text-orange" />
       </motion.div>
       <h1 className="text-2xl font-extrabold tracking-tight">{title}</h1>
-      <p className="max-w-sm text-sm text-ink-secondary">
+      <p className="max-w-sm text-sm text-landmark">
         This module arrives in milestone {milestone} of the implementation plan.
       </p>
     </div>

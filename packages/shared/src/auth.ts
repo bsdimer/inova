@@ -1,7 +1,7 @@
 /** JWT contract between auth-service (issuer) and core-api (verifier). */
 
-export const JWT_ISSUER = 'sosedo-auth';
-export const JWT_AUDIENCE = 'sosedo';
+export const JWT_ISSUER = 'inova-auth';
+export const JWT_AUDIENCE = 'inova';
 
 export interface MembershipClaim {
   /** Tenant id. */

@@ -4,7 +4,7 @@ import {
   JWT_ISSUER,
   type AccessTokenClaims,
   type MembershipClaim,
-} from '@sosedo/shared';
+} from '@inova/shared';
 import { and, eq, isNull } from 'drizzle-orm';
 import { SignJWT } from 'jose';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';

@@ -4,9 +4,9 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const canonicalRelative = '.cursor/skills/sosedo-frontend/SKILL.md';
-const adapterRelative = '.claude/skills/sosedo-frontend/SKILL.md';
-const cleanCodeRelative = '.cursor/skills/sosedo-frontend/references/clean-code.md';
+const canonicalRelative = '.cursor/skills/inova-frontend/SKILL.md';
+const adapterRelative = '.claude/skills/inova-frontend/SKILL.md';
+const cleanCodeRelative = '.cursor/skills/inova-frontend/references/clean-code.md';
 
 const requiredFiles = [
   'AGENTS.md',
@@ -47,7 +47,7 @@ if (errors.length === 0) {
 
   const adapterPath = resolve(repoRoot, adapterRelative);
   const adapter = readFileSync(adapterPath, 'utf8');
-  const adapterTarget = '../../../.cursor/skills/sosedo-frontend/SKILL.md';
+  const adapterTarget = '../../../.cursor/skills/inova-frontend/SKILL.md';
   const adapterFrontmatter = adapter.match(/^---\r?\n([\s\S]*?)\r?\n---/);
 
   if (!adapter.includes(adapterTarget)) {

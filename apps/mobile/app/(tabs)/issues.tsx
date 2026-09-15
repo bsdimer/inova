@@ -20,7 +20,7 @@ import { AppBackground } from '../../src/components/AppBackground';
 import { GlassCircleButton } from '../../src/components/GlassCircleButton';
 import { GlassView } from '../../src/components/GlassView';
 import { PressableScale } from '../../src/components/PressableScale';
-import { BrandLockup } from '../../src/components/SosedoLogo';
+import { BrandLockup } from '../../src/components/InovaLogo';
 import { metrics, rs } from '../../src/theme/responsive';
 import { darkTheme, glass, palette, radius } from '../../src/theme/tokens';
 

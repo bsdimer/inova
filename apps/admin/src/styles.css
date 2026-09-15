@@ -1,14 +1,18 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-navy: #0f1d3a;
-  --color-navy-deep: #0a1428;
-  --color-navy-soft: #16294f;
-  --color-brand-blue: #356dff;
-  --color-brand-green: #22b88f;
-  --color-brand-purple: #7a6cff;
-  --color-mist: #eef2f7;
-  --color-ink-secondary: #5a6b8c;
+  --color-orange: #eb5e28;
+  --color-orange-bright: #ff7e47;
+  --color-ember: #c24a17;
+  --color-foam: #efece3;
+  --color-cream: #f7f4ec;
+  --color-sand: #e4ddcf;
+  --color-gold-black: #1d1d1f;
+  --color-espresso: #2c2324;
+  --color-landmark: #766754;
+  --color-stone: #a79d90;
+  --color-success: #2e9e6b;
+  --color-danger: #d64545;
 
   --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
@@ -20,5 +24,33 @@ body,
 }
 
 body {
-  @apply bg-mist text-navy antialiased;
+  @apply bg-foam text-gold-black antialiased;
+  background-image:
+    radial-gradient(
+      circle at 8% 4%,
+      color-mix(in srgb, var(--color-orange) 9%, transparent),
+      transparent 28rem
+    ),
+    radial-gradient(
+      circle at 92% 92%,
+      color-mix(in srgb, var(--color-stone) 14%, transparent),
+      transparent 30rem
+    );
+  background-attachment: fixed;
+}
+
+button,
+a,
+input,
+select {
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/50 focus-visible:ring-offset-2;
+}
+
+button:not(:disabled),
+select:not(:disabled) {
+  cursor: pointer;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-orange) 24%, transparent);
 }

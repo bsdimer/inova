@@ -1,13 +1,13 @@
 /**
  * Tenant-isolation suite v1 — RELEASE BLOCKER (AGENTS.md rule 5).
  * Proves isolation at two layers:
- *   1. SQL/RLS: the `sosedo_app` role cannot touch another tenant's rows even
+ *   1. SQL/RLS: the `inova_app` role cannot touch another tenant's rows even
  *      with hand-written queries (missing WHERE clauses included).
  *   2. API: cross-tenant requests are rejected regardless of valid JWTs.
  */
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { JWT_AUDIENCE, JWT_ISSUER, type MembershipClaim } from '@sosedo/shared';
+import { JWT_AUDIENCE, JWT_ISSUER, type MembershipClaim } from '@inova/shared';
 import { SignJWT, calculateJwkThumbprint, exportJWK, generateKeyPair } from 'jose';
 import pg from 'pg';
 import request from 'supertest';
@@ -20,7 +20,7 @@ let adminPool: pg.Pool;
 let appPool: pg.Pool;
 let disposeDb: () => Promise<void>;
 
-let tenantA: string; // sosedo
+let tenantA: string; // inova
 let tenantB: string; // demo
 let mariaId: string; // tenant admin of A
 let elenaId: string; // resident of A
@@ -50,7 +50,7 @@ async function sign(
 }
 
 beforeAll(async () => {
-  const { migratorUrl, appUrl, dispose } = await createTestDb('sosedo_test_api');
+  const { migratorUrl, appUrl, dispose } = await createTestDb('inova_test_api');
   disposeDb = dispose;
   process.env.DATABASE_URL = appUrl;
 
@@ -73,8 +73,8 @@ beforeAll(async () => {
 
   const tenants = await adminPool.query('SELECT id, key FROM tenants ORDER BY key');
   tenantB = tenants.rows.find((r) => r.key === 'demo').id;
-  tenantA = tenants.rows.find((r) => r.key === 'sosedo').id;
-  mariaId = (await adminPool.query(`SELECT id FROM users WHERE email = 'maria@sosedo.bg'`)).rows[0]
+  tenantA = tenants.rows.find((r) => r.key === 'inova').id;
+  mariaId = (await adminPool.query(`SELECT id FROM users WHERE email = 'maria@inova.bg'`)).rows[0]
     .id;
   elenaId = (await adminPool.query(`SELECT id FROM users WHERE phone = '+359881000001'`)).rows[0]
     .id;
@@ -94,7 +94,7 @@ afterAll(async () => {
   await disposeDb?.();
 });
 
-describe('RLS at the SQL layer (sosedo_app role)', () => {
+describe('RLS at the SQL layer (inova_app role)', () => {
   it('returns no tenant-owned rows without tenant context', async () => {
     const { rows } = await appPool.query('SELECT * FROM roles');
     expect(rows).toHaveLength(0);
@@ -166,7 +166,7 @@ describe('Tenant isolation at the API layer', () => {
       .set('Authorization', `Bearer ${token}`)
       .set('X-Tenant-Id', tenantA);
     expect(res.status).toBe(200);
-    expect(res.body.tenant.key).toBe('sosedo');
+    expect(res.body.tenant.key).toBe('inova');
     expect(res.body.role).toBe('admin');
   });
 
@@ -219,6 +219,6 @@ describe('Tenant isolation at the API layer', () => {
       .get('/platform/tenants')
       .set('Authorization', `Bearer ${adminToken}`);
     expect(allowed.status).toBe(200);
-    expect(allowed.body.map((t: { key: string }) => t.key).sort()).toEqual(['demo', 'sosedo']);
+    expect(allowed.body.map((t: { key: string }) => t.key).sort()).toEqual(['demo', 'inova']);
   });
 });

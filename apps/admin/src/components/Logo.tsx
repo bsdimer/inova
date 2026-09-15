@@ -1,49 +1,62 @@
-import { Home } from 'lucide-react';
-
 interface MarkProps {
   size?: number;
   disc?: string;
   icon?: string;
 }
 
-/** Circular gradient-ring mark echoing the brand lockup. */
-export function SosedoMark({ size = 56, disc = '#0F1D3A', icon = '#FFFFFF' }: MarkProps) {
+/** Compact inova mark for places where the full lockup does not fit. */
+export function InovaMark({ size = 56, disc = '#1D1D1F', icon = '#FFFFFF' }: MarkProps) {
   const ring = Math.max(3, size * 0.055);
   return (
     <div
-      className="flex items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-green"
+      className="flex items-center justify-center rounded-[32%] bg-gradient-to-br from-orange-bright to-orange shadow-lg shadow-orange/20"
       style={{ width: size, height: size }}
     >
       <div
-        className="relative flex items-center justify-center rounded-full"
+        className="relative flex items-center justify-center rounded-[27%]"
         style={{ width: size - ring * 2, height: size - ring * 2, backgroundColor: disc }}
       >
-        <Home size={size * 0.4} color={icon} strokeWidth={2.4} />
         <span
-          className="absolute rounded-full bg-brand-green"
+          className="font-black leading-none"
           style={{
-            width: size * 0.1,
-            height: size * 0.1,
-            top: size * 0.14,
-            right: size * 0.16,
+            color: icon,
+            fontSize: size * 0.55,
+            transform: `translateY(${size * -0.015}px)`,
           }}
-        />
+        >
+          i
+        </span>
       </div>
     </div>
   );
 }
 
-/** "SOSEDO" wordmark — the E carries the brand green. */
-export function SosedoWordmark({
+/** Lowercase inova wordmark. */
+export function InovaWordmark({
   size = 28,
-  color = '#FFFFFF',
+  color = 'currentColor',
 }: {
   size?: number;
   color?: string;
 }) {
   return (
-    <span className="font-extrabold" style={{ fontSize: size, letterSpacing: size * 0.14, color }}>
-      SOS<span className="text-brand-green">E</span>DO
+    <span className="inline-flex flex-col" style={{ color }}>
+      <span
+        className="font-medium leading-none"
+        style={{ fontSize: size, letterSpacing: size * 0.22 }}
+      >
+        inova
+      </span>
+      <span className="mt-1 flex items-center gap-1.5">
+        <span className="h-px flex-1 bg-orange" />
+        <span className="h-1 w-1 rounded-full bg-orange" />
+      </span>
+      <span
+        className="mt-1 font-semibold uppercase opacity-60"
+        style={{ fontSize: Math.max(6, size * 0.28), letterSpacing: size * 0.055 }}
+      >
+        by WhiteNova Technology
+      </span>
     </span>
   );
 }

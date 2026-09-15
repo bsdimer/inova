@@ -6,11 +6,11 @@
 import { spawnSync } from 'node:child_process';
 
 const expected = [
-  '@sosedo/api',
-  '@sosedo/auth-service',
-  '@sosedo/admin',
-  '@sosedo/mobile',
-  '@sosedo/shared',
+  '@inova/api',
+  '@inova/auth-service',
+  '@inova/admin',
+  '@inova/mobile',
+  '@inova/shared',
 ];
 
 const result = spawnSync('pnpm', ['exec', 'turbo', 'lint', '--dry-run=json'], {

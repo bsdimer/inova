@@ -38,7 +38,7 @@ export interface Session {
 
 // Only the (small) refresh token goes to the keychain — access tokens are
 // short-lived and re-issued at launch, so persisting them buys nothing.
-const REFRESH_TOKEN_KEY = 'sosedo.refreshToken';
+const REFRESH_TOKEN_KEY = 'inova.refreshToken';
 
 let session: Session | null = null;
 

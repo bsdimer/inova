@@ -1,7 +1,7 @@
 # Mobile (`apps/mobile`)
 
 - Stack: Expo SDK 57, expo-router, Reanimated 4, `expo-blur` glass.
-- Tokens: `src/theme/tokens.ts` — keep in sync with `brands/sosedo/brand.json`
+- Tokens: `src/theme/tokens.ts` — keep in sync with `brands/inova/brand.json`
   until generation exists.
 - Surfaces: `GlassView` for frost. Backgrounds: `AppBackground`.
 - Motion: Reanimated entering/springs. Primary CTAs slide up. Pressables:

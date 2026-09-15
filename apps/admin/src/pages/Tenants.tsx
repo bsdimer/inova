@@ -25,10 +25,10 @@ export function TenantsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight">Tenants</h1>
-          <p className="mt-1 text-sm text-ink-secondary">
+          <p className="mt-1 text-sm text-landmark">
             Property-management companies on the platform. Provisioning seeds the starter roles and
             invites the first administrator.
           </p>
@@ -44,11 +44,11 @@ export function TenantsPage() {
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
-        className="overflow-hidden rounded-2xl bg-white shadow-sm shadow-navy/5"
+        className="overflow-x-auto rounded-3xl border border-sand/70 bg-white/80 shadow-sm shadow-landmark/5 backdrop-blur"
       >
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-navy/8 bg-mist/60 text-xs font-semibold tracking-wider text-ink-secondary uppercase">
+            <tr className="border-b border-sand/80 bg-cream/70 text-xs font-semibold tracking-wider text-landmark uppercase">
               <th className="px-6 py-3">Tenant</th>
               <th className="px-6 py-3">Key</th>
               <th className="px-6 py-3">Status</th>
@@ -59,7 +59,7 @@ export function TenantsPage() {
           <tbody>
             {tenants.isLoading && (
               <tr>
-                <td colSpan={5} className="px-6 py-10 text-center text-ink-secondary">
+                <td colSpan={5} className="px-6 py-10 text-center text-landmark">
                   Loading tenants…
                 </td>
               </tr>
@@ -67,14 +67,14 @@ export function TenantsPage() {
             {tenants.data?.map((tenant) => (
               <tr
                 key={tenant.id}
-                className="border-b border-navy/5 transition-colors last:border-0 hover:bg-mist/40"
+                className="border-b border-sand/60 transition-colors last:border-0 hover:bg-orange/4"
               >
                 <td className="px-6 py-3.5 font-semibold">{tenant.name}</td>
-                <td className="px-6 py-3.5 font-mono text-xs text-ink-secondary">{tenant.key}</td>
+                <td className="px-6 py-3.5 font-mono text-xs text-landmark">{tenant.key}</td>
                 <td className="px-6 py-3.5">
                   <StatusBadge status={tenant.status} />
                 </td>
-                <td className="px-6 py-3.5 text-ink-secondary">
+                <td className="px-6 py-3.5 text-landmark">
                   {new Date(tenant.createdAt).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-3.5 text-right">
@@ -173,22 +173,22 @@ function ProvisionWizard({
                 <span
                   className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                     state === 'done'
-                      ? 'bg-brand-green text-white'
+                      ? 'bg-success text-white'
                       : state === 'active'
-                        ? 'bg-brand-blue text-white'
-                        : 'bg-mist text-ink-secondary'
+                        ? 'bg-orange text-white'
+                        : 'bg-foam text-landmark'
                   }`}
                 >
                   {state === 'done' ? <Check size={14} /> : i + 1}
                 </span>
                 <span
                   className={`text-xs font-semibold ${
-                    state === 'todo' ? 'text-ink-secondary' : 'text-navy'
+                    state === 'todo' ? 'text-landmark' : 'text-gold-black'
                   }`}
                 >
                   {s.label}
                 </span>
-                {i < STEPS.length - 1 && <span className="h-px flex-1 bg-navy/10" />}
+                {i < STEPS.length - 1 && <span className="h-px flex-1 bg-sand" />}
               </div>
             );
           })}
@@ -234,7 +234,7 @@ function ProvisionWizard({
 
           {step === 'admin' && (
             <div className="space-y-4">
-              <p className="text-sm text-ink-secondary">
+              <p className="text-sm text-landmark">
                 The first user gets the tenant's <strong>admin</strong> role and activates via an
                 invite code. You can skip this and add them later.
               </p>
@@ -281,14 +281,14 @@ function ProvisionWizard({
 
           {step === 'review' && (
             <div className="space-y-4">
-              <dl className="space-y-2 rounded-xl bg-mist/60 p-4 text-sm">
+              <dl className="space-y-2 rounded-xl border border-sand/70 bg-foam/70 p-4 text-sm">
                 <Row label="Company" value={name} />
                 <Row label="Key" value={key} />
                 <Row label="First admin" value={adminFilled ? adminName : '— added later'} />
                 {adminFilled && <Row label="Email" value={adminEmail} />}
                 {adminFilled && adminPhone && <Row label="Phone" value={adminPhone} />}
               </dl>
-              <p className="text-xs text-ink-secondary">
+              <p className="text-xs text-landmark">
                 Provisioning creates the tenant with the starter roles (Administrator, House
                 manager, Resident){adminFilled ? ' and sends the admin an activation code' : ''}.
               </p>
@@ -315,13 +315,13 @@ function ProvisionWizard({
                 initial={{ scale: 0.6, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: 'spring', damping: 14 }}
-                className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-green/10"
+                className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-success/10"
               >
-                <Check size={26} className="text-brand-green" />
+                <Check size={26} className="text-success" />
               </motion.span>
               <div>
                 <h3 className="font-extrabold">{result.tenant.name} is ready</h3>
-                <p className="mt-1 text-sm text-ink-secondary">
+                <p className="mt-1 text-sm text-landmark">
                   {result.adminInviteSent
                     ? 'The first admin got an activation code (dev: MOCK delivery — check the core-api console).'
                     : 'No admin was invited yet — add one from the Staff page after switching in.'}
@@ -349,7 +349,7 @@ function ProvisionWizard({
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-4">
-      <dt className="text-ink-secondary">{label}</dt>
+      <dt className="text-landmark">{label}</dt>
       <dd className="font-semibold">{value}</dd>
     </div>
   );

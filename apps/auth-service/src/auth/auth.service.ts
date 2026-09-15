@@ -1,5 +1,5 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
-import type { MembershipClaim } from '@sosedo/shared';
+import type { MembershipClaim } from '@inova/shared';
 import bcrypt from 'bcryptjs';
 import { and, eq, gt, inArray, isNull, sql } from 'drizzle-orm';
 import { createHash, randomInt } from 'node:crypto';

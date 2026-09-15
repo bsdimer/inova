@@ -1,6 +1,6 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import type { BrandConfig } from '@sosedo/shared';
+import type { BrandConfig } from '@inova/shared';
 import { Public } from '../../auth/public.decorator';
 import { BrandsService } from './brands.service';
 

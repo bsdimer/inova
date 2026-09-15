@@ -1,7 +1,13 @@
-# Sosedo
+# inova
 
 Multi-tenant, white-label SaaS platform for professional property-management companies.
+Operated by **WhiteNova Technology**.
 **Together. Better. Home.**
+
+> Existing development databases created before the rename should be upgraded
+> with `pnpm db:migrate`. Do not rewrite migration `0001` or delete Docker
+> volumes merely to adopt the new identifiers; migration `0002` performs the
+> forward rename.
 
 Living status: [docs/current.md](docs/current.md). Docs index: [docs/README.md](docs/README.md).
 Architecture and stakeholder decisions: [docs/implementation-plan.md](docs/implementation-plan.md).
@@ -18,7 +24,7 @@ apps/
 packages/
   shared/         Money value object, brand-config schema, shared types
 brands/
-  sosedo/         Non-secret brand config + assets (white-label source of truth)
+  inova/         Non-secret brand config + assets (white-label source of truth)
 db/               Plain SQL migrations (drizzle-kit; wired in M1)
 infra/docker/     Local docker-compose: Postgres, Redis, MinIO, MailHog
 docs/             current.md, architecture, milestones, work-log, plan, ADRs
@@ -44,10 +50,10 @@ pnpm db:migrate && pnpm db:seed
 
 # 5. Run everything (or filter per app)
 pnpm dev                              # all apps via turborepo
-pnpm --filter @sosedo/api dev         # core API      → http://localhost:4000/docs
-pnpm --filter @sosedo/auth-service dev # auth service → http://localhost:4001/docs
-pnpm --filter @sosedo/admin dev       # admin panel   → http://localhost:5173
-pnpm --filter @sosedo/mobile dev      # Expo dev server (scan QR with Expo Go)
+pnpm --filter @inova/api dev         # core API      → http://localhost:4000/docs
+pnpm --filter @inova/auth-service dev # auth service → http://localhost:4001/docs
+pnpm --filter @inova/admin dev       # admin panel   → http://localhost:5173
+pnpm --filter @inova/mobile dev      # Expo dev server (scan QR with Expo Go)
 
 # Definition of Done before you finish a task
 pnpm verify                           # format, lint, typecheck, tests, contracts, build

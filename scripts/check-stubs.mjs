@@ -4,7 +4,7 @@
  * Fails on bare TODO / FIXME / HACK and on unmarked fake/stub/placeholder data.
  */
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 const root = new URL('..', import.meta.url);
 
@@ -23,7 +23,10 @@ const failures = [];
 
 for (const file of files) {
   if (file.startsWith('scripts/check-stubs')) continue;
-  const text = readFileSync(new URL(file, root), 'utf8');
+  const fileUrl = new URL(file, root);
+  // git ls-files includes cached paths deleted by an unstaged rename.
+  if (!existsSync(fileUrl)) continue;
+  const text = readFileSync(fileUrl, 'utf8');
   text.split('\n').forEach((line, i) => {
     if (unmarkedTodo.test(line)) {
       failures.push(`${file}:${i + 1}: unmarked ${line.trim()}`);

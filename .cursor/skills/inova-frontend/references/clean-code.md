@@ -1,6 +1,6 @@
 # Adopted clean-code profile
 
-This is the Sosedo-specific adoption profile derived from
+This is the inova-specific adoption profile derived from
 [HelgaZhizhka/mentor-resources](https://github.com/HelgaZhizhka/mentor-resources/tree/9872e811863f3f0dfa2f73c5f32243163bc45119/clean-code)
 at source commit `9872e811863f3f0dfa2f73c5f32243163bc45119`.
 
@@ -12,7 +12,7 @@ Priority when guidance conflicts:
 
 1. `AGENTS.md`, accepted ADRs, and architecture invariants.
 2. `docs/current.md` and the active milestone.
-3. Existing Sosedo patterns and automated checks.
+3. Existing inova patterns and automated checks.
 4. This profile.
 
 ## Design for clarity
@@ -73,7 +73,7 @@ Priority when guidance conflicts:
 - Exercise the changed flow. A screenshot alone does not prove forms,
   navigation, tenant changes, focus, or errors work.
 
-## Sosedo overrides
+## inova overrides
 
 - Admin uses Tailwind utilities and `@theme`; do not introduce BEM as a second
   styling convention.

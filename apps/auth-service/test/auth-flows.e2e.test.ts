@@ -20,11 +20,11 @@ const post = (url: string, body: object) =>
   request(app.getHttpServer()).post(url).send(body).set('content-type', 'application/json');
 
 beforeAll(async () => {
-  const { appUrl, dispose } = await createTestDb('sosedo_test_auth');
+  const { appUrl, dispose } = await createTestDb('inova_test_auth');
   disposeDb = dispose;
   process.env.DATABASE_URL = appUrl;
   process.env.JWT_PRIVATE_KEY_PATH = path.join(
-    mkdtempSync(path.join(tmpdir(), 'sosedo-jwt-')),
+    mkdtempSync(path.join(tmpdir(), 'inova-jwt-')),
     'test.pem',
   );
   process.env.AUTH_THROTTLE_STRICT = '1000'; // throttling is not under test here
@@ -44,18 +44,18 @@ afterAll(async () => {
 
 describe('password login', () => {
   it('returns tokens and membership claims for valid credentials', async () => {
-    const res = await post('/auth/login', { email: 'maria@sosedo.bg', password: 'sosedo-owner' });
+    const res = await post('/auth/login', { email: 'maria@inova.bg', password: 'inova-owner' });
     expect(res.status).toBe(200);
     expect(res.body.accessToken).toBeTruthy();
     expect(res.body.refreshToken).toBeTruthy();
     expect(res.body.memberships).toHaveLength(1);
     expect(res.body.memberships[0].r).toBe('admin');
-    expect(res.body.memberships[0].tenantKey).toBe('sosedo');
+    expect(res.body.memberships[0].tenantKey).toBe('inova');
   });
 
   it('rejects wrong passwords and unknown emails identically (401)', async () => {
-    const wrong = await post('/auth/login', { email: 'maria@sosedo.bg', password: 'nope' });
-    const unknown = await post('/auth/login', { email: 'ghost@sosedo.bg', password: 'nope' });
+    const wrong = await post('/auth/login', { email: 'maria@inova.bg', password: 'nope' });
+    const unknown = await post('/auth/login', { email: 'ghost@inova.bg', password: 'nope' });
     expect(wrong.status).toBe(401);
     expect(unknown.status).toBe(401);
     expect(wrong.body.message).toBe(unknown.body.message);

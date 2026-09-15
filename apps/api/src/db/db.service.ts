@@ -8,7 +8,7 @@ export type Db = NodePgDatabase<typeof schema>;
 export type TenantTx = Parameters<Parameters<Db['transaction']>[0]>[0];
 
 /**
- * Connects as the non-privileged `sosedo_app` role. All tenant-owned reads/writes
+ * Connects as the non-privileged `inova_app` role. All tenant-owned reads/writes
  * must go through withTenant(), which scopes the transaction via
  * `SET LOCAL app.tenant_id` — RLS then guarantees isolation even if a query
  * forgets a WHERE clause. Platform tables (tenants, brands, permissions) are
@@ -22,7 +22,7 @@ export class DbService implements OnModuleDestroy {
   constructor() {
     this.pool = new Pool({
       connectionString:
-        process.env.DATABASE_URL ?? 'postgres://sosedo_app:sosedo_app@localhost:5432/sosedo',
+        process.env.DATABASE_URL ?? 'postgres://inova_app:inova_app@localhost:5432/inova',
       max: 10,
     });
     this.db = drizzle(this.pool, { schema });

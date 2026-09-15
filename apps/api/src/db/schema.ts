@@ -6,7 +6,7 @@ export const tenants = pgTable('tenants', {
   id: uuid('id').primaryKey().defaultRandom(),
   key: text('key').notNull(),
   name: text('name').notNull(),
-  brandKey: text('brand_key').notNull().default('sosedo'),
+  brandKey: text('brand_key').notNull().default('inova'),
   locale: text('locale').notNull().default('bg-BG'),
   currency: text('currency').notNull().default('EUR'),
   timezone: text('timezone').notNull().default('Europe/Sofia'),

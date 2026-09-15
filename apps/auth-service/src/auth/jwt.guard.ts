@@ -1,5 +1,5 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
-import { JWT_AUDIENCE, JWT_ISSUER, type AccessTokenClaims } from '@sosedo/shared';
+import { JWT_AUDIENCE, JWT_ISSUER, type AccessTokenClaims } from '@inova/shared';
 import type { Request } from 'express';
 import { jwtVerify } from 'jose';
 import { KeysService } from '../keys/keys.service';

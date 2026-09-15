@@ -8,10 +8,10 @@
  * which bypasses RLS; runtime services never do this.
  *
  * DEV CREDENTIALS (local only, never reuse in real environments):
- *   super admin:  admin@sosedo.bg / sosedo-admin
- *   sosedo admin: maria@sosedo.bg / sosedo-owner
+ *   super admin:  admin@inova.bg / inova-admin
+ *   inova admin: maria@inova.bg / inova-owner
  *   demo admin:   ivan@demo.bg    / demo-owner
- *   invite codes: 482913 (Elena, sosedo) · 735026 (Georgi, demo)
+ *   invite codes: 482913 (Elena, inova) · 735026 (Georgi, demo)
  */
 import bcrypt from 'bcryptjs';
 import { createHash } from 'node:crypto';
@@ -26,7 +26,7 @@ const urlFlag = process.argv.indexOf('--url');
 const databaseUrl =
   urlFlag !== -1
     ? process.argv[urlFlag + 1]
-    : (process.env.DATABASE_URL_MIGRATOR ?? 'postgres://sosedo:sosedo@localhost:5432/sosedo');
+    : (process.env.DATABASE_URL_MIGRATOR ?? 'postgres://inova:inova@localhost:5432/inova');
 
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 
@@ -52,17 +52,19 @@ export async function seed(url = databaseUrl, { quiet = false } = {}) {
 
     // Brand from the canonical brand.json
     const brandConfig = JSON.parse(
-      await readFile(path.join(here, '..', 'brands', 'sosedo', 'brand.json'), 'utf8'),
+      await readFile(path.join(here, '..', 'brands', 'inova', 'brand.json'), 'utf8'),
     );
     await client.query(
-      `INSERT INTO brands (key, name, config) VALUES ('sosedo', 'Sosedo', $1)
-       ON CONFLICT (key) DO UPDATE SET config = EXCLUDED.config, updated_at = now()`,
+      `INSERT INTO brands (key, name, config) VALUES ('inova', 'inova', $1)
+       ON CONFLICT (key) DO UPDATE SET name = EXCLUDED.name,
+                                       config = EXCLUDED.config,
+                                       updated_at = now()`,
       [brandConfig],
     );
 
     // Tenants
     const tenants = [
-      { key: 'sosedo', name: 'Sosedo Property Management', status: 'active' },
+      { key: 'inova', name: 'WhiteNova Technology', status: 'active' },
       { key: 'demo', name: 'Demo Blok Management', status: 'trial' },
     ];
     const tenantIds = {};
@@ -117,9 +119,9 @@ export async function seed(url = databaseUrl, { quiet = false } = {}) {
 
     // Platform super admin (no tenant memberships — platform_role claim only)
     await upsertUser({
-      email: 'admin@sosedo.bg',
+      email: 'admin@inova.bg',
       fullName: 'Platform Admin',
-      password: 'sosedo-admin',
+      password: 'inova-admin',
       status: 'active',
       platformRole: 'super_admin',
     });
@@ -127,10 +129,10 @@ export async function seed(url = databaseUrl, { quiet = false } = {}) {
     // First user of each tenant gets the per-tenant 'admin' role
     const admins = [
       {
-        tenant: 'sosedo',
-        email: 'maria@sosedo.bg',
+        tenant: 'inova',
+        email: 'maria@inova.bg',
         fullName: 'Maria Ivanova',
-        password: 'sosedo-owner',
+        password: 'inova-owner',
       },
       { tenant: 'demo', email: 'ivan@demo.bg', fullName: 'Ivan Petrov', password: 'demo-owner' },
     ];
@@ -151,7 +153,7 @@ export async function seed(url = databaseUrl, { quiet = false } = {}) {
 
     // Pending residents with invite codes (manager-created accounts, decision B7)
     const residents = [
-      { tenant: 'sosedo', phone: '+359881000001', fullName: 'Elena Petrova', code: '482913' },
+      { tenant: 'inova', phone: '+359881000001', fullName: 'Elena Petrova', code: '482913' },
       { tenant: 'demo', phone: '+359881000002', fullName: 'Georgi Dimitrov', code: '735026' },
     ];
     for (const r of residents) {
@@ -191,10 +193,10 @@ export async function seed(url = databaseUrl, { quiet = false } = {}) {
 
     await client.query('COMMIT');
     log('seed complete.');
-    log('  super admin : admin@sosedo.bg / sosedo-admin');
-    log('  sosedo admin : maria@sosedo.bg / sosedo-owner');
+    log('  super admin : admin@inova.bg / inova-admin');
+    log('  inova admin : maria@inova.bg / inova-owner');
     log('  demo admin  : ivan@demo.bg / demo-owner');
-    log('  invite codes: 482913 (Elena, sosedo) · 735026 (Georgi, demo)');
+    log('  invite codes: 482913 (Elena, inova) · 735026 (Georgi, demo)');
     return tenantIds;
   } catch (err) {
     await client.query('ROLLBACK');

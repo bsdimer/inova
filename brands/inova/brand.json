@@ -1,8 +1,11 @@
 {
   "$schema": "./brand.schema.json",
-  "key": "sosedo",
-  "name": "Sosedo",
-  "displayName": "Sosedo",
+  "key": "inova",
+  "name": "inova",
+  "displayName": "inova",
+  "company": {
+    "legalName": "WhiteNova Technology"
+  },
   "tagline": "Together. Better. Home.",
   "description": "Community management for apartment buildings and neighborhoods.",
   "values": ["neighborly", "trustworthy", "organized", "tech-forward"],
@@ -63,13 +66,13 @@
   "distribution": {
     "mode": "shared",
     "ios": {
-      "bundleId": "bg.sosedo.resident"
+      "bundleId": "bg.inova.resident"
     },
     "android": {
-      "package": "bg.sosedo.resident"
+      "package": "bg.inova.resident"
     },
-    "deepLinkDomain": "app.sosedo.bg",
-    "scheme": "sosedo"
+    "deepLinkDomain": "app.inova.bg",
+    "scheme": "inova"
   },
   "features": {
     "payments": true,
@@ -81,7 +84,7 @@
     "documentSigning": false
   },
   "support": {
-    "email": "support@sosedo.bg",
+    "email": "support@inova.bg",
     "phone": "+359 000 000 000"
   }
 }

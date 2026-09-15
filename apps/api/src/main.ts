@@ -10,7 +10,7 @@ async function bootstrap(): Promise<void> {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   const config = new DocumentBuilder()
-    .setTitle('Sosedo Core API')
+    .setTitle('inova Core API')
     .setDescription(
       'Domain modules: tenancy, property, billing, payments, finance, documents, issues, notices, notifications, reports, brands.',
     )

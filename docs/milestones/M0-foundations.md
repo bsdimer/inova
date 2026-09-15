@@ -16,7 +16,7 @@ CI is green.
 - `apps/auth-service` and `apps/api` NestJS shells (health, Swagger, `/v1`).
 - `apps/admin` Vite/React shell; `apps/mobile` Expo SDK 57 shell + theme.
 - `packages/shared`: `Money`, `brandConfigSchema`.
-- `brands/sosedo/brand.json` + assets.
+- `brands/inova/brand.json` + assets.
 - GitHub Actions (now split: static, unit, migrations, auth, tenant-isolation, build).
 - `pnpm doctor` / `pnpm verify`.
 

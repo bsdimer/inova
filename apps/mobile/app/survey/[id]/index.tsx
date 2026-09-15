@@ -9,7 +9,7 @@ import { GlassCircleButton } from '../../../src/components/GlassCircleButton';
 import { GlassView } from '../../../src/components/GlassView';
 import { GlowBar } from '../../../src/components/GlowBar';
 import { PressableScale } from '../../../src/components/PressableScale';
-import { BrandLockup } from '../../../src/components/SosedoLogo';
+import { BrandLockup } from '../../../src/components/InovaLogo';
 import { VoteRing } from '../../../src/components/VoteRing';
 import { metrics, rs } from '../../../src/theme/responsive';
 import { glass, palette, radius } from '../../../src/theme/tokens';

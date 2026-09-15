@@ -11,7 +11,7 @@ let pool: pg.Pool;
 let disposeDb: () => Promise<void>;
 
 beforeAll(async () => {
-  const { migratorUrl, dispose } = await createTestDb('sosedo_test_schema');
+  const { migratorUrl, dispose } = await createTestDb('inova_test_schema');
   disposeDb = dispose;
   pool = new pg.Pool({ connectionString: migratorUrl });
 });
@@ -32,9 +32,9 @@ const TENANT_TABLES = `
 `;
 
 describe('tenant schema contract', () => {
-  it('sosedo_app cannot bypass RLS', async () => {
+  it('inova_app cannot bypass RLS', async () => {
     const { rows } = await pool.query(
-      `SELECT rolbypassrls FROM pg_roles WHERE rolname = 'sosedo_app'`,
+      `SELECT rolbypassrls FROM pg_roles WHERE rolname = 'inova_app'`,
     );
     expect(rows).toHaveLength(1);
     expect(rows[0].rolbypassrls).toBe(false);
@@ -105,11 +105,11 @@ describe('tenant schema contract', () => {
     }
   });
 
-  it('append-only audit_records has no UPDATE/DELETE for sosedo_app', async () => {
+  it('append-only audit_records has no UPDATE/DELETE for inova_app', async () => {
     const { rows } = await pool.query(
       `SELECT privilege_type
        FROM information_schema.role_table_grants
-       WHERE grantee = 'sosedo_app' AND table_name = 'audit_records'`,
+       WHERE grantee = 'inova_app' AND table_name = 'audit_records'`,
     );
     const privs = rows.map((r) => r.privilege_type);
     expect(privs).toContain('SELECT');

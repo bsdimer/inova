@@ -10,7 +10,7 @@ async function bootstrap(): Promise<void> {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   const config = new DocumentBuilder()
-    .setTitle('Sosedo Auth Service')
+    .setTitle('inova Auth Service')
     .setDescription('Identity: users, credentials, tenant memberships, JWT issuance (JWKS).')
     .setVersion('0.1.0')
     .build();

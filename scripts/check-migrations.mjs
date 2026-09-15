@@ -10,8 +10,8 @@ import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 import { migrate } from '../db/migrate.mjs';
 
-const cluster = process.env.TEST_PG_URL ?? 'postgres://sosedo:sosedo@localhost:5432';
-const name = `sosedo_check_mig_${process.pid}_${Date.now().toString(36)}`;
+const cluster = process.env.TEST_PG_URL ?? 'postgres://inova:inova@localhost:5432';
+const name = `inova_check_mig_${process.pid}_${Date.now().toString(36)}`;
 const url = `${cluster}/${name}`;
 
 const admin = new pg.Client({ connectionString: `${cluster}/postgres` });

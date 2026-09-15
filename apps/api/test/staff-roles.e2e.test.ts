@@ -6,7 +6,7 @@
  */
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { JWT_AUDIENCE, JWT_ISSUER, type MembershipClaim } from '@sosedo/shared';
+import { JWT_AUDIENCE, JWT_ISSUER, type MembershipClaim } from '@inova/shared';
 import { SignJWT, calculateJwkThumbprint, exportJWK, generateKeyPair } from 'jose';
 import pg from 'pg';
 import request from 'supertest';
@@ -18,7 +18,7 @@ let app: INestApplication;
 let adminPool: pg.Pool;
 let disposeDb: () => Promise<void>;
 
-let tenantA: string; // sosedo
+let tenantA: string; // inova
 let tenantB: string; // demo
 let mariaId: string; // tenant admin of A (the only active admin)
 let elenaId: string; // resident of A
@@ -71,7 +71,7 @@ let manager: ReturnType<typeof as>;
 let resident: ReturnType<typeof as>;
 
 beforeAll(async () => {
-  const { migratorUrl, appUrl, dispose } = await createTestDb('sosedo_test_api_mgmt');
+  const { migratorUrl, appUrl, dispose } = await createTestDb('inova_test_api_mgmt');
   disposeDb = dispose;
   process.env.DATABASE_URL = appUrl;
 
@@ -90,9 +90,9 @@ beforeAll(async () => {
   adminPool = new pg.Pool({ connectionString: migratorUrl, max: 2 });
 
   const tenants = await adminPool.query('SELECT id, key FROM tenants ORDER BY key');
-  tenantA = tenants.rows.find((r) => r.key === 'sosedo').id;
+  tenantA = tenants.rows.find((r) => r.key === 'inova').id;
   tenantB = tenants.rows.find((r) => r.key === 'demo').id;
-  mariaId = (await adminPool.query(`SELECT id FROM users WHERE email = 'maria@sosedo.bg'`)).rows[0]
+  mariaId = (await adminPool.query(`SELECT id FROM users WHERE email = 'maria@inova.bg'`)).rows[0]
     .id;
   elenaId = (await adminPool.query(`SELECT id FROM users WHERE phone = '+359881000001'`)).rows[0]
     .id;
@@ -104,7 +104,7 @@ beforeAll(async () => {
   // An active manager so we can exercise staff.manage without roles.manage.
   managerId = (
     await adminPool.query(
-      `INSERT INTO users (email, full_name, status) VALUES ('manager@sosedo.bg', 'Test Manager', 'active') RETURNING id`,
+      `INSERT INTO users (email, full_name, status) VALUES ('manager@inova.bg', 'Test Manager', 'active') RETURNING id`,
     )
   ).rows[0].id;
   await adminPool.query(
@@ -194,7 +194,7 @@ describe('Roles endpoints', () => {
 describe('Staff endpoints', () => {
   it('invites a new staff member and records an invite code', async () => {
     const res = await admin.post('/tenant/staff', {
-      email: 'nikol@sosedo.bg',
+      email: 'nikol@inova.bg',
       fullName: 'Nikol Petrova',
       phone: '+359881000099',
       roleKey: 'manager',
@@ -211,7 +211,7 @@ describe('Staff endpoints', () => {
 
     // Duplicate invite → conflict.
     const dup = await admin.post('/tenant/staff', {
-      email: 'nikol@sosedo.bg',
+      email: 'nikol@inova.bg',
       fullName: 'Nikol Petrova',
       roleKey: 'manager',
     });
@@ -220,7 +220,7 @@ describe('Staff endpoints', () => {
 
   it('rejects invites to a nonexistent role (400)', async () => {
     const res = await admin.post('/tenant/staff', {
-      email: 'somebody@sosedo.bg',
+      email: 'somebody@inova.bg',
       fullName: 'Some Body',
       roleKey: 'ghost-role',
     });
@@ -229,7 +229,7 @@ describe('Staff endpoints', () => {
 
   it('denies staff mutations to residents (403)', async () => {
     const res = await resident.post('/tenant/staff', {
-      email: 'x@sosedo.bg',
+      email: 'x@inova.bg',
       fullName: 'X Y',
       roleKey: 'resident',
     });

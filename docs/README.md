@@ -22,8 +22,8 @@ inside the implementation plan.
 | File                                              | Status                                                         |
 | ------------------------------------------------- | -------------------------------------------------------------- |
 | [M0-foundations.md](milestones/M0-foundations.md) | Local foundations done; original M0 infra extras live in M-Ops |
-| [M1-identity.md](milestones/M1-identity.md)       | Backend + admin done; Redis denylist and worker pending        |
-| [M2-property.md](milestones/M2-property.md)       | **Current target**                                             |
+| [M1-identity.md](milestones/M1-identity.md)       | **Current prerequisite:** B8 tenant-account realm refactor     |
+| [M2-property.md](milestones/M2-property.md)       | Next after the B8 identity refactor                            |
 | [M3-fees.md](milestones/M3-fees.md)               | Not started                                                    |
 | [M4-payments.md](milestones/M4-payments.md)       | Not started                                                    |
 

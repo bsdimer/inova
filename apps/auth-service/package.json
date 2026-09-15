@@ -1,5 +1,5 @@
 {
-  "name": "@sosedo/auth-service",
+  "name": "@inova/auth-service",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -18,7 +18,7 @@
     "@nestjs/platform-express": "^11.0.0",
     "@nestjs/swagger": "^11.0.0",
     "@nestjs/throttler": "^6.5.0",
-    "@sosedo/shared": "workspace:*",
+    "@inova/shared": "workspace:*",
     "bcryptjs": "^3.0.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",

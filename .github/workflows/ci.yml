@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  TEST_PG_URL: postgres://sosedo:sosedo@localhost:5432
+  TEST_PG_URL: postgres://inova:inova@localhost:5432
 
 # pnpm version comes from package.json "packageManager" only. Do not also
 # pass version to pnpm/action-setup — it fails with Multiple versions specified.
@@ -68,13 +68,13 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: sosedo
-          POSTGRES_PASSWORD: sosedo
-          POSTGRES_DB: sosedo
+          POSTGRES_USER: inova
+          POSTGRES_PASSWORD: inova
+          POSTGRES_DB: inova
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U sosedo"
+          --health-cmd "pg_isready -U inova"
           --health-interval 5s
           --health-timeout 3s
           --health-retries 10
@@ -95,13 +95,13 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: sosedo
-          POSTGRES_PASSWORD: sosedo
-          POSTGRES_DB: sosedo
+          POSTGRES_USER: inova
+          POSTGRES_PASSWORD: inova
+          POSTGRES_DB: inova
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U sosedo"
+          --health-cmd "pg_isready -U inova"
           --health-interval 5s
           --health-timeout 3s
           --health-retries 10
@@ -113,11 +113,11 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @sosedo/shared build
+      - run: pnpm --filter @inova/shared build
       - name: Auth flows
-        run: pnpm --filter @sosedo/auth-service test
+        run: pnpm --filter @inova/auth-service test
       - name: Staff / roles RBAC
-        run: pnpm --filter @sosedo/api exec vitest run test/staff-roles.e2e.test.ts
+        run: pnpm --filter @inova/api exec vitest run test/staff-roles.e2e.test.ts
 
   tenant-isolation:
     name: tenant-isolation
@@ -126,13 +126,13 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: sosedo
-          POSTGRES_PASSWORD: sosedo
-          POSTGRES_DB: sosedo
+          POSTGRES_USER: inova
+          POSTGRES_PASSWORD: inova
+          POSTGRES_DB: inova
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U sosedo"
+          --health-cmd "pg_isready -U inova"
           --health-interval 5s
           --health-timeout 3s
           --health-retries 10
@@ -144,6 +144,6 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @sosedo/shared build
+      - run: pnpm --filter @inova/shared build
       - name: Isolation + schema contract
-        run: pnpm --filter @sosedo/api test:isolation
+        run: pnpm --filter @inova/api test:isolation

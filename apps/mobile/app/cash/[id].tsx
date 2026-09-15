@@ -8,7 +8,7 @@ import { AppBackground } from '../../src/components/AppBackground';
 import { GlassCircleButton } from '../../src/components/GlassCircleButton';
 import { GlassView } from '../../src/components/GlassView';
 import { GradientButton } from '../../src/components/GradientButton';
-import { BrandLockup } from '../../src/components/SosedoLogo';
+import { BrandLockup } from '../../src/components/InovaLogo';
 import { formatEuro, getExpenseById, type ExpenseDetail } from '../../src/data/cashExpenses';
 import { metrics, rs } from '../../src/theme/responsive';
 import { darkTheme, glass, radius } from '../../src/theme/tokens';

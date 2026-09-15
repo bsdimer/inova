@@ -1,14 +1,14 @@
 ---
-name: sosedo-frontend
+name: inova-frontend
 description: >-
-  Sosedo admin (React/Vite) and mobile (Expo) frontend workflow. Use when
+  inova admin (React/Vite) and mobile (Expo) frontend workflow. Use when
   building or restyling screens, components, hooks, or visual QA — not for
   one-line copy or color-token tweaks. Does not override AGENTS.md, milestone
   scope, or architecture.
 disable-model-invocation: true
 ---
 
-# Sosedo frontend
+# inova frontend
 
 Workflow layer only. `AGENTS.md`, `docs/current.md`, and the active milestone
 file win if anything conflicts.

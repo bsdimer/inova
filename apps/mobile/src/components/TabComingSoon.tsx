@@ -9,7 +9,7 @@ import { glass } from '../theme/tokens';
 import { AppBackground } from './AppBackground';
 import { ComingSoon } from './ComingSoon';
 import { GlassCircleButton } from './GlassCircleButton';
-import { BrandLockup } from './SosedoLogo';
+import { BrandLockup } from './InovaLogo';
 
 interface Props {
   title: string;

@@ -1,19 +1,19 @@
 {
   "expo": {
-    "name": "Sosedo",
-    "slug": "sosedo",
+    "name": "inova",
+    "slug": "inova",
     "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "sosedo",
+    "scheme": "inova",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "bg.sosedo.resident"
+      "bundleIdentifier": "bg.inova.resident"
     },
     "android": {
-      "package": "bg.sosedo.resident",
+      "package": "bg.inova.resident",
       "adaptiveIcon": {
         "backgroundColor": "#EFECE3",
         "foregroundImage": "./assets/android-icon-foreground.png",

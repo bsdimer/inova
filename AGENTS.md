@@ -1,8 +1,9 @@
 # AGENTS.md — instructions for coding agents and developers
 
-Sosedo is a multi-tenant, white-label SaaS platform for property-management companies:
-NestJS backend services, React admin panel, Expo resident app, PostgreSQL. Bulgarian
-pilot under the platform's own "Sosedo" brand.
+inova is a multi-tenant, white-label SaaS platform operated by WhiteNova
+Technology for property-management companies: NestJS backend services, React
+admin panel, Expo resident app, PostgreSQL. Bulgarian pilot under the
+platform's own "inova" brand.
 
 ## Session ritual (every task)
 
@@ -87,7 +88,7 @@ docker compose -f infra/docker/docker-compose.yml up -d
 pnpm db:migrate && pnpm db:seed
 pnpm check:admin                    # fast admin lint + typecheck + build loop
 pnpm verify                         # format, lint, typecheck, tests, contracts, build
-pnpm --filter @sosedo/api dev       # or: auth-service, admin, mobile
+pnpm --filter @inova/api dev       # or: auth-service, admin, mobile
 ```
 
 If port 4000 is taken: `API_PORT=4100`.
@@ -95,7 +96,7 @@ If port 4000 is taken: `API_PORT=4100`.
 ## UI conventions
 
 - Colors/gradients come from brand tokens — mobile:
-  `apps/mobile/src/theme/tokens.ts` (mirror of `brands/sosedo/brand.json`);
+  `apps/mobile/src/theme/tokens.ts` (mirror of `brands/inova/brand.json`);
   admin: Tailwind `@theme` in `apps/admin/src/styles.css`. No hardcoded hex in
   screens. Palette: Santiago Orange `#EB5E28`, cold foam `#EFECE3`, gold black
   `#1D1D1F`, warm dark `#2C2324`, landmark `#766754`, stone `#A79D90`.
@@ -107,7 +108,7 @@ If port 4000 is taken: `API_PORT=4100`.
 - Keep user-facing strings extractable for `packages/i18n` (bg/en).
 
 For larger frontend work, read and follow the canonical
-[`sosedo-frontend`](.cursor/skills/sosedo-frontend/SKILL.md) workflow. Cursor may
+[`inova-frontend`](.cursor/skills/inova-frontend/SKILL.md) workflow. Cursor may
 invoke it directly; Claude has a thin adapter; Codex follows this link. Small
 visual fixes do not need it.
 
@@ -141,4 +142,4 @@ integration tests, architecture contracts, and build. Also:
 | Milestone scope + acceptance       | [docs/milestones/](docs/milestones/)                       |
 | Session history                    | [docs/work-log/](docs/work-log/)                           |
 | Feature scope + acceptance         | [docs/features/](docs/features/)                           |
-| Frontend workflow                  | `.cursor/skills/sosedo-frontend/SKILL.md`                  |
+| Frontend workflow                  | `.cursor/skills/inova-frontend/SKILL.md`                   |

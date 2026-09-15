@@ -19,6 +19,7 @@ export const brandConfigSchema = z.object({
   key: z.string().min(1),
   name: z.string().min(1),
   displayName: z.string().min(1),
+  company: z.object({ legalName: z.string().min(1) }),
   tagline: z.string(),
   description: z.string(),
   values: z.array(z.string()),

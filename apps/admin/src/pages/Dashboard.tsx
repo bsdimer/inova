@@ -16,7 +16,7 @@ const STATS = [
     delta: '-4.2%',
     up: false,
     icon: Banknote,
-    tint: 'text-brand-blue bg-brand-blue/10',
+    tint: 'text-ember bg-orange/10',
   },
   {
     label: 'Collected this month',
@@ -24,7 +24,7 @@ const STATS = [
     delta: '+12.8%',
     up: true,
     icon: TrendingUp,
-    tint: 'text-brand-green bg-brand-green/10',
+    tint: 'text-success bg-success/10',
   },
   {
     label: 'Open issues',
@@ -32,7 +32,7 @@ const STATS = [
     delta: '+3',
     up: false,
     icon: Wrench,
-    tint: 'text-brand-purple bg-brand-purple/10',
+    tint: 'text-landmark bg-landmark/10',
   },
   {
     label: 'Buildings',
@@ -40,7 +40,7 @@ const STATS = [
     delta: '+1',
     up: true,
     icon: Building2,
-    tint: 'text-navy bg-navy/10',
+    tint: 'text-gold-black bg-gold-black/8',
   },
 ] as const;
 
@@ -84,7 +84,7 @@ export function DashboardPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight">Dashboard</h1>
-        <p className="mt-1 text-sm text-ink-secondary">
+        <p className="mt-1 text-sm text-landmark">
           Cross-portfolio overview — mock data until the reports API ships (M9).
         </p>
       </div>
@@ -97,7 +97,7 @@ export function DashboardPage() {
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: i * 0.07 }}
-            className="rounded-2xl bg-white p-5 shadow-sm shadow-navy/5 transition-shadow hover:shadow-md hover:shadow-navy/10"
+            className="rounded-3xl border border-sand/70 bg-white/80 p-5 shadow-sm shadow-landmark/5 backdrop-blur transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-landmark/10"
           >
             <div className="flex items-center justify-between">
               <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${tint}`}>
@@ -105,7 +105,7 @@ export function DashboardPage() {
               </span>
               <span
                 className={`flex items-center gap-0.5 text-xs font-bold ${
-                  up ? 'text-brand-green' : 'text-ink-secondary'
+                  up ? 'text-success' : 'text-landmark'
                 }`}
               >
                 {up ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
@@ -113,7 +113,7 @@ export function DashboardPage() {
               </span>
             </div>
             <p className="mt-4 text-2xl font-extrabold tracking-tight">{value}</p>
-            <p className="mt-0.5 text-sm font-medium text-ink-secondary">{label}</p>
+            <p className="mt-0.5 text-sm font-medium text-landmark">{label}</p>
           </motion.div>
         ))}
       </div>
@@ -123,17 +123,17 @@ export function DashboardPage() {
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, delay: 0.3 }}
-        className="overflow-hidden rounded-2xl bg-white shadow-sm shadow-navy/5"
+        className="overflow-x-auto rounded-3xl border border-sand/70 bg-white/80 shadow-sm shadow-landmark/5 backdrop-blur"
       >
         <div className="flex items-center justify-between px-6 py-4">
           <h2 className="font-bold">Recent payments</h2>
-          <button className="text-sm font-semibold text-brand-blue hover:underline">
+          <button className="text-sm font-semibold text-ember hover:text-orange hover:underline">
             View all
           </button>
         </div>
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-y border-navy/8 bg-mist/60 text-xs font-semibold tracking-wider text-ink-secondary uppercase">
+            <tr className="border-y border-sand/80 bg-cream/70 text-xs font-semibold tracking-wider text-landmark uppercase">
               <th className="px-6 py-3">Resident</th>
               <th className="px-6 py-3">Apartment</th>
               <th className="px-6 py-3">Method</th>
@@ -145,12 +145,12 @@ export function DashboardPage() {
             {RECENT_PAYMENTS.map((p) => (
               <tr
                 key={p.id}
-                className="border-b border-navy/5 transition-colors last:border-0 hover:bg-mist/40"
+                className="border-b border-sand/60 transition-colors last:border-0 hover:bg-orange/4"
               >
                 <td className="px-6 py-3.5 font-semibold">{p.resident}</td>
-                <td className="px-6 py-3.5 text-ink-secondary">{p.building}</td>
-                <td className="px-6 py-3.5 text-ink-secondary">{p.method}</td>
-                <td className="px-6 py-3.5 text-ink-secondary">{p.time}</td>
+                <td className="px-6 py-3.5 text-landmark">{p.building}</td>
+                <td className="px-6 py-3.5 text-landmark">{p.method}</td>
+                <td className="px-6 py-3.5 text-landmark">{p.time}</td>
                 <td className="px-6 py-3.5 text-right font-bold">{p.amount}</td>
               </tr>
             ))}

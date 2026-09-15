@@ -8,7 +8,7 @@ export type Db = NodePgDatabase<typeof schema>;
 export type IdentityTx = Parameters<Parameters<Db['transaction']>[0]>[0];
 
 /**
- * Connects as the non-privileged `sosedo_app` role. Identity tables are RLS-protected;
+ * Connects as the non-privileged `inova_app` role. Identity tables are RLS-protected;
  * every query must run inside identityTx(), which sets `app.identity_scope = 'auth'`
  * for the transaction (the policy-based allowance for the identity service — see
  * db/migrations/0001).
@@ -21,7 +21,7 @@ export class DbService implements OnModuleDestroy {
   constructor() {
     this.pool = new Pool({
       connectionString:
-        process.env.DATABASE_URL ?? 'postgres://sosedo_app:sosedo_app@localhost:5432/sosedo',
+        process.env.DATABASE_URL ?? 'postgres://inova_app:inova_app@localhost:5432/inova',
       max: 10,
     });
     this.db = drizzle(this.pool, { schema });

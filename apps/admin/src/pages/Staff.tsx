@@ -54,10 +54,10 @@ export function StaffPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight">Staff</h1>
-          <p className="mt-1 text-sm text-ink-secondary">
+          <p className="mt-1 text-sm text-landmark">
             People who can sign in to this organization and what they are allowed to do.
           </p>
         </div>
@@ -74,11 +74,11 @@ export function StaffPage() {
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
-        className="overflow-hidden rounded-2xl bg-white shadow-sm shadow-navy/5"
+        className="overflow-x-auto rounded-3xl border border-sand/70 bg-white/80 shadow-sm shadow-landmark/5 backdrop-blur"
       >
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-navy/8 bg-mist/60 text-xs font-semibold tracking-wider text-ink-secondary uppercase">
+            <tr className="border-b border-sand/80 bg-cream/70 text-xs font-semibold tracking-wider text-landmark uppercase">
               <th className="px-6 py-3">Member</th>
               <th className="px-6 py-3">Contact</th>
               <th className="px-6 py-3">Role</th>
@@ -90,7 +90,7 @@ export function StaffPage() {
           <tbody>
             {staff.isLoading && (
               <tr>
-                <td colSpan={6} className="px-6 py-10 text-center text-ink-secondary">
+                <td colSpan={6} className="px-6 py-10 text-center text-landmark">
                   Loading staff…
                 </td>
               </tr>
@@ -100,20 +100,20 @@ export function StaffPage() {
               return (
                 <tr
                   key={member.userId}
-                  className="border-b border-navy/5 transition-colors last:border-0 hover:bg-mist/40"
+                  className="border-b border-sand/60 transition-colors last:border-0 hover:bg-orange/4"
                 >
                   <td className="px-6 py-3.5">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-green text-sm font-bold text-white">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[35%] bg-gradient-to-br from-orange-bright to-orange text-sm font-bold text-white shadow-sm shadow-orange/15">
                         {member.fullName.slice(0, 1).toUpperCase()}
                       </span>
                       <span className="font-semibold">
                         {member.fullName}
-                        {isSelf && <span className="ml-2 text-xs text-ink-secondary">(you)</span>}
+                        {isSelf && <span className="ml-2 text-xs text-landmark">(you)</span>}
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-3.5 text-ink-secondary">
+                  <td className="px-6 py-3.5 text-landmark">
                     <p>{member.email ?? '—'}</p>
                     {member.phone && <p className="text-xs">{member.phone}</p>}
                   </td>
@@ -124,7 +124,7 @@ export function StaffPage() {
                       onChange={(e) =>
                         update.mutate({ userId: member.userId, roleKey: e.target.value })
                       }
-                      className="rounded-lg border border-navy/10 bg-white px-2.5 py-1.5 text-sm font-semibold outline-none focus:border-brand-blue disabled:opacity-50"
+                      className="rounded-lg border border-sand bg-white/80 px-2.5 py-1.5 text-sm font-semibold outline-none focus:border-orange disabled:opacity-50"
                     >
                       {(roles.data ?? [{ key: member.roleKey, name: member.roleKey }]).map(
                         (role) => (
@@ -138,7 +138,7 @@ export function StaffPage() {
                   <td className="px-6 py-3.5">
                     <StatusBadge status={member.status} />
                   </td>
-                  <td className="px-6 py-3.5 text-ink-secondary">
+                  <td className="px-6 py-3.5 text-landmark">
                     {new Date(member.since).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-3.5">
@@ -185,7 +185,7 @@ export function StaffPage() {
             })}
             {staff.data?.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-6 py-10 text-center text-ink-secondary">
+                <td colSpan={6} className="px-6 py-10 text-center text-landmark">
                   No staff members yet.
                 </td>
               </tr>
@@ -258,11 +258,11 @@ function InviteModal({
     <Modal open={open} title={invited ? 'Invite sent' : 'Invite a staff member'} onClose={reset}>
       {invited ? (
         <div className="space-y-4">
-          <p className="text-sm text-ink-secondary">
-            <strong className="text-navy">{fullName}</strong> was added with an activation code.
-            They activate their account from the mobile or web app using the code.
+          <p className="text-sm text-landmark">
+            <strong className="text-gold-black">{fullName}</strong> was added with an activation
+            code. They activate their account from the mobile or web app using the code.
           </p>
-          <p className="rounded-xl bg-brand-blue/8 px-3.5 py-2.5 text-xs font-medium text-brand-blue">
+          <p className="rounded-xl border border-orange/15 bg-orange/8 px-3.5 py-2.5 text-xs font-medium text-ember">
             Dev note: SMS/Viber delivery is mocked until the gateway lands — the code is printed in
             the core-api console.
           </p>
@@ -329,11 +329,9 @@ function InviteModal({
 
 export function AccessNote({ page }: { page: string }) {
   return (
-    <div className="rounded-2xl bg-white p-10 text-center shadow-sm shadow-navy/5">
+    <div className="rounded-3xl border border-sand/70 bg-white/80 p-10 text-center shadow-sm shadow-landmark/5 backdrop-blur">
       <h1 className="text-xl font-extrabold">{page}</h1>
-      <p className="mt-2 text-sm text-ink-secondary">
-        Your role doesn't include access to this page.
-      </p>
+      <p className="mt-2 text-sm text-landmark">Your role doesn't include access to this page.</p>
     </div>
   );
 }

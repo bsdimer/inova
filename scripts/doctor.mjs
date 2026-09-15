@@ -33,7 +33,7 @@ function run(cmd, args) {
   return r.status === 0 ? r.stdout.trim() : null;
 }
 
-console.log('Sosedo doctor\n');
+console.log('inova doctor\n');
 
 const nodeMajor = Number(process.versions.node.split('.')[0]);
 const wantNode = 22;
@@ -71,7 +71,7 @@ for (const key of required) {
 }
 
 const migratorUrl =
-  process.env.DATABASE_URL_MIGRATOR ?? 'postgres://sosedo:sosedo@localhost:5432/sosedo';
+  process.env.DATABASE_URL_MIGRATOR ?? 'postgres://inova:inova@localhost:5432/inova';
 
 try {
   const client = new pg.Client({ connectionString: migratorUrl, connectionTimeoutMillis: 3000 });
@@ -80,14 +80,14 @@ try {
   ok(`PostgreSQL ${ready.rows[0].db} as ${ready.rows[0].user}`);
 
   const bypass = await client.query(
-    `SELECT rolbypassrls FROM pg_roles WHERE rolname = 'sosedo_app'`,
+    `SELECT rolbypassrls FROM pg_roles WHERE rolname = 'inova_app'`,
   );
   if (bypass.rowCount === 0) {
-    warn('role sosedo_app missing', 'pnpm db:migrate (creates the runtime role)');
+    warn('role inova_app missing', 'pnpm db:migrate (creates the runtime role)');
   } else if (bypass.rows[0].rolbypassrls) {
-    fail('sosedo_app has BYPASSRLS', 'This is a security bug — do not grant BYPASSRLS');
+    fail('inova_app has BYPASSRLS', 'This is a security bug — do not grant BYPASSRLS');
   } else {
-    ok('sosedo_app exists and does not bypass RLS');
+    ok('inova_app exists and does not bypass RLS');
   }
 
   const applied = await client
@@ -105,8 +105,8 @@ try {
   const msg = err instanceof Error ? err.message : String(err);
   if (/password authentication failed/i.test(msg)) {
     fail(
-      `PostgreSQL on this port is not the Sosedo instance (${migratorUrl})`,
-      'Stop the other Postgres on :5432, or: docker compose -f infra/docker/docker-compose.yml up -d, or set TEST_PG_URL / DATABASE_URL_MIGRATOR to the Sosedo cluster',
+      `PostgreSQL on this port is not the inova instance (${migratorUrl})`,
+      'Stop the other Postgres on :5432, or: docker compose -f infra/docker/docker-compose.yml up -d, or set TEST_PG_URL / DATABASE_URL_MIGRATOR to the inova cluster',
     );
   } else {
     fail(
@@ -118,8 +118,8 @@ try {
 }
 
 const redisUrl = process.env.REDIS_URL ?? 'redis://localhost:6379';
-const redis = run('docker', ['exec', 'sosedo-redis', 'redis-cli', 'ping']);
-if (redis === 'PONG') ok('Redis (sosedo-redis) PONG');
+const redis = run('docker', ['exec', 'inova-redis', 'redis-cli', 'ping']);
+if (redis === 'PONG') ok('Redis (inova-redis) PONG');
 else
   warn(
     `Redis not reachable (${redisUrl})`,

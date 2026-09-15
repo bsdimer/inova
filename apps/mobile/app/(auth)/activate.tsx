@@ -11,7 +11,7 @@ import { GlassCircleButton } from '../../src/components/GlassCircleButton';
 import { GlassView } from '../../src/components/GlassView';
 import { GradientButton } from '../../src/components/GradientButton';
 import { PressableScale } from '../../src/components/PressableScale';
-import { BrandLockup } from '../../src/components/SosedoLogo';
+import { BrandLockup } from '../../src/components/InovaLogo';
 import { metrics, rs } from '../../src/theme/responsive';
 import { glass, palette } from '../../src/theme/tokens';
 

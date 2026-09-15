@@ -5,12 +5,12 @@ import pg from 'pg';
 const repoRoot = path.resolve(__dirname, '..', '..', '..');
 
 /** Cluster URL without a database name; CI overrides via TEST_PG_URL. */
-const clusterUrl = process.env.TEST_PG_URL ?? 'postgres://sosedo:sosedo@localhost:5432';
+const clusterUrl = process.env.TEST_PG_URL ?? 'postgres://inova:inova@localhost:5432';
 
 export interface TestDb {
   /** Privileged connection (migrations, fixtures, cross-tenant assertions). */
   migratorUrl: string;
-  /** RLS-enforced `sosedo_app` connection — what the services actually use. */
+  /** RLS-enforced `inova_app` connection — what the services actually use. */
   appUrl: string;
   dispose: () => Promise<void>;
 }
@@ -39,7 +39,7 @@ export async function createTestDb(prefix: string): Promise<TestDb> {
     stdio: 'pipe',
   });
 
-  const appUrl = `${migratorUrl.replace(/\/\/[^@]+@/, '//sosedo_app:sosedo_app@')}`;
+  const appUrl = `${migratorUrl.replace(/\/\/[^@]+@/, '//inova_app:inova_app@')}`;
   return {
     migratorUrl,
     appUrl,

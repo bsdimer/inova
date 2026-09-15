@@ -40,10 +40,10 @@ export function RolesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight">Roles</h1>
-          <p className="mt-1 text-sm text-ink-secondary">
+          <p className="mt-1 text-sm text-landmark">
             Each role maps to a set of permissions. The Administrator role is locked and always has
             every permission.
           </p>
@@ -66,17 +66,17 @@ export function RolesPage() {
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, delay: i * 0.06 }}
-              className="flex flex-col rounded-2xl bg-white p-5 shadow-sm shadow-navy/5"
+              className="flex flex-col rounded-3xl border border-sand/70 bg-white/80 p-5 shadow-sm shadow-landmark/5 backdrop-blur transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-landmark/10"
             >
               <div className="flex items-start justify-between">
                 <div>
                   <h2 className="font-extrabold">{role.name}</h2>
-                  <p className="text-xs text-ink-secondary">
+                  <p className="text-xs text-landmark">
                     {role.key}
                     {role.isSystem && ' · system'}
                   </p>
                 </div>
-                <span className="flex items-center gap-1.5 rounded-full bg-mist px-2.5 py-1 text-xs font-bold text-ink-secondary">
+                <span className="flex items-center gap-1.5 rounded-full bg-foam px-2.5 py-1 text-xs font-bold text-landmark">
                   <Users size={13} />
                   {role.members}
                 </span>
@@ -86,19 +86,19 @@ export function RolesPage() {
                 {role.permissions.map((p) => (
                   <span
                     key={p}
-                    className="rounded-full bg-brand-blue/8 px-2.5 py-1 text-xs font-semibold text-brand-blue"
+                    className="rounded-full bg-orange/8 px-2.5 py-1 text-xs font-semibold text-ember"
                   >
                     {p}
                   </span>
                 ))}
                 {role.permissions.length === 0 && (
-                  <span className="text-xs text-ink-secondary">No permissions</span>
+                  <span className="text-xs text-landmark">No permissions</span>
                 )}
               </div>
 
               <div className="mt-5 flex items-center gap-2">
                 {locked ? (
-                  <span className="flex items-center gap-1.5 text-xs font-semibold text-ink-secondary">
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-landmark">
                     <Lock size={13} /> Locked — always has all permissions
                   </span>
                 ) : (
@@ -239,19 +239,19 @@ function RoleEditor({
                 key={permission.key}
                 className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 p-3 transition-colors ${
                   selected.has(permission.key)
-                    ? 'border-brand-blue bg-brand-blue/5'
-                    : 'border-navy/8 hover:border-navy/15'
+                    ? 'border-orange bg-orange/5'
+                    : 'border-sand hover:border-stone'
                 }`}
               >
                 <input
                   type="checkbox"
                   checked={selected.has(permission.key)}
                   onChange={() => toggle(permission.key)}
-                  className="mt-0.5 accent-brand-blue"
+                  className="mt-0.5 accent-orange"
                 />
                 <span>
                   <span className="block text-sm font-bold">{permission.key}</span>
-                  <span className="block text-xs text-ink-secondary">{permission.description}</span>
+                  <span className="block text-xs text-landmark">{permission.description}</span>
                 </span>
               </label>
             ))}

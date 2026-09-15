@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { parseBrandConfig, type BrandConfig } from '@sosedo/shared';
+import { parseBrandConfig, type BrandConfig } from '@inova/shared';
 import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 

@@ -1,5 +1,5 @@
 /**
- * Sosedo design tokens — mirror of /brands/sosedo/brand.json.
+ * inova design tokens — mirror of /brands/inova/brand.json.
  * In the shared multi-brand app these are eventually hydrated at runtime from
  * GET /v1/brands/:key/config; this file provides the compiled-in default brand.
  *
@@ -93,7 +93,8 @@ export const glass = {
 } as const;
 
 export const brand = {
-  name: 'Sosedo',
+  name: 'inova',
+  companyName: 'WhiteNova Technology',
   tagline: ['Together', 'Better', 'Home'] as const,
   taglineAccents: [palette.orange, palette.stone, palette.ember] as const,
 } as const;

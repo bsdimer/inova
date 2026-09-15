@@ -1,9 +1,9 @@
 ---
-description: Sosedo session harness — what to read, how to finish, where status lives
+description: inova session harness — what to read, how to finish, where status lives
 alwaysApply: true
 ---
 
-# Sosedo harness
+# inova harness
 
 This rule is the shareable development harness. It does not override
 `AGENTS.md` or milestone scope.
@@ -12,7 +12,7 @@ This rule is the shareable development harness. It does not override
 
 1. Read `AGENTS.md` (already in context) and `docs/current.md`.
 2. Open only one extra file: the relevant `docs/milestones/M*.md`, an ADR, or
-   `.cursor/skills/sosedo-frontend/SKILL.md` for larger UI work.
+   `.cursor/skills/inova-frontend/SKILL.md` for larger UI work.
 3. Check `git status`. Do not build ahead of the current milestone in
    `docs/current.md`.
 
@@ -24,7 +24,7 @@ This rule is the shareable development harness. It does not override
    how it was verified, what remains.
 4. Mark mocks with `TODO(M<n>)` or `MOCK`. Never commit secrets or `.env`.
 
-For larger frontend work, read and follow the canonical `sosedo-frontend` skill;
+For larger frontend work, read and follow the canonical `inova-frontend` skill;
 it selects the small, feature, domain, or bug route and uses a brief only when
 needed.
 
