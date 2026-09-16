@@ -104,7 +104,7 @@ export function GhostButton({
 const STATUS_STYLES: Record<string, string> = {
   active: 'bg-success/10 text-success',
   invited: 'bg-orange/10 text-ember',
-  suspended: 'bg-amber-500/10 text-amber-600',
+  suspended: 'bg-warning/10 text-warning',
   revoked: 'bg-danger/10 text-danger',
   trial: 'bg-landmark/10 text-landmark',
   offboarded: 'bg-stone/15 text-landmark',
