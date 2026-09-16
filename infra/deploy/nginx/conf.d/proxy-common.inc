@@ -1,4 +1,6 @@
-# Shared upstream headers. Included by every proxying location.
+# Shared upstream headers, included by every proxying location.
+# Named .inc, not .conf: nginx.conf auto-includes conf.d/*.conf into the
+# http block, and these directives belong in a location.
 proxy_http_version 1.1;
 proxy_set_header Host $host;
 proxy_set_header X-Real-IP $remote_addr;

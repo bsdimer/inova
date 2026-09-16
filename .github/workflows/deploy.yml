@@ -112,11 +112,16 @@ jobs:
         env:
           TARGET: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
         run: |
-          # Config is replaced wholesale so a file deleted from the repo also
-          # disappears from the host. .env and secrets/ live outside these
-          # directories and are never touched.
-          ssh -i ~/.ssh/deploy_key "$TARGET" \
-            'mkdir -p /opt/inova && rm -rf /opt/inova/nginx /opt/inova/scripts /opt/inova/systemd'
+          # A file deleted from the repo must also disappear from the host,
+          # but nginx bind-mounts /opt/inova/nginx/conf.d: removing that
+          # directory would leave the running container attached to the old
+          # inode, seeing it empty. Clear its contents and keep the directory.
+          # .env and secrets/ live outside these paths and are never touched.
+          ssh -i ~/.ssh/deploy_key "$TARGET" '
+            mkdir -p /opt/inova/nginx/conf.d
+            find /opt/inova/nginx/conf.d -mindepth 1 -delete
+            rm -rf /opt/inova/scripts /opt/inova/systemd
+          '
           tar -czf - -C infra/deploy . \
             | ssh -i ~/.ssh/deploy_key "$TARGET" 'tar -xzf - -C /opt/inova'
 

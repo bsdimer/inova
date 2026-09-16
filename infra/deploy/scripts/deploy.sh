@@ -68,8 +68,21 @@ done
 log "reloading nginx"
 # Config files are bind-mounted, so a changed config needs an explicit reload;
 # `up -d` will not recreate the container for a file-content change.
-docker compose exec -T nginx nginx -t
-docker compose exec -T nginx nginx -s reload
+#
+# But a bind-mounted directory that was replaced on the host (rather than
+# rewritten in place) leaves the container holding the old, unlinked inode,
+# which it sees as empty. Reloading into that state silently strips nginx of
+# every listen directive and takes the site down while still reporting
+# success. Compare what the container sees with what is on disk first.
+host_config_sum=$(md5sum "$STACK_DIR/nginx/conf.d/portal.conf" | cut -d' ' -f1)
+container_config_sum=$(docker compose exec -T nginx md5sum /etc/nginx/conf.d/portal.conf 2>/dev/null | cut -d' ' -f1 || true)
+if [ "$host_config_sum" != "$container_config_sum" ]; then
+  log "nginx is not seeing the current config — recreating the container"
+  docker compose up -d --force-recreate nginx
+else
+  docker compose exec -T nginx nginx -t
+  docker compose exec -T nginx nginx -s reload
+fi
 
 log "verifying through the proxy"
 curl -fsS --max-time 10 "https://$DOMAIN/api/v1/health" >/dev/null
