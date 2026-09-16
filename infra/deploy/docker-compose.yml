@@ -136,7 +136,6 @@ services:
       - '443:443'
     volumes:
       - /opt/inova/nginx/conf.d:/etc/nginx/conf.d:ro
-      - /opt/inova/nginx/proxy-common.conf:/etc/nginx/proxy-common.conf:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - certbot-webroot:/var/www/certbot:ro
     healthcheck:
