@@ -23,6 +23,9 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
   login, shell, shared controls, cards, tables, modals, and responsive
   navigation. Dashboard stats still mock.
 - Quality gates: `pnpm verify` (format, lint, typecheck, unit, integration, architecture contracts, build). GitHub Actions CI installs pnpm from `package.json` `packageManager` (`pnpm@10.34.5`); do not also pass `version` to `pnpm/action-setup`.
+  Locally the repo needs **Node >= 22** (`engines`): on Node 20.11 `verify`
+  dies at `test:unit` before any project code runs, because rolldown imports
+  `util.styleText` (added in Node 20.12).
 
 ## Tests (release blockers)
 

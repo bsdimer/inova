@@ -109,7 +109,7 @@ export function LoginPage() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="w-full max-w-md rounded-[2rem] border border-white/80 bg-cream/75 p-7 shadow-2xl shadow-landmark/10 backdrop-blur sm:p-10"
+          className="w-full max-w-md rounded-3xl border border-white/80 bg-cream/75 p-7 shadow-2xl shadow-landmark/10 backdrop-blur sm:p-10"
         >
           <div className="mb-10 flex items-center gap-4 lg:hidden">
             <InovaMark size={48} />

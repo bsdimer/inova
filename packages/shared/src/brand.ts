@@ -12,6 +12,7 @@ export const brandThemeSchema = z.object({
   primary: hexColor,
   success: hexColor,
   accent: hexColor,
+  warning: hexColor,
   danger: hexColor,
 });
 

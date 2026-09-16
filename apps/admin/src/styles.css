@@ -12,7 +12,14 @@
   --color-landmark: #766754;
   --color-stone: #a79d90;
   --color-success: #2e9e6b;
+  --color-warning: #a45f0b;
   --color-danger: #d64545;
+
+  /* Radius scale from brands/inova/brand.json, which the mobile app mirrors.
+     Overrides Tailwind's 16/24 defaults so both clients round the same way. */
+  --radius-xl: 12px; /* brand sm */
+  --radius-2xl: 18px; /* brand md */
+  --radius-3xl: 28px; /* brand lg */
 
   --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }

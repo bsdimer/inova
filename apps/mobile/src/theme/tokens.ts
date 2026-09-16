@@ -17,6 +17,7 @@ export const palette = {
   espresso: '#2C2324', // warm dark surface
   landmark: '#766754', // warm secondary text
   stone: '#A79D90',
+  warning: '#A45F0B', // attention, not failure: suspended, expired, overdue
   white: '#FFFFFF',
 } as const;
 
@@ -36,6 +37,7 @@ export interface ThemeColors {
   border: string;
   primary: string;
   success: string;
+  warning: string;
   accent: string;
   danger: string;
 }
@@ -49,6 +51,7 @@ export const lightTheme: ThemeColors = {
   border: '#E4DDCF',
   primary: '#EB5E28',
   success: '#2E9E6B',
+  warning: '#A45F0B',
   accent: '#A79D90',
   danger: '#D64545',
 };
@@ -62,6 +65,7 @@ export const darkTheme: ThemeColors = {
   border: '#3E3733',
   primary: '#FF7E47',
   success: '#4CBF8B',
+  warning: '#E8A33C',
   accent: '#A79D90',
   danger: '#FF6B61',
 };

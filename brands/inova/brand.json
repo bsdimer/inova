@@ -24,6 +24,7 @@
     "espresso": "#2C2324",
     "landmark": "#766754",
     "stone": "#A79D90",
+    "warning": "#A45F0B",
     "white": "#FFFFFF"
   },
   "gradients": {
@@ -41,6 +42,7 @@
       "border": "#E4DDCF",
       "primary": "#EB5E28",
       "success": "#2E9E6B",
+      "warning": "#A45F0B",
       "accent": "#A79D90",
       "danger": "#D64545"
     },
@@ -53,6 +55,7 @@
       "border": "#3E3733",
       "primary": "#FF7E47",
       "success": "#4CBF8B",
+      "warning": "#E8A33C",
       "accent": "#A79D90",
       "danger": "#FF6B61"
     }
