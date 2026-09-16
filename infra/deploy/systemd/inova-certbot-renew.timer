@@ -1,0 +1,12 @@
+[Unit]
+Description=Twice-daily Let's Encrypt renewal check for inova
+
+[Timer]
+# Let's Encrypt asks that renewals run twice a day at a random minute so the
+# ACME service does not see a thundering herd on the hour.
+OnCalendar=*-*-* 03,15:00:00
+RandomizedDelaySec=3600
+Persistent=true
+
+[Install]
+WantedBy=timers.target

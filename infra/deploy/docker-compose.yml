@@ -1,0 +1,182 @@
+# Test environment stack (204.168.180.167), deployed to /opt/inova.
+#
+# Images are built and pushed by .github/workflows/deploy.yml; this host only
+# pulls them. Postgres and Redis publish no ports — they are reachable only on
+# the internal compose network, so the host firewall is not the only thing
+# keeping them off the public internet.
+#
+# Values come from /opt/inova/.env, written once by scripts/provision.sh.
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '3'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: inova
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
+      POSTGRES_DB: inova
+    # 3.7 GB box shared with three Node services: keep Postgres modest and let
+    # the kernel page cache do the rest.
+    command:
+      - postgres
+      - -c
+      - shared_buffers=512MB
+      - -c
+      - effective_cache_size=1536MB
+      - -c
+      - max_connections=60
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U inova -d inova']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+    logging: *logging
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command:
+      [
+        'redis-server',
+        '--appendonly',
+        'yes',
+        '--maxmemory',
+        '128mb',
+        '--maxmemory-policy',
+        'noeviction',
+      ]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 192m
+    logging: *logging
+
+  auth-service:
+    image: ${IMAGE_REGISTRY:?set in .env}/inova-auth-service:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    init: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://inova_app:${APP_DB_PASSWORD:?set in .env}@postgres:5432/inova
+      REDIS_URL: redis://redis:6379
+      JWT_PRIVATE_KEY_PATH: /run/secrets/jwt-private.pem
+      AUTH_THROTTLE_STRICT: 'true'
+    volumes:
+      - /opt/inova/secrets/jwt-private.pem:/run/secrets/jwt-private.pem:ro
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    logging: *logging
+
+  api:
+    image: ${IMAGE_REGISTRY:?set in .env}/inova-api:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    init: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://inova_app:${APP_DB_PASSWORD:?set in .env}@postgres:5432/inova
+      REDIS_URL: redis://redis:6379
+      # JWKS is fetched over the internal network — no public round trip, and
+      # core-api still verifies tokens locally after the first fetch.
+      AUTH_JWKS_URL: http://auth-service:4001/.well-known/jwks.json
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    logging: *logging
+
+  admin:
+    image: ${IMAGE_REGISTRY:?set in .env}/inova-admin:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 64m
+    logging: *logging
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - admin
+      - api
+      - auth-service
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - /opt/inova/nginx/conf.d:/etc/nginx/conf.d:ro
+      - /opt/inova/nginx/proxy-common.conf:/etc/nginx/proxy-common.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - certbot-webroot:/var/www/certbot:ro
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:8080/healthz']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+    logging: *logging
+
+  # One-shot tooling, never started by `docker compose up`:
+  #   docker compose run --rm migrator
+  #   docker compose run --rm seed
+  # The auth-service image is the one that carries both pg and bcryptjs.
+  migrator:
+    image: ${IMAGE_REGISTRY:?set in .env}/inova-auth-service:${IMAGE_TAG:-latest}
+    profiles: ['tools']
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL_MIGRATOR: postgres://inova:${POSTGRES_PASSWORD:?set in .env}@postgres:5432/inova
+    command: ['node', 'db/migrate.mjs']
+    logging: *logging
+
+  seed:
+    image: ${IMAGE_REGISTRY:?set in .env}/inova-auth-service:${IMAGE_TAG:-latest}
+    profiles: ['tools']
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL_MIGRATOR: postgres://inova:${POSTGRES_PASSWORD:?set in .env}@postgres:5432/inova
+    command: ['node', 'db/seed.mjs']
+    logging: *logging
+
+volumes:
+  postgres-data:
+  redis-data:
+  certbot-webroot:

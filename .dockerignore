@@ -1,0 +1,19 @@
+# Keep the build context small: everything an image needs is copied explicitly.
+# apps/mobile is excluded except its package.json — pnpm --frozen-lockfile
+# validates every workspace importer listed in pnpm-lock.yaml.
+**/node_modules
+**/dist
+**/.turbo
+**/.expo
+.git
+.github
+.keys
+.env
+.env.*
+apps/mobile/*
+!apps/mobile/package.json
+docs
+output
+tmp
+coverage
+**/*.log
