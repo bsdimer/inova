@@ -1,0 +1,59 @@
+# syntax=docker/dockerfile:1.7
+#
+# Shared image for both NestJS services. Built from the repository root:
+#   docker build -f infra/deploy/Dockerfile.service --build-arg APP=api --build-arg PORT=4000 .
+#   docker build -f infra/deploy/Dockerfile.service --build-arg APP=auth-service --build-arg PORT=4001 .
+#
+# One file rather than two near-identical ones: the two services differ only in
+# workspace name and port.
+ARG NODE_VERSION=22-alpine
+
+FROM node:${NODE_VERSION} AS base
+RUN corepack enable
+WORKDIR /repo
+ENV CI=1
+
+# Dependencies resolve from the lockfile alone so this layer is cached until a
+# package.json changes. Every workspace importer in pnpm-lock.yaml must be
+# present or --frozen-lockfile rejects the workspace.
+FROM base AS deps
+ARG APP
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+COPY packages/shared/package.json packages/shared/
+COPY apps/admin/package.json apps/admin/
+COPY apps/api/package.json apps/api/
+COPY apps/auth-service/package.json apps/auth-service/
+COPY apps/mobile/package.json apps/mobile/
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile --filter "@inova/${APP}..."
+
+FROM deps AS build
+ARG APP
+COPY tsconfig.base.json ./
+COPY packages/shared packages/shared
+COPY apps/${APP} apps/${APP}
+# "..." selects the package and its workspace dependencies, built in
+# topological order (@inova/shared before the service that consumes its dist).
+RUN pnpm --filter "@inova/${APP}..." build
+# --legacy: this workspace does not use injected workspace packages.
+RUN pnpm --filter "@inova/${APP}" deploy --prod --legacy /out
+
+FROM node:${NODE_VERSION} AS runtime
+ARG PORT=4000
+WORKDIR /app
+COPY --from=build /out ./
+# Non-secret white-label config, read by core-api through BRANDS_DIR.
+COPY brands ./brands
+# Plain-SQL migrations and the seed run as one-shot containers from the
+# auth-service image, the only one carrying both pg and bcryptjs.
+COPY db ./db
+ENV NODE_ENV=production \
+    BRANDS_DIR=/app/brands \
+    SERVICE_PORT=${PORT} \
+    API_PORT=${PORT} \
+    AUTH_SERVICE_PORT=${PORT}
+USER node
+EXPOSE ${PORT}
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 CMD \
+  node -e "fetch('http://127.0.0.1:'+process.env.SERVICE_PORT+'/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+CMD ["node", "dist/main.js"]
