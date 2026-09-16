@@ -90,13 +90,17 @@ if [ ! -f "$STACK_DIR/secrets/jwt-private.pem" ]; then
   openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 \
     -out "$STACK_DIR/secrets/jwt-private.pem" 2>/dev/null
   # Rotating this key invalidates every issued access token.
-  # Owned by root so only root can replace it; group-readable by the image's
-  # `node` user, which is the uid the container reads it as.
-  chown "root:$NODE_UID" "$STACK_DIR/secrets/jwt-private.pem"
-  chmod 640 "$STACK_DIR/secrets/jwt-private.pem"
 else
   log "JWT signing key already present"
 fi
+
+# Enforced on every run, not only at creation. auth-service reads this file as
+# uid 1000 (`node`), so root ownership with a group the container is not in
+# makes it crash on boot with EACCES — and the crash only surfaces on the next
+# container recreate, long after whatever changed the ownership. Re-asserting
+# it here means a deploy repairs it instead of failing.
+chown "root:$NODE_UID" "$STACK_DIR/secrets/jwt-private.pem"
+chmod 640 "$STACK_DIR/secrets/jwt-private.pem"
 
 log "installing the certificate renewal timer"
 install -m 0644 "$STACK_DIR/systemd/inova-certbot-renew.service" /etc/systemd/system/
