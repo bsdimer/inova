@@ -27,8 +27,8 @@ export function StaffTable({ strip, children }: { strip?: ReactNode; children: R
       transition={{ duration: 0.35 }}
       className="@container"
     >
-      <div className="rounded-3xl border border-sand/70 bg-white/80 shadow-sm shadow-landmark/5 backdrop-blur">
-        <table className="w-full text-left text-sm">
+      <div className="overflow-x-auto rounded-3xl border border-sand/70 bg-white/80 shadow-sm shadow-landmark/5 backdrop-blur">
+        <table className="w-full min-w-[32rem] text-left text-sm">
           <thead>
             <tr className="border-b border-sand/80 bg-cream/70 text-xs font-semibold tracking-wider text-landmark uppercase">
               {COLUMNS.map((column) => (

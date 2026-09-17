@@ -111,7 +111,7 @@ export function StaffToolbar({
             Reset
           </button>
         )}
-        <div className="ml-auto">
+        <div className="w-full sm:ml-auto sm:w-auto">
           <Popover
             open={sortOpen}
             onClose={() => setSortOpen(false)}

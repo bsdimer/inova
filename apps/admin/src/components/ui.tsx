@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, ChevronDown, X } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 export function Modal({
   open,
@@ -214,10 +215,10 @@ export function FilterChip({ children, onClear }: { children: ReactNode; onClear
 }
 
 /**
- * Anchored popover; closes on outside click and Escape. With `align: 'auto'`
+ * Anchored popover rendered through a portal, so a scrollable card or table
+ * never clips it. It closes on outside click and Escape. With `align: 'auto'`
  * (the default) it measures itself after opening and hugs whichever edge of
- * the anchor keeps it inside the viewport, so a facet at the page edge never
- * causes horizontal scroll.
+ * the anchor keeps it inside the viewport.
  */
 export function Popover({
   open,
@@ -232,14 +233,16 @@ export function Popover({
   children: ReactNode;
   align?: 'left' | 'right' | 'auto';
 }) {
-  const ref = useRef<HTMLDivElement>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [side, setSide] = useState<'left' | 'right'>(align === 'right' ? 'right' : 'left');
+  const [box, setBox] = useState<{ top: number; left?: number; right?: number } | null>(null);
 
   useEffect(() => {
     if (!open) return;
     const onClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+      const target = e.target as Node;
+      if (anchorRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      onClose();
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -253,34 +256,60 @@ export function Popover({
   }, [open, onClose]);
 
   useLayoutEffect(() => {
-    if (!open || align !== 'auto' || !ref.current || !menuRef.current) return;
-    const anchorBox = ref.current.getBoundingClientRect();
-    const width = menuRef.current.offsetWidth;
-    const fitsLeft = anchorBox.left + width <= window.innerWidth;
-    const fitsRight = anchorBox.right - width >= 0;
-    setSide(fitsLeft || !fitsRight ? 'left' : 'right');
+    if (!open) {
+      setBox(null);
+      return;
+    }
+    const place = () => {
+      const a = anchorRef.current?.getBoundingClientRect();
+      if (!a) return;
+      const width = menuRef.current?.offsetWidth ?? 0;
+      const fitsLeft = a.left + width <= window.innerWidth;
+      const fitsRight = a.right - width >= 0;
+      const side = align === 'auto' ? (fitsLeft || !fitsRight ? 'left' : 'right') : align;
+      const top = a.bottom + 6;
+      setBox(
+        side === 'right' ? { top, right: window.innerWidth - a.right } : { top, left: a.left },
+      );
+    };
+    place();
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', place, true);
+    return () => {
+      window.removeEventListener('resize', place);
+      window.removeEventListener('scroll', place, true);
+    };
   }, [open, align]);
 
   return (
-    <div ref={ref} className="relative">
-      {anchor}
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            ref={menuRef}
-            initial={{ opacity: 0, y: -4, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -4, scale: 0.98 }}
-            transition={{ duration: 0.15 }}
-            className={`absolute top-full z-30 mt-1.5 min-w-full rounded-2xl border border-sand/80 bg-white p-1.5 shadow-xl shadow-gold-black/10 ${
-              side === 'right' ? 'right-0' : 'left-0'
-            }`}
-          >
-            {children}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    <>
+      <div ref={anchorRef} className="inline-block">
+        {anchor}
+      </div>
+      {createPortal(
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              ref={menuRef}
+              initial={{ opacity: 0, y: -4, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -4, scale: 0.98 }}
+              transition={{ duration: 0.15 }}
+              style={{
+                top: box?.top ?? 0,
+                left: box?.left,
+                right: box?.right,
+                visibility: box ? 'visible' : 'hidden',
+              }}
+              className="fixed z-50 rounded-2xl border border-sand/80 bg-white p-1.5 shadow-xl shadow-gold-black/10"
+            >
+              {children}
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
+    </>
   );
 }
 
