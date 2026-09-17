@@ -36,10 +36,15 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
 - Admin: real login, tenant switcher, Staff / Roles / Tenants (provisioning
   wizard) on live APIs. The portal uses the warm inova visual system across
   login, shell, shared controls, cards, tables, modals, and responsive
-  navigation. Dashboard stats still mock. The new "Табло" design is planned,
-  not built: contract in [features/admin-dashboard.md](features/admin-dashboard.md);
-  it added M2b (unified search) and M11 (staff tasks/calendar) to the plan and
-  extended M6 (issue priority), M7 (debtors audience, unread count) and M9.
+  navigation. Staff follows the M1 eight-column contract (Figma page
+  "M1 · Context & States"): search + facets, sort presets, all ten table
+  states, row menu with explained guards, container-query layouts for
+  1440/1280/1024. Roles/scope drawer, platform context and the multi-role
+  profile card are the next M1 admin change sets. Dashboard stats still mock.
+  The new "Табло" design is planned, not built: contract in
+  [features/admin-dashboard.md](features/admin-dashboard.md); it added M2b
+  (unified search) and M11 (staff tasks/calendar) to the plan and extended M6
+  (issue priority), M7 (debtors audience, unread count) and M9.
 - Quality gates: `pnpm verify` (format, lint, typecheck, unit, integration, architecture contracts, build). `pnpm test:unit` now covers `apps/api` and `apps/auth-service` too (co-located `src/**/*.test.ts`, hermetic, excluded from the build) — neither has a unit test yet; the testing policy is in `AGENTS.md` → Testing. Admin and mobile still have no test runner. GitHub Actions CI installs pnpm from `package.json` `packageManager` (`pnpm@10.34.5`); do not also pass `version` to `pnpm/action-setup`.
   Locally the repo needs **Node >= 22** (`engines`): on Node 20.11 `verify`
   dies at `test:unit` before any project code runs, because rolldown imports
