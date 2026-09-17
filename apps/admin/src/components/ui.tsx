@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, ChevronDown, X } from 'lucide-react';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 
 export function Modal({
   open,
@@ -213,21 +213,29 @@ export function FilterChip({ children, onClear }: { children: ReactNode; onClear
   );
 }
 
-/** Anchored popover; closes on outside click and Escape. */
+/**
+ * Anchored popover; closes on outside click and Escape. With `align: 'auto'`
+ * (the default) it measures itself after opening and hugs whichever edge of
+ * the anchor keeps it inside the viewport, so a facet at the page edge never
+ * causes horizontal scroll.
+ */
 export function Popover({
   open,
   onClose,
   anchor,
   children,
-  align = 'left',
+  align = 'auto',
 }: {
   open: boolean;
   onClose: () => void;
   anchor: ReactNode;
   children: ReactNode;
-  align?: 'left' | 'right';
+  align?: 'left' | 'right' | 'auto';
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [side, setSide] = useState<'left' | 'right'>(align === 'right' ? 'right' : 'left');
+
   useEffect(() => {
     if (!open) return;
     const onClick = (e: MouseEvent) => {
@@ -244,18 +252,28 @@ export function Popover({
     };
   }, [open, onClose]);
 
+  useLayoutEffect(() => {
+    if (!open || align !== 'auto' || !ref.current || !menuRef.current) return;
+    const anchorBox = ref.current.getBoundingClientRect();
+    const width = menuRef.current.offsetWidth;
+    const fitsLeft = anchorBox.left + width <= window.innerWidth;
+    const fitsRight = anchorBox.right - width >= 0;
+    setSide(fitsLeft || !fitsRight ? 'left' : 'right');
+  }, [open, align]);
+
   return (
     <div ref={ref} className="relative">
       {anchor}
       <AnimatePresence>
         {open && (
           <motion.div
+            ref={menuRef}
             initial={{ opacity: 0, y: -4, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
             transition={{ duration: 0.15 }}
             className={`absolute top-full z-30 mt-1.5 min-w-full rounded-2xl border border-sand/80 bg-white p-1.5 shadow-xl shadow-gold-black/10 ${
-              align === 'right' ? 'right-0' : 'left-0'
+              side === 'right' ? 'right-0' : 'left-0'
             }`}
           >
             {children}
