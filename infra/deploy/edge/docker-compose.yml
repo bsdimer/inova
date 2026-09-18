@@ -5,8 +5,9 @@
 # `edge` network under an environment-prefixed alias, and site files in
 # conf.d/ route each hostname to its prefix. Databases never join `edge`.
 #
-# Changed only by production deploys: this proxy also routes production
-# traffic, so a test deploy must not be able to alter it.
+# Maintained by test deploys while test is the only environment. Once
+# production exists, only production deploys should change it: the proxy will
+# then carry production traffic too.
 
 name: edge
 

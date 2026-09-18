@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Bring the edge proxy in line with /opt/edge: certificates first, then start
-# or reload nginx. Run by production deploys only — this proxy also routes
-# production traffic, so a test deploy must not be able to change it.
+# or reload nginx. Run by test deploys while test is the only environment; once
+# production exists it should be run by production deploys only, because the
+# proxy will then carry production traffic.
 #
 #   bash /opt/edge/scripts/deploy-edge.sh
 set -euo pipefail
