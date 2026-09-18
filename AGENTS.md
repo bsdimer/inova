@@ -44,6 +44,27 @@ needs architecture or a stakeholder decision. Index: [docs/README.md](docs/READM
    [docs/implementation-plan.md](docs/implementation-plan.md) or
    [docs/architecture.md](docs/architecture.md).
 
+## Branching and environments (GitFlow)
+
+| Branch      | Purpose                             | Deploys to                                                   |
+| ----------- | ----------------------------------- | ------------------------------------------------------------ |
+| `develop`   | Integration; target of feature PRs  | test — `https://test-portal.whitenova.tech`, automatically   |
+| `main`      | Production releases only            | production — `https://portal.whitenova.tech`, after approval |
+| `feature/*` | Work in progress, from `develop`    | nothing                                                      |
+| `release/*` | Stabilise a release, from `develop` | nothing; merge to `main`, then back into `develop`           |
+| `hotfix/*`  | Urgent production fix, from `main`  | nothing; merge to `main`, then back into `develop`           |
+
+- Branch from `develop` and open the PR against `develop`. Never branch
+  feature work from `main`.
+- `main` and `develop` are protected: changes land by pull request only, with
+  every CI gate green. Force-pushes and deletions are blocked.
+- A push to `develop` or `main` runs CI and then deploys; production waits for
+  a reviewer to approve the `production` environment in GitHub Actions.
+- The environments are isolated: separate databases, Redis and JWT signing
+  keys. A token from test is rejected by production. Only test is ever seeded.
+- Mobile release builds default to production; point test builds at
+  `https://test-portal.whitenova.tech/auth/v1` with `EXPO_PUBLIC_AUTH_URL`.
+
 ## Architecture invariants (do not violate)
 
 - **Tenant isolation:** every tenant-owned table has `tenant_id` as the _leading_

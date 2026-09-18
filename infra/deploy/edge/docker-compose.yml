@@ -1,0 +1,50 @@
+# Edge proxy for every environment on this host, deployed to /opt/edge.
+#
+# The only thing that binds 80/443. Each app stack (/opt/inova for production,
+# /opt/inova-test for test) attaches its public containers to the external
+# `edge` network under an environment-prefixed alias, and site files in
+# conf.d/ route each hostname to its prefix. Databases never join `edge`.
+#
+# Changed only by production deploys: this proxy also routes production
+# traffic, so a test deploy must not be able to alter it.
+
+name: edge
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '3'
+
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      # Mounted as a directory, never as individual files: a file mount pins an
+      # inode and silently goes stale when the file is replaced.
+      - /opt/edge/conf.d:/etc/nginx/conf.d:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - certbot-webroot:/var/www/certbot:ro
+    networks:
+      - edge
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:8080/healthz']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+    logging: *logging
+
+networks:
+  edge:
+    external: true
+
+volumes:
+  certbot-webroot:

@@ -1,13 +1,18 @@
 name: CI
 
+# GitFlow: develop is the integration branch (deploys to test), main is
+# production. Pushes to either run every gate and then deploy; pull requests
+# only run the gates.
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
 
+# Superseded pull-request runs are cancelled. Pushes are not: a push run ends in
+# a deploy, and cancelling one mid-migration is worse than letting it finish.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   TEST_PG_URL: postgres://inova:inova@localhost:5432
@@ -147,3 +152,15 @@ jobs:
       - run: pnpm --filter @inova/shared build
       - name: Isolation + schema contract
         run: pnpm --filter @inova/api test:isolation
+
+  deploy:
+    name: deploy
+    if: github.event_name == 'push'
+    needs: [static, unit, build, migrations, auth, tenant-isolation]
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: ${{ github.ref_name == 'main' && 'production' || 'test' }}
+    secrets: inherit
+    permissions:
+      contents: read
+      packages: write

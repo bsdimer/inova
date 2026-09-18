@@ -5,4 +5,4 @@ Requires=docker.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/env bash /opt/inova/scripts/renew-certs.sh
+ExecStart=/usr/bin/env bash /opt/edge/scripts/renew-certs.sh

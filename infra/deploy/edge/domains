@@ -1,0 +1,4 @@
+# One hostname per line. deploy-edge.sh obtains a certificate for each
+# before reloading nginx, so a new site file never references a missing cert.
+portal.whitenova.tech
+test-portal.whitenova.tech
