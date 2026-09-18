@@ -1,11 +1,13 @@
-# Test environment stack (204.168.180.167), deployed to /opt/inova.
+# One environment's app stack. The same file is deployed to /opt/inova
+# (production, ENV_NAME=prod) and /opt/inova-test (test, ENV_NAME=test); each
+# directory has its own .env, secrets and volumes, so the environments share
+# nothing but the host and the edge proxy in edge/docker-compose.yml.
 #
 # Images are built and pushed by .github/workflows/deploy.yml; this host only
-# pulls them. Postgres and Redis publish no ports — they are reachable only on
-# the internal compose network, so the host firewall is not the only thing
-# keeping them off the public internet.
+# pulls them. Postgres and Redis publish no ports and stay off the `edge`
+# network — they are reachable only from inside their own stack.
 #
-# Values come from /opt/inova/.env, written once by scripts/provision.sh.
+# Values come from <stack>/.env, written by scripts/provision-env.sh.
 
 x-logging: &logging
   driver: json-file
@@ -21,12 +23,12 @@ services:
       POSTGRES_USER: inova
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
       POSTGRES_DB: inova
-    # 3.7 GB box shared with three Node services: keep Postgres modest and let
-    # the kernel page cache do the rest.
+    # Two environments share a 3.7 GB box: keep Postgres modest (test sets a
+    # smaller PG_SHARED_BUFFERS) and let the kernel page cache do the rest.
     command:
       - postgres
       - -c
-      - shared_buffers=512MB
+      - shared_buffers=${PG_SHARED_BUFFERS:-512MB}
       - -c
       - effective_cache_size=1536MB
       - -c
@@ -73,6 +75,10 @@ services:
   auth-service:
     image: ${IMAGE_REGISTRY:?set in .env}/inova-auth-service:${IMAGE_TAG:-latest}
     restart: unless-stopped
+    networks:
+      default: {}
+      edge:
+        aliases: ['${ENV_NAME:?set in .env}-auth']
     init: true
     depends_on:
       postgres:
@@ -86,7 +92,10 @@ services:
       JWT_PRIVATE_KEY_PATH: /run/secrets/jwt-private.pem
       AUTH_THROTTLE_STRICT: 'true'
     volumes:
-      - /opt/inova/secrets/jwt-private.pem:/run/secrets/jwt-private.pem:ro
+      # Relative to the stack directory, never absolute: this file is shared by
+      # every environment, and an absolute path would make them all sign with
+      # the same key — tokens from test would then be accepted by production.
+      - ./secrets/jwt-private.pem:/run/secrets/jwt-private.pem:ro
     deploy:
       resources:
         limits:
@@ -96,6 +105,10 @@ services:
   api:
     image: ${IMAGE_REGISTRY:?set in .env}/inova-api:${IMAGE_TAG:-latest}
     restart: unless-stopped
+    networks:
+      default: {}
+      edge:
+        aliases: ['${ENV_NAME:?set in .env}-api']
     init: true
     depends_on:
       postgres:
@@ -108,7 +121,13 @@ services:
       REDIS_URL: redis://redis:6379
       # JWKS is fetched over the internal network — no public round trip, and
       # core-api still verifies tokens locally after the first fetch.
-      AUTH_JWKS_URL: http://auth-service:4001/.well-known/jwks.json
+      #
+      # Must be the environment-prefixed alias, not `auth-service`: Compose
+      # registers the plain service name on every network a container joins,
+      # so on the shared `edge` network `auth-service` resolves to BOTH
+      # environments' containers. Production could then trust test's signing
+      # key.
+      AUTH_JWKS_URL: http://${ENV_NAME:?set in .env}-auth:4001/.well-known/jwks.json
     deploy:
       resources:
         limits:
@@ -118,35 +137,14 @@ services:
   admin:
     image: ${IMAGE_REGISTRY:?set in .env}/inova-admin:${IMAGE_TAG:-latest}
     restart: unless-stopped
+    networks:
+      default: {}
+      edge:
+        aliases: ['${ENV_NAME:?set in .env}-admin']
     deploy:
       resources:
         limits:
           memory: 64m
-    logging: *logging
-
-  nginx:
-    image: nginx:1.27-alpine
-    restart: unless-stopped
-    depends_on:
-      - admin
-      - api
-      - auth-service
-    ports:
-      - '80:80'
-      - '443:443'
-    volumes:
-      - /opt/inova/nginx/conf.d:/etc/nginx/conf.d:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-      - certbot-webroot:/var/www/certbot:ro
-    healthcheck:
-      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:8080/healthz']
-      interval: 30s
-      timeout: 5s
-      retries: 3
-    deploy:
-      resources:
-        limits:
-          memory: 128m
     logging: *logging
 
   # One-shot tooling, never started by `docker compose up`:
@@ -175,7 +173,11 @@ services:
     command: ['node', 'db/seed.mjs']
     logging: *logging
 
+networks:
+  default: {}
+  edge:
+    external: true
+
 volumes:
   postgres-data:
   redis-data:
-  certbot-webroot:

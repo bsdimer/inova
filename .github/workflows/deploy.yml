@@ -1,24 +1,36 @@
-name: Deploy test env
+name: Deploy
 
-# Runs only after CI is green on main, so the gates in ci.yml (lint, typecheck,
-# unit, migrations, auth, tenant-isolation) are the deployment gate too.
-# workflow_dispatch is the manual path: re-deploy, seed, or roll back by
-# re-running an older successful run.
+# GitFlow environments on the shared host:
+#
+#   develop -> test        https://test-portal.whitenova.tech   (/opt/inova-test)
+#   main    -> production  https://portal.whitenova.tech        (/opt/inova)
+#
+# Called by ci.yml after every gate passes on a push to develop or main, so the
+# workflow file that deploys is always the one on the branch being deployed —
+# pipeline changes run on develop before they can reach production.
+# Per-environment settings (DOMAIN, STACK_DIR, ENV_NAME, PG_SHARED_BUFFERS) are
+# GitHub environment variables. The production environment requires a
+# reviewer's approval and accepts deployments from main only; test accepts
+# develop only. workflow_dispatch is the manual path: redeploy, seed test, or
+# roll back by re-running an older successful run.
 on:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
-    branches: [main]
+  workflow_call:
+    inputs:
+      environment:
+        description: 'test | production'
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
+      environment:
+        description: 'Target environment (branch rules apply: test from develop, production from main)'
+        type: choice
+        options: [test, production]
+        default: test
       seed:
-        description: 'Run db/seed.mjs after migrating (demo tenants and users)'
+        description: 'Run db/seed.mjs after migrating — test only, refused anywhere else'
         type: boolean
         default: false
-
-concurrency:
-  group: deploy-test-env
-  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -27,15 +39,10 @@ permissions:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAMESPACE: ghcr.io/${{ github.repository_owner }}
-  # workflow_run reports the commit CI actually tested; workflow_dispatch uses
-  # the ref it was started from.
-  SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
 
 jobs:
   build:
     name: build ${{ matrix.image }}
-    # A failed or cancelled CI run must not reach the server.
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
@@ -58,8 +65,6 @@ jobs:
               VITE_AUTH_URL=/auth/v1
     steps:
       - uses: actions/checkout@v5
-        with:
-          ref: ${{ env.SHA }}
 
       - uses: docker/setup-buildx-action@v3
 
@@ -79,23 +84,50 @@ jobs:
           platforms: linux/amd64
           push: true
           build-args: ${{ matrix.build-args }}
+          # Tagged by commit (what deploys use) and by branch (what is
+          # currently on develop / main, for humans).
           tags: |
-            ${{ env.IMAGE_NAMESPACE }}/${{ matrix.image }}:${{ env.SHA }}
-            ${{ env.IMAGE_NAMESPACE }}/${{ matrix.image }}:latest
+            ${{ env.IMAGE_NAMESPACE }}/${{ matrix.image }}:${{ github.sha }}
+            ${{ env.IMAGE_NAMESPACE }}/${{ matrix.image }}:${{ github.ref_name }}
           cache-from: type=gha,scope=${{ matrix.image }}
           cache-to: type=gha,scope=${{ matrix.image }},mode=max
 
   deploy:
-    name: deploy
+    name: deploy ${{ inputs.environment }}
     needs: build
     runs-on: ubuntu-latest
     environment:
-      name: test
-      url: https://portal.whitenova.tech
+      name: ${{ inputs.environment }}
+      url: ${{ steps.target.outputs.url }}
+    # Never cancel a deploy mid-flight (it may be mid-migration); queue instead.
+    concurrency:
+      group: deploy-${{ inputs.environment }}
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v5
-        with:
-          ref: ${{ env.SHA }}
+
+      - name: Resolve target
+        id: target
+        env:
+          DOMAIN: ${{ vars.DOMAIN }}
+          STACK_DIR: ${{ vars.STACK_DIR }}
+          ENV_NAME: ${{ vars.ENV_NAME }}
+          PG_SHARED_BUFFERS: ${{ vars.PG_SHARED_BUFFERS }}
+          TARGET: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
+        run: |
+          # An environment missing its variables would otherwise deploy into
+          # an empty path; fail before touching the host.
+          for v in DOMAIN STACK_DIR ENV_NAME; do
+            [ -n "${!v}" ] || { echo "::error::environment variable $v is not set on '${{ inputs.environment }}'"; exit 1; }
+          done
+          {
+            echo "DOMAIN=$DOMAIN"
+            echo "STACK_DIR=$STACK_DIR"
+            echo "ENV_NAME=$ENV_NAME"
+            echo "PG_SHARED_BUFFERS=${PG_SHARED_BUFFERS:-512MB}"
+            echo "TARGET=$TARGET"
+          } >> "$GITHUB_ENV"
+          echo "url=https://$DOMAIN" >> "$GITHUB_OUTPUT"
 
       - name: Configure SSH
         env:
@@ -108,64 +140,68 @@ jobs:
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
-      - name: Sync deployment files
-        env:
-          TARGET: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
+      # The edge proxy routes production traffic too, so only production
+      # deploys may change it. Test deploys use it as it stands.
+      - name: Sync and apply the edge proxy
+        if: inputs.environment == 'production'
         run: |
-          # A file deleted from the repo must also disappear from the host,
-          # but nginx bind-mounts /opt/inova/nginx/conf.d: removing that
-          # directory would leave the running container attached to the old
-          # inode, seeing it empty. Clear its contents and keep the directory.
-          # .env and secrets/ live outside these paths and are never touched.
+          # nginx bind-mounts /opt/edge/conf.d: removing the directory would
+          # leave the container on the old inode, seeing it empty. Clear its
+          # contents and keep the directory.
           ssh -i ~/.ssh/deploy_key "$TARGET" '
-            mkdir -p /opt/inova/nginx/conf.d
-            find /opt/inova/nginx/conf.d -mindepth 1 -delete
-            rm -rf /opt/inova/scripts /opt/inova/systemd
+            mkdir -p /opt/edge/conf.d
+            find /opt/edge/conf.d -mindepth 1 -delete
+            rm -rf /opt/edge/scripts /opt/edge/systemd
           '
-          tar -czf - -C infra/deploy . \
-            | ssh -i ~/.ssh/deploy_key "$TARGET" 'tar -xzf - -C /opt/inova'
+          tar -czf - -C infra/deploy/edge docker-compose.yml conf.d domains -C .. scripts systemd \
+            | ssh -i ~/.ssh/deploy_key "$TARGET" 'tar -xzf - -C /opt/edge'
+          ssh -i ~/.ssh/deploy_key "$TARGET" 'bash /opt/edge/scripts/provision.sh'
+          ssh -i ~/.ssh/deploy_key "$TARGET" 'bash /opt/edge/scripts/deploy-edge.sh'
 
-      - name: Provision host (idempotent)
-        env:
-          TARGET: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
+      - name: Sync the app stack
+        run: |
+          # .env and secrets/ live beside these files and are never touched.
+          ssh -i ~/.ssh/deploy_key "$TARGET" "mkdir -p '$STACK_DIR' && rm -rf '$STACK_DIR/scripts'"
+          tar -czf - -C infra/deploy docker-compose.yml scripts \
+            | ssh -i ~/.ssh/deploy_key "$TARGET" "tar -xzf - -C '$STACK_DIR'"
+
+      - name: Provision the environment (idempotent)
         run: |
           ssh -i ~/.ssh/deploy_key "$TARGET" \
-            'bash /opt/inova/scripts/provision.sh'
+            "STACK_DIR='$STACK_DIR' ENV_NAME='$ENV_NAME' DOMAIN='$DOMAIN' PG_SHARED_BUFFERS='$PG_SHARED_BUFFERS' bash '$STACK_DIR/scripts/provision-env.sh'"
 
       - name: Registry login on the host
         env:
-          TARGET: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # This token expires when the job ends, so no long-lived registry
-          # credential is left sitting on the test box.
+          # credential is left on the host.
           printf '%s' "$GHCR_TOKEN" | ssh -i ~/.ssh/deploy_key "$TARGET" \
             "docker login ghcr.io -u ${{ github.actor }} --password-stdin"
 
       - name: Deploy
         env:
-          TARGET: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
+          # Undefined for workflow_call, which therefore never seeds.
           SEED: ${{ inputs.seed == true }}
         run: |
           ssh -i ~/.ssh/deploy_key "$TARGET" \
-            "SEED=$SEED bash /opt/inova/scripts/deploy.sh $SHA"
+            "SEED=$SEED bash '$STACK_DIR/scripts/deploy.sh' ${{ github.sha }}"
 
       - name: Registry logout on the host
         if: always()
-        env:
-          TARGET: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
         run: |
           ssh -i ~/.ssh/deploy_key "$TARGET" 'docker logout ghcr.io' || true
 
       - name: Summary
         run: |
           {
-            echo "### Deployed to https://portal.whitenova.tech"
+            echo "### Deployed \`${{ github.ref_name }}\` to ${{ inputs.environment }}"
             echo
             echo "| item | value |"
             echo "| --- | --- |"
-            echo "| commit | \`$SHA\` |"
-            echo "| images | \`$IMAGE_NAMESPACE/inova-{api,auth-service,admin}:$SHA\` |"
+            echo "| url | https://$DOMAIN |"
+            echo "| commit | \`${{ github.sha }}\` |"
+            echo "| images | \`$IMAGE_NAMESPACE/inova-{api,auth-service,admin}:${{ github.sha }}\` |"
             echo
-            echo "Roll back by re-running an older successful deploy run."
+            echo "Roll back by re-running an older successful deploy of this environment."
           } >> "$GITHUB_STEP_SUMMARY"
