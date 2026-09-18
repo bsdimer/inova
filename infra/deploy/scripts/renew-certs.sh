@@ -15,6 +15,11 @@ MARKER=/etc/letsencrypt/.renewed
 
 rm -f "$MARKER"
 
+# certbot exits non-zero if ANY certificate fails to renew (for example one
+# whose DNS record was removed). The others may still have renewed, so capture
+# the status instead of letting `set -e` exit before the reload — otherwise a
+# freshly renewed certificate sits unused on disk until the old one expires.
+status=0
 docker run --rm \
   -v /etc/letsencrypt:/etc/letsencrypt \
   -v /var/lib/letsencrypt:/var/lib/letsencrypt \
@@ -22,12 +27,16 @@ docker run --rm \
   "$CERTBOT_IMAGE" renew \
   --webroot --webroot-path /var/www/certbot \
   --non-interactive \
-  --deploy-hook "touch $MARKER"
+  --deploy-hook "touch $MARKER" || status=$?
 
 if [ -f "$MARKER" ]; then
   echo "certificate renewed — reloading the edge proxy"
   docker compose --project-directory "$EDGE_DIR" exec -T nginx nginx -s reload
   rm -f "$MARKER"
 else
-  echo "nothing due for renewal"
+  echo "nothing renewed"
 fi
+
+# Still fail the unit when a renewal failed, so it shows in the journal and in
+# `systemctl --failed`.
+exit "$status"
