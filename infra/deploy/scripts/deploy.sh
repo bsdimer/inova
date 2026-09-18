@@ -37,7 +37,7 @@ export IMAGE_TAG=$NEW_TAG
 if ! docker network inspect edge >/dev/null 2>&1 \
   || [ -z "$(docker ps -q --filter label=com.docker.compose.project=edge --filter status=running)" ]; then
   echo "FAILED: the edge proxy is not running on this host." >&2
-  echo "It is provisioned by production deploys; run one before deploying $ENV_NAME." >&2
+  echo "Run /opt/edge/scripts/deploy-edge.sh (the deploy workflow does this) first." >&2
   exit 1
 fi
 

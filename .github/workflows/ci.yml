@@ -1,8 +1,8 @@
 name: CI
 
-# GitFlow: develop is the integration branch (deploys to test), main is
-# production. Pushes to either run every gate and then deploy; pull requests
-# only run the gates.
+# GitFlow: develop is the integration branch (deploys to test), main holds
+# releases. Pushes to either run every gate; only develop deploys for now —
+# there is no production environment yet. Pull requests only run the gates.
 on:
   push:
     branches: [main, develop]
@@ -153,13 +153,16 @@ jobs:
       - name: Isolation + schema contract
         run: pnpm --filter @inova/api test:isolation
 
+  # Deploys develop to test only. main does not deploy until a production
+  # environment exists; to enable it, extend the condition to main and pass
+  # `production` for it (that GitHub environment already has an approval gate).
   deploy:
     name: deploy
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref_name == 'develop'
     needs: [static, unit, build, migrations, auth, tenant-isolation]
     uses: ./.github/workflows/deploy.yml
     with:
-      environment: ${{ github.ref_name == 'main' && 'production' || 'test' }}
+      environment: test
     secrets: inherit
     permissions:
       contents: read

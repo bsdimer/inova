@@ -2,17 +2,17 @@ name: Deploy
 
 # GitFlow environments on the shared host:
 #
-#   develop -> test        https://test-portal.whitenova.tech   (/opt/inova-test)
-#   main    -> production  https://portal.whitenova.tech        (/opt/inova)
+#   develop -> test   https://test-portal.whitenova.tech   (/opt/inova-test)
+#   main    -> none yet; there is no production environment
 #
-# Called by ci.yml after every gate passes on a push to develop or main, so the
-# workflow file that deploys is always the one on the branch being deployed —
-# pipeline changes run on develop before they can reach production.
+# Called by ci.yml after every gate passes on a push to develop, so the
+# workflow file that deploys is always the one on the branch being deployed.
 # Per-environment settings (DOMAIN, STACK_DIR, ENV_NAME, PG_SHARED_BUFFERS) are
-# GitHub environment variables. The production environment requires a
-# reviewer's approval and accepts deployments from main only; test accepts
-# develop only. workflow_dispatch is the manual path: redeploy, seed test, or
-# roll back by re-running an older successful run.
+# GitHub environment variables; `test` accepts deployments from develop only.
+# A `production` environment (main only, approval required) is configured in
+# GitHub but nothing targets it until production exists.
+# workflow_dispatch is the manual path: redeploy, seed test, or roll back by
+# re-running an older successful run.
 on:
   workflow_call:
     inputs:
@@ -23,9 +23,10 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Target environment (branch rules apply: test from develop, production from main)'
+        description: 'Target environment (test deploys from develop only)'
         type: choice
-        options: [test, production]
+        # production is deliberately absent until that environment exists.
+        options: [test]
         default: test
       seed:
         description: 'Run db/seed.mjs after migrating — test only, refused anywhere else'
@@ -140,10 +141,11 @@ jobs:
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
-      # The edge proxy routes production traffic too, so only production
-      # deploys may change it. Test deploys use it as it stands.
+      # While test is the only environment, its deploys maintain the edge
+      # proxy. Once production exists, restrict this step to production
+      # deploys: the proxy will then carry production traffic, and a test
+      # deploy must not be able to change it.
       - name: Sync and apply the edge proxy
-        if: inputs.environment == 'production'
         run: |
           # nginx bind-mounts /opt/edge/conf.d: removing the directory would
           # leave the container on the old inode, seeing it empty. Clear its

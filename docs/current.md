@@ -14,14 +14,12 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
   are upgraded through the forward-only `0002_rename_product_to_inova.sql`
   migration; `0001_identity_tenancy.sql` remains immutable.
 - Local infra: `docker compose -f infra/docker/docker-compose.yml up -d` (Postgres 16, Redis, MinIO, MailHog).
-- Environments (GitFlow, one host 204.168.180.167): `develop` deploys to test
-  at `https://test-portal.whitenova.tech` automatically; `main` deploys to
-  production at `https://portal.whitenova.tech` after a reviewer approves the
-  `production` GitHub environment. Each runs its own `infra/deploy/` stack
-  (`/opt/inova-test`, `/opt/inova`) with separate Postgres, Redis and JWT
-  signing key; a shared edge nginx (`/opt/edge`) terminates Let's Encrypt TLS
-  for both, renewed by a systemd timer. CI calls `deploy.yml` after every gate
-  passes on a push. Host secrets are generated on the box and live only there.
+- Environments (GitFlow, host 204.168.180.167): `develop` deploys to test at
+  `https://test-portal.whitenova.tech` automatically after CI. There is **no
+  production environment yet** — pushes to `main` run CI only. Test runs the
+  `infra/deploy/` stack in `/opt/inova-test` behind a shared edge nginx
+  (`/opt/edge`, Let's Encrypt, renewed by a systemd timer) that test deploys
+  maintain. Host secrets are generated on the box and live only there.
   `main` and `develop` are protected (PR + green CI). Only test is seeded.
 - `pnpm db:migrate && pnpm db:seed` — migrations `0001_identity_tenancy.sql` and `0002_rename_product_to_inova.sql` + two tenants, super_admin, tenant admins, residents with invite codes.
 - Auth service (`:4001`): login, invite-code activate, refresh (rotation + reuse revocation), set-password, `/me`, resend-code (MOCK delivery), JWKS, throttling, Swagger `/docs`. **Current code uses global users; stakeholder decision B8 now requires independent tenant-scoped account realms before M2.**
@@ -94,7 +92,8 @@ Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migr
 3. Wire mobile “My building” / resident profile to M2 APIs as they land.
 4. Deferred M1 (before pilot): Redis denylist, worker skeleton, real invite delivery, admin silent refresh, audit viewer.
 5. Self-contained Testcontainers for integration tests (harness Phase 2 remainder).
-6. Production hygiene — production still holds the demo seed from before the
-   environments split, including the publicly documented super_admin; clear it
-   before real customer data arrives. Add a nightly `pg_dump` off the box for
-   production.
+6. Before production exists: decide where it runs (its own host or this one),
+   re-enable `main` deploys in `ci.yml`, move edge maintenance to production deploys,
+   and remove the leftover `/opt/inova` stack and `portal.whitenova.tech` site
+   (its certificate can no longer renew without DNS). Add nightly off-box
+   `pg_dump` backups.
