@@ -64,7 +64,9 @@ stage needs it; do not front-load the whole library.
 - Server state through TanStack Query (admin) or the existing API client
   (mobile). Do not invent a second cache.
 - Accessible names on controls; Android back + `elevation` on mobile.
-- `rs(wide, narrow)` for mobile sizes above 375pt.
+- `rs(wide, narrow)` for every mobile font, padding, margin, gap, and control
+  height. It scales with screen width (375pt and 402pt are the two tuned
+  sizes). Do not hardcode those values or add another width breakpoint.
 - Light and dark via `useTheme()` on mobile.
 
 ## After coding

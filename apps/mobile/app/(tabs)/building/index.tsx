@@ -9,6 +9,7 @@ import { AppBackground } from '../../../src/components/AppBackground';
 import { ArrowBubble } from '../../../src/components/ArrowBubble';
 import { GlassCircleButton } from '../../../src/components/GlassCircleButton';
 import { GlassView } from '../../../src/components/GlassView';
+import { GridTile, tileGrid } from '../../../src/components/GridTile';
 import { PressableScale } from '../../../src/components/PressableScale';
 import { BrandLockup } from '../../../src/components/InovaLogo';
 import { metrics, rs, screen } from '../../../src/theme/responsive';
@@ -112,30 +113,32 @@ export default function BuildingOverview() {
         </Animated.View>
 
         {/* Cash boxes */}
-        <View style={styles.grid}>
+        <View style={[tileGrid.row, styles.grid]}>
           {MOCK.cash.map((box, i) => (
             <Animated.View
               key={box.id}
               entering={FadeInUp.duration(400).delay(240 + i * 70)}
-              style={styles.cell}
+              style={tileGrid.cell}
             >
-              <PressableScale
-                haptic={false}
+              <GridTile
                 onPress={() => {
                   if (box.route) router.push(box.route);
                 }}
-                accessibilityRole="button"
                 accessibilityLabel={box.title}
+                height={metrics.cashTileHeight}
+                contentStyle={styles.cashCard}
               >
-                <GlassView rounded={radius.lg} contentStyle={styles.cashCard}>
-                  <Text style={styles.cashTitle}>{box.title}</Text>
-                  <Text style={styles.cashValue}>{box.value}</Text>
-                  <Text style={styles.cashCaption}>{box.caption}</Text>
-                  <View style={styles.cardArrow}>
-                    <ArrowBubble />
-                  </View>
-                </GlassView>
-              </PressableScale>
+                <Text style={styles.cashTitle} numberOfLines={2}>
+                  {box.title}
+                </Text>
+                <Text style={styles.cashValue}>{box.value}</Text>
+                <Text style={styles.cashCaption} numberOfLines={2}>
+                  {box.caption}
+                </Text>
+                <View style={styles.cardArrow}>
+                  <ArrowBubble />
+                </View>
+              </GridTile>
             </Animated.View>
           ))}
         </View>
@@ -169,20 +172,25 @@ export default function BuildingOverview() {
           </PressableScale>
         </Animated.View>
 
-        <View style={styles.grid}>
+        <View style={[tileGrid.row, styles.grid]}>
           {MOCK.issues.map((issue, i) => (
             <Animated.View
               key={issue.id}
               entering={FadeInUp.duration(400).delay(520 + i * 70)}
-              style={styles.cell}
+              style={tileGrid.cell}
             >
               <PressableScale
                 haptic={false}
                 onPress={() => router.push('/issues')}
                 accessibilityRole="button"
                 accessibilityLabel={issue.title}
+                style={styles.issuePress}
               >
-                <GlassView rounded={radius.lg} contentStyle={styles.issueCard}>
+                <GlassView
+                  rounded={radius.lg}
+                  style={{ height: metrics.issueTileHeight }}
+                  contentStyle={styles.issueCard}
+                >
                   <View style={styles.issueTop}>
                     <View style={styles.issueCategory}>
                       <Ionicons
@@ -202,7 +210,9 @@ export default function BuildingOverview() {
                       <Text style={styles.issueDate}>{issue.date}</Text>
                     </View>
                   </View>
-                  <Text style={styles.issueTitle}>{issue.title}</Text>
+                  <Text style={styles.issueTitle} numberOfLines={2}>
+                    {issue.title}
+                  </Text>
                   <View style={styles.cardArrow}>
                     <ArrowBubble />
                   </View>
@@ -282,19 +292,10 @@ const styles = StyleSheet.create({
     marginBottom: rs(24, 18),
   },
   grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: rs(12, 9),
     marginBottom: rs(12, 9),
   },
-  cell: {
-    flexBasis: '47%',
-    flexGrow: 1,
-  },
   cashCard: {
-    padding: rs(16, 13),
     gap: rs(8, 6),
-    minHeight: rs(158, 140),
   },
   cashTitle: {
     fontSize: rs(14, 13),
@@ -357,10 +358,13 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: glass.textSecondary,
   },
+  issuePress: {
+    flex: 1,
+  },
   issueCard: {
-    padding: rs(16, 13),
+    flex: 1,
+    padding: metrics.cardPadding,
     gap: rs(14, 11),
-    minHeight: rs(196, 174),
   },
   issueTop: {
     flexDirection: 'row',

@@ -7,7 +7,10 @@ interface Props {
   children?: React.ReactNode;
   /** Outer layout style (size, margins, flex). */
   style?: StyleProp<ViewStyle>;
-  /** Inner style for padding/gap around the children. */
+  /**
+   * Inner style for padding/gap around the children. Margins here sit inside
+   * the frost and look like empty card padding — put spacing on `style`.
+   */
   contentStyle?: StyleProp<ViewStyle>;
   /** Blur strength (iOS/Android real blur). */
   intensity?: number;

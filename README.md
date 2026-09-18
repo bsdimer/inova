@@ -73,5 +73,6 @@ Signing keys and store credentials never live in this repository.
 - Money is decimal-string/`NUMERIC(14,2)` at rest, integer minor units in code
   (`Money` in `packages/shared`). No floats.
 - Every tenant-owned table: `tenant_id` leads all keys; RLS enforced (M1+).
-- Mobile screens use width-responsive styles: values differ for screens
-  wider than 375pt (`rs(wide, narrow)` in `src/theme/responsive.ts`).
+- Mobile screens use `rs(wide, narrow)` (`src/theme/responsive.ts`): `wide` is
+  the 402pt size, `narrow` the 375pt size, and other widths scale between and
+  beyond those within a clamp.

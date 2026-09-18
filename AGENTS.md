@@ -100,7 +100,11 @@ If port 4000 is taken: `API_PORT=4100`.
   admin: Tailwind `@theme` in `apps/admin/src/styles.css`. No hardcoded hex in
   screens. Palette: Santiago Orange `#EB5E28`, cold foam `#EFECE3`, gold black
   `#1D1D1F`, warm dark `#2C2324`, landmark `#766754`, stone `#A79D90`.
-- Mobile widths >375pt: `rs(wide, narrow)` from `src/theme/responsive.ts`.
+- Mobile widths: `rs(wide, narrow)` from `src/theme/responsive.ts`. `wide` is
+  the 402pt (iPhone 17) size, `narrow` is the 375pt size. The helper
+  interpolates between them and scales outside that range (clamped), so do
+  not hardcode fonts, padding, margins, or control heights, and do not add a
+  second width check.
 - Android is first-class: `elevation` plus iOS shadows; Platform-guard iOS-only APIs.
 - Light and dark via `useTheme()`; no raw `StyleSheet` colors.
 - Animations: Reanimated (mobile), framer-motion (admin). CTAs slide up;

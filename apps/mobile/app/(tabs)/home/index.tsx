@@ -1,17 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useRouter, type Href } from 'expo-router';
-import React, { useCallback, useRef } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { useRouter, type Href } from 'expo-router';
+import React, { useMemo } from 'react';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getSession } from '../../../src/api/client';
 import { AppBackground } from '../../../src/components/AppBackground';
 import { ArrowBubble } from '../../../src/components/ArrowBubble';
 import { GlassCircleButton } from '../../../src/components/GlassCircleButton';
 import { GlassView } from '../../../src/components/GlassView';
+import { GridTile } from '../../../src/components/GridTile';
 import { PressableScale } from '../../../src/components/PressableScale';
 import { BrandLockup } from '../../../src/components/InovaLogo';
-import { metrics, rs } from '../../../src/theme/responsive';
+import { floatingTabClearance, metrics, rs } from '../../../src/theme/responsive';
 import { glass, palette, radius } from '../../../src/theme/tokens';
 
 // TODO(M2/M3): resident name, building and balance come from the API.
@@ -60,59 +60,78 @@ const QUICK_CARDS: QuickCard[] = [
   },
 ];
 
+const HEADER_HEIGHT = rs(46, 42);
+const WELCOME_MARGIN = rs(18, 12);
+const HELLO_LINE = rs(26, 22);
+const NAME_LINE = rs(44, 38);
+const BUILDING_BLOCK = rs(48, 42);
+const DUES_MARGIN = rs(12, 8);
+const DUES_BLOCK = DUES_MARGIN + rs(14, 12) * 2 + rs(52, 46);
+const GRID_MARGIN = rs(10, 8);
+const MIN_SPACER = rs(6, 4);
+const MIN_TILE = rs(112, 100);
+
 export default function Home() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const scrollRef = useRef<ScrollView>(null);
+  const { height: windowHeight } = useWindowDimensions();
+  const padTop = insets.top + rs(10, 6);
 
-  // Snap back to the rest position when the tab regains focus — a leftover
-  // scroll offset (or a bounce frozen by the tab switch) would otherwise leave
-  // a stray gap between the cards and the tab bar.
-  useFocusEffect(
-    useCallback(() => {
-      scrollRef.current?.scrollTo({ y: 0, animated: false });
-    }, []),
-  );
+  // Shrink the pair of tiles until both rows sit fully above the tab bar.
+  // Leftover height on a tall phone becomes the photo gap under the name.
+  const tileHeight = useMemo(() => {
+    const chrome =
+      padTop +
+      floatingTabClearance(insets.bottom) +
+      HEADER_HEIGHT +
+      WELCOME_MARGIN +
+      HELLO_LINE +
+      NAME_LINE +
+      MIN_SPACER +
+      BUILDING_BLOCK +
+      DUES_BLOCK +
+      GRID_MARGIN +
+      rs(20, 16);
+    const room = windowHeight - chrome - metrics.gridGap;
+    return Math.max(MIN_TILE, Math.min(metrics.homeTileHeight, Math.floor(room / 2)));
+  }, [insets.bottom, padTop, windowHeight]);
+
+  const descriptionLines = tileHeight < rs(150, 134) ? 2 : 3;
 
   return (
     <View style={styles.container}>
       <AppBackground variant="hero" />
 
-      <ScrollView
-        ref={scrollRef}
-        contentContainerStyle={[
-          styles.scroll,
-          { paddingTop: insets.top + rs(16, 10), paddingBottom: insets.bottom + rs(96, 86) },
+      <View
+        style={[
+          styles.column,
+          { paddingTop: padTop, paddingBottom: floatingTabClearance(insets.bottom) },
         ]}
-        showsVerticalScrollIndicator={false}
       >
-        <Animated.View entering={FadeInDown.duration(400)} style={styles.headerRow}>
+        <View style={styles.headerRow}>
           <BrandLockup />
           <GlassCircleButton
             icon="ellipsis-horizontal"
             onPress={() => router.push('/menu')}
             accessibilityLabel="Отвори менюто"
           />
-        </Animated.View>
+        </View>
 
-        <Animated.View entering={FadeInDown.duration(420).delay(80)} style={styles.welcome}>
+        <View style={styles.welcome}>
           <Text style={styles.hello}>Добре дошли,</Text>
           <Text style={styles.name}>
             {getSession()?.user.fullName.split(' ')[0] ?? MOCK.residentName}
           </Text>
-        </Animated.View>
+        </View>
 
-        {/* Stretchy photo area: absorbs extra height on tall screens so the
-            grid always rests just above the tab bar without scrolling. */}
         <View style={styles.heroSpacer} />
 
-        <Animated.View entering={FadeInDown.duration(420).delay(140)} style={styles.buildingInfo}>
+        <View style={styles.buildingInfo}>
           <Text style={styles.buildingName}>{MOCK.building}</Text>
           <Text style={styles.buildingAddress}>{MOCK.address}</Text>
-        </Animated.View>
+        </View>
 
-        {/* Current dues + pay CTA */}
-        <Animated.View entering={FadeInUp.duration(420).delay(220)}>
+        <View style={styles.duesWrap}>
           <GlassView contentStyle={styles.duesCard}>
             <View style={styles.duesText}>
               <Text style={styles.duesLabel}>Текущо задължение</Text>
@@ -130,98 +149,108 @@ export default function Home() {
               <Ionicons name="arrow-forward" size={rs(17, 15)} color={palette.white} />
             </PressableScale>
           </GlassView>
-        </Animated.View>
+        </View>
 
-        {/* Quick-access grid */}
         <View style={styles.grid}>
-          {QUICK_CARDS.map((card, i) => (
-            <Animated.View
-              key={card.title}
-              entering={FadeInUp.duration(400).delay(300 + i * 70)}
-              style={styles.cell}
-            >
-              <PressableScale
-                haptic={false}
-                onPress={() => {
-                  if (card.route) router.push(card.route);
-                }}
-                accessibilityRole="button"
-                accessibilityLabel={card.title}
-              >
-                <GlassView rounded={radius.lg} contentStyle={styles.quickCard}>
-                  <View style={styles.quickIconWrap}>
-                    <Ionicons name={card.icon} size={rs(26, 23)} color={glass.textPrimary} />
-                    {card.badge ? (
-                      <View style={styles.badge}>
-                        <Text style={styles.badgeText}>{card.badge}</Text>
-                      </View>
-                    ) : null}
-                  </View>
-                  <View style={styles.quickTexts}>
-                    <Text style={styles.quickTitle}>{card.title}</Text>
-                    <Text style={styles.quickDescription}>{card.description}</Text>
-                  </View>
-                  <View style={styles.quickArrow}>
-                    <ArrowBubble />
-                  </View>
-                </GlassView>
-              </PressableScale>
-            </Animated.View>
+          {[QUICK_CARDS.slice(0, 2), QUICK_CARDS.slice(2)].map((row) => (
+            <View key={row[0].title} style={[styles.tileRow, { height: tileHeight }]}>
+              {row.map((card) => (
+                <View key={card.title} style={styles.tileCell}>
+                  <GridTile
+                    onPress={() => {
+                      if (card.route) router.push(card.route);
+                    }}
+                    accessibilityLabel={card.title}
+                    height={tileHeight}
+                    contentStyle={styles.quickCard}
+                  >
+                    <View style={styles.quickIconWrap}>
+                      <Ionicons name={card.icon} size={rs(26, 23)} color={glass.textPrimary} />
+                      {card.badge ? (
+                        <View style={styles.badge}>
+                          <Text style={styles.badgeText}>{card.badge}</Text>
+                        </View>
+                      ) : null}
+                    </View>
+                    <View style={styles.quickTexts}>
+                      <Text style={styles.quickTitle}>{card.title}</Text>
+                      <Text style={styles.quickDescription} numberOfLines={descriptionLines}>
+                        {card.description}
+                      </Text>
+                    </View>
+                    <View style={styles.quickArrow}>
+                      <ArrowBubble />
+                    </View>
+                  </GridTile>
+                </View>
+              ))}
+            </View>
           ))}
         </View>
-      </ScrollView>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scroll: {
-    flexGrow: 1,
+  column: {
+    flex: 1,
     paddingHorizontal: metrics.screenPadding,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    height: HEADER_HEIGHT,
   },
   welcome: {
-    marginTop: rs(44, 32),
+    marginTop: WELCOME_MARGIN,
     gap: rs(2, 1),
   },
   hello: {
     fontSize: rs(22, 19),
+    lineHeight: HELLO_LINE,
     color: glass.textPrimary,
   },
   name: {
     fontSize: rs(40, 34),
+    lineHeight: NAME_LINE,
     fontWeight: '800',
     letterSpacing: -0.5,
     color: glass.textPrimary,
   },
   heroSpacer: {
     flexGrow: 1,
-    minHeight: rs(28, 20),
+    flexShrink: 1,
+    minHeight: MIN_SPACER,
   },
   buildingInfo: {
+    height: BUILDING_BLOCK,
+    justifyContent: 'center',
     gap: rs(4, 3),
   },
   buildingName: {
     fontSize: rs(21, 18),
+    lineHeight: rs(26, 22),
     fontWeight: '700',
     color: glass.textPrimary,
   },
   buildingAddress: {
     fontSize: rs(15, 14),
+    lineHeight: rs(18, 16),
     color: glass.textSecondary,
   },
+  duesWrap: {
+    marginTop: DUES_MARGIN,
+  },
   duesCard: {
-    marginTop: rs(30, 22),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: rs(12, 10),
-    padding: rs(18, 15),
+    paddingVertical: rs(14, 12),
+    paddingHorizontal: rs(16, 14),
   },
   duesText: {
     gap: rs(4, 3),
@@ -252,19 +281,18 @@ const styles = StyleSheet.create({
     color: palette.white,
   },
   grid: {
-    marginTop: rs(14, 11),
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: rs(12, 9),
+    marginTop: GRID_MARGIN,
+    gap: metrics.gridGap,
   },
-  cell: {
-    flexBasis: '47%',
-    flexGrow: 1,
+  tileRow: {
+    flexDirection: 'row',
+    gap: metrics.gridGap,
+  },
+  tileCell: {
+    flex: 1,
   },
   quickCard: {
-    minHeight: rs(178, 158),
-    padding: rs(16, 13),
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
   },
   quickIconWrap: {
     alignSelf: 'flex-start',
@@ -287,9 +315,8 @@ const styles = StyleSheet.create({
     color: palette.white,
   },
   quickTexts: {
-    gap: rs(6, 5),
-    marginTop: rs(26, 20),
-    paddingBottom: rs(6, 4),
+    gap: rs(4, 3),
+    marginTop: rs(12, 10),
   },
   quickTitle: {
     fontSize: rs(19, 17),
@@ -300,7 +327,6 @@ const styles = StyleSheet.create({
     fontSize: rs(13, 12),
     lineHeight: rs(18, 16),
     color: glass.textSecondary,
-    paddingRight: rs(30, 26),
   },
   quickArrow: {
     position: 'absolute',

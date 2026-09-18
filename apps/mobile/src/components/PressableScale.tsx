@@ -1,13 +1,19 @@
 import * as Haptics from 'expo-haptics';
 import React from 'react';
-import { Platform, Pressable, type PressableProps, type ViewStyle } from 'react-native';
+import {
+  Platform,
+  Pressable,
+  type PressableProps,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface Props extends PressableProps {
   children: React.ReactNode;
-  style?: ViewStyle | ViewStyle[];
+  style?: StyleProp<ViewStyle>;
   haptic?: boolean;
   scaleTo?: number;
 }
