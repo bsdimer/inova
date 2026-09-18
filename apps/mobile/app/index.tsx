@@ -1,9 +1,9 @@
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { bootstrapSession } from '../src/api/client';
+import { useRedirectIfAuthenticated } from '../src/auth/AuthProvider';
 import { AppBackground } from '../src/components/AppBackground';
 import { GradientButton } from '../src/components/GradientButton';
 import { metrics, rs } from '../src/theme/responsive';
@@ -11,28 +11,17 @@ import { metrics, rs } from '../src/theme/responsive';
 export default function Welcome() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  // The hero doubles as a splash while we restore a persisted session; the
-  // CTAs only appear once we know the user actually has to log in.
-  const [needsAuth, setNeedsAuth] = useState(false);
+  const { status } = useRedirectIfAuthenticated();
 
-  useEffect(() => {
-    let mounted = true;
-    void bootstrapSession().then((session) => {
-      if (!mounted) return;
-      if (session) router.replace('/home');
-      else setNeedsAuth(true);
-    });
-    return () => {
-      mounted = false;
-    };
-  }, [router]);
+  // CTAs only after we know the user must authenticate.
+  const showActions = status === 'guest';
 
   return (
     <View style={styles.container}>
       {/* The welcome artwork already carries the inova wordmark. */}
       <AppBackground variant="welcome" />
 
-      {needsAuth && (
+      {showActions && (
         <Animated.View
           entering={FadeInUp.duration(500).delay(250)}
           style={[styles.actions, { paddingBottom: insets.bottom + rs(24, 18) }]}

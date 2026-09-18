@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, FadeIn, SlideInRight } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { logout } from '../src/api/client';
+import { useAuth } from '../src/auth/AuthProvider';
 import { GlassView } from '../src/components/GlassView';
 import { GradientButton } from '../src/components/GradientButton';
 import { PressableScale } from '../src/components/PressableScale';
@@ -34,6 +34,7 @@ const SHEET_WIDTH = Math.min(screen.width * 0.78, 340);
 export default function Menu() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { session, signOut } = useAuth();
   const { mode, setMode } = useTheme();
   // TODO(M5): wire to packages/i18n once bg/en extraction lands.
   const [language, setLanguage] = useState<'bg' | 'en'>('bg');
@@ -90,6 +91,19 @@ export default function Menu() {
             ]}
             showsVerticalScrollIndicator={false}
           >
+            {session ? (
+              <View style={styles.profile}>
+                <Text style={styles.profileName} numberOfLines={1}>
+                  {session.user.fullName}
+                </Text>
+                {session.user.email ? (
+                  <Text style={styles.profileMeta} numberOfLines={1}>
+                    {session.user.email}
+                  </Text>
+                ) : null}
+              </View>
+            ) : null}
+
             <View style={styles.rows}>
               {NAV_ROWS.map((item) => row(item.icon, item.label, () => router.replace(item.route)))}
             </View>
@@ -126,7 +140,7 @@ export default function Menu() {
               variant="dark"
               icon="log-out-outline"
               onPress={() => {
-                void logout().finally(() => router.replace('/'));
+                void signOut().finally(() => router.replace('/'));
               }}
             />
           </ScrollView>
@@ -160,6 +174,20 @@ const styles = StyleSheet.create({
   scroll: {
     flexGrow: 1,
     paddingHorizontal: rs(28, 22),
+  },
+  profile: {
+    marginBottom: rs(22, 16),
+    gap: rs(4, 3),
+  },
+  profileName: {
+    fontSize: rs(20, 18),
+    fontWeight: '700',
+    color: palette.goldBlack,
+  },
+  profileMeta: {
+    fontSize: metrics.captionSize,
+    fontWeight: '500',
+    color: palette.landmark,
   },
   rows: {
     gap: rs(6, 4),

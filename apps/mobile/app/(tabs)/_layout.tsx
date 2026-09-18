@@ -4,6 +4,7 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRequireAuth } from '../../src/auth/AuthProvider';
 import { GlassView } from '../../src/components/GlassView';
 import { PressableScale } from '../../src/components/PressableScale';
 import { metrics, rs } from '../../src/theme/responsive';
@@ -74,6 +75,11 @@ function GlassTabBar({ state, navigation }: BottomTabBarProps) {
 }
 
 export default function TabsLayout() {
+  const { status } = useRequireAuth('/');
+  if (status !== 'authenticated') {
+    return <View style={styles.gate} />;
+  }
+
   return (
     // Cast: expo-router bundles its own copy of @react-navigation/bottom-tabs whose
     // BottomTabBarProps is structurally identical but nominally different from ours.
@@ -90,6 +96,7 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
+  gate: { flex: 1 },
   wrap: {
     position: 'absolute',
     left: 0,

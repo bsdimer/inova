@@ -1,43 +1,45 @@
+import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ApiError, login, postAuthRoute } from '../../src/api/client';
+import { ApiError, resendCode, toE164Phone } from '../../src/api/client';
 import { AppBackground } from '../../src/components/AppBackground';
 import { GlassCircleButton } from '../../src/components/GlassCircleButton';
 import { GradientButton } from '../../src/components/GradientButton';
-import { PressableScale } from '../../src/components/PressableScale';
 import { TextField } from '../../src/components/TextField';
 import { metrics, rs } from '../../src/theme/responsive';
 import { glass, palette } from '../../src/theme/tokens';
 
-export default function Login() {
+export default function ResendCode() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
 
   const submit = async () => {
+    const e164 = toE164Phone(phone);
+    if (!e164) {
+      setError('Въведете телефон в формат +359… или 08…');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
-      const session = await login(email.trim(), password);
-      router.replace(postAuthRoute(session));
+      // Always show the same success copy — the API never discloses whether the
+      // phone exists (enumeration-safe).
+      await resendCode(e164);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setSent(true);
     } catch (e) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       setError(
-        e instanceof ApiError && e.status === 401
-          ? 'Грешен имейл или парола.'
+        e instanceof ApiError && e.status === 0
+          ? e.message
           : e instanceof Error
             ? e.message
             : 'Нещо се обърка',
@@ -45,14 +47,6 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const forgotPassword = () => {
-    Alert.alert(
-      'Забравена парола',
-      'Няма самообслужване за нулиране още. Свържете се с домоуправителя си, за да възстановите достъпа.',
-      [{ text: 'Разбрах' }],
-    );
   };
 
   return (
@@ -76,53 +70,54 @@ export default function Login() {
           </View>
 
           <Animated.View entering={FadeInDown.duration(420).delay(80)} style={styles.header}>
-            <Text style={styles.title}>Добре дошли{'\n'}отново</Text>
+            <Text style={styles.title}>Изпрати код{'\n'}отново</Text>
             <View style={styles.titleDash} />
-            <Text style={styles.subtitle}>Влезте, за да видите своята сграда, такси и съседи.</Text>
+            <Text style={styles.subtitle}>
+              Въведете телефона, с който домоуправителят е регистрирал апартамента. Ако има активна
+              покана, ще получите нов код по SMS или Viber.
+            </Text>
           </Animated.View>
 
           <Animated.View entering={FadeInUp.duration(420).delay(200)} style={styles.form}>
             <TextField
-              label="Имейл"
-              icon="mail-outline"
-              placeholder="you@example.com"
+              label="Телефон"
+              icon="call-outline"
+              placeholder="+359 88 100 0001"
               autoCapitalize="none"
-              autoComplete="email"
-              keyboardType="email-address"
-              value={email}
-              onChangeText={setEmail}
+              autoComplete="tel"
+              keyboardType="phone-pad"
+              textContentType="telephoneNumber"
+              value={phone}
+              onChangeText={(next) => {
+                setPhone(next);
+                if (error) setError(null);
+                if (sent) setSent(false);
+              }}
             />
-            <TextField
-              label="Парола"
-              icon="lock-closed-outline"
-              placeholder="Вашата парола"
-              secure
-              value={password}
-              onChangeText={setPassword}
-            />
-            <PressableScale haptic={false} onPress={forgotPassword} style={styles.forgot}>
-              <Text style={styles.forgotText}>Забравена парола?</Text>
-            </PressableScale>
             {error ? (
               <Animated.Text entering={FadeIn.duration(200)} style={styles.error}>
                 {error}
               </Animated.Text>
             ) : null}
+            {sent ? (
+              <Animated.Text entering={FadeIn.duration(200)} style={styles.success}>
+                Ако номерът е регистриран, новият код е изпратен.
+              </Animated.Text>
+            ) : null}
           </Animated.View>
         </ScrollView>
 
-        {/* CTA fades up gently and stays above the keyboard */}
         <Animated.View
           entering={FadeInUp.duration(450).delay(320)}
           style={[styles.cta, { paddingBottom: insets.bottom + rs(20, 14) }]}
         >
           <GradientButton
-            label="Вход"
+            label={sent ? 'Готово' : 'Изпрати код'}
             variant="dark"
-            trailingIcon="arrow-forward"
-            onPress={submit}
+            trailingIcon={sent ? 'checkmark' : 'arrow-forward'}
+            onPress={sent ? () => router.back() : submit}
             loading={loading}
-            disabled={email.length === 0 || password.length === 0}
+            disabled={!sent && phone.trim().length === 0}
           />
         </Animated.View>
       </KeyboardAvoidingView>
@@ -164,19 +159,17 @@ const styles = StyleSheet.create({
   form: {
     gap: rs(18, 14),
   },
-  forgot: {
-    alignSelf: 'flex-end',
-  },
-  forgotText: {
-    fontSize: metrics.bodySize,
-    fontWeight: '600',
-    color: glass.textPrimary,
-  },
   error: {
     fontSize: metrics.bodySize,
     fontWeight: '600',
     textAlign: 'center',
     color: glass.danger,
+  },
+  success: {
+    fontSize: metrics.bodySize,
+    fontWeight: '600',
+    textAlign: 'center',
+    color: palette.orangeBright,
   },
   cta: {
     paddingHorizontal: metrics.screenPadding,

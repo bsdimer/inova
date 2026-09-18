@@ -1,43 +1,63 @@
+import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ApiError, login, postAuthRoute } from '../../src/api/client';
+import { ApiError, setPassword } from '../../src/api/client';
+import { useRequireAuth } from '../../src/auth/AuthProvider';
 import { AppBackground } from '../../src/components/AppBackground';
 import { GlassCircleButton } from '../../src/components/GlassCircleButton';
 import { GradientButton } from '../../src/components/GradientButton';
-import { PressableScale } from '../../src/components/PressableScale';
 import { TextField } from '../../src/components/TextField';
 import { metrics, rs } from '../../src/theme/responsive';
 import { glass, palette } from '../../src/theme/tokens';
 
-export default function Login() {
+const MIN_PASSWORD_LENGTH = 8;
+
+export default function SetPassword() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const { status, session, signOut } = useRequireAuth('/');
+  const [password, setPasswordValue] = useState('');
+  const [confirm, setConfirm] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (status === 'authenticated' && session && !session.user.mustSetPassword) {
+      router.replace('/home');
+    }
+  }, [status, session, router]);
+
+  if (status !== 'authenticated') {
+    return <View style={styles.container} />;
+  }
+
+  const canSubmit =
+    password.length >= MIN_PASSWORD_LENGTH && confirm.length >= MIN_PASSWORD_LENGTH && !loading;
+
   const submit = async () => {
+    if (password !== confirm) {
+      setError('Паролите не съвпадат.');
+      return;
+    }
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(`Паролата трябва да е поне ${MIN_PASSWORD_LENGTH} символа.`);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
-      const session = await login(email.trim(), password);
-      router.replace(postAuthRoute(session));
+      await setPassword(password);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.replace('/home');
     } catch (e) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       setError(
         e instanceof ApiError && e.status === 401
-          ? 'Грешен имейл или парола.'
+          ? 'Сесията изтече. Влезте отново.'
           : e instanceof Error
             ? e.message
             : 'Нещо се обърка',
@@ -45,14 +65,6 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const forgotPassword = () => {
-    Alert.alert(
-      'Забравена парола',
-      'Няма самообслужване за нулиране още. Свържете се с домоуправителя си, за да възстановите достъпа.',
-      [{ text: 'Разбрах' }],
-    );
   };
 
   return (
@@ -70,39 +82,48 @@ export default function Login() {
           <View style={styles.backRow}>
             <GlassCircleButton
               icon="arrow-back"
-              onPress={() => router.back()}
-              accessibilityLabel="Назад"
+              onPress={() => {
+                void signOut().finally(() => router.replace('/'));
+              }}
+              accessibilityLabel="Изход"
             />
           </View>
 
           <Animated.View entering={FadeInDown.duration(420).delay(80)} style={styles.header}>
-            <Text style={styles.title}>Добре дошли{'\n'}отново</Text>
+            <Text style={styles.title}>Създайте{'\n'}парола</Text>
             <View style={styles.titleDash} />
-            <Text style={styles.subtitle}>Влезте, за да видите своята сграда, такси и съседи.</Text>
+            <Text style={styles.subtitle}>
+              Изберете парола с поне {MIN_PASSWORD_LENGTH} символа, за да влизате в приложението.
+            </Text>
           </Animated.View>
 
           <Animated.View entering={FadeInUp.duration(420).delay(200)} style={styles.form}>
             <TextField
-              label="Имейл"
-              icon="mail-outline"
-              placeholder="you@example.com"
-              autoCapitalize="none"
-              autoComplete="email"
-              keyboardType="email-address"
-              value={email}
-              onChangeText={setEmail}
-            />
-            <TextField
               label="Парола"
               icon="lock-closed-outline"
-              placeholder="Вашата парола"
+              placeholder="Нова парола"
               secure
+              autoComplete="new-password"
+              textContentType="newPassword"
               value={password}
-              onChangeText={setPassword}
+              onChangeText={(next) => {
+                setPasswordValue(next);
+                if (error) setError(null);
+              }}
             />
-            <PressableScale haptic={false} onPress={forgotPassword} style={styles.forgot}>
-              <Text style={styles.forgotText}>Забравена парола?</Text>
-            </PressableScale>
+            <TextField
+              label="Потвърдете паролата"
+              icon="lock-closed-outline"
+              placeholder="Повторете паролата"
+              secure
+              autoComplete="new-password"
+              textContentType="newPassword"
+              value={confirm}
+              onChangeText={(next) => {
+                setConfirm(next);
+                if (error) setError(null);
+              }}
+            />
             {error ? (
               <Animated.Text entering={FadeIn.duration(200)} style={styles.error}>
                 {error}
@@ -111,18 +132,17 @@ export default function Login() {
           </Animated.View>
         </ScrollView>
 
-        {/* CTA fades up gently and stays above the keyboard */}
         <Animated.View
           entering={FadeInUp.duration(450).delay(320)}
           style={[styles.cta, { paddingBottom: insets.bottom + rs(20, 14) }]}
         >
           <GradientButton
-            label="Вход"
+            label="Запази и продължи"
             variant="dark"
             trailingIcon="arrow-forward"
             onPress={submit}
             loading={loading}
-            disabled={email.length === 0 || password.length === 0}
+            disabled={!canSubmit}
           />
         </Animated.View>
       </KeyboardAvoidingView>
@@ -163,14 +183,6 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: rs(18, 14),
-  },
-  forgot: {
-    alignSelf: 'flex-end',
-  },
-  forgotText: {
-    fontSize: metrics.bodySize,
-    fontWeight: '600',
-    color: glass.textPrimary,
   },
   error: {
     fontSize: metrics.bodySize,

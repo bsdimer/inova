@@ -1,6 +1,6 @@
 # Current status
 
-**Last updated:** 2026-09-15
+**Last updated:** 2026-09-18
 **Current milestone:** M1 tenant-account realm refactor, then M2 Property hierarchy
 **Focus:** apply the B8 tenant-scoped account decision, including secure multi-tenant session switching and multi-role mobile views, before M2 locks identity references; then build property hierarchy so mobile can drop mock building/apartment data.
 
@@ -23,7 +23,12 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
 - `pnpm db:migrate && pnpm db:seed` — migrations `0001_identity_tenancy.sql` and `0002_rename_product_to_inova.sql` + two tenants, super_admin, tenant admins, residents with invite codes.
 - Auth service (`:4001`): login, invite-code activate, refresh (rotation + reuse revocation), set-password, `/me`, resend-code (MOCK delivery), JWKS, throttling, Swagger `/docs`. **Current code uses global users; stakeholder decision B8 now requires independent tenant-scoped account realms before M2.**
 - Core API (`:4000`): JWKS JWT verify, `X-Tenant-Id` + DB membership re-check, permission guards, RLS via `SET LOCAL app.tenant_id`. Tenant profile/staff/audit, staff+roles CRUD (admin-role lock, last-admin guard), super_admin tenant provisioning, public brand config, health. **Current multi-membership JWT/context flow must be adapted to a single tenant-account realm; platform identities remain separate.**
-- Mobile: real activate + login; session in keychain (refresh only); home greets the user. Building/home/dues/issues still MOCK (`TODO(M2/M3/…)`).
+- Mobile: production-ready auth against live auth-service — activate → set-password,
+  login, resend-code (phone → E.164), silent refresh, logout, session gate on tabs;
+  release builds default to `https://portal.whitenova.tech/auth/v1` (`EXPO_PUBLIC_AUTH_URL`
+  overrides; `__DEV__` keeps localhost). Home greets the signed-in user. B8 multi-account
+  portfolio / tenant switcher waits on the backend realm refactor. Building/home/dues/issues
+  still MOCK (`TODO(M2/M3/…)`).
 - Admin: real login, tenant switcher, Staff / Roles / Tenants (provisioning
   wizard) on live APIs. The portal uses the warm inova visual system across
   login, shell, shared controls, cards, tables, modals, and responsive

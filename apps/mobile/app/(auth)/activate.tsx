@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ApiError, activate } from '../../src/api/client';
+import { activate, ApiError, postAuthRoute } from '../../src/api/client';
 import { AppBackground } from '../../src/components/AppBackground';
 import { CodeInput } from '../../src/components/CodeInput';
 import { GlassCircleButton } from '../../src/components/GlassCircleButton';
@@ -23,15 +23,14 @@ export default function Activate() {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [resent, setResent] = useState(false);
 
   const submit = async () => {
     setLoading(true);
     setError(null);
     try {
-      await activate(code);
+      const session = await activate(code);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.replace('/home');
+      router.replace(postAuthRoute(session));
     } catch (e) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       setError(
@@ -44,15 +43,6 @@ export default function Activate() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const resend = () => {
-    if (resent) return;
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setResent(true);
-    // TODO(M1): needs a phone-entry step — POST /v1/auth/resend-code is live but
-    // requires the phone number the manager registered. UI-only for now.
-    setTimeout(() => setResent(false), 4000);
   };
 
   return (
@@ -103,10 +93,13 @@ export default function Activate() {
               />
               <View style={styles.resendRow}>
                 <Text style={styles.resendHint}>Не получихте код?</Text>
-                <PressableScale haptic={false} onPress={resend} accessibilityRole="button">
-                  <Text style={[styles.resendAction, resent && styles.resendDone]}>
-                    {resent ? 'Кодът е изпратен ✓' : 'Изпрати отново'}
-                  </Text>
+                <PressableScale
+                  haptic={false}
+                  onPress={() => router.push('/resend-code')}
+                  accessibilityRole="button"
+                  accessibilityLabel="Изпрати код отново"
+                >
+                  <Text style={styles.resendAction}>Изпрати отново</Text>
                 </PressableScale>
               </View>
             </GlassView>
@@ -130,11 +123,6 @@ export default function Activate() {
             onPress={submit}
             loading={loading}
             disabled={code.length !== CODE_LENGTH}
-          />
-          <GradientButton
-            label="Пропусни засега"
-            variant="glass"
-            onPress={() => router.replace('/home')}
           />
         </Animated.View>
       </KeyboardAvoidingView>
@@ -200,9 +188,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: glass.textPrimary,
   },
-  resendDone: {
-    color: palette.orangeBright,
-  },
   error: {
     fontSize: metrics.bodySize,
     fontWeight: '600',
@@ -212,6 +197,5 @@ const styles = StyleSheet.create({
   cta: {
     paddingHorizontal: metrics.screenPadding,
     paddingTop: rs(12, 8),
-    gap: rs(12, 9),
   },
 });
