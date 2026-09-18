@@ -64,11 +64,7 @@ export default function Activate() {
               accessibilityLabel="Назад"
             />
             <BrandLockup align="center" />
-            <GlassCircleButton
-              icon="help"
-              onPress={() => router.push('/how-to-pay')}
-              accessibilityLabel="Помощ"
-            />
+            <View style={styles.topBarSpacer} />
           </View>
 
           <Animated.View entering={FadeInDown.duration(420).delay(80)} style={styles.header}>
@@ -141,6 +137,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  topBarSpacer: {
+    width: rs(46, 42),
+    height: rs(46, 42),
   },
   header: {
     marginTop: rs(28, 18),
