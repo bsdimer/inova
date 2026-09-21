@@ -18,6 +18,8 @@ import { createTestDb } from './db-helper';
 let app: INestApplication;
 let adminPool: pg.Pool;
 let appPool: pg.Pool;
+/** auth-service's role — only used to prove identity scope is reserved for it. */
+let authUrl: string;
 let disposeDb: () => Promise<void>;
 
 let tenantA: string; // inova
@@ -51,6 +53,7 @@ async function sign(
 
 beforeAll(async () => {
   const { migratorUrl, appUrl, dispose } = await createTestDb('inova_test_api');
+  authUrl = migratorUrl.replace(/\/\/[^@]+@/, '//inova_auth:inova_auth@');
   disposeDb = dispose;
   process.env.DATABASE_URL = appUrl;
 
@@ -130,6 +133,29 @@ describe('RLS at the SQL layer (inova_app role)', () => {
     }
   });
 
+  it('cannot widen its view with the identity scope reserved for auth-service', async () => {
+    // Regression: the identity_scope policies used to apply to every role, so
+    // setting this variable from core-api exposed all tenants' identity rows.
+    const client = await appPool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`SELECT set_config('app.identity_scope', 'auth', true)`);
+      const memberships = await client.query('SELECT 1 FROM staff_memberships');
+      const invites = await client.query('SELECT 1 FROM invite_codes');
+      expect(memberships.rows).toHaveLength(0);
+      expect(invites.rows).toHaveLength(0);
+      await client.query('ROLLBACK');
+    } finally {
+      client.release();
+    }
+  });
+
+  it('has no access to refresh tokens', async () => {
+    await expect(appPool.query('SELECT 1 FROM refresh_tokens')).rejects.toMatchObject({
+      code: '42501',
+    });
+  });
+
   it('denies UPDATE/DELETE on the append-only audit trail entirely', async () => {
     // Table-privilege denials — independent of tenant context, so no transaction
     // needed (and a denied statement would abort one anyway).
@@ -145,15 +171,21 @@ describe('RLS at the SQL layer (inova_app role)', () => {
     const none = await appPool.query('SELECT * FROM staff_memberships');
     expect(none.rows).toHaveLength(0);
 
-    const client = await appPool.connect();
+    // Identity scope sees across tenants — for auth-service's own role only.
+    const authPool = new pg.Pool({ connectionString: authUrl, max: 1 });
+    const client = await authPool.connect();
     try {
+      const unscoped = await client.query('SELECT 1 FROM staff_memberships');
+      expect(unscoped.rows).toHaveLength(0);
+
       await client.query('BEGIN');
       await client.query(`SELECT set_config('app.identity_scope', 'auth', true)`);
       const all = await client.query('SELECT DISTINCT tenant_id FROM staff_memberships');
-      expect(all.rows.length).toBeGreaterThan(1); // identity scope sees across tenants
+      expect(all.rows.length).toBeGreaterThan(1);
       await client.query('ROLLBACK');
     } finally {
       client.release();
+      await authPool.end();
     }
   });
 });

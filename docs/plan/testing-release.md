@@ -1,0 +1,64 @@
+# Testing strategy and release readiness
+
+Part of the [implementation plan](../implementation-plan.md). Section numbers (§) are the plan's own; its index maps each § to a file.
+
+## 9. Testing strategy
+
+| Layer                 | Approach                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Blocker status      |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| Unit                  | Vitest/Jest on domain logic; `Money` arithmetic and allocation algorithms property-based (fast-check)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Standard gate       |
+| Financial calculation | Golden-file suites: fee matrix, allocations, ledger balancing, reconciliation; hand-verified inova oracle sheet                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | **Release blocker** |
+| Integration/API       | Testcontainers Postgres+Redis; per-module API tests against real DB with RLS active                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Standard gate       |
+| Tenant isolation      | Dedicated suite: seed tenants A/B, execute every route cross-tenant, assert 403/404 and zero row leakage; SQL-level RLS tests                                                                                                                                                                                                                                                                                                                                                                                                                                                           | **Release blocker** |
+| Payment idempotency   | Webhook duplicate/replay/out-of-order simulations; concurrent initiation with same Idempotency-Key                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | **Release blocker** |
+| Authorization         | Permission-matrix tests generated from the permission catalog (role × endpoint grid)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Standard gate       |
+| Migrations            | CI job: fresh migrate + migrate-from-previous-release + rollback step; drift detection                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Standard gate       |
+| End-to-end (web)      | Playwright: admin critical paths (building setup, fee run, payment entry, debtor report)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Pre-release         |
+| Mobile                | Maestro/Detox happy paths on Android emulator + iOS simulator in CI; manual device matrix before store builds                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Pre-release         |
+| Accessibility         | axe on admin; RN accessibility props audit; contrast checks on brand themes, automated per brand. **Not built yet — `pnpm verify` has no such step.** The check must run over the **render**, not over token values: the admin light theme sits on the tenant's photograph, so text contrast depends on the photo and a token-only check passes while proving nothing. Method: Playwright screenshot of the dashboard per brand and theme → measure each text layer against the pixels actually behind it → fail under WCAG AA. Re-run per brand, because both palette and photo change | Pre-release         |
+| Performance           | k6 smoke on hot endpoints (obligations list, dashboard) with pilot-scale seed (200 buildings / 10k apartments)                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Pre-release         |
+| Backup-restore        | Quarterly drill runbook; restore into staging verified by checksum queries                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Operational gate    |
+| Security              | Dependency + container scanning in CI; upload abuse tests (EICAR, polyglots); auth brute-force tests; pre-launch external pen test (P1 budget item)                                                                                                                                                                                                                                                                                                                                                                                                                                     | Mixed               |
+
+**Critical E2E pilot scenarios (automated where possible):**
+
+1. Admin imports building portfolio → admin creates resident account on an apartment → invite code delivered (SMS/Viber) → resident activates → resident sees correct obligations.
+2. Fee generation for a period → amounts match oracle → resident notified.
+3. Resident views IBAN/reference → admin records bank payment → allocation → receipt → resident push + history update.
+4. Issue with photo → admin plans → resolves → resident sees status trail.
+5. Notice to one entrance → only its residents receive push.
+6. (M8) Card payment → webhook → auto-allocation → receipt; duplicate webhook changes nothing.
+7. Cross-tenant probe: tenant-B staff token against every tenant-A resource → all denied.
+
+---
+
+## 10. Release readiness
+
+### Pilot launch checklist
+
+- [ ] All release-blocker suites green (tenant isolation, financial golden files, idempotency)
+- [ ] Pilot portfolio data migrated; opening-balance reconciliation report signed off by the pilot operations team
+- [ ] Production infra: backups verified by an actual restore, alerts firing to Slack, uptime check live
+- [ ] Runbooks complete: deploy/rollback, incident response, DB restore, webhook replay
+- [ ] DPA template finalized (required before first external tenant); privacy policy + terms published per brand; GDPR export/erasure functional
+- [ ] Staff trained (session held, quick-reference guide delivered); support channel + rota agreed
+- [ ] App published to TestFlight external / Play closed track; store production submission of shared app approved
+- [ ] Rate limits and WAF rules verified in production
+- [ ] Sentry + PostHog receiving production events; feedback survey configured
+- [ ] Rollback rehearsed: previous image redeploy + migration-down path documented
+- [ ] Incident-response contact tree agreed with inova
+
+### MVP success criteria (measurable)
+
+| Metric                                                                                     | Target                               |
+| ------------------------------------------------------------------------------------------ | ------------------------------------ |
+| Resident activation (registered + verified link / invited units)                           | ≥ 40% in first month                 |
+| Payments recorded through platform (manual + online) vs. pilot portfolio's existing ledger | 100% reconciled, 0 unexplained diffs |
+| Fee-generation accuracy vs. oracle                                                         | 100%                                 |
+| Crash-free mobile sessions                                                                 | ≥ 99.5%                              |
+| API availability                                                                           | ≥ 99.5% monthly                      |
+| Median support-issue first response (product bugs)                                         | < 1 business day                     |
+| Manager weekly active usage (staff logins)                                                 | 100% of trained staff                |
+| Push delivery success (valid tokens)                                                       | ≥ 95%                                |
+
+Feedback collection: in-app support contact, monthly inova review call, PostHog funnels on activation/payment flows, app-store review monitoring.

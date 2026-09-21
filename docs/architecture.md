@@ -1,6 +1,8 @@
 # Architecture (stable invariants)
 
-Source of decisions: [implementation-plan.md](implementation-plan.md) §4–§6.
+Source of decisions: [plan/system-design.md](plan/system-design.md) (§4),
+[plan/data-model.md](plan/data-model.md) (§5), [plan/security.md](plan/security.md)
+(§6) and [plan/decisions.md](plan/decisions.md).
 Do not re-litigate RESOLVED items. This file is the short agent-facing extract.
 
 ## Services

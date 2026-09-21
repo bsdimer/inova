@@ -36,6 +36,7 @@ IMAGE_TAG=latest
 PG_SHARED_BUFFERS=$PG_SHARED_BUFFERS
 POSTGRES_PASSWORD=$(openssl rand -hex 24)
 APP_DB_PASSWORD=$(openssl rand -hex 24)
+AUTH_DB_PASSWORD=$(openssl rand -hex 24)
 ENV
   chmod 600 "$STACK_DIR/.env"
 else
@@ -48,6 +49,15 @@ else
   ensure_key ENV_NAME "$ENV_NAME"
   ensure_key COMPOSE_PROJECT_NAME "$(basename "$STACK_DIR")"
   ensure_key PG_SHARED_BUFFERS "$PG_SHARED_BUFFERS"
+  ensure_key AUTH_DB_PASSWORD "$(openssl rand -hex 24)"
+fi
+
+# One-time codes are only ever written to the log in the seeded test
+# environment. Production never gets this key, so its services refuse to start
+# until a real delivery channel exists.
+if [ "$ENV_NAME" = "test" ] && ! grep -q '^CODE_DELIVERY=' "$STACK_DIR/.env"; then
+  echo 'CODE_DELIVERY=log' >>"$STACK_DIR/.env"
+  log "added CODE_DELIVERY=log (test only)"
 fi
 
 if [ ! -f "$STACK_DIR/secrets/jwt-private.pem" ]; then

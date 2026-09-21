@@ -1,8 +1,8 @@
+import { MockCodeDelivery } from '@inova/shared';
 import {
   BadRequestException,
   ConflictException,
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { and, eq, sql } from 'drizzle-orm';
@@ -57,11 +57,10 @@ export interface UpdateStaffInput {
  */
 @Injectable()
 export class TenantService {
-  private readonly logger = new Logger(TenantService.name);
-
   constructor(
     private readonly dbService: DbService,
     private readonly audit: AuditService,
+    private readonly codeDelivery: MockCodeDelivery,
   ) {}
 
   listPermissions() {
@@ -292,7 +291,7 @@ export class TenantService {
           createdBy: actor.userId,
         });
         // TODO(M1): deliver via SMS/Viber gateway through the worker. MOCK: log only.
-        this.logger.warn(`MOCK invite delivery — staff code for ${input.email}: ${code}`);
+        this.codeDelivery.deliver('staff invite code', input.email, code);
       }
 
       await this.audit.record(tx, {

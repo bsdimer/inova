@@ -22,7 +22,7 @@ const post = (url: string, body: object) =>
 beforeAll(async () => {
   const { appUrl, dispose } = await createTestDb('inova_test_auth');
   disposeDb = dispose;
-  process.env.DATABASE_URL = appUrl;
+  process.env.AUTH_DATABASE_URL = appUrl;
   process.env.JWT_PRIVATE_KEY_PATH = path.join(
     mkdtempSync(path.join(tmpdir(), 'inova-jwt-')),
     'test.pem',

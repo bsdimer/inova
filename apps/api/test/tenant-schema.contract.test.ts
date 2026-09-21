@@ -40,6 +40,24 @@ describe('tenant schema contract', () => {
     expect(rows[0].rolbypassrls).toBe(false);
   });
 
+  it('inova_auth cannot bypass RLS either', async () => {
+    const { rows } = await pool.query(
+      `SELECT rolbypassrls, rolsuper FROM pg_roles WHERE rolname = 'inova_auth'`,
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toEqual({ rolbypassrls: false, rolsuper: false });
+  });
+
+  it('identity-scope policies are granted to inova_auth only', async () => {
+    const { rows } = await pool.query(
+      `SELECT tablename, roles::text[] AS roles FROM pg_policies WHERE policyname = 'identity_scope'`,
+    );
+    expect(rows.length).toBeGreaterThan(0);
+    for (const row of rows) {
+      expect(row.roles, `${row.tablename}.identity_scope roles`).toEqual(['inova_auth']);
+    }
+  });
+
   it('every tenant-owned table has tenant_id NOT NULL as the leading PK column', async () => {
     const { rows: tables } = await pool.query(TENANT_TABLES);
     expect(tables.length).toBeGreaterThan(0);
