@@ -87,10 +87,20 @@ services:
         condition: service_healthy
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgres://inova_app:${APP_DB_PASSWORD:?set in .env}@postgres:5432/inova
+      # Its own database role: only inova_auth may use the cross-tenant identity
+      # scope (db/migrations/0003). core-api's inova_app cannot.
+      AUTH_DATABASE_URL: postgres://inova_auth:${AUTH_DB_PASSWORD:?set in .env}@postgres:5432/inova
       REDIS_URL: redis://redis:6379
       JWT_PRIVATE_KEY_PATH: /run/secrets/jwt-private.pem
-      AUTH_THROTTLE_STRICT: 'true'
+      # Attempts per minute per client on login/activate/resend. A number: the
+      # service refuses to start on anything else.
+      AUTH_THROTTLE_STRICT: '5'
+      # One reverse proxy (the edge nginx) sits in front. Without this every
+      # client shares the proxy's address and the limit above is one bucket.
+      TRUST_PROXY_HOPS: '1'
+      # Empty in production: the service then refuses to start instead of
+      # writing one-time codes to the log. provision-env.sh sets `log` for test.
+      CODE_DELIVERY: ${CODE_DELIVERY:-}
     volumes:
       # Relative to the stack directory, never absolute: this file is shared by
       # every environment, and an absolute path would make them all sign with
@@ -119,6 +129,8 @@ services:
       NODE_ENV: production
       DATABASE_URL: postgres://inova_app:${APP_DB_PASSWORD:?set in .env}@postgres:5432/inova
       REDIS_URL: redis://redis:6379
+      TRUST_PROXY_HOPS: '1'
+      CODE_DELIVERY: ${CODE_DELIVERY:-}
       # JWKS is fetched over the internal network — no public round trip, and
       # core-api still verifies tokens locally after the first fetch.
       #

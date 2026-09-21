@@ -10,7 +10,7 @@ const clusterUrl = process.env.TEST_PG_URL ?? 'postgres://inova:inova@localhost:
 export interface TestDb {
   /** Privileged connection (migrations, fixtures, cross-tenant assertions). */
   migratorUrl: string;
-  /** RLS-enforced `inova_app` connection — what the services actually use. */
+  /** RLS-enforced `inova_auth` connection — what auth-service actually uses. */
   appUrl: string;
   dispose: () => Promise<void>;
 }
@@ -39,7 +39,7 @@ export async function createTestDb(prefix: string): Promise<TestDb> {
     stdio: 'pipe',
   });
 
-  const appUrl = `${migratorUrl.replace(/\/\/[^@]+@/, '//inova_app:inova_app@')}`;
+  const appUrl = `${migratorUrl.replace(/\/\/[^@]+@/, '//inova_auth:inova_auth@')}`;
   return {
     migratorUrl,
     appUrl,

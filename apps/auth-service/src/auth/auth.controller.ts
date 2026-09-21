@@ -1,4 +1,5 @@
 import { Body, Controller, Get, HttpCode, Post, Req, UseGuards } from '@nestjs/common';
+import { RuntimeEnv } from '@inova/shared';
 import { Throttle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -6,9 +7,14 @@ import { ActivateDto, LoginDto, RefreshDto, ResendCodeDto, SetPasswordDto } from
 import { JwtGuard, type AuthedRequest } from './jwt.guard';
 import { Public } from './public.decorator';
 
-// Brute-force protection on credential/code endpoints (tunable for tests).
+// Brute-force protection on credential/code endpoints: attempts per minute per
+// client address (tunable for tests). Parsed strictly — a non-numeric value
+// must stop the service, not disable the limit.
 const STRICT = {
-  default: { limit: Number(process.env.AUTH_THROTTLE_STRICT ?? 5), ttl: 60_000 },
+  default: {
+    limit: new RuntimeEnv(process.env).positiveInt('AUTH_THROTTLE_STRICT', 5),
+    ttl: 60_000,
+  },
 };
 
 @ApiTags('auth')

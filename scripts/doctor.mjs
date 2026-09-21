@@ -79,15 +79,18 @@ try {
   const ready = await client.query('SELECT current_database() AS db, current_user AS user');
   ok(`PostgreSQL ${ready.rows[0].db} as ${ready.rows[0].user}`);
 
-  const bypass = await client.query(
-    `SELECT rolbypassrls FROM pg_roles WHERE rolname = 'inova_app'`,
-  );
-  if (bypass.rowCount === 0) {
-    warn('role inova_app missing', 'pnpm db:migrate (creates the runtime role)');
-  } else if (bypass.rows[0].rolbypassrls) {
-    fail('inova_app has BYPASSRLS', 'This is a security bug — do not grant BYPASSRLS');
-  } else {
-    ok('inova_app exists and does not bypass RLS');
+  // core-api and auth-service each connect as their own role; neither may bypass RLS.
+  for (const role of ['inova_app', 'inova_auth']) {
+    const bypass = await client.query(`SELECT rolbypassrls FROM pg_roles WHERE rolname = $1`, [
+      role,
+    ]);
+    if (bypass.rowCount === 0) {
+      warn(`role ${role} missing`, 'pnpm db:migrate (creates the runtime roles)');
+    } else if (bypass.rows[0].rolbypassrls) {
+      fail(`${role} has BYPASSRLS`, 'This is a security bug — do not grant BYPASSRLS');
+    } else {
+      ok(`${role} exists and does not bypass RLS`);
+    }
   }
 
   const applied = await client

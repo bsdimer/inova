@@ -1,4 +1,5 @@
-import { Module } from '@nestjs/common';
+import { MockCodeDelivery } from '@inova/shared';
+import { Logger, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -23,6 +24,11 @@ import { KeysService } from './keys/keys.service';
     TokenService,
     AuthService,
     JwtGuard,
+    {
+      provide: MockCodeDelivery,
+      useFactory: () =>
+        new MockCodeDelivery(process.env, (message) => new Logger('CodeDelivery').warn(message)),
+    },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })

@@ -1,4 +1,5 @@
-import { ConflictException, Injectable, Logger } from '@nestjs/common';
+import { MockCodeDelivery } from '@inova/shared';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { eq, sql } from 'drizzle-orm';
 import { createHash, randomInt } from 'node:crypto';
 import { DbService } from '../../db/db.service';
@@ -40,11 +41,10 @@ export interface ProvisionTenantInput {
 
 @Injectable()
 export class PlatformService {
-  private readonly logger = new Logger(PlatformService.name);
-
   constructor(
     private readonly dbService: DbService,
     private readonly audit: AuditService,
+    private readonly codeDelivery: MockCodeDelivery,
   ) {}
 
   async listTenants() {
@@ -131,9 +131,7 @@ export class PlatformService {
             createdBy: actorUserId,
           });
           // TODO(M1): deliver via SMS/Viber gateway through the worker. MOCK: log only.
-          this.logger.warn(
-            `MOCK invite delivery — admin code for ${input.adminEmail}: ${inviteCode}`,
-          );
+          this.codeDelivery.deliver('tenant admin invite code', input.adminEmail, inviteCode);
         }
       }
 

@@ -1,5 +1,5 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
-import type { MembershipClaim } from '@inova/shared';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { MockCodeDelivery, type MembershipClaim } from '@inova/shared';
 import bcrypt from 'bcryptjs';
 import { and, eq, gt, inArray, isNull, sql } from 'drizzle-orm';
 import { createHash, randomInt } from 'node:crypto';
@@ -23,11 +23,10 @@ export interface SessionResult extends TokenPair {
 
 @Injectable()
 export class AuthService {
-  private readonly logger = new Logger(AuthService.name);
-
   constructor(
     private readonly dbService: DbService,
     private readonly tokens: TokenService,
+    private readonly codeDelivery: MockCodeDelivery,
   ) {}
 
   private async loadMemberships(
@@ -173,7 +172,7 @@ export class AuthService {
         .where(and(eq(inviteCodes.tenantId, existing.tenantId), eq(inviteCodes.id, existing.id)));
 
       // TODO(M1): deliver via SMS/Viber gateway through the worker. MOCK: log only.
-      this.logger.warn(`MOCK sms/viber delivery — invite code for ${phone}: ${code}`);
+      this.codeDelivery.deliver('invite code', phone, code);
     });
   }
 
