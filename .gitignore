@@ -37,3 +37,4 @@ android/
 coverage/
 *.log
 .idea/
+tmp/
