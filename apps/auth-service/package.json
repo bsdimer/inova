@@ -8,6 +8,7 @@
     "lint": "node ../../scripts/run-eslint.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
+    "test:unit": "vitest run --config vitest.unit.config.ts",
     "test:integration": "vitest run",
     "start": "node dist/main.js"
   },

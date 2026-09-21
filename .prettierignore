@@ -9,4 +9,5 @@ pnpm-lock.yaml
 ios
 android
 docs/work-log
-docs/implementation-plan.md
+# Scratch notes (untracked source material, not part of the repo)
+tmp
