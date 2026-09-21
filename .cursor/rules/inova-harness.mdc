@@ -19,6 +19,8 @@ This rule is the shareable development harness. It does not override
 ## Finish of every task
 
 1. Run `pnpm verify` from the repo root. That is the Definition of Done.
+   A milestone is marked Done only when its required tests exist and
+   `pnpm verify` passes as one command — see `AGENTS.md` → Closing a phase.
 2. Update `docs/current.md` only when what works, blockers, or Next up changed.
 3. Add one short change-set entry to `docs/work-log/YYYY-MM.md`: what changed,
    how it was verified, what remains.
@@ -30,8 +32,12 @@ needed.
 
 ## Do not
 
-- Load `docs/implementation-plan.md` unless you need a stakeholder decision
-  or domain rule.
+- Load the whole plan. `docs/implementation-plan.md` is an index; open the one
+  `docs/plan/*.md` or `docs/milestones/*.md` file that holds the stakeholder
+  decision or domain rule you need.
+- Ship logic without tests in the same change: unit tests next to the code
+  (`src/**/*.test.ts`), integration tests in `apps/<service>/test/` against
+  real Postgres. See `AGENTS.md` → Testing.
 - Skip, weaken, or delete tenant-isolation or financial tests.
 - Use client-supplied brand/bundle/tenant config as authorization.
 - Import another core-api module's schema/tables.

@@ -84,6 +84,19 @@ owner/tenant access demonstrate distinct server-enforced behavior; effective
 dates produce the correct population at a chosen date; removal approval and
 verification round-trips work end to end.
 
+## Follow-ups that depend only on M2
+
+Not part of M2 acceptance, but unblocked by it (scope in
+[implementation-plan.md](../implementation-plan.md) §7):
+
+- **M2b unified search** — building / apartment / resident from the admin
+  shell. Keep building name/address, apartment number and resident
+  name/phone/email in plain, indexable columns so M2b needs no schema change.
+- **M11 staff tasks and calendar** — tasks reference `building_id` /
+  `entrance_id`.
+- Dashboard building and apartment counts and the "add building" tile
+  ([features/admin-dashboard.md](../features/admin-dashboard.md)).
+
 ## Risks
 
 Obtain sample spreadsheet files before locking column mappings.
@@ -93,3 +106,19 @@ for claims submitted to a public/private enforcement agent. Until confirmed,
 do not place them on the general account or occupancy model. If required, use a
 separate encrypted, purpose-limited legal-identity record with explicit access
 permissions, audit logging, and retention/erasure rules.
+
+## Full scope by layer
+
+Moved verbatim from the implementation plan §7 when it was split. Where this and the sections above differ, the sections above are newer.
+
+**Effort / sequencing:** M
+
+- **Goal:** admin builds the inova portfolio and creates independent owner/tenant accounts on apartments (B7-B10); role-specific app access and effective-dated residents/pets are correct; self-service link requests remain an admin-verified fallback.
+- **Dependencies:** M1, including the tenant-scoped account-realm refactor required by B8.
+- **DB:** `buildings, entrances, apartments, occupancies, pets, occupancy_requests, building_manager_assignments, removal_requests` (+ soft delete/effective-date columns). Apartment unique business key: `(tenant, building, entrance, floor, apartment_number)`.
+- **Backend:** draft-building CRUD + bulk import endpoint (CSV/XLSX) for buildings/apartments; building activation freezes direct apartment removal; **create-resident-on-apartment endpoint (creates/uses a tenant-local account + effective-dated occupancy + invite code)**; multiple simultaneous owners; owner vs tenant permission guards; effective-dated residents/pets; occupancy request/verify/reject; reasoned removal request + super_admin approve/reject/apply; building-scoped manager assignments for tenant staff, resident managers, or platform-employed managers.
+- **Admin:** portfolio tree UI, apartment detail, building setup/activation, **"add resident" flow** with owner/tenant/occupant role and effective date, multiple-owner support, designated owner document recipient, verification/removal queues, corrections, resident lifecycle (approved end occupancy/move), manager assignment.
+- **Mobile:** distinct role-derived owner/tenant/occupant/manager views in the active branded tenant context; explicit role/view and apartment switching where applicable; tenant switching among independently authenticated accounts in the shared app; profile screens (contacts, occupants, pets with effective dates); fallback "add my apartment" request flow. Owner-only features stay hidden and server-blocked for tenants/occupants, regardless of the selected view.
+- **Tests:** import edge cases; natural-key uniqueness including floor; duplicate email/phone across tenants but not within one tenant; multiple co-owner access; owner/tenant authorization differences; effective-date boundaries; draft vs active removal policy; removal approval audit; occupancy state machine; resident cannot see unlinked apartments.
+- **Acceptance:** inova's real structure importable from spreadsheet; verification round-trip works end to end.
+- **Risks:** source data is spreadsheets (B4 resolved) — obtain sample files early to fix column mappings for the bulk importer.

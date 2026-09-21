@@ -10,7 +10,7 @@ Operated by **WhiteNova Technology**.
 > forward rename.
 
 Living status: [docs/current.md](docs/current.md). Docs index: [docs/README.md](docs/README.md).
-Architecture and stakeholder decisions: [docs/implementation-plan.md](docs/implementation-plan.md).
+Plan index: [docs/implementation-plan.md](docs/implementation-plan.md) — topics in [docs/plan/](docs/plan/) (stakeholder decisions: [decisions.md](docs/plan/decisions.md)), phases in [docs/milestones/](docs/milestones/).
 Agent/developer harness: [AGENTS.md](AGENTS.md).
 
 ## Repository layout

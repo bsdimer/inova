@@ -12,11 +12,12 @@ platform's own "inova" brand.
 1. Read this file.
 2. Read [docs/current.md](docs/current.md) — the only living status document.
 3. Start with **one** relevant extra file: a milestone under `docs/milestones/`,
-   an ADR under `docs/decisions/`, the linked feature brief under
+   a plan topic under `docs/plan/`, an ADR under `docs/decisions/`, the linked feature brief under
    `docs/features/`, or the frontend skill (see below). Load a linked reference
    later only when the task stage needs it.
 4. Check `git status`.
-5. State the task's acceptance criteria before editing.
+5. State the task's acceptance criteria before editing, and which tests will
+   prove them (see [Testing](#testing)).
 
 **Finish**
 
@@ -28,8 +29,10 @@ platform's own "inova" brand.
    how it was verified, what remains.
 5. Keep Next up accurate.
 
-Do **not** load the full implementation plan or old status files unless the task
-needs architecture or a stakeholder decision. Index: [docs/README.md](docs/README.md).
+The implementation plan is split: [docs/implementation-plan.md](docs/implementation-plan.md)
+is a short index, topics live in `docs/plan/`, phases in `docs/milestones/`. Load
+only the one file the task needs — never the whole set — and skip old status
+files. Index: [docs/README.md](docs/README.md).
 
 ## Non-negotiable working rules
 
@@ -41,8 +44,11 @@ needs architecture or a stakeholder decision. Index: [docs/README.md](docs/READM
 4. Financial and tenant-isolation suites are release blockers — never skip,
    weaken, or delete them to make CI pass.
 5. Do not re-litigate items marked RESOLVED/Decided in
-   [docs/implementation-plan.md](docs/implementation-plan.md) or
+   [docs/plan/decisions.md](docs/plan/decisions.md) or
    [docs/architecture.md](docs/architecture.md).
+6. **A phase closes only on green tests.** No milestone is marked Done —
+   in its file, in `docs/current.md`, in a commit or a PR — until the tests it
+   requires exist and pass. See [Closing a phase](#closing-a-phase).
 
 ## Branching and environments (GitFlow)
 
@@ -147,12 +153,81 @@ visual fixes do not need it.
 - Prettier at the root — `pnpm format` to fix, `pnpm format:check` in CI.
 - Conventional, present-tense commit messages.
 
+## Testing
+
+Logic ships with its tests **in the same change**. "Tests to follow" is not
+done, and a change whose tests were not run is not verified.
+
+| Kind        | Covers                                                                                                                                              | Lives in                                                                         | Runs with               |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ----------------------- |
+| Unit        | Logic with no I/O: calculations, allocation, state machines, validators, mappers, the decision part of a guard or policy                            | next to the code, `src/**/*.test.ts`                                             | `pnpm test:unit`        |
+| Integration | Anything whose correctness depends on Postgres/RLS, HTTP routing, guards, transactions or queues: every endpoint, table and migration-enforced rule | `apps/<service>/test/*.e2e.test.ts`, real Postgres as `inova_app` (no BYPASSRLS) | `pnpm test:integration` |
+
+- **Every new or changed behaviour has a test that fails without it.** Most
+  backend work needs both kinds: unit tests for the rules, an integration test
+  for the route that exposes them. A bug fix starts with a failing regression
+  test.
+- **New endpoint:** integration tests for the happy path, permission denied,
+  invalid input, and a cross-tenant case added to the tenant-isolation suite.
+  **New tenant-owned table:** the schema contract test must pass unchanged.
+- **Money:** unit tests on the arithmetic (`Money`, never floats), integration
+  tests for append-only and `Idempotency-Key` behaviour. Finance,
+  tenant-isolation and auth suites are release blockers (rule 4).
+- Test through the public surface — a service method, an HTTP route — not
+  private internals. Cover the failure modes that really occur: empty result,
+  duplicate/retry, malformed payload, upstream timeout or 4xx/5xx.
+- Unit tests are hermetic: no network, database, real clock, shared mutable
+  fixtures or ordering assumptions. Mock only at the process boundary (HTTP
+  client, queue, S3, clock). **Never mock the database in an integration
+  test** — RLS and constraints are the thing under test.
+- Use the existing runner (vitest) and helpers; do not add a second one.
+- Judgement, not a coverage number: layout, copy and token changes, DI wiring
+  and trivial pass-through code do not need a test written for them. There is
+  no coverage threshold to game.
+- **Frontend:** follow the `inova-frontend` skill's `references/testing.md`.
+  Admin and mobile have no test runner yet, so put pure logic that deserves a
+  test (formatting, display math, schemas) in `packages/shared`, and record
+  manual flow/visual QA in the work-log entry.
+- Never skip, weaken or delete a test to get green. Report the real output.
+
+## Closing a phase
+
+A phase (a file in `docs/milestones/`) is **Done** only when all of this is
+true. Until then its status is "In progress" with the gaps listed — "done
+except tests" is not a status.
+
+1. Every item under the phase file's **Tests / Required tests** exists as an
+   automated test. Where no runner exists yet (admin, mobile), the item is
+   recorded as a named manual check with its result — never silently dropped.
+2. Every **Acceptance** criterion is demonstrated and mapped to a test or to
+   such a recorded check.
+3. Release-blocker suites cover the phase's additions: each new route and
+   tenant-owned table is in the tenant-isolation suite and passes the schema
+   contract; money paths have their financial and idempotency tests.
+4. **`pnpm verify` is green as one command** on the branch being merged. A
+   failure that "passes on rerun" is a finding to explain in the work-log, not
+   a pass.
+5. No mock of this phase is left: `TODO(M<n>)` / `MOCK` markers for the phase
+   are gone or explicitly re-assigned to a later phase.
+
+Then, in the same change: set **Status** in the phase file to Done with the
+date, update the "Milestone honesty" and "Tests" tables in `docs/current.md`,
+and put the test summary (suites, counts, the verify result) in the work-log
+entry.
+
+Scope may be moved out of a phase, openly, into another phase's file — as M0's
+infrastructure moved to M-Ops. Tests for the scope that stays may not be
+deferred. Do not build the next phase on a dependency that is not closed unless
+the user says so.
+
 ## Definition of done
 
 `pnpm verify` is green. That runs format check, lint, typecheck, unit tests,
 integration tests, architecture contracts, and build. Also:
 
-1. New behavior has tests where the plan requires them (finance, isolation, auth).
+1. New or changed logic has unit and/or integration tests in the same change,
+   per [Testing](#testing); finance, isolation and auth suites stay green.
+   Finishing a task is not closing a phase — that needs [Closing a phase](#closing-a-phase).
 2. Mocks/stubs are marked `TODO(M<n>)` or `MOCK`.
 3. `docs/current.md` is updated when living state changed; the monthly work-log
    has one concise entry for the change set.
@@ -164,7 +239,9 @@ integration tests, architecture contracts, and build. Also:
 | ---------------------------------- | ---------------------------------------------------------- |
 | Living status, Next up             | [docs/current.md](docs/current.md)                         |
 | Architecture + decided trade-offs  | [docs/architecture.md](docs/architecture.md)               |
-| Stakeholder decisions, full domain | [docs/implementation-plan.md](docs/implementation-plan.md) |
+| Plan index + section (§) map       | [docs/implementation-plan.md](docs/implementation-plan.md) |
+| Stakeholder decisions, assumptions | [docs/plan/decisions.md](docs/plan/decisions.md)           |
+| Domain, data model, API, security  | [docs/plan/](docs/plan/)                                   |
 | Milestone scope + acceptance       | [docs/milestones/](docs/milestones/)                       |
 | Session history                    | [docs/work-log/](docs/work-log/)                           |
 | Feature scope + acceptance         | [docs/features/](docs/features/)                           |
