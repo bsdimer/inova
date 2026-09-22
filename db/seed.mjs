@@ -129,7 +129,7 @@ export async function seed(url = databaseUrl, { quiet = false } = {}) {
     // Platform super admin (no tenant memberships — platform_role claim only)
     await upsertUser({
       email: 'admin@inova.bg',
-      fullName: 'Platform Admin',
+      fullName: 'Пламен Атанасов',
       password: 'inova-admin',
       status: 'active',
       platformRole: 'super_admin',

@@ -108,6 +108,39 @@ export function IconButton({
   );
 }
 
+/**
+ * The light counterpart of `IconButton`: a solid white disc with a dark glyph.
+ * The mock-ups use exactly one per row — the action that opens the drawer —
+ * so it stays the loudest thing in the table without being a filled CTA.
+ */
+export function SolidIconButton({
+  children,
+  onClick,
+  disabled = false,
+  label,
+  size = 32,
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  label: string;
+  size?: number;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      title={label}
+      style={{ width: size, height: size }}
+      className="glass-solid flex shrink-0 items-center justify-center rounded-full transition-opacity hover:opacity-85 disabled:opacity-40"
+    >
+      {children}
+    </button>
+  );
+}
+
 /** Neutral pill for a role, a tag or a count. */
 export function Chip({ children, muted = false }: { children: ReactNode; muted?: boolean }) {
   return (

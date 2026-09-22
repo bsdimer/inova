@@ -1,4 +1,4 @@
-import { Link, Outlet, useRouterState } from '@tanstack/react-router';
+import { Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
 import {
   Bell,
@@ -9,6 +9,7 @@ import {
   CircleCheck,
   Globe,
   LayoutGrid,
+  Lock,
   LogOut,
   Menu,
   Monitor,
@@ -22,9 +23,11 @@ import {
   X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { AppBackground } from '../components/AppBackground';
 import { InovaWordmark } from '../components/Logo';
 import { Avatar, MenuItem, Popover } from '../components/ui';
+import { api, type TenantContext } from '../lib/api';
 import { clearSession, getSession } from '../lib/auth';
 import { setTheme, useThemeChoice, type ThemeChoice } from '../lib/theme';
 import {
@@ -51,13 +54,24 @@ const NAV = [
   { to: '/roles', label: 'Роли', icon: Shield },
 ] as const;
 
-const PLATFORM_NAV = [{ to: '/tenants', label: 'Организации', icon: Globe }] as const;
+/**
+ * The platform scope has a rail of its own — it is not the tenant rail with an
+ * extra item. «Общ преглед» and «Одитен дневник» have no screens before P1, so
+ * both lead to the placeholder.
+ */
+const PLATFORM_NAV = [
+  { to: '/platform', label: 'Общ преглед', icon: Globe },
+  { to: '/tenants', label: 'Организации', icon: Building2 },
+  { to: '/audit', label: 'Одитен дневник', icon: Shield },
+] as const;
+
 
 export function AppShell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const session = getSession();
   const [navOpen, setNavOpen] = useState(false);
-  const nav = session?.user.platformRole === 'super_admin' ? [...NAV, ...PLATFORM_NAV] : [...NAV];
+  const platform = usePlatformScope();
+  const nav = platform ? [...PLATFORM_NAV] : [...NAV];
 
   // A tap on a nav item should not leave the mobile drawer standing open.
   useEffect(() => setNavOpen(false), [pathname]);
@@ -66,10 +80,11 @@ export function AppShell() {
     <>
       <AppBackground />
       <div className="app-content mx-auto flex min-h-full max-w-[1392px] gap-6 px-4 py-4 lg:px-0 lg:py-16">
-        <Rail nav={nav} pathname={pathname} session={session} />
+        <Rail nav={nav} pathname={pathname} session={session} platform={platform} />
 
         <div className="flex min-w-0 flex-1 flex-col gap-4">
           <Topbar onOpenNav={() => setNavOpen(true)} session={session} />
+          {!platform && <PlatformVisitNote session={session} />}
           <motion.main
             key={pathname}
             initial={{ opacity: 0, y: 10 }}
@@ -88,8 +103,63 @@ export function AppShell() {
         nav={nav}
         pathname={pathname}
         session={session}
+        platform={platform}
       />
     </>
+  );
+}
+
+/**
+ * A super_admin is in the platform scope until they enter an organization, and
+ * back in it the moment they leave — «Върни се в платформата» clears the
+ * selection. Everyone else is always in a tenant.
+ */
+function usePlatformScope(): boolean {
+  const session = getSession();
+  const tenantId = useSelectedTenantId();
+  return session?.user.platformRole === 'super_admin' && !tenantId;
+}
+
+/**
+ * A platform administrator inside a tenant is a visitor, and core-api writes
+ * every write they make to that tenant's audit trail
+ * (`AuditService.record`, actorType 'platform'). The banner says so, and
+ * carries the way back out.
+ */
+function PlatformVisitNote({ session }: { session: Session }) {
+  const navigate = useNavigate();
+  const tenantId = useSelectedTenantId();
+  const context = useQuery({
+    queryKey: ['tenant', tenantId],
+    queryFn: () => api<TenantContext>('/tenant', { tenantId: tenantId! }),
+    enabled: Boolean(tenantId),
+    staleTime: 60_000,
+  });
+
+  if (session?.user.platformRole !== 'super_admin') return null;
+
+  const name = context.data?.tenant.name ?? 'организацията';
+  return (
+    <div className="glass flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-3.5">
+      <Lock size={17} className="shrink-0 text-ink-muted" />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold">Платформа → {name}</p>
+        <p className="text-xs text-ink-muted">
+          Влязохте в организацията от платформен обхват. Всяко действие тук се записва в одитния ѝ
+          дневник.
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={() => {
+          clearSelectedTenantId();
+          void navigate({ to: '/tenants' });
+        }}
+        className="glass-solid shrink-0 rounded-full px-4 py-2 text-sm font-medium"
+      >
+        Върни се в платформата
+      </button>
+    </div>
   );
 }
 
@@ -130,24 +200,51 @@ function NavList({ nav, pathname }: { nav: NavItems; pathname: string }) {
 }
 
 function AccountBlock({ session }: { session: Session }) {
+  const platform = usePlatformScope();
   const name = session?.user.fullName ?? '—';
   return (
     <div className="flex items-center gap-3 px-1.5">
       <Avatar name={name} size={40} />
       <span className="min-w-0">
         <span className="block truncate text-sm font-semibold">{name}</span>
-        <span className="block truncate text-xs text-ink-muted">{roleLabel(session)}</span>
+        <span className="block truncate text-xs text-ink-muted">{roleLabel(session, platform)}</span>
       </span>
     </div>
   );
 }
 
-function Rail({ nav, pathname, session }: { nav: NavItems; pathname: string; session: Session }) {
+/** The badge that tells a platform administrator which scope the rail is. */
+function PlatformBadge() {
+  return (
+    <div className="px-1.5 pb-5">
+      <span
+        className="inline-flex rounded-md px-2 py-1 text-[10px] font-semibold tracking-[0.14em] uppercase"
+        style={{ background: 'var(--badge-fill)', color: 'var(--badge-text)' }}
+      >
+        Платформа
+      </span>
+      <p className="mt-1.5 text-xs text-ink-faint">всички организации</p>
+    </div>
+  );
+}
+
+function Rail({
+  nav,
+  pathname,
+  session,
+  platform,
+}: {
+  nav: NavItems;
+  pathname: string;
+  session: Session;
+  platform: boolean;
+}) {
   return (
     <aside className="glass hidden w-58 shrink-0 flex-col p-5 lg:flex">
-      <div className="px-1.5 pt-1 pb-6 text-ink">
+      <div className={`px-1.5 pt-1 text-ink ${platform ? 'pb-4' : 'pb-6'}`}>
         <InovaWordmark size={22} />
       </div>
+      {platform && <PlatformBadge />}
       <NavList nav={nav} pathname={pathname} />
       <div className="flex-1" />
       <div className="mt-6 border-t border-glass-divider pt-4">
@@ -163,12 +260,14 @@ function MobileNav({
   nav,
   pathname,
   session,
+  platform,
 }: {
   open: boolean;
   onClose: () => void;
   nav: NavItems;
   pathname: string;
   session: Session;
+  platform: boolean;
 }) {
   if (!open) return null;
   return (
@@ -193,6 +292,7 @@ function MobileNav({
             <X size={18} />
           </button>
         </div>
+        {platform && <PlatformBadge />}
         <NavList nav={nav} pathname={pathname} />
         <div className="flex-1" />
         <div className="mt-6 border-t border-glass-divider pt-4">
@@ -242,8 +342,10 @@ function Topbar({ onOpenNav, session }: { onOpenNav: () => void; session: Sessio
   );
 }
 
-function roleLabel(session: Session): string {
-  if (session?.user.platformRole === 'super_admin') return 'Платформа';
+function roleLabel(session: Session, platform: boolean): string {
+  if (session?.user.platformRole === 'super_admin') {
+    return platform ? 'super_admin · платформа' : 'super_admin · в организация';
+  }
   const membership = session?.memberships[0];
   if (!membership) return '—';
   return `${ROLE_NAMES[membership.r] ?? membership.r} · ${membership.tenantKey}`;
@@ -260,6 +362,7 @@ const ROLE_NAMES: Record<string, string> = {
 function AccountMenu({ session }: { session: Session }) {
   const [open, setOpen] = useState(false);
   const themeChoice = useThemeChoice();
+  const platform = usePlatformScope();
   const selectedTenantId = useSelectedTenantId();
   const { options } = useTenantOptions();
   const name = session?.user.fullName ?? '—';
@@ -286,7 +389,7 @@ function AccountMenu({ session }: { session: Session }) {
           <Avatar name={name} size={34} />
           <span className="hidden min-w-0 sm:block">
             <span className="block truncate text-sm font-semibold">{name}</span>
-            <span className="block truncate text-xs text-ink-muted">{roleLabel(session)}</span>
+            <span className="block truncate text-xs text-ink-muted">{roleLabel(session, platform)}</span>
           </span>
           <ChevronDown size={14} className="shrink-0 opacity-70" />
         </button>

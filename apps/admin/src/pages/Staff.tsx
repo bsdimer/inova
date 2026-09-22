@@ -54,7 +54,6 @@ export function StaffPage() {
   const session = getSession();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [filters, setFilters] = useState<StaffFilters>(EMPTY_FILTERS);
-  const [expanded, setExpanded] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [pending, setPending] = useState<{ member: StaffMember; action: RowAction } | null>(null);
   const [drawerFor, setDrawerFor] = useState<string | null>(null);
@@ -145,8 +144,6 @@ export function StaffPage() {
       canManage: canManage === true,
       protection: protectionReason({ member, isSelf, activeAdmins, tenantName }),
       busy: pending?.member.userId === member.userId,
-      expanded: expanded === member.userId,
-      onToggleDetails: () => setExpanded((v) => (v === member.userId ? null : member.userId)),
       onAction: (action: RowAction) => {
         if (action === 'change-role') {
           setDrawerError(null);

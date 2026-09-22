@@ -10,6 +10,7 @@ import {
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { getSession } from './lib/auth';
+import { getSelectedTenantId } from './lib/tenant';
 import { initTheme } from './lib/theme';
 import { AppShell } from './pages/AppShell';
 import { ComingSoonPage } from './pages/ComingSoon';
@@ -45,6 +46,14 @@ const dashboardRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/',
   component: DashboardPage,
+  // A platform administrator who has not entered an organization has no
+  // dashboard to show: every query on it is tenant-scoped.
+  beforeLoad: () => {
+    const session = getSession();
+    if (session?.user.platformRole === 'super_admin' && !getSelectedTenantId()) {
+      throw redirect({ to: '/tenants' });
+    }
+  },
 });
 
 const tasksRoute = createRoute({
@@ -95,6 +104,28 @@ const rolesRoute = createRoute({
   component: RolesPage,
 });
 
+const platformOverviewRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: '/platform',
+  component: () => <ComingSoonPage title="Общ преглед" milestone="P1" />,
+  beforeLoad: () => {
+    if (getSession()?.user.platformRole !== 'super_admin') {
+      throw redirect({ to: '/' });
+    }
+  },
+});
+
+const auditRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: '/audit',
+  component: () => <ComingSoonPage title="Одитен дневник" milestone="P1" />,
+  beforeLoad: () => {
+    if (getSession()?.user.platformRole !== 'super_admin') {
+      throw redirect({ to: '/' });
+    }
+  },
+});
+
 const tenantsRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/tenants',
@@ -118,6 +149,8 @@ const routeTree = rootRoute.addChildren([
     noticesRoute,
     staffRoute,
     rolesRoute,
+    platformOverviewRoute,
+    auditRoute,
     tenantsRoute,
   ]),
 ]);
