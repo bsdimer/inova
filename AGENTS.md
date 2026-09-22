@@ -263,7 +263,7 @@ recovery`, a feature brief, or decision ids such as B13 or D19, linked to
   and never `Done` for a phase before [Closing a phase](#closing-a-phase)
   holds.
 - **Cross-references:** work-log heading `## YYYY-MM-DD — title (#PR, WHI-nn)`.
-- **Design issues** carry `design`. They are written in Bulgarian for the
+- **Design issues** carry `Design`. They are written in Bulgarian for the
   stakeholder, have no PR, and close when the decision they settle lands in
   [docs/plan/decisions.md](docs/plan/decisions.md). Technical anchors — phase
   ids, paths, token names — stay English.
