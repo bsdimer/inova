@@ -15,6 +15,10 @@ This rule is the shareable development harness. It does not override
    `.cursor/skills/inova-frontend/SKILL.md` for larger UI work.
 3. Check `git status`. Do not build ahead of the current milestone in
    `docs/current.md`.
+4. Create the Linear issue for this piece of work (team WhiteLabel, project
+   inova) in plain, non-technical words with a plan reference, and set it In
+   Progress — see `AGENTS.md` → Tracking in Linear. Never create issues for
+   work you are not starting.
 
 ## Finish of every task
 
@@ -26,6 +30,8 @@ This rule is the shareable development harness. It does not override
    + **Changed:** / **Verified:** / **Remains:**, at most 700 characters
    (`pnpm check:worklog`). Detail goes in the PR description, not here.
 4. Mark mocks with `TODO(M<n>)` or `MOCK`. Never commit secrets or `.env`.
+5. Linear issue → In Review when the PR opens (link the PR), Done after the
+   merge into `develop`.
 
 For larger frontend work, read and follow the canonical `inova-frontend` skill;
 it selects the small, feature, domain, or bug route and uses a brief only when

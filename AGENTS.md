@@ -18,6 +18,9 @@ platform's own "inova" brand.
 4. Check `git status`.
 5. State the task's acceptance criteria before editing, and which tests will
    prove them (see [Testing](#testing)).
+6. Create the task's Linear issue and set it **In Progress** (see
+   [Tracking in Linear](#tracking-in-linear)). Never before this point, never
+   for work you are not starting.
 
 **Finish**
 
@@ -32,6 +35,8 @@ platform's own "inova" brand.
    verified — belongs in the PR description and the commit message, not here:
    the work-log is the index of change sets, the PR is the record.
 5. Keep Next up accurate.
+6. Move the Linear issue to **In Review** when the PR opens (with the PR as a
+   link on the issue) and to **Done** once it merges into `develop`.
 
 The implementation plan is split: [docs/implementation-plan.md](docs/implementation-plan.md)
 is a short index, topics live in `docs/plan/`, phases in `docs/milestones/`. Load
@@ -224,6 +229,41 @@ infrastructure moved to M-Ops. Tests for the scope that stays may not be
 deferred. Do not build the next phase on a dependency that is not closed unless
 the user says so.
 
+## Tracking in Linear
+
+Stakeholders who do not read code follow the project in Linear: workspace
+`white-label-app`, team **WhiteLabel**, project **inova**. Every change set has
+one issue there — the same unit as the PR and the work-log entry — and the
+issue is written for those readers.
+
+- **One issue per piece of work, created when the work starts** (Start step
+  6), not before. **Never create issues ahead of work**: not for the backlog,
+  not for a phase's items, not for the plan. Questions, reading and reviews
+  that change nothing get no issue.
+- **Title:** what the reader gains, in plain words. "Residents can recover a
+  forgotten password by email or phone", not "add POST /auth/recovery".
+- **Description**, three short parts, no jargon:
+  - **What changes for the product** — two to four sentences.
+  - **Why now** — one or two sentences.
+  - **Plan reference** — the exact file and section the work implements:
+    `docs/plan/security.md §6.1`, `docs/milestones/M1-identity.md → Account
+recovery`, a feature brief, or decision ids such as B13 or D19, linked to
+    the file on GitHub (`https://github.com/bsdimer/inova/blob/develop/…`).
+  - No file paths, commands, table names or acronyms outside that last line.
+    The technical detail belongs in the PR description.
+- **Fields:** project `inova`. Phase work goes under the milestone named after
+  its phase file (`M1 — Identity`, `M2 — Property`, …) — create it when it is
+  missing; plan and harness work has no milestone. Label `Feature` for a new
+  capability, `Improvement` for plan, harness and refactoring work, `Bug` for a
+  defect in running code. Assignee: the person running the session.
+- **Status:** `In Progress` on creation → `In Review` when the PR opens (add
+  the PR as a link on the issue; put `Linear: WHI-nn` as the first line of the
+  PR body) → `Done` when the PR merges into `develop` → `Canceled`, with a
+  comment saying why, if the work is dropped. Never `Done` before the merge,
+  and never `Done` for a phase before [Closing a phase](#closing-a-phase)
+  holds.
+- **Cross-references:** work-log heading `## YYYY-MM-DD — title (#PR, WHI-nn)`.
+
 ## Definition of done
 
 `pnpm verify` is green. That runs format check, lint, typecheck, unit tests,
@@ -236,6 +276,8 @@ integration tests, architecture contracts, and build. Also:
 3. `docs/current.md` is updated when living state changed; the monthly work-log
    has one entry in the checked shape (Finish step 4) for the change set.
 4. No secrets, no commented-out code, no unrelated refactors.
+5. The change set's Linear issue exists, links the PR, and is `Done` after the
+   merge ([Tracking in Linear](#tracking-in-linear)).
 
 ## Where to read more
 
