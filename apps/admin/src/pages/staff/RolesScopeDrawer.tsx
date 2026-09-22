@@ -192,13 +192,18 @@ export function RolesScopeDrawer({
 
         <section>
           <h3 className="text-sm font-semibold">Акаунт</h3>
+          {!protection && (
+            <p className="mt-0.5 text-xs text-panel-ink-muted">
+              Спирането е обратимо. Отмяната прекратява достъпа завинаги.
+            </p>
+          )}
           {protection ? (
             <p className="mt-3 flex gap-2 rounded-2xl bg-panel-row px-3.5 py-3 text-xs text-panel-status-urgent">
               <Info size={14} className="mt-0.5 shrink-0" />
               {protection}
             </p>
           ) : (
-            <div className="mt-3 space-y-1.5">
+            <div className="mt-3 flex flex-wrap gap-2">
               {member.status === 'suspended' ? (
                 <AccountAction
                   icon={<RotateCcw size={15} />}
@@ -235,6 +240,7 @@ export function RolesScopeDrawer({
   );
 }
 
+/** The two account actions sit side by side as outlined pills, as drawn. */
 function AccountAction({
   icon,
   children,
@@ -256,8 +262,10 @@ function AccountAction({
       onClick={onClick}
       disabled={disabled}
       title={hint}
-      className={`flex w-full items-center gap-3 rounded-2xl bg-panel-row px-3.5 py-3 text-left text-sm font-medium transition-colors hover:bg-panel-row-strong disabled:cursor-not-allowed disabled:opacity-40 ${
-        danger ? 'text-panel-status-urgent' : 'text-panel-ink'
+      className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors hover:bg-panel-row disabled:cursor-not-allowed disabled:opacity-40 ${
+        danger
+          ? 'border-panel-status-urgent text-panel-status-urgent'
+          : 'border-panel-border text-panel-ink'
       }`}
     >
       <span className="shrink-0">{icon}</span>

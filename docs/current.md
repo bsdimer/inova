@@ -39,14 +39,19 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
   three glass fills (card / data / input) and the light panel surface for
   drawers, modals and menus, all from `design/inova-admin/glass-tokens.md`. The
   light and dark themes both exist and are chosen from the account menu or the
-  OS. Navigation is the nine items the stakeholder confirmed on 2026-09-22:
+  OS. Icons are Phosphor Light, the set the screens are drawn with. Navigation
+  is the nine items the stakeholder confirmed on 2026-09-22:
   Табло · Задачи · Известия · Сгради · Жители · Финанси · Нередности ·
-  Служители · Роли. Служители follows the M1 eight-column contract: search +
-  facets, sort presets, all ten table states, a roles-and-scope side panel with
-  pinned header and footer, a row menu that explains blocked actions, and a
-  card list with a filter sheet below `md`. Табло shows only the figures the
-  APIs really return (staff, roles, permissions); balance, calendar, issues,
-  buildings and documents are cards that name the milestone that brings them.
+  Служители · Роли. A platform administrator gets a rail of its own instead —
+  Общ преглед · Организации · Одитен дневник, with the ПЛАТФОРМА marker — and,
+  once inside an organization, the banner that says the visit is audited and
+  carries the way back out. Служители follows the M1 eight-column contract:
+  search + facets, sort presets, all ten table states, and one light disc per
+  row that opens the roles-and-scope drawer, which holds every row action and
+  explains the blocked ones; below `md` the rows become cards with a filter
+  sheet. Табло is laid out as drawn, which until M2, M3–M4, M6 and M11 means
+  the cards are placeholders: every figure slot shows «—» with its milestone,
+  and only the month grid is real.
   Contract for the full Табло: [features/admin-dashboard.md](features/admin-dashboard.md);
   it added M2b (unified search) and M11 (staff tasks/calendar) to the plan and
   extended M6 (issue priority), M7 (debtors audience, unread count) and M9.

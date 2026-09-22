@@ -8,11 +8,14 @@ import { useResolvedTheme } from '../lib/theme';
  * It is a real <img> rather than a CSS background-image: the design calls for a
  * fixed layer, and `background-attachment: fixed` is broken in iOS Safari.
  *
- * `data-bg-ready` gates every `backdrop-filter` in the app. Chromium samples the
- * backdrop for a filtered element once and does not re-sample it when an image
- * decodes later, so switching the blur on a frame after the photograph has
- * painted is what makes the glass show a blurred building instead of a sharp
- * one. Until then the surfaces are plain tints, which is the right fallback.
+ * `data-bg-ready` gates every `backdrop-filter` in the app. Chromium samples
+ * the backdrop of a filtered element once and keeps that sample: if it is
+ * taken before the photograph has painted, or before a resize has re-laid the
+ * layer out, the glass shows a razor-sharp building through a darkened pane
+ * for as long as the page is open. Switching the attribute off and on again
+ * forces a fresh sample, so this component does that whenever the backdrop
+ * changes underneath. Until it is on the surfaces are plain tints, which is
+ * the right fallback.
  */
 export function AppBackground() {
   const theme = useResolvedTheme();
@@ -21,27 +24,38 @@ export function AppBackground() {
   useEffect(() => {
     const img = ref.current;
     if (!img) return;
+    const root = document.documentElement;
     let cancelled = false;
+    let frame = 0;
+    let timer = 0;
 
-    // Off while this photograph is on its way in, so the gate below can only
-    // ever switch the blur on over a picture that has already painted.
-    delete document.documentElement.dataset.bgReady;
+    const resample = () => {
+      delete root.dataset.bgReady;
+      cancelAnimationFrame(frame);
+      // Two frames: one for the photograph to paint, one for the filtered
+      // layers above it to be composited against it.
+      frame = requestAnimationFrame(() => {
+        frame = requestAnimationFrame(() => {
+          if (!cancelled) root.dataset.bgReady = 'true';
+        });
+      });
+    };
 
-    const ready = () =>
-      // `decode()` resolves when the bitmap is ready, not merely fetched — a
-      // cached image otherwise reports `complete` before it has ever painted,
-      // and the compositor then samples an empty backdrop and keeps it. The
-      // two frames after it are for the photograph to paint and for the
-      // filtered layers above it to be re-composited.
-      requestAnimationFrame(() =>
-        requestAnimationFrame(() => {
-          if (!cancelled) document.documentElement.dataset.bgReady = 'true';
-        }),
-      );
+    // `decode()` rather than `load`: a cached image reports `complete` before
+    // it has ever painted, and the sample taken then is an empty one.
+    img.decode().then(resample, resample);
 
-    img.decode().then(ready, ready);
+    const onResize = () => {
+      clearTimeout(timer);
+      timer = window.setTimeout(resample, 150);
+    };
+    window.addEventListener('resize', onResize);
+
     return () => {
       cancelled = true;
+      cancelAnimationFrame(frame);
+      clearTimeout(timer);
+      window.removeEventListener('resize', onResize);
     };
   }, [theme]);
 

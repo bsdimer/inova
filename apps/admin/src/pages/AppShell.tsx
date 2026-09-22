@@ -65,7 +65,6 @@ const PLATFORM_NAV = [
   { to: '/audit', label: 'Одитен дневник', icon: Shield },
 ] as const;
 
-
 export function AppShell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const session = getSession();
@@ -207,7 +206,9 @@ function AccountBlock({ session }: { session: Session }) {
       <Avatar name={name} size={40} />
       <span className="min-w-0">
         <span className="block truncate text-sm font-semibold">{name}</span>
-        <span className="block truncate text-xs text-ink-muted">{roleLabel(session, platform)}</span>
+        <span className="block truncate text-xs text-ink-muted">
+          {roleLabel(session, platform)}
+        </span>
       </span>
     </div>
   );
@@ -218,8 +219,11 @@ function PlatformBadge() {
   return (
     <div className="px-1.5 pb-5">
       <span
-        className="inline-flex rounded-md px-2 py-1 text-[10px] font-semibold tracking-[0.14em] uppercase"
-        style={{ background: 'var(--badge-fill)', color: 'var(--badge-text)' }}
+        className="inline-flex rounded-[10px] px-2.5 py-[5px] text-[11px] font-semibold tracking-[0.8px] text-ink-soft uppercase"
+        style={{
+          background: 'var(--glass-chip)',
+          boxShadow: 'inset 0 0 0 1px var(--glass-edge-soft)',
+        }}
       >
         Платформа
       </span>
@@ -389,7 +393,9 @@ function AccountMenu({ session }: { session: Session }) {
           <Avatar name={name} size={34} />
           <span className="hidden min-w-0 sm:block">
             <span className="block truncate text-sm font-semibold">{name}</span>
-            <span className="block truncate text-xs text-ink-muted">{roleLabel(session, platform)}</span>
+            <span className="block truncate text-xs text-ink-muted">
+              {roleLabel(session, platform)}
+            </span>
           </span>
           <ChevronDown size={14} className="shrink-0 opacity-70" />
         </button>
