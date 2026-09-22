@@ -70,7 +70,7 @@ describe('invite-code activation (B7)', () => {
   it('activates a manager-created account and returns a session', async () => {
     const res = await post('/auth/activate', { code: '482913' });
     expect(res.status).toBe(200);
-    expect(res.body.user.fullName).toBe('Elena Petrova');
+    expect(res.body.user.fullName).toBe('Елена Петрова');
     expect(res.body.user.mustSetPassword).toBe(true);
     expect(res.body.memberships[0].r).toBe('resident');
   });
