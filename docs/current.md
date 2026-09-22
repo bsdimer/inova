@@ -4,7 +4,7 @@
 **Current milestone:** M1 tenant-account realm refactor, then M2 Property hierarchy
 **Focus:** apply the B8 tenant-scoped account decision, including secure multi-tenant session switching and multi-role mobile views, before M2 locks identity references; then build property hierarchy so mobile can drop mock building/apartment data.
 
-This is the only living status file. History: [work-log/](work-log/). Scope: [milestones/](milestones/).
+This is the only living status file. History: [work-log/](work-log/). Scope: [milestones/](milestones/). Non-technical view: Linear project `inova` (workspace `white-label-app`), one task per change set, created when the work starts — `AGENTS.md` → Tracking in Linear.
 
 ## What actually works
 

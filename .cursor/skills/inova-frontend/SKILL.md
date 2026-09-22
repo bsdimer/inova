@@ -80,4 +80,5 @@ stage needs it; do not front-load the whole library.
    and test plan.
 6. Update `docs/current.md` only when project state, blockers, or Next up
    changed. Add one work-log entry per change set in the checked shape
-   (`AGENTS.md` → Finish step 4); the PR description carries the detail.
+   (`AGENTS.md` → Finish step 4); the PR description carries the detail. Move
+   the change set's Linear issue to In Review with the PR, Done after merge.

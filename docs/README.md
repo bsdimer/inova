@@ -3,17 +3,18 @@
 One source of truth per kind of information. New sessions read
 `AGENTS.md` + [current.md](current.md) + at most one extra file below.
 
-| Kind                       | File                                             | When to open                                    |
-| -------------------------- | ------------------------------------------------ | ----------------------------------------------- |
-| Living status              | [current.md](current.md)                         | Every session                                   |
-| Architecture invariants    | [architecture.md](architecture.md)               | Schema, services, isolation, money              |
-| Plan index + § map         | [implementation-plan.md](implementation-plan.md) | Finding which file holds a § or a phase         |
-| Stakeholder decisions      | [plan/decisions.md](plan/decisions.md)           | Re-checking a RESOLVED item; open questions     |
-| Plan topics                | [plan/](plan/)                                   | Domain, data model, API, security, scope, risks |
-| Milestone / phase scope    | [milestones/](milestones/)                       | Working on that milestone                       |
-| Session history            | [work-log/](work-log/)                           | Index of change sets; the PR holds the detail   |
-| Feature scope + acceptance | [features/](features/)                           | Medium or large feature work                    |
-| ADRs                       | [decisions/](decisions/)                         | When an ADR exists for the topic                |
+| Kind                         | File                                                  | When to open                                                                 |
+| ---------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Living status                | [current.md](current.md)                              | Every session                                                                |
+| Architecture invariants      | [architecture.md](architecture.md)                    | Schema, services, isolation, money                                           |
+| Plan index + § map           | [implementation-plan.md](implementation-plan.md)      | Finding which file holds a § or a phase                                      |
+| Stakeholder decisions        | [plan/decisions.md](plan/decisions.md)                | Re-checking a RESOLVED item; open questions                                  |
+| Plan topics                  | [plan/](plan/)                                        | Domain, data model, API, security, scope, risks                              |
+| Milestone / phase scope      | [milestones/](milestones/)                            | Working on that milestone                                                    |
+| Session history              | [work-log/](work-log/)                                | Index of change sets; the PR holds the detail                                |
+| Stakeholder view of the work | Linear, project `inova` (workspace `white-label-app`) | Plain-language task per change set; rule in `AGENTS.md` → Tracking in Linear |
+| Feature scope + acceptance   | [features/](features/)                                | Medium or large feature work                                                 |
+| ADRs                         | [decisions/](decisions/)                              | When an ADR exists for the topic                                             |
 
 [implementation-status.md](implementation-status.md) is a pointer to `current.md`
 (kept so old links still resolve). Progress is **not** tracked as checkboxes
