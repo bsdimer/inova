@@ -162,7 +162,7 @@ services:
   # One-shot tooling, never started by `docker compose up`:
   #   docker compose run --rm migrator
   #   docker compose run --rm seed
-  # The auth-service image is the one that carries both pg and bcryptjs.
+  # The auth-service image is the one that carries both pg and argon2.
   migrator:
     image: ${IMAGE_REGISTRY:?set in .env}/inova-auth-service:${IMAGE_TAG:-latest}
     profiles: ['tools']

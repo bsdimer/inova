@@ -1,9 +1,9 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { MockCodeDelivery, type MembershipClaim } from '@inova/shared';
-import bcrypt from 'bcryptjs';
 import { and, eq, gt, inArray, isNull, sql } from 'drizzle-orm';
 import { createHash, randomInt } from 'node:crypto';
 import { DbService, type IdentityTx } from '../db/db.service';
+import { PasswordHasher } from './password-hasher';
 import { inviteCodes, staffMemberships, tenants, users } from '../db/schema';
 import { TokenService, type TokenPair } from './token.service';
 
@@ -27,6 +27,7 @@ export class AuthService {
     private readonly dbService: DbService,
     private readonly tokens: TokenService,
     private readonly codeDelivery: MockCodeDelivery,
+    private readonly passwords: PasswordHasher,
   ) {}
 
   private async loadMemberships(
@@ -89,12 +90,18 @@ export class AuthService {
         .from(users)
         .where(sql`lower(${users.email}) = lower(${email})`);
 
-      const valid =
-        user?.status === 'active' &&
-        user.passwordHash !== null &&
-        (await bcrypt.compare(password, user.passwordHash));
+      const storedHash = user?.status === 'active' ? user.passwordHash : null;
+      const valid = storedHash !== null && (await this.passwords.verify(storedHash, password));
       if (!valid) {
         throw new UnauthorizedException('Invalid credentials');
+      }
+      // Legacy bcrypt hashes (and weaker argon2 parameters) are upgraded on
+      // the first successful login — the only moment the plaintext is known.
+      if (this.passwords.needsRehash(storedHash)) {
+        await tx
+          .update(users)
+          .set({ passwordHash: await this.passwords.hash(password), updatedAt: new Date() })
+          .where(eq(users.id, user.id));
       }
       return this.buildSession(tx, user);
     });
@@ -201,7 +208,7 @@ export class AuthService {
   }
 
   async setPassword(userId: string, newPassword: string): Promise<void> {
-    const passwordHash = await bcrypt.hash(newPassword, 10);
+    const passwordHash = await this.passwords.hash(newPassword);
     await this.dbService.identityTx(async (tx) => {
       await tx
         .update(users)

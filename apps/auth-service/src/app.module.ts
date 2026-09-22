@@ -6,6 +6,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { JwtGuard } from './auth/jwt.guard';
+import { PasswordHasher } from './auth/password-hasher';
 import { TokenService } from './auth/token.service';
 import { DbService } from './db/db.service';
 import { HealthController } from './health/health.controller';
@@ -22,6 +23,7 @@ import { KeysService } from './keys/keys.service';
     DbService,
     KeysService,
     TokenService,
+    PasswordHasher,
     AuthService,
     JwtGuard,
     {

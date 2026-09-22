@@ -45,7 +45,7 @@ COPY --from=build /out ./
 # Non-secret white-label config, read by core-api through BRANDS_DIR.
 COPY brands ./brands
 # Plain-SQL migrations and the seed run as one-shot containers from the
-# auth-service image, the only one carrying both pg and bcryptjs.
+# auth-service image, the only one carrying both pg and argon2.
 COPY db ./db
 ENV NODE_ENV=production \
     BRANDS_DIR=/app/brands \

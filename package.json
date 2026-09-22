@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.35.0",
-    "bcryptjs": "^3.0.3",
+    "argon2": "^0.44.0",
     "eslint": "9.35.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-unused-imports": "^4.2.0",
@@ -37,5 +37,10 @@
     "turbo": "^2.5.0",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.44.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "argon2"
+    ]
   }
 }
