@@ -11,16 +11,20 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import bcrypt from 'bcryptjs';
+import pg from 'pg';
 import { createTestDb } from './db-helper';
 
 let app: INestApplication;
+let migratorUrl: string;
 let disposeDb: () => Promise<void>;
 
 const post = (url: string, body: object) =>
   request(app.getHttpServer()).post(url).send(body).set('content-type', 'application/json');
 
 beforeAll(async () => {
-  const { appUrl, dispose } = await createTestDb('inova_test_auth');
+  const { appUrl, migratorUrl: migrator, dispose } = await createTestDb('inova_test_auth');
+  migratorUrl = migrator;
   disposeDb = dispose;
   process.env.AUTH_DATABASE_URL = appUrl;
   process.env.JWT_PRIVATE_KEY_PATH = path.join(
@@ -95,6 +99,45 @@ describe('invite-code activation (B7)', () => {
       .set('Authorization', `Bearer ${session.body.accessToken}`);
     expect(me.status).toBe(200);
     expect(me.body.user.mustSetPassword).toBe(false);
+  });
+});
+
+describe('password hashing', () => {
+  it('stores argon2id and upgrades a legacy bcrypt hash on the first successful login', async () => {
+    // An account hashed before the argon2id switch, planted directly in the DB.
+    const db = new pg.Client({ connectionString: migratorUrl });
+    await db.connect();
+    try {
+      const legacy = await bcrypt.hash('legacy-password', 4);
+      await db.query(`UPDATE users SET password_hash = $1 WHERE lower(email) = 'ivan@demo.bg'`, [
+        legacy,
+      ]);
+
+      const wrong = await post('/auth/login', { email: 'ivan@demo.bg', password: 'nope' });
+      expect(wrong.status).toBe(401);
+      const ok = await post('/auth/login', { email: 'ivan@demo.bg', password: 'legacy-password' });
+      expect(ok.status).toBe(200);
+
+      const { rows } = await db.query(
+        `SELECT password_hash FROM users WHERE lower(email) = 'ivan@demo.bg'`,
+      );
+      expect(rows[0].password_hash.startsWith('$argon2id$')).toBe(true);
+
+      // The upgraded hash still verifies, and a wrong password still does not.
+      expect(
+        (await post('/auth/login', { email: 'ivan@demo.bg', password: 'legacy-password' })).status,
+      ).toBe(200);
+      expect((await post('/auth/login', { email: 'ivan@demo.bg', password: 'nope' })).status).toBe(
+        401,
+      );
+    } finally {
+      // Restore the seeded password for the suites below.
+      const argon2 = await import('argon2');
+      await db.query(`UPDATE users SET password_hash = $1 WHERE lower(email) = 'ivan@demo.bg'`, [
+        await argon2.hash('demo-owner', { type: argon2.argon2id }),
+      ]);
+      await db.end();
+    }
   });
 });
 

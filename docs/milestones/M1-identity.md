@@ -130,6 +130,10 @@ Defects in running code, fixed without starting the B8 or B13–B15 work:
   service.
 - Per-client rate limiting behind the edge proxy (`TRUST_PROXY_HOPS`).
 - One-time codes are logged only with an explicit opt-in in production.
+- Passwords are hashed with argon2id as the plan always said; the code had
+  used bcrypt (cost 10). Existing bcrypt hashes are upgraded on the next
+  successful login. `TODO(M1)`: drop the bcrypt verification path once no
+  `$2` hash remains.
 
 ## Required tests (release blockers)
 

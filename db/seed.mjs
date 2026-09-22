@@ -13,7 +13,7 @@
  *   demo admin:   ivan@demo.bg    / demo-owner
  *   invite codes: 482913 (Elena, inova) · 735026 (Georgi, demo)
  */
-import bcrypt from 'bcryptjs';
+import argon2 from 'argon2';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -101,7 +101,16 @@ export async function seed(url = databaseUrl, { quiet = false } = {}) {
     }
 
     const upsertUser = async ({ email, phone, fullName, password, status, platformRole }) => {
-      const passwordHash = password ? await bcrypt.hash(password, 10) : null;
+      // Same argon2id parameters as auth-service's PasswordHasher, so seeded
+      // accounts are not rehashed on their first login.
+      const passwordHash = password
+        ? await argon2.hash(password, {
+            type: argon2.argon2id,
+            memoryCost: 19 * 1024,
+            timeCost: 2,
+            parallelism: 1,
+          })
+        : null;
       const res = await client.query(
         `INSERT INTO users (email, phone, full_name, password_hash, status, platform_role)
          VALUES ($1, $2, $3, $4, $5, $6)
