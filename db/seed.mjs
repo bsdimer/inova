@@ -140,10 +140,10 @@ export async function seed(url = databaseUrl, { quiet = false } = {}) {
       {
         tenant: 'inova',
         email: 'maria@inova.bg',
-        fullName: 'Maria Ivanova',
+        fullName: 'Мария Иванова',
         password: 'inova-owner',
       },
-      { tenant: 'demo', email: 'ivan@demo.bg', fullName: 'Ivan Petrov', password: 'demo-owner' },
+      { tenant: 'demo', email: 'ivan@demo.bg', fullName: 'Иван Петров', password: 'demo-owner' },
     ];
     for (const o of admins) {
       const userId = await upsertUser({
@@ -162,8 +162,8 @@ export async function seed(url = databaseUrl, { quiet = false } = {}) {
 
     // Pending residents with invite codes (manager-created accounts, decision B7)
     const residents = [
-      { tenant: 'inova', phone: '+359881000001', fullName: 'Elena Petrova', code: '482913' },
-      { tenant: 'demo', phone: '+359881000002', fullName: 'Georgi Dimitrov', code: '735026' },
+      { tenant: 'inova', phone: '+359881000001', fullName: 'Елена Петрова', code: '482913' },
+      { tenant: 'demo', phone: '+359881000002', fullName: 'Георги Димитров', code: '735026' },
     ];
     for (const r of residents) {
       const existing = await client.query('SELECT id FROM users WHERE phone = $1', [r.phone]);
@@ -192,11 +192,14 @@ export async function seed(url = databaseUrl, { quiet = false } = {}) {
          VALUES ($1, $2, $3, 'sms', $4, now() + interval '30 days')`,
         [tenantIds[r.tenant], userId, sha256(r.code), r.phone],
       );
-      // Reset consumed state if a previous run activated this demo user
+      // Reset consumed state if a previous run activated this demo user, and
+      // carry the name across: unlike the email upsert above, a phone-only
+      // user is matched, not re-inserted, so a renamed fixture would stick.
       await client.query(
-        `UPDATE users SET status = 'pending', password_hash = NULL, updated_at = now()
+        `UPDATE users SET status = 'pending', password_hash = NULL,
+                          full_name = $2, updated_at = now()
          WHERE id = $1 AND status <> 'suspended'`,
-        [userId],
+        [userId, r.fullName],
       );
     }
 

@@ -14,8 +14,10 @@ const COLUMNS = [
   { label: 'Статус', width: '10.2%', className: '', bar: 'w-1/2' },
   { label: 'Роли', width: '17.9%', className: '', bar: 'w-3/4' },
   { label: 'Обхват', width: '10.2%', className: 'hidden @4xl:table-cell', bar: 'w-2/3' },
-  { label: 'Покана', width: '16.8%', className: 'hidden @5xl:table-cell', bar: 'w-2/3' },
-  { label: 'От', width: '6.6%', className: 'hidden @5xl:table-cell', bar: 'w-1/2' },
+  // «От» carries a whole date; Figma leaves it 12px of padding on the left and
+  // almost none on the right, so the column gets the point back from «Покана».
+  { label: 'Покана', width: '15.9%', className: 'hidden @5xl:table-cell', bar: 'w-2/3' },
+  { label: 'От', width: '7.5%', className: 'hidden @5xl:table-cell pr-1', bar: 'w-1/2' },
   { label: '', width: '4.7%', className: '', bar: 'ml-auto w-8' },
 ] as const;
 

@@ -131,7 +131,9 @@ export function StaffRow(props: RowProps) {
       <td className={`${CELL} hidden @5xl:table-cell`}>
         <InviteCell member={member} />
       </td>
-      <td className={`${CELL} num hidden text-sm whitespace-nowrap text-ink-muted @5xl:table-cell`}>
+      <td
+        className={`${CELL} num hidden pr-1 text-sm whitespace-nowrap text-ink-muted @5xl:table-cell`}
+      >
         {formatSince(member.since)}
       </td>
       <td className={CELL}>
