@@ -25,8 +25,12 @@ platform's own "inova" brand.
 2. Confirm no secrets and no unmarked mocks (`TODO(M<n>)` or `MOCK`).
 3. Update [docs/current.md](docs/current.md) only when what works, blockers, or
    Next up actually changed.
-4. Add one short change-set entry to `docs/work-log/YYYY-MM.md`: what changed,
-   how it was verified, what remains.
+4. Add one entry to `docs/work-log/YYYY-MM.md` in the checked shape:
+   `## YYYY-MM-DD — title (#PR)`, then **Changed:**, **Verified:** and
+   **Remains:**, one or two sentences each, **at most 700 characters in all**
+   (`pnpm check:worklog` enforces it). The long form — what, why, how it was
+   verified — belongs in the PR description and the commit message, not here:
+   the work-log is the index of change sets, the PR is the record.
 5. Keep Next up accurate.
 
 The implementation plan is split: [docs/implementation-plan.md](docs/implementation-plan.md)
@@ -212,8 +216,8 @@ except tests" is not a status.
 
 Then, in the same change: set **Status** in the phase file to Done with the
 date, update the "Milestone honesty" and "Tests" tables in `docs/current.md`,
-and put the test summary (suites, counts, the verify result) in the work-log
-entry.
+and put the test summary (suites, counts, the verify result) in the entry's
+**Verified** line and, in full, in the PR description.
 
 Scope may be moved out of a phase, openly, into another phase's file — as M0's
 infrastructure moved to M-Ops. Tests for the scope that stays may not be
@@ -230,7 +234,7 @@ integration tests, architecture contracts, and build. Also:
    Finishing a task is not closing a phase — that needs [Closing a phase](#closing-a-phase).
 2. Mocks/stubs are marked `TODO(M<n>)` or `MOCK`.
 3. `docs/current.md` is updated when living state changed; the monthly work-log
-   has one concise entry for the change set.
+   has one entry in the checked shape (Finish step 4) for the change set.
 4. No secrets, no commented-out code, no unrelated refactors.
 
 ## Where to read more

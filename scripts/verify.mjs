@@ -16,6 +16,7 @@ const steps = [
   ['check:brands', ['pnpm', 'check:brands']],
   ['check:routes', ['pnpm', 'check:routes']],
   ['check:agent-harness', ['pnpm', 'check:agent-harness']],
+  ['check:worklog', ['pnpm', 'check:worklog']],
   ['check:migrations', ['pnpm', 'check:migrations']],
   ['build', ['pnpm', 'build']],
 ];

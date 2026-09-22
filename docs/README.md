@@ -11,7 +11,7 @@ One source of truth per kind of information. New sessions read
 | Stakeholder decisions      | [plan/decisions.md](plan/decisions.md)           | Re-checking a RESOLVED item; open questions     |
 | Plan topics                | [plan/](plan/)                                   | Domain, data model, API, security, scope, risks |
 | Milestone / phase scope    | [milestones/](milestones/)                       | Working on that milestone                       |
-| Session history            | [work-log/](work-log/)                           | What changed and how it was verified            |
+| Session history            | [work-log/](work-log/)                           | Index of change sets; the PR holds the detail   |
 | Feature scope + acceptance | [features/](features/)                           | Medium or large feature work                    |
 | ADRs                       | [decisions/](decisions/)                         | When an ADR exists for the topic                |
 

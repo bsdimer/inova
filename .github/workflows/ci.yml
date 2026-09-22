@@ -39,6 +39,7 @@ jobs:
       - run: pnpm check:brands
       - run: pnpm check:routes
       - run: pnpm check:agent-harness
+      - run: pnpm check:worklog
 
   unit:
     name: unit

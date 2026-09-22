@@ -18,6 +18,7 @@
     "check:routes": "node scripts/check-routes.mjs",
     "check:migrations": "node scripts/check-migrations.mjs",
     "check:agent-harness": "node scripts/check-agent-harness.mjs",
+    "check:worklog": "node scripts/check-worklog.mjs",
     "check:admin": "pnpm --filter @inova/admin lint && pnpm --filter @inova/admin typecheck && pnpm --filter @inova/admin build",
     "verify": "node scripts/verify.mjs",
     "doctor": "node scripts/doctor.mjs",
