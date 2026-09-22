@@ -2,9 +2,9 @@
 
 /*
  * Glass design tokens. Values are generated from the Figma variable
- * collections "V2 Glass" (Светла / Тъмна) and "V2 Layout"; the source sheet is
- * design/inova-admin/glass-tokens.md in the innova-doc repository. Do not hand
- * tune a value here — change the Figma variable and regenerate the sheet.
+ * collections "V2 Glass" (Светла / Тъмна) and "V2 Layout" in the design file;
+ * the generated sheet is on its Foundations page. Do not hand tune a value
+ * here — change the Figma variable and regenerate the sheet.
  */
 
 :root {

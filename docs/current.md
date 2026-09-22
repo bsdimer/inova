@@ -37,10 +37,11 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
   Организации on live APIs, in Bulgarian. The portal uses the V2 glass visual
   system from the Figma page **Screens**: a fixed photograph with a scrim, the
   three glass fills (card / data / input) and the light panel surface for
-  drawers, modals and menus, all from `design/inova-admin/glass-tokens.md`. The
-  light and dark themes both exist and are chosen from the account menu or the
-  OS. Icons are Phosphor Light, the set the screens are drawn with. Navigation
-  is the nine items the stakeholder confirmed on 2026-09-22:
+  drawers, modals and menus, all generated from that file's V2 Glass and V2
+  Layout variables. The light and dark themes both exist and are chosen from
+  the account menu or the OS. Icons are Phosphor Light, the set the screens
+  are drawn with. Navigation is the nine items the stakeholder confirmed on
+  2026-09-22:
   Табло · Задачи · Известия · Сгради · Жители · Финанси · Нередности ·
   Служители · Роли. A platform administrator gets a rail of its own instead —
   Общ преглед · Организации · Одитен дневник, with the ПЛАТФОРМА marker — and,
