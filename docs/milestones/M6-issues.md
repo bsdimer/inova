@@ -22,7 +22,7 @@ Issue CRUD, status transitions with history, **priority set/changed by staff wit
 
 ## Admin
 
-Issue queue with filters (building, status, **priority**, category, date), detail with photo gallery, status timeline and a priority control.
+Issue queue with filters (building, status, **priority**, category, date), detail with photo gallery, status timeline and a priority control. **Category is also a visibility boundary (D22):** the Cleaning Contractor and Technician roles see only issues of their category; the house manager sees everything, including urgent and uncategorised ones.
 
 ## Mobile
 
