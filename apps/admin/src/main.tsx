@@ -10,6 +10,7 @@ import {
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { getSession } from './lib/auth';
+import { initTheme } from './lib/theme';
 import { AppShell } from './pages/AppShell';
 import { ComingSoonPage } from './pages/ComingSoon';
 import { DashboardPage } from './pages/Dashboard';
@@ -46,34 +47,40 @@ const dashboardRoute = createRoute({
   component: DashboardPage,
 });
 
+const tasksRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: '/tasks',
+  component: () => <ComingSoonPage title="Задачи" milestone="M11" />,
+});
+
 const buildingsRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/buildings',
-  component: () => <ComingSoonPage title="Buildings" milestone="M2" />,
+  component: () => <ComingSoonPage title="Сгради" milestone="M2" />,
 });
 
 const residentsRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/residents',
-  component: () => <ComingSoonPage title="Residents" milestone="M2" />,
+  component: () => <ComingSoonPage title="Жители" milestone="M2" />,
 });
 
 const financeRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/finance',
-  component: () => <ComingSoonPage title="Finance" milestone="M3–M4" />,
+  component: () => <ComingSoonPage title="Финанси" milestone="M3–M4" />,
 });
 
 const issuesRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/issues',
-  component: () => <ComingSoonPage title="Issues" milestone="M6" />,
+  component: () => <ComingSoonPage title="Нередности" milestone="M6" />,
 });
 
 const noticesRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/notices',
-  component: () => <ComingSoonPage title="Notices" milestone="M7" />,
+  component: () => <ComingSoonPage title="Известия" milestone="M7" />,
 });
 
 const staffRoute = createRoute({
@@ -103,6 +110,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   shellRoute.addChildren([
     dashboardRoute,
+    tasksRoute,
     buildingsRoute,
     residentsRoute,
     financeRoute,
@@ -123,6 +131,9 @@ declare module '@tanstack/react-router' {
 }
 
 const queryClient = new QueryClient();
+
+// Before the first paint, so the app never flashes the light theme at night.
+initTheme();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

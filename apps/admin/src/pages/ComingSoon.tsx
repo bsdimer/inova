@@ -3,19 +3,25 @@ import { Hammer } from 'lucide-react';
 
 export function ComingSoonPage({ title, milestone }: { title: string; milestone: string }) {
   return (
-    <div className="flex h-[60vh] flex-col items-center justify-center gap-4 text-center">
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: 'spring', damping: 14 }}
-        className="flex h-16 w-16 items-center justify-center rounded-3xl border border-orange/15 bg-gradient-to-br from-orange/15 to-orange-bright/5 shadow-lg shadow-orange/10"
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="glass flex min-h-[60vh] flex-col items-center justify-center gap-4 p-10 text-center"
+    >
+      <span
+        className="flex h-16 w-16 items-center justify-center rounded-3xl text-ink-soft"
+        style={{
+          background: 'var(--glass-inner)',
+          boxShadow: 'inset 0 0 0 1px var(--glass-edge-soft)',
+        }}
       >
-        <Hammer size={28} className="text-orange" />
-      </motion.div>
-      <h1 className="text-2xl font-extrabold tracking-tight">{title}</h1>
-      <p className="max-w-sm text-sm text-landmark">
-        This module arrives in milestone {milestone} of the implementation plan.
+        <Hammer size={26} />
+      </span>
+      <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+      <p className="max-w-sm text-sm text-ink-muted">
+        Разделът идва с етап {milestone} от плана за изпълнение.
       </p>
-    </div>
+    </motion.div>
   );
 }

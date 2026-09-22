@@ -33,18 +33,23 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
   overrides; `__DEV__` keeps localhost). Home greets the signed-in user. B8 multi-account
   portfolio / tenant switcher waits on the backend realm refactor. Building/home/dues/issues
   still MOCK (`TODO(M2/M3/…)`).
-- Admin: real login, tenant switcher, Staff / Roles / Tenants (provisioning
-  wizard) on live APIs. The portal uses the warm inova visual system across
-  login, shell, shared controls, cards, tables, modals, and responsive
-  navigation. Staff follows the M1 eight-column contract (Figma page
-  "M1 · Context & States"): search + facets, sort presets, all ten table
-  states, row menu with explained guards, container-query layouts for
-  1440/1280/1024. Roles/scope drawer, platform context and the multi-role
-  profile card are the next M1 admin change sets. Dashboard stats still mock.
-  The new "Табло" design is planned, not built: contract in
-  [features/admin-dashboard.md](features/admin-dashboard.md); it added M2b
-  (unified search) and M11 (staff tasks/calendar) to the plan and extended M6
-  (issue priority), M7 (debtors audience, unread count) and M9.
+- Admin: real login, organization switching, Табло / Служители / Роли /
+  Организации on live APIs, in Bulgarian. The portal uses the V2 glass visual
+  system from the Figma page **Screens**: a fixed photograph with a scrim, the
+  three glass fills (card / data / input) and the light panel surface for
+  drawers, modals and menus, all from `design/inova-admin/glass-tokens.md`. The
+  light and dark themes both exist and are chosen from the account menu or the
+  OS. Navigation is the nine items the stakeholder confirmed on 2026-09-22:
+  Табло · Задачи · Известия · Сгради · Жители · Финанси · Нередности ·
+  Служители · Роли. Служители follows the M1 eight-column contract: search +
+  facets, sort presets, all ten table states, a roles-and-scope side panel with
+  pinned header and footer, a row menu that explains blocked actions, and a
+  card list with a filter sheet below `md`. Табло shows only the figures the
+  APIs really return (staff, roles, permissions); balance, calendar, issues,
+  buildings and documents are cards that name the milestone that brings them.
+  Contract for the full Табло: [features/admin-dashboard.md](features/admin-dashboard.md);
+  it added M2b (unified search) and M11 (staff tasks/calendar) to the plan and
+  extended M6 (issue priority), M7 (debtors audience, unread count) and M9.
 - Quality gates: `pnpm verify` (format, lint, typecheck, unit, integration, architecture contracts, build). `pnpm test:unit` now covers `apps/api` and `apps/auth-service` too (co-located `src/**/*.test.ts`, hermetic, excluded from the build); `apps/auth-service` has the first six — the `PasswordHasher` units that came with argon2id — and `apps/api` still has none. The testing policy is in `AGENTS.md` → Testing. Admin and mobile still have no test runner. GitHub Actions CI installs pnpm from `package.json` `packageManager` (`pnpm@10.34.5`); do not also pass `version` to `pnpm/action-setup`.
   Locally the repo needs **Node >= 22** (`engines`): on Node 20.11 `verify`
   dies at `test:unit` before any project code runs, because rolldown imports

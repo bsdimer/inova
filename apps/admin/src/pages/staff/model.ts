@@ -10,8 +10,8 @@ export type MemberStatus = StaffMember['status'];
 /**
  * Invite column. The API only exposes membership status: an `invited` member
  * has a code, everyone else activated at some point. Delivery failures and
- * expiry are not stored yet.
- * TODO(M1): show "Delivery failed" / "Code expired" once the worker records
+ * expiry are drawn in the mock-up but not stored yet.
+ * TODO(M1): "Доставката неуспешна" / "Кодът изтече" once the worker records
  * delivery outcomes and the API exposes invite-code state.
  */
 export type InviteState = 'activated' | 'code-sent' | 'none';
@@ -23,46 +23,77 @@ export function inviteStateOf(member: StaffMember): InviteState {
 }
 
 export const INVITE_LABELS: Record<InviteState, string> = {
-  activated: 'Activated',
-  'code-sent': 'Code sent',
+  activated: 'Активиран',
+  'code-sent': 'Код изпратен',
   none: '—',
 };
 
 export const STATUS_LABELS: Record<MemberStatus, string> = {
-  active: 'Active',
-  invited: 'Invited',
-  suspended: 'Suspended',
-  revoked: 'Revoked',
+  active: 'Активен',
+  invited: 'Поканен',
+  suspended: 'Спрян',
+  revoked: 'Отменен',
+};
+
+export type StatusTone = 'pending' | 'urgent' | 'resolved' | 'muted';
+
+export const STATUS_TONES: Record<MemberStatus, StatusTone> = {
+  active: 'resolved',
+  invited: 'pending',
+  suspended: 'urgent',
+  revoked: 'muted',
 };
 
 export const STATUS_ORDER: MemberStatus[] = ['active', 'invited', 'suspended', 'revoked'];
 
 /**
- * Roles per member. The API carries one `roleKey`; multiple roles per account
+ * Bulgarian names for the role keys the seed creates. A tenant's own custom
+ * role falls back to whatever name it was given in the API.
+ * TODO(M1-B8): Собственик / Наемател (D8) and Почистваща фирма / Техник (D22)
+ * are stakeholder decisions with no backend yet; the drawer lists the roles
+ * `/tenant/roles` really returns rather than four names the server would
+ * reject.
+ */
+export const ROLE_NAMES: Record<string, string> = {
+  admin: 'Администратор',
+  manager: 'Домоуправител',
+  accountant: 'Счетоводител',
+  resident: 'Жител',
+  owner: 'Собственик',
+  tenant: 'Наемател',
+  cleaning: 'Почистваща фирма',
+  technician: 'Техник',
+};
+
+export function roleName(key: string, roles: Role[]): string {
+  return ROLE_NAMES[key] ?? roles.find((r) => r.key === key)?.name ?? key;
+}
+
+/**
+ * Roles per member. The API carries one `roleKey`; several roles per account
  * arrive with the B8 realm refactor. Shaped as an array now so the row and the
  * `+N` overflow do not change when the data does.
  * TODO(M1-B8): read `member.roles` once the API returns several.
  */
 export function rolesOf(member: StaffMember, roles: Role[]): { key: string; name: string }[] {
-  const role = roles.find((r) => r.key === member.roleKey);
-  return [{ key: member.roleKey, name: role?.name ?? member.roleKey }];
+  return [{ key: member.roleKey, name: roleName(member.roleKey, roles) }];
 }
 
 /**
  * Building scope. Every M1 staff role applies organization-wide; a revoked
  * account has no scope at all.
- * TODO(M2): building scope from manager assignments.
+ * TODO(M2): real building scope from manager assignments.
  */
 export function scopeOf(member: StaffMember): string | null {
-  return member.status === 'revoked' ? null : 'All buildings';
+  return member.status === 'revoked' ? null : 'Всички сгради';
 }
 
 export type SortPreset = 'attention' | 'name' | 'newest';
 
 export const SORT_LABELS: Record<SortPreset, string> = {
-  attention: 'Needs attention first',
-  name: 'Name A–Z',
-  newest: 'Newest first',
+  attention: 'Първо нуждаещите се от внимание',
+  name: 'Име А–Я',
+  newest: 'Първо най-новите',
 };
 
 export interface StaffFilters {
@@ -87,6 +118,10 @@ export function hasActiveFacets(f: StaffFilters): boolean {
 
 export function hasAnyFilter(f: StaffFilters): boolean {
   return hasActiveFacets(f) || f.search.trim().length > 0;
+}
+
+export function facetCount(f: StaffFilters): number {
+  return f.status.length + f.role.length + f.invite.length;
 }
 
 function matchesSearch(member: StaffMember, needle: string): boolean {
@@ -119,7 +154,7 @@ const ATTENTION_RANK: Record<MemberStatus, number> = {
 };
 
 export function sortMembers(members: StaffMember[], preset: SortPreset): StaffMember[] {
-  const byName = (a: StaffMember, b: StaffMember) => a.fullName.localeCompare(b.fullName);
+  const byName = (a: StaffMember, b: StaffMember) => a.fullName.localeCompare(b.fullName, 'bg');
   const sorted = [...members];
   switch (preset) {
     case 'attention':
@@ -133,35 +168,35 @@ export function sortMembers(members: StaffMember[], preset: SortPreset): StaffMe
   }
 }
 
-/** One human sentence per facet, for the chips and the no-results copy. */
+/** One human phrase per facet, for the chips and the no-results copy. */
 export function describeFacet(
   key: 'status' | 'role' | 'invite',
   values: string[],
-  roleNames: Map<string, string>,
+  roles: Role[],
 ): string {
   const labels = values.map((v) => {
     if (key === 'status') return STATUS_LABELS[v as MemberStatus] ?? v;
     if (key === 'invite') return INVITE_LABELS[v as InviteState] ?? v;
-    return roleNames.get(v) ?? v;
+    return roleName(v, roles);
   });
-  const title = key === 'status' ? 'Status' : key === 'invite' ? 'Invite' : 'Role';
-  return `${title}: ${labels.join(' or ')}`;
+  const title = key === 'status' ? 'Статус' : key === 'invite' ? 'Покана' : 'Роля';
+  return `${title}: ${labels.join(' или ')}`;
 }
 
 export type RowAction = 'suspend' | 'reactivate' | 'revoke' | 'change-role';
 
 export const ACTION_PROGRESS: Record<RowAction, string> = {
-  suspend: 'Suspending',
-  reactivate: 'Reactivating',
-  revoke: 'Revoking',
-  'change-role': 'Changing the role of',
+  suspend: 'Спира',
+  reactivate: 'Възстановява',
+  revoke: 'Отменя',
+  'change-role': 'Променя ролята на',
 };
 
 export const ACTION_DONE: Record<RowAction, string> = {
-  suspend: 'suspended',
-  reactivate: 'reactivated',
-  revoke: 'revoked',
-  'change-role': 'now has a new role',
+  suspend: 'е спрян',
+  reactivate: 'е възстановен',
+  revoke: 'е отменен',
+  'change-role': 'вече има нова роля',
 };
 
 /**
@@ -175,9 +210,22 @@ export function protectionReason(input: {
   tenantName: string;
 }): string | null {
   const { member, isSelf, activeAdmins, tenantName } = input;
-  if (isSelf) return 'You cannot change your own membership. Ask another administrator.';
+  if (isSelf) return 'Не можете да променяте собственото си членство. Помолете друг администратор.';
   if (member.roleKey === 'admin' && member.status === 'active' && activeAdmins <= 1) {
-    return `${member.fullName} is the last administrator of ${tenantName}. Add another administrator before suspending, revoking or changing this account.`;
+    return `${member.fullName} е последният администратор на ${tenantName}. Добавете друг администратор, преди да спрете, отмените или промените този акаунт.`;
   }
   return null;
+}
+
+export const INVITED_NOTE =
+  'Поканените активират акаунта си с код. Дотогава поканата може само да бъде отменена.';
+
+/**
+ * Dates render as in the mock-up: 16.09.26. Built by hand because the bg-BG
+ * locale appends " г." to a formatted date, which does not fit a 72px column.
+ */
+export function formatSince(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${String(d.getFullYear()).slice(2)}`;
 }

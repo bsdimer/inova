@@ -1,162 +1,224 @@
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
-  ArrowDownRight,
-  ArrowUpRight,
-  Banknote,
   Building2,
-  TrendingUp,
-  Wrench,
+  CalendarDays,
+  CircleAlert,
+  FileUp,
+  ShieldCheck,
+  UserCog,
+  Wallet,
 } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { Chip, StatusDot, type StatusTone } from '../components/ui';
+import { api, ApiError, type Role, type StaffMember, type TenantContext } from '../lib/api';
+import { useSelectedTenantId } from '../lib/tenant';
+import { STATUS_TONES } from './staff/model';
 
-// Mock data until the reports API lands (M9).
-const STATS = [
-  {
-    label: 'Outstanding',
-    value: '12 480 лв',
-    delta: '-4.2%',
-    up: false,
-    icon: Banknote,
-    tint: 'text-ember bg-orange/10',
-  },
-  {
-    label: 'Collected this month',
-    value: '38 950 лв',
-    delta: '+12.8%',
-    up: true,
-    icon: TrendingUp,
-    tint: 'text-success bg-success/10',
-  },
-  {
-    label: 'Open issues',
-    value: '17',
-    delta: '+3',
-    up: false,
-    icon: Wrench,
-    tint: 'text-landmark bg-landmark/10',
-  },
-  {
-    label: 'Buildings',
-    value: '24',
-    delta: '+1',
-    up: true,
-    icon: Building2,
-    tint: 'text-gold-black bg-gold-black/8',
-  },
-] as const;
+const TENANT_STATUS_LABELS: Record<TenantContext['tenant']['status'], string> = {
+  trial: 'Пробен период',
+  active: 'Активна',
+  suspended: 'Спряна',
+  offboarded: 'Закрита',
+};
 
-const RECENT_PAYMENTS = [
-  {
-    id: 'p1',
-    resident: 'Maria Ivanova',
-    building: 'Iztok 24 · Apt 12',
-    amount: '86.40 лв',
-    method: 'Bank transfer',
-    time: 'Today 14:05',
-  },
-  {
-    id: 'p2',
-    resident: 'Georgi Petrov',
-    building: 'Mladost 7 · Apt 3',
-    amount: '54.00 лв',
-    method: 'Cash',
-    time: 'Today 11:42',
-  },
-  {
-    id: 'p3',
-    resident: 'Elena Dimitrova',
-    building: 'Iztok 24 · Apt 8',
-    amount: '112.20 лв',
-    method: 'Bank transfer',
-    time: 'Yesterday',
-  },
-  {
-    id: 'p4',
-    resident: 'Stefan Kolev',
-    building: 'Center 3 · Apt 21',
-    amount: '73.60 лв',
-    method: 'Bank transfer',
-    time: 'Yesterday',
-  },
-] as const;
+const TENANT_STATUS_TONES: Record<TenantContext['tenant']['status'], StatusTone> = {
+  trial: 'pending',
+  active: 'resolved',
+  suspended: 'urgent',
+  offboarded: 'muted',
+};
 
 export function DashboardPage() {
+  const tenantId = useSelectedTenantId();
+
+  const context = useQuery({
+    queryKey: ['tenant', tenantId],
+    queryFn: () => api<TenantContext>('/tenant', { tenantId: tenantId! }),
+    enabled: Boolean(tenantId),
+    staleTime: 60_000,
+  });
+  const staff = useQuery({
+    queryKey: ['staff', tenantId],
+    queryFn: () => api<StaffMember[]>('/tenant/staff', { tenantId: tenantId! }),
+    enabled: Boolean(tenantId),
+    retry: false,
+  });
+  const roles = useQuery({
+    queryKey: ['roles', tenantId],
+    queryFn: () => api<Role[]>('/tenant/roles', { tenantId: tenantId! }),
+    enabled: Boolean(tenantId),
+    retry: false,
+  });
+
+  const tenant = context.data?.tenant;
+  const members = staff.data ?? [];
+  const activeStaff = members.filter((m) => m.status === 'active').length;
+  const invitedStaff = members.filter((m) => m.status === 'invited').length;
+  const staffDenied = staff.error instanceof ApiError && staff.error.status === 403;
+
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight">Dashboard</h1>
-        <p className="mt-1 text-sm text-landmark">
-          Cross-portfolio overview — mock data until the reports API ships (M9).
+    <div className="space-y-5">
+      <div className="min-w-0">
+        <h1 className="text-2xl font-semibold tracking-tight">Табло</h1>
+        <p className="mt-1 text-sm text-ink-muted">
+          {tenant ? `${tenant.name} · ключ ${tenant.key}` : 'Зарежда организацията…'}
         </p>
       </div>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        {STATS.map(({ label, value, delta, up, icon: Icon, tint }, i) => (
-          <motion.div
-            key={label}
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: i * 0.07 }}
-            className="rounded-3xl border border-sand/70 bg-white/80 p-5 shadow-sm shadow-landmark/5 backdrop-blur transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-landmark/10"
-          >
-            <div className="flex items-center justify-between">
-              <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${tint}`}>
-                <Icon size={20} />
-              </span>
-              <span
-                className={`flex items-center gap-0.5 text-xs font-bold ${
-                  up ? 'text-success' : 'text-landmark'
-                }`}
-              >
-                {up ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                {delta}
-              </span>
-            </div>
-            <p className="mt-4 text-2xl font-extrabold tracking-tight">{value}</p>
-            <p className="mt-0.5 text-sm font-medium text-landmark">{label}</p>
-          </motion.div>
-        ))}
-      </div>
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        {/* The one card whose numbers exist today: identity and access. */}
+        <motion.section
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+          className="glass p-6 xl:col-span-2"
+        >
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="text-base font-semibold">Организация</h2>
+            {tenant && (
+              <StatusDot tone={TENANT_STATUS_TONES[tenant.status]}>
+                {TENANT_STATUS_LABELS[tenant.status]}
+              </StatusDot>
+            )}
+          </div>
 
-      {/* Recent payments */}
-      <motion.div
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, delay: 0.3 }}
-        className="overflow-x-auto rounded-3xl border border-sand/70 bg-white/80 shadow-sm shadow-landmark/5 backdrop-blur"
-      >
-        <div className="flex items-center justify-between px-6 py-4">
-          <h2 className="font-bold">Recent payments</h2>
-          <button className="text-sm font-semibold text-ember hover:text-orange hover:underline">
-            View all
-          </button>
-        </div>
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-y border-sand/80 bg-cream/70 text-xs font-semibold tracking-wider text-landmark uppercase">
-              <th className="px-6 py-3">Resident</th>
-              <th className="px-6 py-3">Apartment</th>
-              <th className="px-6 py-3">Method</th>
-              <th className="px-6 py-3">When</th>
-              <th className="px-6 py-3 text-right">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {RECENT_PAYMENTS.map((p) => (
-              <tr
-                key={p.id}
-                className="border-b border-sand/60 transition-colors last:border-0 hover:bg-orange/4"
-              >
-                <td className="px-6 py-3.5 font-semibold">{p.resident}</td>
-                <td className="px-6 py-3.5 text-landmark">{p.building}</td>
-                <td className="px-6 py-3.5 text-landmark">{p.method}</td>
-                <td className="px-6 py-3.5 text-landmark">{p.time}</td>
-                <td className="px-6 py-3.5 text-right font-bold">{p.amount}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </motion.div>
+          <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <Figure
+              icon={<UserCog size={16} />}
+              label="Активни служители"
+              value={staffDenied ? null : activeStaff}
+            />
+            <Figure
+              icon={<UserCog size={16} />}
+              label="Чакащи покана"
+              value={staffDenied ? null : invitedStaff}
+            />
+            <Figure
+              icon={<ShieldCheck size={16} />}
+              label="Роли"
+              value={roles.data ? roles.data.length : null}
+            />
+            <Figure
+              icon={<ShieldCheck size={16} />}
+              label="Ваши права"
+              value={context.data ? context.data.permissions.length : null}
+            />
+          </div>
+
+          {members.length > 0 && (
+            <div className="mt-5 border-t border-glass-divider pt-4">
+              <p className="text-xs font-semibold tracking-wider text-ink-faint uppercase">
+                Последно добавени
+              </p>
+              <ul className="mt-2 space-y-1.5">
+                {[...members]
+                  .sort((a, b) => b.since.localeCompare(a.since))
+                  .slice(0, 3)
+                  .map((member) => (
+                    <li
+                      key={member.userId}
+                      className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm"
+                    >
+                      <span className="font-medium">{member.fullName}</span>
+                      <StatusDot tone={STATUS_TONES[member.status]}>
+                        <span className="text-xs">{member.email ?? member.phone ?? '—'}</span>
+                      </StatusDot>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          )}
+        </motion.section>
+
+        {/*
+          The rest of the Табло design needs data no API returns yet. Each card
+          keeps its place and says which milestone brings it, rather than
+          showing a plausible number that would read as decided.
+          Contract: docs/features/admin-dashboard.md.
+        */}
+        <Planned icon={<CalendarDays size={18} />} title="Календар" milestone="M11" delay={0.05}>
+          Общи събрания, отчети и задачи на екипа се появяват тук, когато разделът «Задачи» получи
+          своя API.
+        </Planned>
+
+        <Planned icon={<Wallet size={18} />} title="Баланс" milestone="M3–M4" delay={0.1}>
+          Събрани суми, задължения и дял на плащанията идват с начисленията и касата.
+        </Planned>
+
+        <Planned icon={<CircleAlert size={18} />} title="Нередности" milestone="M6" delay={0.15}>
+          Отворените сигнали по етикет и спешност идват с раздела «Нередности».
+        </Planned>
+
+        <Planned
+          icon={<Building2 size={18} />}
+          title="Преглед на сгради"
+          milestone="M2"
+          delay={0.2}
+        >
+          Сгради, апартаменти и жители идват с йерархията на имотите.
+        </Planned>
+
+        <Planned
+          icon={<FileUp size={18} />}
+          title="Качи документ"
+          milestone="M4"
+          delay={0.25}
+          className="xl:col-span-2"
+        >
+          Фактури и документи за сгради се качват тук, когато хранилището на документи бъде
+          включено.
+        </Planned>
+      </div>
     </div>
+  );
+}
+
+function Figure({ icon, label, value }: { icon: ReactNode; label: string; value: number | null }) {
+  return (
+    <div>
+      <span className="flex items-center gap-1.5 text-xs text-ink-muted">
+        {icon}
+        {label}
+      </span>
+      <span className="num mt-1 block text-3xl font-semibold tracking-tight">
+        {value ?? <span className="text-xl text-ink-faint">—</span>}
+      </span>
+    </div>
+  );
+}
+
+/** A card the design places but the data does not exist for yet. */
+function Planned({
+  icon,
+  title,
+  milestone,
+  children,
+  delay,
+  className = '',
+}: {
+  icon: ReactNode;
+  title: string;
+  milestone: string;
+  children: ReactNode;
+  delay: number;
+  className?: string;
+}) {
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay }}
+      className={`glass flex flex-col p-6 ${className}`}
+    >
+      <div className="flex items-center gap-2.5">
+        <span className="text-ink-soft">{icon}</span>
+        <h2 className="text-base font-semibold">{title}</h2>
+        <span className="ml-auto">
+          <Chip muted>{milestone}</Chip>
+        </span>
+      </div>
+      <p className="mt-3 text-sm text-ink-muted">{children}</p>
+    </motion.section>
   );
 }
