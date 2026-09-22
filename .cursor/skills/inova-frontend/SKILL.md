@@ -79,4 +79,5 @@ stage needs it; do not front-load the whole library.
 5. Confirm the implementation covers the active contract's acceptance criteria
    and test plan.
 6. Update `docs/current.md` only when project state, blockers, or Next up
-   changed. Add one concise monthly work-log entry per change set.
+   changed. Add one work-log entry per change set in the checked shape
+   (`AGENTS.md` → Finish step 4); the PR description carries the detail.
