@@ -7,6 +7,7 @@ import {
   createRouter,
   redirect,
 } from '@tanstack/react-router';
+import { IconContext } from '@phosphor-icons/react';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { getSession } from './lib/auth';
@@ -170,8 +171,11 @@ initTheme();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
+    {/* The mock-ups are drawn in Phosphor Light; set the weight once here. */}
+    <IconContext.Provider value={{ weight: 'light' }}>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </IconContext.Provider>
   </StrictMode>,
 );

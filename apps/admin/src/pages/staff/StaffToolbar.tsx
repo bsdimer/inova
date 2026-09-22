@@ -1,4 +1,4 @@
-import { ArrowUpDown, ChevronDown, Search, SlidersHorizontal } from 'lucide-react';
+import { ArrowUpDown, ChevronDown, Search, SlidersHorizontal } from '../../components/icons';
 import { useState } from 'react';
 import { Drawer, Facet, FilterChip, Popover, type FacetOption } from '../../components/ui';
 import type { Role } from '../../lib/api';

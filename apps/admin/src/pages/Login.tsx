@@ -1,6 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Loader2, Lock, Mail } from 'lucide-react';
+import { Eye, EyeOff, LoaderCircle, Lock, Mail } from '../components/icons';
 import { useState, type FormEvent } from 'react';
 import { AppBackground } from '../components/AppBackground';
 import { InovaWordmark } from '../components/Logo';
@@ -121,7 +121,7 @@ export function LoginPage() {
               disabled={loading}
               className="cta flex w-full items-center justify-center gap-2 py-3.5 text-sm font-semibold transition-opacity disabled:opacity-60"
             >
-              {loading ? <Loader2 size={18} className="animate-spin" /> : 'Влез'}
+              {loading ? <LoaderCircle size={18} className="animate-spin" /> : 'Влез'}
             </button>
           </form>
         </motion.div>

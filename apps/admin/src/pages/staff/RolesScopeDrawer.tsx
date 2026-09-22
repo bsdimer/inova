@@ -1,4 +1,4 @@
-import { Info, LoaderCircle, RotateCcw, ShieldOff, UserX, X } from 'lucide-react';
+import { Info, LoaderCircle, RotateCcw, ShieldOff, UserX, X } from '../../components/icons';
 import { useEffect, useState } from 'react';
 import { Avatar, Drawer, StatusDot } from '../../components/ui';
 import type { Role, StaffMember } from '../../lib/api';

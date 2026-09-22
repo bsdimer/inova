@@ -5,7 +5,7 @@ import {
   LoaderCircle,
   MoreHorizontal,
   TriangleAlert,
-} from 'lucide-react';
+} from '../../components/icons';
 import type { ReactNode } from 'react';
 import { Avatar, Chip, SolidIconButton, StatusDot } from '../../components/ui';
 import type { StaffMember } from '../../lib/api';

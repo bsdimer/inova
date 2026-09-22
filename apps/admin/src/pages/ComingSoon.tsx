@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Hammer } from 'lucide-react';
+import { Hammer } from '../components/icons';
 
 export function ComingSoonPage({ title, milestone }: { title: string; milestone: string }) {
   return (

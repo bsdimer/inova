@@ -9,7 +9,7 @@ import {
   RefreshCw,
   Search,
   Users,
-} from 'lucide-react';
+} from '../components/icons';
 import { useMemo, useState, type ReactNode } from 'react';
 import {
   EmptyState,

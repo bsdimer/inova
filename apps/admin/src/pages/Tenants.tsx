@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Check, Plus, Search, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Plus, Search, Sparkles } from '../components/icons';
 import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import {

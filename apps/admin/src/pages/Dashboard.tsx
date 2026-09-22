@@ -8,7 +8,7 @@ import {
   ShieldCheck,
   UserCog,
   Wallet,
-} from 'lucide-react';
+} from '../components/icons';
 import type { ReactNode } from 'react';
 import { Chip, StatusDot, type StatusTone } from '../components/ui';
 import { api, ApiError, type Role, type StaffMember, type TenantContext } from '../lib/api';

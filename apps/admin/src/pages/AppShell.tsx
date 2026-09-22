@@ -21,7 +21,7 @@ import {
   Users,
   Wallet,
   X,
-} from 'lucide-react';
+} from '../components/icons';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AppBackground } from '../components/AppBackground';
