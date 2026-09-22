@@ -22,7 +22,7 @@ New `tasks` module. `GET /v1/tasks?date=|from=&to=&status=&limit=`, `GET /v1/tas
 
 ## Admin
 
-Tasks section (list + create/edit form) and the dashboard Calendar card: Month (Monday-first, dots, today, selected) with "Upcoming"; Day (summary "N tasks · M done", checkbox, time, place, deadline-only items); picking a day in Month opens Day. The dashboard checkbox writes, optimistically.
+Tasks section (list + create/edit form), reached from a **"Задачи" item in the shell navigation, placed directly after "Табло" and before "Известия"** (stakeholder, 2026-09-22), and the dashboard Calendar card: Month (Monday-first, dots, today, selected) with "Upcoming"; Day (summary "N tasks · M done", checkbox, time, place, deadline-only items); picking a day in Month opens Day. The dashboard checkbox writes, optimistically.
 
 ## Out of scope (v1)
 
