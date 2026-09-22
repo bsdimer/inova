@@ -1,149 +1,460 @@
-import { Link, Outlet, useRouterState } from '@tanstack/react-router';
+import { Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
 import {
-  Banknote,
   Bell,
   Building2,
+  Check,
+  ChevronDown,
+  CircleAlert,
+  CircleCheck,
   Globe,
-  LayoutDashboard,
+  LayoutGrid,
+  Lock,
   LogOut,
+  Menu,
+  Monitor,
+  Moon,
   Search,
-  ShieldCheck,
+  Shield,
+  Sun,
   UserCog,
   Users,
-  Wrench,
-} from 'lucide-react';
-import { InovaMark, InovaWordmark } from '../components/Logo';
-import { TenantSwitcher } from '../components/TenantSwitcher';
+  Wallet,
+  X,
+} from '../components/icons';
+import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { AppBackground } from '../components/AppBackground';
+import { InovaWordmark } from '../components/Logo';
+import { Avatar, MenuItem, Popover } from '../components/ui';
+import { api, type TenantContext } from '../lib/api';
 import { clearSession, getSession } from '../lib/auth';
-import { clearSelectedTenantId } from '../lib/tenant';
+import { setTheme, useThemeChoice, type ThemeChoice } from '../lib/theme';
+import {
+  clearSelectedTenantId,
+  setSelectedTenantId,
+  useSelectedTenantId,
+  useTenantOptions,
+} from '../lib/tenant';
 
+/**
+ * Order confirmed by the stakeholder on 2026-09-22. "Задачи" comes before
+ * "Известия"; the section behind it is M11 and does not exist yet, so the item
+ * leads to the placeholder rather than being hidden.
+ */
 const NAV = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/buildings', label: 'Buildings', icon: Building2 },
-  { to: '/residents', label: 'Residents', icon: Users },
-  { to: '/finance', label: 'Finance', icon: Banknote },
-  { to: '/issues', label: 'Issues', icon: Wrench },
-  { to: '/notices', label: 'Notices', icon: Bell },
-  { to: '/staff', label: 'Staff', icon: UserCog },
-  { to: '/roles', label: 'Roles', icon: ShieldCheck },
+  { to: '/', label: 'Табло', icon: LayoutGrid },
+  { to: '/tasks', label: 'Задачи', icon: CircleCheck },
+  { to: '/notices', label: 'Известия', icon: Bell },
+  { to: '/buildings', label: 'Сгради', icon: Building2 },
+  { to: '/residents', label: 'Жители', icon: Users },
+  { to: '/finance', label: 'Финанси', icon: Wallet },
+  { to: '/issues', label: 'Нередности', icon: CircleAlert },
+  { to: '/staff', label: 'Служители', icon: UserCog },
+  { to: '/roles', label: 'Роли', icon: Shield },
 ] as const;
 
-const PLATFORM_NAV = [{ to: '/tenants', label: 'Tenants', icon: Globe }] as const;
+/**
+ * The platform scope has a rail of its own — it is not the tenant rail with an
+ * extra item. «Общ преглед» and «Одитен дневник» have no screens before P1, so
+ * both lead to the placeholder.
+ */
+const PLATFORM_NAV = [
+  { to: '/platform', label: 'Общ преглед', icon: Globe },
+  { to: '/tenants', label: 'Организации', icon: Building2 },
+  { to: '/audit', label: 'Одитен дневник', icon: Shield },
+] as const;
 
 export function AppShell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const session = getSession();
-  const nav = session?.user.platformRole === 'super_admin' ? [...NAV, ...PLATFORM_NAV] : [...NAV];
+  const [navOpen, setNavOpen] = useState(false);
+  const platform = usePlatformScope();
+  const nav = platform ? [...PLATFORM_NAV] : [...NAV];
+
+  // A tap on a nav item should not leave the mobile drawer standing open.
+  useEffect(() => setNavOpen(false), [pathname]);
 
   return (
-    <div className="flex min-h-full flex-col bg-foam lg:flex-row">
-      {/* Sidebar */}
-      <aside className="relative flex shrink-0 flex-col overflow-hidden bg-gold-black p-4 text-white shadow-2xl shadow-gold-black/20 lg:min-h-screen lg:w-64 lg:p-5">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -top-28 -left-24 h-64 w-64 rounded-full bg-orange/18 blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute right-0 bottom-20 h-44 w-44 translate-x-1/2 rounded-full bg-landmark/20 blur-3xl"
-        />
-        <div className="relative mb-4 flex items-center justify-between gap-3 px-1 lg:mb-7 lg:justify-start lg:px-2">
-          <div className="flex items-center gap-3">
-            <InovaMark size={40} />
-            <InovaWordmark size={16} />
-          </div>
-          <Link
-            to="/login"
-            onClick={() => {
-              clearSession();
-              clearSelectedTenantId();
-            }}
-            className="rounded-xl p-2.5 text-white/60 transition-colors hover:bg-white/7 hover:text-white lg:hidden"
-            aria-label="Sign out"
-          >
-            <LogOut size={18} />
-          </Link>
-        </div>
+    <>
+      <AppBackground />
+      <div className="app-content mx-auto flex min-h-full max-w-[1392px] gap-6 px-4 py-4 lg:px-0 lg:py-16">
+        <Rail nav={nav} pathname={pathname} session={session} platform={platform} />
 
-        <div className="relative">
-          <TenantSwitcher />
-        </div>
-
-        <nav className="relative -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 lg:mx-0 lg:flex-1 lg:flex-col lg:overflow-visible lg:px-0 lg:pb-0">
-          {nav.map(({ to, label, icon: Icon }) => {
-            const active = pathname === to;
-            return (
-              <Link
-                key={to}
-                to={to}
-                className={`relative flex shrink-0 items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-colors lg:gap-3 lg:px-4 lg:py-3 ${
-                  active ? 'text-white' : 'text-white/55 hover:bg-white/7 hover:text-white/90'
-                }`}
-              >
-                {active && (
-                  <motion.span
-                    layoutId="nav-pill"
-                    className="absolute inset-0 rounded-xl bg-gradient-to-r from-orange-bright to-orange shadow-lg shadow-orange/20"
-                    transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-                  />
-                )}
-                <Icon size={18} className="relative" />
-                <span className="relative">{label}</span>
-              </Link>
-            );
-          })}
-        </nav>
-
-        <Link
-          to="/login"
-          onClick={() => {
-            clearSession();
-            clearSelectedTenantId();
-          }}
-          className="relative hidden items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-white/55 transition-colors hover:bg-white/7 hover:text-white/90 lg:flex"
-        >
-          <LogOut size={18} />
-          Sign out
-        </Link>
-      </aside>
-
-      {/* Main */}
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-sand/80 bg-cream/80 px-4 py-3 backdrop-blur-xl sm:px-6 lg:px-8 lg:py-4">
-          <div className="hidden w-full max-w-md items-center gap-3 rounded-full border border-sand/80 bg-white/70 px-4 py-2.5 shadow-sm sm:flex">
-            <Search size={17} className="text-landmark" />
-            <input
-              placeholder="Search buildings, residents, payments…"
-              className="w-full bg-transparent text-sm font-medium outline-none placeholder:text-stone"
-            />
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <p className="text-sm font-bold">{session?.user.fullName ?? 'Signed out'}</p>
-              <p className="text-xs text-landmark">
-                {session?.user.platformRole ??
-                  session?.memberships[0]?.tenantName ??
-                  'no membership'}
-              </p>
-            </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-[35%] bg-gradient-to-br from-orange-bright to-orange font-bold text-white shadow-md shadow-orange/20">
-              {(session?.user.fullName ?? 'S').slice(0, 1).toUpperCase()}
-            </div>
-          </div>
-        </header>
-
-        <main className="relative flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <motion.div
+        <div className="flex min-w-0 flex-1 flex-col gap-4">
+          <Topbar onOpenNav={() => setNavOpen(true)} session={session} />
+          {!platform && <PlatformVisitNote session={session} />}
+          <motion.main
             key={pathname}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
+            className="min-w-0 flex-1"
           >
             <Outlet />
-          </motion.div>
-        </main>
+          </motion.main>
+        </div>
       </div>
+
+      <MobileNav
+        open={navOpen}
+        onClose={() => setNavOpen(false)}
+        nav={nav}
+        pathname={pathname}
+        session={session}
+        platform={platform}
+      />
+    </>
+  );
+}
+
+/**
+ * A super_admin is in the platform scope until they enter an organization, and
+ * back in it the moment they leave — «Върни се в платформата» clears the
+ * selection. Everyone else is always in a tenant.
+ */
+function usePlatformScope(): boolean {
+  const session = getSession();
+  const tenantId = useSelectedTenantId();
+  return session?.user.platformRole === 'super_admin' && !tenantId;
+}
+
+/**
+ * A platform administrator inside a tenant is a visitor, and core-api writes
+ * every write they make to that tenant's audit trail
+ * (`AuditService.record`, actorType 'platform'). The banner says so, and
+ * carries the way back out.
+ */
+function PlatformVisitNote({ session }: { session: Session }) {
+  const navigate = useNavigate();
+  const tenantId = useSelectedTenantId();
+  const context = useQuery({
+    queryKey: ['tenant', tenantId],
+    queryFn: () => api<TenantContext>('/tenant', { tenantId: tenantId! }),
+    enabled: Boolean(tenantId),
+    staleTime: 60_000,
+  });
+
+  if (session?.user.platformRole !== 'super_admin') return null;
+
+  const name = context.data?.tenant.name ?? 'организацията';
+  return (
+    <div className="glass flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-3.5">
+      <Lock size={17} className="shrink-0 text-ink-muted" />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold">Платформа → {name}</p>
+        <p className="text-xs text-ink-muted">
+          Влязохте в организацията от платформен обхват. Всяко действие тук се записва в одитния ѝ
+          дневник.
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={() => {
+          clearSelectedTenantId();
+          void navigate({ to: '/tenants' });
+        }}
+        className="glass-solid shrink-0 rounded-full px-4 py-2 text-sm font-medium"
+      >
+        Върни се в платформата
+      </button>
     </div>
+  );
+}
+
+type NavItems = readonly { to: string; label: string; icon: typeof Bell }[];
+type Session = ReturnType<typeof getSession>;
+
+function NavList({ nav, pathname }: { nav: NavItems; pathname: string }) {
+  return (
+    <nav className="flex flex-col gap-1">
+      {nav.map(({ to, label, icon: Icon }) => {
+        const active = to === '/' ? pathname === '/' : pathname.startsWith(to);
+        return (
+          <Link
+            key={to}
+            to={to}
+            className={`relative flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm transition-colors ${
+              active ? 'font-semibold text-ink' : 'font-medium text-ink-muted hover:text-ink'
+            }`}
+          >
+            {active && (
+              <motion.span
+                layoutId="nav-pill"
+                className="absolute inset-0 rounded-2xl"
+                style={{
+                  background: 'var(--glass-inner)',
+                  boxShadow: 'inset 0 0 0 1px var(--glass-edge-soft)',
+                }}
+                transition={{ type: 'spring', damping: 30, stiffness: 340 }}
+              />
+            )}
+            <Icon size={18} className="relative shrink-0 opacity-90" />
+            <span className="relative truncate">{label}</span>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+function AccountBlock({ session }: { session: Session }) {
+  const platform = usePlatformScope();
+  const name = session?.user.fullName ?? '—';
+  return (
+    <div className="flex items-center gap-3 px-1.5">
+      <Avatar name={name} size={40} />
+      <span className="min-w-0">
+        <span className="block truncate text-sm font-semibold">{name}</span>
+        <span className="block truncate text-xs text-ink-muted">
+          {roleLabel(session, platform)}
+        </span>
+      </span>
+    </div>
+  );
+}
+
+/** The badge that tells a platform administrator which scope the rail is. */
+function PlatformBadge() {
+  return (
+    <div className="px-1.5 pb-5">
+      <span
+        className="inline-flex rounded-[10px] px-2.5 py-[5px] text-[11px] font-semibold tracking-[0.8px] text-ink-soft uppercase"
+        style={{
+          background: 'var(--glass-chip)',
+          boxShadow: 'inset 0 0 0 1px var(--glass-edge-soft)',
+        }}
+      >
+        Платформа
+      </span>
+      <p className="mt-1.5 text-xs text-ink-faint">всички организации</p>
+    </div>
+  );
+}
+
+function Rail({
+  nav,
+  pathname,
+  session,
+  platform,
+}: {
+  nav: NavItems;
+  pathname: string;
+  session: Session;
+  platform: boolean;
+}) {
+  return (
+    <aside className="glass hidden w-58 shrink-0 flex-col p-5 lg:flex">
+      <div className={`px-1.5 pt-1 text-ink ${platform ? 'pb-4' : 'pb-6'}`}>
+        <InovaWordmark size={22} />
+      </div>
+      {platform && <PlatformBadge />}
+      <NavList nav={nav} pathname={pathname} />
+      <div className="flex-1" />
+      <div className="mt-6 border-t border-glass-divider pt-4">
+        <AccountBlock session={session} />
+      </div>
+    </aside>
+  );
+}
+
+function MobileNav({
+  open,
+  onClose,
+  nav,
+  pathname,
+  session,
+  platform,
+}: {
+  open: boolean;
+  onClose: () => void;
+  nav: NavItems;
+  pathname: string;
+  session: Session;
+  platform: boolean;
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 lg:hidden" style={{ background: 'rgb(0 0 0 / 0.45)' }}>
+      <div className="absolute inset-0" onClick={onClose} />
+      <motion.aside
+        initial={{ x: -40, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ type: 'spring', damping: 30, stiffness: 320 }}
+        className="glass absolute top-3 bottom-3 left-3 flex w-64 flex-col p-5"
+      >
+        <div className="flex items-start justify-between pb-6">
+          <span className="px-1.5 pt-1 text-ink">
+            <InovaWordmark size={22} />
+          </span>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Затвори менюто"
+            className="rounded-full p-1.5 text-ink-muted hover:text-ink"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        {platform && <PlatformBadge />}
+        <NavList nav={nav} pathname={pathname} />
+        <div className="flex-1" />
+        <div className="mt-6 border-t border-glass-divider pt-4">
+          <AccountBlock session={session} />
+        </div>
+      </motion.aside>
+    </div>
+  );
+}
+
+function Topbar({ onOpenNav, session }: { onOpenNav: () => void; session: Session }) {
+  return (
+    <header className="flex items-center gap-3">
+      <button
+        type="button"
+        onClick={onOpenNav}
+        aria-label="Отвори менюто"
+        className="glass-control flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink lg:hidden"
+      >
+        <Menu size={18} />
+      </button>
+
+      {/* TODO(M2b): unified search over buildings, apartments and residents. */}
+      <label className="glass-control flex h-12 min-w-0 flex-1 items-center gap-3 rounded-full px-5 sm:max-w-xl">
+        <Search size={17} className="shrink-0 text-ink-faint" />
+        <input
+          type="search"
+          disabled
+          placeholder="Търсене — сграда, апартамент, жител"
+          aria-label="Общо търсене"
+          className="w-full bg-transparent text-sm font-medium text-ink outline-none placeholder:text-ink-faint disabled:cursor-not-allowed"
+        />
+      </label>
+
+      <div className="ml-auto flex shrink-0 items-center gap-2">
+        {/* TODO(M7): unread notice count; the mock-up shows a badge, the API has no counter yet. */}
+        <Link
+          to="/notices"
+          aria-label="Известия"
+          className="glass-control flex h-11 w-11 items-center justify-center rounded-full text-ink"
+        >
+          <Bell size={18} />
+        </Link>
+        <AccountMenu session={session} />
+      </div>
+    </header>
+  );
+}
+
+function roleLabel(session: Session, platform: boolean): string {
+  if (session?.user.platformRole === 'super_admin') {
+    return platform ? 'super_admin · платформа' : 'super_admin · в организация';
+  }
+  const membership = session?.memberships[0];
+  if (!membership) return '—';
+  return `${ROLE_NAMES[membership.r] ?? membership.r} · ${membership.tenantKey}`;
+}
+
+/** Display names for the seeded role keys; custom roles fall back to the key. */
+const ROLE_NAMES: Record<string, string> = {
+  admin: 'Администратор',
+  manager: 'Домоуправител',
+  accountant: 'Счетоводител',
+  resident: 'Жител',
+};
+
+function AccountMenu({ session }: { session: Session }) {
+  const [open, setOpen] = useState(false);
+  const themeChoice = useThemeChoice();
+  const platform = usePlatformScope();
+  const selectedTenantId = useSelectedTenantId();
+  const { options } = useTenantOptions();
+  const name = session?.user.fullName ?? '—';
+
+  const signOut = () => {
+    clearSession();
+    clearSelectedTenantId();
+    window.location.assign('/login');
+  };
+
+  return (
+    <Popover
+      open={open}
+      onClose={() => setOpen(false)}
+      align="right"
+      anchor={
+        <button
+          type="button"
+          aria-haspopup="menu"
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+          className="glass-control flex h-11 items-center gap-2.5 rounded-full py-1 pr-3 pl-1.5 text-left text-ink"
+        >
+          <Avatar name={name} size={34} />
+          <span className="hidden min-w-0 sm:block">
+            <span className="block truncate text-sm font-semibold">{name}</span>
+            <span className="block truncate text-xs text-ink-muted">
+              {roleLabel(session, platform)}
+            </span>
+          </span>
+          <ChevronDown size={14} className="shrink-0 opacity-70" />
+        </button>
+      }
+    >
+      <div role="menu" className="w-64">
+        {options.length > 1 && (
+          <>
+            <p className="px-3 pt-1.5 pb-1 text-xs font-semibold tracking-wider text-panel-ink-faint uppercase">
+              Организация
+            </p>
+            {options.map((option) => (
+              <MenuItem
+                key={option.id}
+                icon={<Building2 size={15} />}
+                onClick={() => {
+                  setSelectedTenantId(option.id);
+                  setOpen(false);
+                }}
+                trailing={
+                  option.id === selectedTenantId ? (
+                    <Check size={14} className="opacity-70" />
+                  ) : undefined
+                }
+              >
+                {option.name}
+              </MenuItem>
+            ))}
+            <hr className="my-1.5 border-panel-divider" />
+          </>
+        )}
+
+        <p className="px-3 pt-1.5 pb-1 text-xs font-semibold tracking-wider text-panel-ink-faint uppercase">
+          Изглед
+        </p>
+        {(
+          [
+            { value: 'light', label: 'Светъл', icon: Sun },
+            { value: 'dark', label: 'Тъмен', icon: Moon },
+            { value: 'system', label: 'Както в системата', icon: Monitor },
+          ] as { value: ThemeChoice; label: string; icon: typeof Sun }[]
+        ).map(({ value, label, icon: Icon }) => (
+          <MenuItem
+            key={value}
+            icon={<Icon size={15} />}
+            onClick={() => setTheme(value)}
+            trailing={
+              value === themeChoice ? <Check size={14} className="opacity-70" /> : undefined
+            }
+          >
+            {label}
+          </MenuItem>
+        ))}
+
+        <hr className="my-1.5 border-panel-divider" />
+        <MenuItem icon={<LogOut size={15} />} onClick={signOut}>
+          Изход
+        </MenuItem>
+      </div>
+    </Popover>
   );
 }

@@ -1,11 +1,56 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Lock, Pencil, Plus, Trash2, Users } from 'lucide-react';
+import { Lock, Pencil, Plus, Trash2 } from '../components/icons';
 import { useState, type FormEvent } from 'react';
-import { ErrorNote, Field, GhostButton, Modal, PrimaryButton, inputClass } from '../components/ui';
+import {
+  Chip,
+  ErrorNote,
+  Field,
+  GhostButton,
+  Modal,
+  PrimaryButton,
+  panelInputClass,
+} from '../components/ui';
 import { api, ApiError, type Permission, type Role } from '../lib/api';
 import { useSelectedTenantId } from '../lib/tenant';
 import { AccessNote } from './Staff';
+import { ROLE_NAMES } from './staff/model';
+
+/** Role descriptions in the stakeholder's words; custom roles have none. */
+const ROLE_DESCRIPTIONS: Record<string, string> = {
+  admin: 'Всички права в организацията, включително ролите и служителите.',
+  manager: 'Ежедневните операции за сградите, в които е назначен.',
+  accountant: 'Такси, плащания и финансови отчети.',
+  resident: 'Собственият апартамент.',
+  owner: 'Собственият апартамент, гласуване и предложения за анкети.',
+  tenant: 'Само собственият апартамент.',
+  cleaning: 'Вижда само сигналите с етикет «Чистота» в сградите, които са ѝ възложени.',
+  technician: 'Вижда само сигналите с етикет «Поддръжка» в сградите, които са му възложени.',
+};
+
+/** Bulgarian headings for the permission catalogue, keyed by the prefix. */
+const PERMISSION_GROUPS: Record<string, string> = {
+  tenant: 'Организация',
+  staff: 'Служители',
+  roles: 'Роли',
+  audit: 'Одит',
+  property: 'Имоти',
+  residents: 'Жители',
+  billing: 'Финанси',
+  payments: 'Плащания',
+  notifications: 'Комуникация',
+  surveys: 'Анкети',
+  issues: 'Нередности',
+  tasks: 'Задачи',
+  documents: 'Документи',
+  reports: 'Отчети',
+  settings: 'Настройки',
+};
+
+function memberLabel(count: number): string {
+  if (count === 0) return 'още никой';
+  return `${count} ${count === 1 ? 'акаунт' : 'акаунта'}`;
+}
 
 export function RolesPage() {
   const tenantId = useSelectedTenantId();
@@ -31,81 +76,79 @@ export function RolesPage() {
       setPageError(null);
       void queryClient.invalidateQueries({ queryKey: ['roles', tenantId] });
     },
-    onError: (e) => setPageError(e instanceof ApiError ? e.message : 'Something went wrong.'),
+    onError: (e) => setPageError(e instanceof ApiError ? e.message : 'Нещо се обърка.'),
   });
 
   if (roles.error instanceof ApiError && roles.error.status === 403) {
-    return <AccessNote page="Roles" />;
+    return <AccessNote page="Роли" />;
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Roles</h1>
-          <p className="mt-1 text-sm text-landmark">
-            Each role maps to a set of permissions. The Administrator role is locked and always has
-            every permission.
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-title-22 font-medium">Роли</h1>
+          <p className="mt-1 text-sm text-ink-muted">
+            Всяка роля е набор от права от общия каталог. Обхватът — кои сгради — се задава при
+            назначаване, в Служители.
           </p>
         </div>
         <PrimaryButton onClick={() => setEditorRole('new')}>
           <span className="flex items-center gap-2">
-            <Plus size={16} /> New role
+            <Plus size={16} /> Нова роля
           </span>
         </PrimaryButton>
       </div>
 
       <ErrorNote message={pageError} />
 
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {roles.data?.map((role, i) => {
           const locked = role.key === 'admin';
           return (
-            <motion.div
+            <motion.article
               key={role.key}
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: i * 0.06 }}
-              className="flex flex-col rounded-3xl border border-sand/70 bg-white/80 p-5 shadow-sm shadow-landmark/5 backdrop-blur transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-landmark/10"
+              transition={{ duration: 0.35, delay: Math.min(i, 6) * 0.05 }}
+              className="glass flex flex-col p-5"
             >
-              <div className="flex items-start justify-between">
-                <div>
-                  <h2 className="font-extrabold">{role.name}</h2>
-                  <p className="text-xs text-landmark">
-                    {role.key}
-                    {role.isSystem && ' · system'}
-                  </p>
-                </div>
-                <span className="flex items-center gap-1.5 rounded-full bg-foam px-2.5 py-1 text-xs font-bold text-landmark">
-                  <Users size={13} />
-                  {role.members}
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h2 className="text-base font-semibold">{ROLE_NAMES[role.key] ?? role.name}</h2>
+                <Chip muted>
+                  {role.key} · {role.isSystem ? 'системна' : 'собствена'}
+                </Chip>
+                {locked && <Chip muted>заключена</Chip>}
+                <span className="num ml-auto text-xs text-ink-faint">
+                  {memberLabel(role.members)}
                 </span>
               </div>
 
+              {ROLE_DESCRIPTIONS[role.key] && (
+                <p className="mt-2 text-sm text-ink-muted">{ROLE_DESCRIPTIONS[role.key]}</p>
+              )}
+
               <div className="mt-4 flex flex-1 flex-wrap content-start gap-1.5">
-                {role.permissions.map((p) => (
-                  <span
-                    key={p}
-                    className="rounded-full bg-orange/8 px-2.5 py-1 text-xs font-semibold text-ember"
-                  >
-                    {p}
-                  </span>
-                ))}
-                {role.permissions.length === 0 && (
-                  <span className="text-xs text-landmark">No permissions</span>
+                {locked ? (
+                  <Chip>всички права</Chip>
+                ) : (
+                  role.permissions.map((p) => <Chip key={p}>{p}</Chip>)
+                )}
+                {!locked && role.permissions.length === 0 && (
+                  <span className="text-xs text-ink-faint">Без права</span>
                 )}
               </div>
 
-              <div className="mt-5 flex items-center gap-2">
+              <div className="mt-5 flex items-center gap-2 border-t border-glass-divider pt-4">
                 {locked ? (
-                  <span className="flex items-center gap-1.5 text-xs font-semibold text-landmark">
-                    <Lock size={13} /> Locked — always has all permissions
+                  <span className="flex items-center gap-2 text-xs text-ink-muted">
+                    <Lock size={13} /> Системна роля — правата не се променят
                   </span>
                 ) : (
                   <>
                     <GhostButton onClick={() => setEditorRole(role)}>
                       <span className="flex items-center gap-1.5">
-                        <Pencil size={13} /> Edit
+                        <Pencil size={13} /> Редактирай
                       </span>
                     </GhostButton>
                     {!role.isSystem && (
@@ -115,17 +158,19 @@ export function RolesPage() {
                         onClick={() => remove.mutate(role.key)}
                       >
                         <span className="flex items-center gap-1.5">
-                          <Trash2 size={13} /> Delete
+                          <Trash2 size={13} /> Изтрий
                         </span>
                       </GhostButton>
                     )}
                   </>
                 )}
               </div>
-            </motion.div>
+            </motion.article>
           );
         })}
       </div>
+
+      <PermissionCatalogue catalog={permissions.data ?? []} />
 
       <RoleEditor
         role={editorRole}
@@ -134,6 +179,37 @@ export function RolesPage() {
         catalog={permissions.data ?? []}
       />
     </div>
+  );
+}
+
+/** Every right the platform knows, grouped by the area it belongs to. */
+function PermissionCatalogue({ catalog }: { catalog: Permission[] }) {
+  if (catalog.length === 0) return null;
+  const groups = new Map<string, Permission[]>();
+  for (const permission of catalog) {
+    const prefix = permission.key.split('.')[0] ?? 'other';
+    const title = PERMISSION_GROUPS[prefix] ?? prefix;
+    groups.set(title, [...(groups.get(title) ?? []), permission]);
+  }
+
+  return (
+    <section className="glass p-5">
+      <h2 className="text-base font-semibold">Каталог на правата</h2>
+      <div className="mt-4 space-y-3">
+        {[...groups].map(([title, items]) => (
+          <div key={title} className="flex flex-wrap items-center gap-2">
+            <span className="w-28 shrink-0 text-xs font-semibold tracking-wider text-ink-faint uppercase">
+              {title}
+            </span>
+            {items.map((permission) => (
+              <span key={permission.key} title={permission.description}>
+                <Chip>{permission.key}</Chip>
+              </span>
+            ))}
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -181,7 +257,7 @@ function RoleEditor({
       void queryClient.invalidateQueries({ queryKey: ['roles', tenantId] });
       onClose();
     },
-    onError: (e) => setError(e instanceof ApiError ? e.message : 'Something went wrong.'),
+    onError: (e) => setError(e instanceof ApiError ? e.message : 'Нещо се обърка.'),
   });
 
   const toggle = (permissionKey: string) => {
@@ -201,16 +277,16 @@ function RoleEditor({
   return (
     <Modal
       open={role !== null}
-      title={isNew ? 'New role' : `Edit ${role?.name ?? ''}`}
+      title={isNew ? 'Нова роля' : `Редактиране на ${role?.name ?? ''}`}
       onClose={onClose}
       wide
     >
       <form onSubmit={submit} className="space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {isNew && (
-            <Field label="Key" hint="Lowercase slug, cannot be changed later.">
+            <Field label="Ключ" hint="Малки букви и тирета; не се променя по-късно.">
               <input
-                className={inputClass}
+                className={panelInputClass}
                 value={key}
                 onChange={(e) => setKey(e.target.value)}
                 placeholder="accountant"
@@ -219,12 +295,12 @@ function RoleEditor({
               />
             </Field>
           )}
-          <Field label="Name">
+          <Field label="Име">
             <input
-              className={inputClass}
+              className={panelInputClass}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Accountant"
+              placeholder="Счетоводител"
               required
               minLength={2}
             />
@@ -232,38 +308,54 @@ function RoleEditor({
         </div>
 
         <div>
-          <p className="mb-2 text-sm font-semibold">Permissions</p>
+          <p className="mb-2 text-sm font-semibold">Права</p>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {catalog.map((permission) => (
               <label
                 key={permission.key}
-                className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 p-3 transition-colors ${
+                className={`flex cursor-pointer items-start gap-3 rounded-2xl px-3.5 py-3 transition-colors ${
                   selected.has(permission.key)
-                    ? 'border-orange bg-orange/5'
-                    : 'border-sand hover:border-stone'
+                    ? 'bg-panel-row-strong'
+                    : 'bg-panel-row hover:bg-panel-row-strong'
                 }`}
               >
                 <input
                   type="checkbox"
                   checked={selected.has(permission.key)}
                   onChange={() => toggle(permission.key)}
-                  className="mt-0.5 accent-orange"
+                  className="mt-0.5"
                 />
                 <span>
-                  <span className="block text-sm font-bold">{permission.key}</span>
-                  <span className="block text-xs text-landmark">{permission.description}</span>
+                  <span className="block text-sm font-medium text-panel-ink">{permission.key}</span>
+                  <span className="block text-xs text-panel-ink-muted">
+                    {permission.description}
+                  </span>
                 </span>
               </label>
             ))}
           </div>
         </div>
 
-        <ErrorNote message={error} />
+        {error && (
+          <p className="rounded-xl bg-panel-row px-3.5 py-2.5 text-sm font-medium text-panel-status-urgent">
+            {error}
+          </p>
+        )}
         <div className="flex justify-end gap-2">
-          <GhostButton onClick={onClose}>Cancel</GhostButton>
-          <PrimaryButton type="submit" disabled={save.isPending}>
-            {save.isPending ? 'Saving…' : isNew ? 'Create role' : 'Save changes'}
-          </PrimaryButton>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-panel-border px-4 py-2 text-sm font-medium text-panel-ink"
+          >
+            Отказ
+          </button>
+          <button
+            type="submit"
+            disabled={save.isPending}
+            className="rounded-full bg-panel-ink px-5 py-2 text-sm font-semibold text-panel-ink-inverse disabled:opacity-40"
+          >
+            {save.isPending ? 'Запазва…' : isNew ? 'Създай роля' : 'Запази промените'}
+          </button>
         </div>
       </form>
     </Modal>

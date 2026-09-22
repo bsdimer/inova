@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "admin",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@inova/admin", "dev"],
+      "port": 5173
+    },
+    {
+      "name": "api",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@inova/api", "dev"],
+      "port": 4000
+    },
+    {
+      "name": "auth-service",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@inova/auth-service", "dev"],
+      "port": 4001
+    }
+  ]
+}

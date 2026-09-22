@@ -1,27 +1,209 @@
 @import 'tailwindcss';
 
-@theme {
-  --color-orange: #eb5e28;
-  --color-orange-bright: #ff7e47;
-  --color-ember: #c24a17;
-  --color-foam: #efece3;
-  --color-cream: #f7f4ec;
-  --color-sand: #e4ddcf;
-  --color-gold-black: #1d1d1f;
-  --color-espresso: #2c2324;
-  --color-landmark: #766754;
-  --color-stone: #a79d90;
-  --color-success: #2e9e6b;
-  --color-warning: #a45f0b;
-  --color-danger: #d64545;
+/*
+ * Glass design tokens. Values are generated from the Figma variable
+ * collections "V2 Glass" (Светла / Тъмна) and "V2 Layout"; the source sheet is
+ * design/inova-admin/glass-tokens.md in the innova-doc repository. Do not hand
+ * tune a value here — change the Figma variable and regenerate the sheet.
+ */
 
-  /* Radius scale from brands/inova/brand.json, which the mobile app mirrors.
-     Overrides Tailwind's 16/24 defaults so both clients round the same way. */
-  --radius-xl: 12px; /* brand sm */
-  --radius-2xl: 18px; /* brand md */
-  --radius-3xl: 28px; /* brand lg */
+:root {
+  --glass-card: rgb(0 0 0 / 0.1);
+  --glass-edge: rgb(255 255 255 / 0.32);
+  --glass-edge-soft: rgb(255 255 255 / 0.16);
+  --glass-inner: rgb(255 255 255 / 0.16);
+  --glass-inner-strong: rgb(255 255 255 / 0.22);
+  --glass-inner-soft: rgb(255 255 255 / 0.12);
+  --glass-solid: rgb(255 255 255 / 0.92);
+  --glass-segment: rgb(255 255 255 / 0.86);
+  --glass-avatar: rgb(255 255 255 / 0.18);
+  --glass-avatar-edge: rgb(255 255 255 / 0.45);
+  --glass-divider: rgb(255 255 255 / 0.2);
+  --text-primary: rgb(255 255 255);
+  --text-secondary: rgb(255 255 255 / 0.85);
+  --text-muted: rgb(255 255 255 / 0.72);
+  --text-faint: rgb(255 255 255 / 0.55);
+  --text-on-solid: rgb(29 29 31);
+  --cta-fill: rgb(29 29 31);
+  --cta-edge: rgb(255 255 255 / 0.18);
+  --cta-text: rgb(255 255 255);
+  --badge-fill: rgb(29 29 31 / 0.94);
+  --badge-text: rgb(255 255 255);
+  --light-source: rgb(255 255 255);
+  --light-ember: rgb(255 255 255);
+  --glow-near: rgb(255 255 255 / 0.45);
+  --glow-far: rgb(255 255 255 / 0);
+  --glow-dot-near: rgb(255 255 255 / 0.8);
+  --glow-dot-far: rgb(255 255 255 / 0);
+  --ring-track: rgb(255 255 255 / 0.26);
+  --ring-core: rgb(255 255 255);
+  --ring-halo-near: rgb(255 255 255 / 0.5);
+  --ring-halo-far: rgb(255 255 255 / 0);
+  --status-pending: rgb(232 193 90);
+  --status-planned: rgb(111 168 255);
+  --status-urgent: rgb(255 107 97);
+  --status-resolved: rgb(76 191 139);
+  --selected-tag: rgb(255 255 255 / 0.86);
+  --selected-day: rgb(255 255 255 / 0.92);
+  --glass-data: rgb(0 0 0 / 0.32);
+  --focus-edge: rgb(255 255 255 / 0.7);
+  --focus-glow: rgb(255 255 255 / 0.32);
+  --glass-input: rgb(0 0 0 / 0.26);
+  --panel-fill: rgb(255 255 255 / 0.84);
+  --panel-edge: rgb(255 255 255 / 0.7);
+  --panel-row: rgb(29 29 31 / 0.05);
+  --panel-row-strong: rgb(29 29 31 / 0.09);
+  --panel-border: rgb(29 29 31 / 0.14);
+  --panel-divider: rgb(29 29 31 / 0.1);
+  --panel-text-muted: rgb(29 29 31 / 0.62);
+  --panel-text-faint: rgb(29 29 31 / 0.45);
+  --panel-status-pending: rgb(138 109 11);
+  --panel-status-planned: rgb(47 111 208);
+  --panel-status-urgent: rgb(199 54 44);
+  --panel-status-resolved: rgb(30 127 82);
+  --panel-fill-strong: rgb(255 255 255 / 0.92);
+  --panel-text: rgb(29 29 31);
+  --panel-text-inverse: rgb(255 255 255);
+  --panel-control: rgb(255 255 255 / 0.9);
+  --glass-chip: rgb(0 0 0 / 0.22);
+  --radius-card: 28px;
+  --radius-row: 12px;
+  --radius-signal: 14px;
+  --radius-nav: 16px;
+  --radius-pill: 9999px;
+  --space-card-pad: 24px;
+  --space-grid-gap: 16px;
+  --space-col-gap: 20px;
+  --blur-card: 28px;
+  --blur-control: 16px;
+}
 
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+/* Only the values that differ from the light theme. */
+:root[data-theme='dark'] {
+  --glass-card: rgb(255 255 255 / 0.14);
+  --cta-fill: rgb(255 255 255 / 0.92);
+  --cta-edge: rgb(255 255 255 / 0);
+  --cta-text: rgb(29 29 31);
+  --light-source: rgb(255 207 156);
+  --light-ember: rgb(245 166 91);
+  --glow-near: rgb(255 207 156 / 0.85);
+  --glow-far: rgb(245 166 91 / 0.6);
+  --glow-dot-near: rgb(255 207 156);
+  --glow-dot-far: rgb(245 166 91 / 0.7);
+  --ring-track: rgb(255 255 255 / 0.22);
+  --ring-core: rgb(255 243 234);
+  --ring-halo-near: rgb(242 160 90);
+  --ring-halo-far: rgb(224 161 120 / 0.7);
+  --glass-data: rgb(255 255 255 / 0.14);
+  --focus-edge: rgb(255 207 156 / 0.78);
+  --focus-glow: rgb(245 166 91 / 0.45);
+  --glass-input: rgb(255 255 255 / 0.1);
+  --panel-fill: rgb(25 27 31 / 0.86);
+  --panel-edge: rgb(255 255 255 / 0.16);
+  --panel-row: rgb(255 255 255 / 0.07);
+  --panel-row-strong: rgb(255 255 255 / 0.14);
+  --panel-border: rgb(255 255 255 / 0.2);
+  --panel-divider: rgb(255 255 255 / 0.14);
+  --panel-text-muted: rgb(255 255 255 / 0.7);
+  --panel-text-faint: rgb(255 255 255 / 0.5);
+  --panel-status-pending: rgb(232 193 90);
+  --panel-status-planned: rgb(111 168 255);
+  --panel-status-urgent: rgb(255 128 121);
+  --panel-status-resolved: rgb(76 191 139);
+  --panel-fill-strong: rgb(25 27 31 / 0.93);
+  --panel-text: rgb(255 255 255);
+  --panel-text-inverse: rgb(29 29 31);
+  --panel-control: rgb(255 255 255 / 0.1);
+  --glass-chip: rgb(0 0 0 / 0.3);
+}
+
+/*
+ * Tailwind sees the tokens through `@theme inline`, so `text-ink`,
+ * `bg-glass-data` and friends emit `var(--…)` instead of a frozen value and
+ * follow the theme switch.
+ */
+@theme inline {
+  --color-ink: var(--text-primary);
+  --color-ink-soft: var(--text-secondary);
+  --color-ink-muted: var(--text-muted);
+  --color-ink-faint: var(--text-faint);
+  --color-ink-solid: var(--text-on-solid);
+  --color-glass-card: var(--glass-card);
+  --color-glass-data: var(--glass-data);
+  --color-glass-input: var(--glass-input);
+  --color-glass-chip: var(--glass-chip);
+  --color-glass-edge: var(--glass-edge);
+  --color-glass-divider: var(--glass-divider);
+  --color-glass-inner: var(--glass-inner);
+  --color-glass-inner-soft: var(--glass-inner-soft);
+  --color-glass-avatar: var(--glass-avatar);
+  --color-glass-segment: var(--glass-segment);
+  --color-glass-solid: var(--glass-solid);
+  --color-cta: var(--cta-fill);
+  --color-cta-text: var(--cta-text);
+  --color-panel: var(--panel-fill);
+  --color-panel-strong: var(--panel-fill-strong);
+  --color-panel-ink: var(--panel-text);
+  --color-panel-ink-muted: var(--panel-text-muted);
+  --color-panel-ink-faint: var(--panel-text-faint);
+  --color-panel-ink-inverse: var(--panel-text-inverse);
+  --color-panel-row: var(--panel-row);
+  --color-panel-row-strong: var(--panel-row-strong);
+  --color-panel-border: var(--panel-border);
+  --color-panel-divider: var(--panel-divider);
+  --color-panel-control: var(--panel-control);
+  --color-status-pending: var(--status-pending);
+  --color-status-planned: var(--status-planned);
+  --color-status-urgent: var(--status-urgent);
+  --color-status-resolved: var(--status-resolved);
+  --color-panel-status-pending: var(--panel-status-pending);
+  --color-panel-status-planned: var(--panel-status-planned);
+  --color-panel-status-urgent: var(--panel-status-urgent);
+  --color-panel-status-resolved: var(--panel-status-resolved);
+
+  /*
+   * The screens are set in SF Pro — 331 of the 337 text runs across Табло,
+   * Служители and Роли. SF Pro cannot be licensed for the web, but on Apple
+   * devices it is the system face, so the system stack leads and Apple gets
+   * exactly what is drawn. Windows falls to Segoe UI Variable, which is close
+   * in proportion. Inter is last and is not loaded: naming it first, as this
+   * did, only meant the design held by accident on machines without it.
+   */
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI',
+    system-ui, 'Inter', sans-serif;
+
+  /*
+   * The V2 type scale (Figma sheet 841:2 → Text styles). Tailwind's defaults
+   * cover 12/16, 14/20 and 16/24 by coincidence; 13, 15, 17, 22, 26, 52 and 72
+   * do not exist there, and neither does the negative tracking the large
+   * numbers carry. Figma's weights sit on SF Pro's variable axis — 274, 510,
+   * 590 — and are given here as the nearest static ones.
+   */
+  --text-display-72: 4.5rem;
+  --text-display-72--line-height: 1;
+  --text-display-72--letter-spacing: -2px;
+  --text-display-52: 3.25rem;
+  --text-display-52--line-height: 3.25rem;
+  --text-display-52--letter-spacing: -1.5px;
+  --text-display-26: 1.625rem;
+  --text-display-26--line-height: 2.1875rem;
+  --text-display-26--letter-spacing: -1.5px;
+  --text-number-30: 1.875rem;
+  --text-number-30--line-height: 2rem;
+  --text-number-30--letter-spacing: -0.86px;
+  --text-number-18: 1.125rem;
+  --text-number-18--line-height: 1.375rem;
+  --text-number-18--letter-spacing: -1px;
+  --text-number-13: 0.8125rem;
+  --text-number-13--line-height: 1.125rem;
+  --text-number-13--letter-spacing: -1px;
+  --text-title-22: 1.375rem;
+  --text-title-22--line-height: 1.625rem;
+  --text-body-15: 0.9375rem;
+  --text-body-15--line-height: 1.25rem;
+  --text-body-13: 0.8125rem;
+  --text-body-13--line-height: 1rem;
 }
 
 html,
@@ -31,33 +213,224 @@ body,
 }
 
 body {
-  @apply bg-foam text-gold-black antialiased;
-  background-image:
-    radial-gradient(
-      circle at 8% 4%,
-      color-mix(in srgb, var(--color-orange) 9%, transparent),
-      transparent 28rem
-    ),
-    radial-gradient(
-      circle at 92% 92%,
-      color-mix(in srgb, var(--color-stone) 14%, transparent),
-      transparent 30rem
-    );
-  background-attachment: fixed;
+  @apply bg-black text-ink antialiased;
+
+  /*
+   * `lang="bg"` is right for hyphenation, spell-check and screen readers, but
+   * it also switches SF Pro to its Bulgarian localized Cyrillic — the cursive
+   * д, и, т forms. The mock-ups are drawn with the standard shapes, so the
+   * substitution is turned off here. Delete this line if the design session
+   * decides the portal should use the Bulgarian forms.
+   */
+  font-feature-settings: 'locl' 0;
 }
 
-button,
-a,
-input,
-select {
-  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/50 focus-visible:ring-offset-2;
+/*
+ * The photograph is a fixed layer behind the app, not a background-attachment:
+ * that property is broken in iOS Safari. The scrim sits on the same layer so
+ * the two always move together.
+ *
+ * The layer stays at z-index 0 and the app sits above it at z-index 1. A
+ * negative z-index would paint the photo outside the backdrop root, and every
+ * `backdrop-filter` above it would then blur nothing — the glass would show a
+ * razor-sharp building through a darkened pane.
+ */
+.app-background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.app-scrim {
+  position: absolute;
+  inset: 0;
+  /* The values on the Scrim layer of every Screens frame, both themes. */
+  background-image: linear-gradient(
+    180deg,
+    rgb(29 29 31 / 0.52) 0%,
+    rgb(29 29 31 / 0.3) 50%,
+    rgb(29 29 31 / 0.55) 100%
+  );
+}
+
+/** Everything the app draws sits above the photograph layer. */
+.app-content {
+  position: relative;
+  z-index: 1;
+}
+
+@layer components {
+  /*
+   * First-level glass: cards, the rail, the top bar, overlay panels. Never put
+   * this on a pill, a table row or anything inside a scrolling list — each one
+   * costs a separate GPU pass over the photograph underneath.
+   */
+  .glass {
+    background: var(--glass-card);
+    box-shadow:
+      inset 0 0 0 1px var(--glass-edge),
+      inset 0 1px 0 var(--glass-inner);
+    border-radius: var(--radius-card);
+  }
+
+  /* Same material, darker fill: small text over bright parts of the photo. */
+  .glass-data {
+    background: var(--glass-data);
+    box-shadow:
+      inset 0 0 0 1px var(--glass-edge),
+      inset 0 1px 0 var(--glass-inner);
+    border-radius: var(--radius-card);
+  }
+
+  /* Controls: a field, the search, an inactive facet, the sort pill. */
+  .glass-control {
+    background: var(--glass-input);
+    box-shadow:
+      inset 0 0 0 1px var(--glass-edge-soft),
+      inset 0 1px 0 var(--glass-inner-soft);
+  }
+
+  /*
+   * The one light control on the photograph: the row action, the "enter"
+   * button in the organization table. `glass/solid` is opaque enough that no
+   * backdrop pass is needed, which is why it is absent from the gated rules
+   * below.
+   */
+  .glass-solid {
+    background: var(--glass-solid);
+    color: var(--text-on-solid);
+    box-shadow: inset 0 0 0 1px var(--glass-edge);
+  }
+
+  /* An active facet reads as lifted rather than recessed. */
+  .glass-control-active {
+    background: var(--glass-segment);
+    color: var(--text-on-solid);
+    box-shadow: inset 0 0 0 1px var(--glass-edge);
+  }
+
+  /* Layered surfaces: drawer, modal, menu, filter sheet. */
+  .panel {
+    background: var(--panel-fill);
+    box-shadow:
+      inset 0 0 0 1px var(--panel-edge),
+      0 18px 52px rgb(0 0 0 / 0.3);
+    color: var(--panel-text);
+  }
+
+  .panel-strong {
+    background: var(--panel-fill-strong);
+    box-shadow:
+      inset 0 0 0 1px var(--panel-edge),
+      0 18px 52px rgb(0 0 0 / 0.3);
+    color: var(--panel-text);
+  }
+
+  /* The dark pill that carries the page's one primary action. */
+  .cta {
+    background: var(--cta-fill);
+    color: var(--cta-text);
+    box-shadow:
+      inset 0 0 0 1px var(--cta-edge),
+      0 0 14px var(--glow-near);
+    border-radius: var(--radius-pill);
+  }
+
+  /* Numbers line up under each other and can be compared without reading. */
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/*
+ * Blur switches on only once the photograph has decoded — see AppBackground.
+ * Declared outside the components layer so it wins over the base surfaces
+ * without raising their specificity.
+ */
+:root[data-bg-ready='true'] :is(.glass, .glass-data, .panel, .panel-strong) {
+  backdrop-filter: blur(var(--blur-card));
+  -webkit-backdrop-filter: blur(var(--blur-card));
+}
+
+:root[data-bg-ready='true'] :is(.glass-control, .glass-control-active) {
+  backdrop-filter: blur(var(--blur-control));
+  -webkit-backdrop-filter: blur(var(--blur-control));
+}
+
+/*
+ * One focus treatment everywhere: 1.5px edge plus a glow, drawn with box-shadow
+ * so it follows the rounded corner instead of fighting it. Never removed.
+ */
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow:
+    inset 0 0 0 1.5px var(--focus-edge),
+    0 0 14px var(--focus-glow);
+}
+
+/* Inside a light panel the same ring has to darken instead of glow. */
+.panel :where(button, a, input, select, textarea, [tabindex]):focus-visible,
+.panel-strong :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  box-shadow:
+    inset 0 0 0 1.5px var(--panel-border),
+    0 0 0 3px rgb(29 29 31 / 0.08);
 }
 
 button:not(:disabled),
-select:not(:disabled) {
+select:not(:disabled),
+[role='option']:not([aria-disabled='true']) {
   cursor: pointer;
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--color-orange) 24%, transparent);
+  background: rgb(255 255 255 / 0.28);
+}
+
+/*
+ * Accessibility, and the escape hatch for weak GPUs: no blur, opaque surfaces.
+ */
+@media (prefers-reduced-transparency: reduce) {
+  :root :is(.glass, .glass-data, .glass-control, .glass-control-active, .panel, .panel-strong),
+  :root[data-bg-ready='true']
+    :is(.glass, .glass-data, .glass-control, .glass-control-active, .panel, .panel-strong) {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .glass,
+  .glass-data {
+    background: rgb(24 24 27 / 0.92);
+  }
+
+  .glass-control {
+    background: rgb(24 24 27 / 0.8);
+  }
+
+  .panel,
+  .panel-strong {
+    background: rgb(250 250 250);
+  }
+
+  :root[data-theme='dark'] .panel,
+  :root[data-theme='dark'] .panel-strong {
+    background: rgb(25 27 31);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* The mockups are drawn at 1728; above 2400 everything scales with the root. */
+@media (min-width: 2400px) {
+  html {
+    font-size: 20px;
+  }
 }

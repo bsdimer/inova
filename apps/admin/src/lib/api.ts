@@ -77,6 +77,13 @@ export interface StaffMember {
   since: string;
 }
 
+/** `GET /tenant` — the caller's own role and effective permissions. */
+export interface TenantContext {
+  tenant: TenantSummary;
+  role: string;
+  permissions: string[];
+}
+
 export interface Role {
   key: string;
   name: string;

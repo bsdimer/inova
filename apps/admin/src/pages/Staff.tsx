@@ -1,27 +1,70 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
-import { MailPlus, RotateCcw, ShieldOff, UserX } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
 import {
-  ErrorNote,
-  Field,
+  CircleAlert,
+  CircleCheck,
+  Eye,
+  LoaderCircle,
+  Lock,
+  MailPlus,
+  RefreshCw,
+  Search,
+  Users,
+} from '../components/icons';
+import { useMemo, useState, type ReactNode } from 'react';
+import {
+  EmptyState,
   GhostButton,
-  Modal,
   PrimaryButton,
-  StatusBadge,
-  inputClass,
+  TableStrip,
+  type FacetOption,
+  type StripTone,
 } from '../components/ui';
-import { api, ApiError, type Role, type StaffMember } from '../lib/api';
+import { api, ApiError, type Role, type StaffMember, type TenantContext } from '../lib/api';
 import { getSession } from '../lib/auth';
 import { useSelectedTenantId } from '../lib/tenant';
+import { InviteModal } from './staff/InviteModal';
+import { RolesScopeDrawer } from './staff/RolesScopeDrawer';
+import { StaffCard, StaffRow } from './staff/StaffRow';
+import { BodyMessage, SkeletonRows, StaffCards, StaffTable } from './staff/StaffTable';
+import { StaffToolbar } from './staff/StaffToolbar';
+import {
+  ACTION_DONE,
+  ACTION_PROGRESS,
+  EMPTY_FILTERS,
+  applyFilters,
+  describeFacet,
+  hasAnyFilter,
+  protectionReason,
+  roleName,
+  rolesOf,
+  scopeOf,
+  sortMembers,
+  type RowAction,
+  type StaffFilters,
+} from './staff/model';
+
+interface Notice {
+  tone: StripTone;
+  text: string;
+}
 
 export function StaffPage() {
   const tenantId = useSelectedTenantId();
   const queryClient = useQueryClient();
   const session = getSession();
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [rowError, setRowError] = useState<string | null>(null);
+  const [filters, setFilters] = useState<StaffFilters>(EMPTY_FILTERS);
+  const [notice, setNotice] = useState<Notice | null>(null);
+  const [pending, setPending] = useState<{ member: StaffMember; action: RowAction } | null>(null);
+  const [drawerFor, setDrawerFor] = useState<string | null>(null);
+  const [drawerError, setDrawerError] = useState<string | null>(null);
 
+  const context = useQuery({
+    queryKey: ['tenant', tenantId],
+    queryFn: () => api<TenantContext>('/tenant', { tenantId: tenantId! }),
+    enabled: Boolean(tenantId),
+    staleTime: 60_000,
+  });
   const staff = useQuery({
     queryKey: ['staff', tenantId],
     queryFn: () => api<StaffMember[]>('/tenant/staff', { tenantId: tenantId! }),
@@ -34,304 +77,337 @@ export function StaffPage() {
   });
 
   const update = useMutation({
-    mutationFn: (input: { userId: string; roleKey?: string; status?: string }) =>
-      api(`/tenant/staff/${input.userId}`, {
+    mutationFn: (input: { member: StaffMember; action: RowAction; roleKey?: string }) => {
+      const body =
+        input.action === 'change-role'
+          ? { roleKey: input.roleKey }
+          : { status: STATUS_FOR_ACTION[input.action as Exclude<RowAction, 'change-role'>] };
+      return api(`/tenant/staff/${input.member.userId}`, {
         method: 'PATCH',
         tenantId: tenantId!,
-        body: { roleKey: input.roleKey, status: input.status },
-      }),
-    onSuccess: () => {
-      setRowError(null);
+        body,
+      });
+    },
+    onMutate: (input) => {
+      setNotice(null);
+      setDrawerError(null);
+      setPending({ member: input.member, action: input.action });
+    },
+    onSuccess: (_data, input) => {
+      setNotice({
+        tone: 'success',
+        text: `${input.member.fullName} ${ACTION_DONE[input.action]}.`,
+      });
+      setDrawerFor(null);
       void queryClient.invalidateQueries({ queryKey: ['staff', tenantId] });
       void queryClient.invalidateQueries({ queryKey: ['roles', tenantId] });
     },
-    onError: (e) => setRowError(e instanceof ApiError ? e.message : 'Something went wrong.'),
+    onError: (e, input) => {
+      const reason = e instanceof ApiError ? e.message : 'нещо се обърка.';
+      // A failed save keeps the drawer open with the edit still in it.
+      setDrawerError(reason);
+      setNotice({
+        tone: 'danger',
+        text: `${ACTION_PROGRESS[input.action]} ${input.member.fullName} не успя: ${reason}`,
+      });
+    },
+    onSettled: () => setPending(null),
   });
 
-  if (staff.error instanceof ApiError && staff.error.status === 403) {
-    return <AccessNote page="Staff" />;
-  }
+  const members = useMemo(() => staff.data ?? [], [staff.data]);
+  const roleList = useMemo(() => roles.data ?? [], [roles.data]);
+  const roleOptions: FacetOption[] = useMemo(() => {
+    const keys = new Set([...roleList.map((r) => r.key), ...members.map((m) => m.roleKey)]);
+    return [...keys].map((key) => ({ value: key, label: roleName(key, roleList) }));
+  }, [roleList, members]);
+
+  const visible = useMemo(
+    () => sortMembers(applyFilters(members, filters), filters.sort),
+    [members, filters],
+  );
+  const activeAdmins = members.filter((m) => m.roleKey === 'admin' && m.status === 'active').length;
+  const tenantName = context.data?.tenant.name ?? 'организацията';
+  // Undefined while the permission set loads: no write affordance is shown yet,
+  // but the read-only strip waits for a definite answer.
+  const canManage = context.data ? context.data.permissions.includes('staff.manage') : undefined;
+  const denied = staff.error instanceof ApiError && staff.error.status === 403;
+
+  const drawerMember = members.find((m) => m.userId === drawerFor) ?? null;
+
+  const rowProps = (member: StaffMember) => {
+    const isSelf = member.userId === session?.user.id;
+    return {
+      member,
+      roles: rolesOf(member, roleList),
+      scope: scopeOf(member),
+      isSelf,
+      canManage: canManage === true,
+      protection: protectionReason({ member, isSelf, activeAdmins, tenantName }),
+      busy: pending?.member.userId === member.userId,
+      onAction: (action: RowAction) => {
+        if (action === 'change-role') {
+          setDrawerError(null);
+          setDrawerFor(member.userId);
+          return;
+        }
+        update.mutate({ member, action });
+      },
+    };
+  };
+
+  const strip = pickStrip({
+    denied,
+    canManage,
+    refreshing: staff.isFetching && !staff.isLoading,
+    pending,
+    notice,
+    error: !denied && staff.error ? staff.error : null,
+    onDismiss: () => setNotice(null),
+    onRetry: () => void staff.refetch(),
+  });
+
+  const emptyBody = buildEmptyBody({
+    denied,
+    tenantName,
+    members,
+    visible,
+    filters,
+    roles: roleList,
+    canManage: canManage === true,
+    onInvite: () => setInviteOpen(true),
+    onReset: () => setFilters(EMPTY_FILTERS),
+  });
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Staff</h1>
-          <p className="mt-1 text-sm text-landmark">
-            People who can sign in to this organization and what they are allowed to do.
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-title-22 font-medium">Служители</h1>
+          <p className="mt-1 text-sm text-ink-muted">
+            Акаунти с достъп до {tenantName}, ролите им и къде важат.
           </p>
         </div>
-        <PrimaryButton onClick={() => setInviteOpen(true)}>
-          <span className="flex items-center gap-2">
-            <MailPlus size={16} /> Invite member
-          </span>
-        </PrimaryButton>
+        {canManage && (
+          <PrimaryButton onClick={() => setInviteOpen(true)}>
+            <span className="flex items-center gap-2">
+              <MailPlus size={16} />
+              <span>
+                Покани<span className="hidden sm:inline"> служител</span>
+              </span>
+            </span>
+          </PrimaryButton>
+        )}
       </div>
 
-      <ErrorNote message={rowError} />
+      <StaffToolbar
+        filters={filters}
+        onChange={setFilters}
+        roleOptions={roleOptions}
+        roles={roleList}
+        shown={hasAnyFilter(filters) ? visible.length : members.length}
+        total={members.length}
+      />
 
-      <motion.div
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="overflow-x-auto rounded-3xl border border-sand/70 bg-white/80 shadow-sm shadow-landmark/5 backdrop-blur"
-      >
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-sand/80 bg-cream/70 text-xs font-semibold tracking-wider text-landmark uppercase">
-              <th className="px-6 py-3">Member</th>
-              <th className="px-6 py-3">Contact</th>
-              <th className="px-6 py-3">Role</th>
-              <th className="px-6 py-3">Status</th>
-              <th className="px-6 py-3">Since</th>
-              <th className="px-6 py-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {staff.isLoading && (
-              <tr>
-                <td colSpan={6} className="px-6 py-10 text-center text-landmark">
-                  Loading staff…
-                </td>
-              </tr>
-            )}
-            {staff.data?.map((member) => {
-              const isSelf = member.userId === session?.user.id;
-              return (
-                <tr
-                  key={member.userId}
-                  className="border-b border-sand/60 transition-colors last:border-0 hover:bg-orange/4"
-                >
-                  <td className="px-6 py-3.5">
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[35%] bg-gradient-to-br from-orange-bright to-orange text-sm font-bold text-white shadow-sm shadow-orange/15">
-                        {member.fullName.slice(0, 1).toUpperCase()}
-                      </span>
-                      <span className="font-semibold">
-                        {member.fullName}
-                        {isSelf && <span className="ml-2 text-xs text-landmark">(you)</span>}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-3.5 text-landmark">
-                    <p>{member.email ?? '—'}</p>
-                    {member.phone && <p className="text-xs">{member.phone}</p>}
-                  </td>
-                  <td className="px-6 py-3.5">
-                    <select
-                      value={member.roleKey}
-                      disabled={isSelf || member.status === 'revoked' || update.isPending}
-                      onChange={(e) =>
-                        update.mutate({ userId: member.userId, roleKey: e.target.value })
-                      }
-                      className="rounded-lg border border-sand bg-white/80 px-2.5 py-1.5 text-sm font-semibold outline-none focus:border-orange disabled:opacity-50"
-                    >
-                      {(roles.data ?? [{ key: member.roleKey, name: member.roleKey }]).map(
-                        (role) => (
-                          <option key={role.key} value={role.key}>
-                            {role.name}
-                          </option>
-                        ),
-                      )}
-                    </select>
-                  </td>
-                  <td className="px-6 py-3.5">
-                    <StatusBadge status={member.status} />
-                  </td>
-                  <td className="px-6 py-3.5 text-landmark">
-                    {new Date(member.since).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-3.5">
-                    <div className="flex justify-end gap-2">
-                      {member.status === 'active' && (
-                        <GhostButton
-                          disabled={isSelf || update.isPending}
-                          onClick={() =>
-                            update.mutate({ userId: member.userId, status: 'suspended' })
-                          }
-                        >
-                          <span className="flex items-center gap-1.5">
-                            <ShieldOff size={14} /> Suspend
-                          </span>
-                        </GhostButton>
-                      )}
-                      {member.status === 'suspended' && (
-                        <GhostButton
-                          disabled={update.isPending}
-                          onClick={() => update.mutate({ userId: member.userId, status: 'active' })}
-                        >
-                          <span className="flex items-center gap-1.5">
-                            <RotateCcw size={14} /> Reactivate
-                          </span>
-                        </GhostButton>
-                      )}
-                      {member.status !== 'revoked' && (
-                        <GhostButton
-                          danger
-                          disabled={isSelf || update.isPending}
-                          onClick={() =>
-                            update.mutate({ userId: member.userId, status: 'revoked' })
-                          }
-                        >
-                          <span className="flex items-center gap-1.5">
-                            <UserX size={14} /> Revoke
-                          </span>
-                        </GhostButton>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-            {staff.data?.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-6 py-10 text-center text-landmark">
-                  No staff members yet.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </motion.div>
+      {/* The table is the drawn layout; below md the same rows become cards. */}
+      <div className="hidden md:block">
+        <StaffTable strip={strip}>
+          {emptyBody ? (
+            <BodyMessage>{emptyBody}</BodyMessage>
+          ) : staff.isLoading ? (
+            <SkeletonRows />
+          ) : (
+            visible.map((member) => <StaffRow key={member.userId} {...rowProps(member)} />)
+          )}
+        </StaffTable>
+      </div>
+
+      <div className="md:hidden">
+        <StaffCards strip={strip}>
+          {emptyBody ? (
+            <div className="glass-data">{emptyBody}</div>
+          ) : staff.isLoading ? (
+            <div className="glass-data space-y-3 p-4">
+              <div className="h-16 animate-pulse rounded-2xl bg-glass-inner" />
+              <div className="h-16 animate-pulse rounded-2xl bg-glass-inner" />
+            </div>
+          ) : (
+            visible.map((member) => <StaffCard key={member.userId} {...rowProps(member)} />)
+          )}
+        </StaffCards>
+      </div>
 
       <InviteModal
         open={inviteOpen}
         onClose={() => setInviteOpen(false)}
         tenantId={tenantId}
-        roles={roles.data ?? []}
+        roles={roleList}
+      />
+      <RolesScopeDrawer
+        member={drawerMember}
+        roles={roleList}
+        saving={update.isPending && pending?.action === 'change-role'}
+        error={drawerError}
+        protection={
+          drawerMember
+            ? protectionReason({
+                member: drawerMember,
+                isSelf: drawerMember.userId === session?.user.id,
+                activeAdmins,
+                tenantName,
+              })
+            : null
+        }
+        onClose={() => {
+          setDrawerFor(null);
+          setDrawerError(null);
+        }}
+        onSave={(roleKey) => {
+          if (drawerMember) update.mutate({ member: drawerMember, action: 'change-role', roleKey });
+        }}
+        onAccountAction={(action) => {
+          if (drawerMember) update.mutate({ member: drawerMember, action });
+        }}
       />
     </div>
   );
 }
 
-function InviteModal({
-  open,
-  onClose,
-  tenantId,
-  roles,
-}: {
-  open: boolean;
-  onClose: () => void;
-  tenantId: string | null;
+const STATUS_FOR_ACTION: Record<Exclude<RowAction, 'change-role'>, StaffMember['status']> = {
+  suspend: 'suspended',
+  reactivate: 'active',
+  revoke: 'revoked',
+};
+
+/** The body when there are no rows to show, or null when there are. */
+function buildEmptyBody(input: {
+  denied: boolean;
+  tenantName: string;
+  members: StaffMember[];
+  visible: StaffMember[];
+  filters: StaffFilters;
   roles: Role[];
-}) {
-  const queryClient = useQueryClient();
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [roleKey, setRoleKey] = useState('manager');
-  const [error, setError] = useState<string | null>(null);
-  const [invited, setInvited] = useState(false);
-
-  const invite = useMutation({
-    mutationFn: () =>
-      api<{ inviteSent: boolean }>('/tenant/staff', {
-        method: 'POST',
-        tenantId: tenantId!,
-        body: { fullName, email, phone: phone || undefined, roleKey },
-      }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['staff', tenantId] });
-      void queryClient.invalidateQueries({ queryKey: ['roles', tenantId] });
-      setInvited(true);
-      setError(null);
-    },
-    onError: (e) => setError(e instanceof ApiError ? e.message : 'Something went wrong.'),
-  });
-
-  const reset = () => {
-    setFullName('');
-    setEmail('');
-    setPhone('');
-    setRoleKey('manager');
-    setError(null);
-    setInvited(false);
-    onClose();
-  };
-
-  const submit = (e: FormEvent) => {
-    e.preventDefault();
-    invite.mutate();
-  };
-
-  return (
-    <Modal open={open} title={invited ? 'Invite sent' : 'Invite a staff member'} onClose={reset}>
-      {invited ? (
-        <div className="space-y-4">
-          <p className="text-sm text-landmark">
-            <strong className="text-gold-black">{fullName}</strong> was added with an activation
-            code. They activate their account from the mobile or web app using the code.
-          </p>
-          <p className="rounded-xl border border-orange/15 bg-orange/8 px-3.5 py-2.5 text-xs font-medium text-ember">
-            Dev note: SMS/Viber delivery is mocked until the gateway lands — the code is printed in
-            the core-api console.
-          </p>
-          <div className="flex justify-end">
-            <PrimaryButton onClick={reset}>Done</PrimaryButton>
-          </div>
-        </div>
-      ) : (
-        <form onSubmit={submit} className="space-y-4">
-          <Field label="Full name">
-            <input
-              className={inputClass}
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="Nikol Petrova"
-              required
-              minLength={2}
-            />
-          </Field>
-          <Field label="Email">
-            <input
-              className={inputClass}
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="nikol@example.bg"
-              required
-            />
-          </Field>
-          <Field label="Phone" hint="Optional — used for the SMS/Viber activation code.">
-            <input
-              className={inputClass}
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+359881234567"
-              pattern="\+\d{6,15}"
-            />
-          </Field>
-          <Field label="Role">
-            <select
-              className={inputClass}
-              value={roleKey}
-              onChange={(e) => setRoleKey(e.target.value)}
-            >
-              {roles.map((role) => (
-                <option key={role.key} value={role.key}>
-                  {role.name}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <ErrorNote message={error} />
-          <div className="flex justify-end gap-2">
-            <GhostButton onClick={reset}>Cancel</GhostButton>
-            <PrimaryButton type="submit" disabled={invite.isPending}>
-              {invite.isPending ? 'Inviting…' : 'Send invite'}
+  canManage: boolean;
+  onInvite: () => void;
+  onReset: () => void;
+}): ReactNode {
+  if (input.denied) {
+    return (
+      <EmptyState icon={<Lock size={22} />} title="Ролята ви не може да вижда служители">
+        Преглеждането на акаунти изисква правото staff.read. Администратор на {input.tenantName}{' '}
+        може да го добави към ролята ви.
+      </EmptyState>
+    );
+  }
+  if (input.members.length === 0) {
+    return (
+      <EmptyState
+        icon={<Users size={22} />}
+        title="Още няма акаунти на служители"
+        action={
+          input.canManage && (
+            <PrimaryButton onClick={input.onInvite}>
+              <span className="flex items-center gap-2">
+                <MailPlus size={16} /> Покани първия служител
+              </span>
             </PrimaryButton>
-          </div>
-        </form>
-      )}
-    </Modal>
-  );
+          )
+        }
+      >
+        Поканете първия човек, който трябва да има достъп до организацията. Акаунтът се активира с
+        код, изпратен по имейл, SMS или Viber.
+      </EmptyState>
+    );
+  }
+  if (input.visible.length === 0) {
+    const parts = (['status', 'role', 'invite'] as const)
+      .filter((k) => input.filters[k].length > 0)
+      .map((k) => describeFacet(k, input.filters[k], input.roles));
+    if (input.filters.search.trim()) parts.push(`Търсенето е „${input.filters.search.trim()}“`);
+    return (
+      <EmptyState
+        icon={<Search size={22} />}
+        title="Няма служители по тези филтри"
+        action={<GhostButton onClick={input.onReset}>Изчисти филтрите</GhostButton>}
+      >
+        {parts.join(' и ')}. Разширете филтър или ги изчистете, за да видите другите{' '}
+        {input.members.length} {input.members.length === 1 ? 'акаунт' : 'акаунта'}.
+      </EmptyState>
+    );
+  }
+  return null;
+}
+
+/**
+ * One strip at a time, most urgent first. The Figma gallery also has a
+ * "Частичен неуспех" strip for bulk invite re-sends; core-api has no bulk
+ * action yet, so that tone has no producer.
+ * TODO(M1): partial-failure strip once bulk re-send exists (needs worker delivery).
+ */
+function pickStrip(input: {
+  denied: boolean;
+  canManage: boolean | undefined;
+  refreshing: boolean;
+  pending: { member: StaffMember; action: RowAction } | null;
+  notice: Notice | null;
+  error: Error | null;
+  onDismiss: () => void;
+  onRetry: () => void;
+}) {
+  if (input.denied) return undefined;
+  if (input.error) {
+    return (
+      <TableStrip
+        tone="danger"
+        icon={<CircleAlert size={14} />}
+        action={<GhostButton onClick={input.onRetry}>Опитай пак</GhostButton>}
+      >
+        Списъкът не можа да се зареди: {input.error.message}
+      </TableStrip>
+    );
+  }
+  if (input.pending) {
+    return (
+      <TableStrip tone="busy" icon={<LoaderCircle size={14} />}>
+        {ACTION_PROGRESS[input.pending.action]} {input.pending.member.fullName} — редът остава на
+        мястото си, докато сървърът потвърди.
+      </TableStrip>
+    );
+  }
+  if (input.notice) {
+    return (
+      <TableStrip
+        tone={input.notice.tone}
+        icon={
+          input.notice.tone === 'success' ? <CircleCheck size={14} /> : <CircleAlert size={14} />
+        }
+        onDismiss={input.onDismiss}
+      >
+        {input.notice.text}
+      </TableStrip>
+    );
+  }
+  if (input.refreshing) {
+    return (
+      <TableStrip tone="info" icon={<RefreshCw size={13} />}>
+        Обновява се — показва се последно зареденият списък
+      </TableStrip>
+    );
+  }
+  if (input.canManage === false) {
+    return (
+      <TableStrip tone="muted" icon={<Eye size={14} />}>
+        Само за четене — ролята ви вижда акаунтите, но не може да кани, спира или променя роли.
+      </TableStrip>
+    );
+  }
+  return undefined;
 }
 
 export function AccessNote({ page }: { page: string }) {
   return (
-    <div className="rounded-3xl border border-sand/70 bg-white/80 p-10 text-center shadow-sm shadow-landmark/5 backdrop-blur">
-      <h1 className="text-xl font-extrabold">{page}</h1>
-      <p className="mt-2 text-sm text-landmark">Your role doesn't include access to this page.</p>
+    <div className="glass p-10 text-center">
+      <h1 className="text-title-22 font-medium">{page}</h1>
+      <p className="mt-2 text-sm text-ink-muted">Ролята ви няма достъп до този раздел.</p>
     </div>
   );
 }
