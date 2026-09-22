@@ -100,12 +100,12 @@ function BalanceCard() {
       milestone="M3–M4"
       lead={
         <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-          <h2 className="text-base font-semibold">Баланс</h2>
+          <h2 className="text-base font-medium">Баланс</h2>
           <p className="text-xs text-ink-muted">Портфолио</p>
         </div>
       }
     >
-      <p className="num mt-2 text-5xl font-semibold tracking-tight">
+      <p className="num mt-2 text-display-52 font-medium">
         <Blank />
       </p>
 
@@ -142,7 +142,7 @@ function Figure({ label }: { label: string }) {
   return (
     <div>
       <p className="text-xs text-ink-muted">{label}</p>
-      <p className="num mt-0.5 text-sm font-semibold">
+      <p className="num mt-0.5 text-base font-medium">
         <Blank />
       </p>
     </div>
@@ -162,7 +162,7 @@ function CollectedRing() {
         boxShadow: 'inset 0 0 0 2px var(--ring-track)',
       }}
     >
-      <span className="num text-lg font-semibold">
+      <span className="num text-number-18 font-light">
         <Blank />
       </span>
       <span className="text-[11px] text-ink-muted">събрани</span>
@@ -246,7 +246,7 @@ function SignalsCard() {
       lead={<Segmented options={['Сигнали', 'Анкети']} selected="Сигнали" />}
       action={<SectionArrow to="/issues" label="Към нередностите" />}
     >
-      <p className="num mt-6 text-center text-6xl font-semibold tracking-tight">
+      <p className="num mt-6 text-center text-display-72 font-light">
         <Blank />
       </p>
       <p className="mt-1 text-center text-sm text-ink-muted">отворени нередности</p>
@@ -337,7 +337,7 @@ function CalendarCard() {
     <Card
       milestone="M11"
       delay={0.15}
-      lead={<h2 className="text-base font-semibold">Календар</h2>}
+      lead={<h2 className="text-base font-medium">Календар</h2>}
       action={<Segmented options={['Ден', 'Месец']} selected="Месец" />}
     >
       <p className="mt-5 text-center text-sm font-medium">
@@ -386,7 +386,7 @@ function BuildingsCard() {
       action={<SectionArrow to="/buildings" label="Към сградите" />}
       lead={
         <>
-          <h2 className="text-base font-semibold">Преглед на сгради</h2>
+          <h2 className="text-base font-medium">Преглед на сгради</h2>
           <p className="num mt-0.5 text-xs text-ink-muted">
             <Blank /> сгради · <Blank /> апартамента
           </p>

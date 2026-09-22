@@ -182,7 +182,7 @@ export function StaffPage() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight">Служители</h1>
+          <h1 className="text-title-22 font-medium">Служители</h1>
           <p className="mt-1 text-sm text-ink-muted">
             Акаунти с достъп до {tenantName}, ролите им и къде важат.
           </p>
@@ -406,7 +406,7 @@ function pickStrip(input: {
 export function AccessNote({ page }: { page: string }) {
   return (
     <div className="glass p-10 text-center">
-      <h1 className="text-xl font-semibold">{page}</h1>
+      <h1 className="text-title-22 font-medium">{page}</h1>
       <p className="mt-2 text-sm text-ink-muted">Ролята ви няма достъп до този раздел.</p>
     </div>
   );

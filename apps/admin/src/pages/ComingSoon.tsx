@@ -18,7 +18,7 @@ export function ComingSoonPage({ title, milestone }: { title: string; milestone:
       >
         <Hammer size={26} />
       </span>
-      <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+      <h1 className="text-title-22 font-medium">{title}</h1>
       <p className="max-w-sm text-sm text-ink-muted">
         Разделът идва с етап {milestone} от плана за изпълнение.
       </p>

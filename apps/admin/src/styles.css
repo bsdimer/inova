@@ -161,7 +161,49 @@
   --color-panel-status-urgent: var(--panel-status-urgent);
   --color-panel-status-resolved: var(--panel-status-resolved);
 
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /*
+   * The screens are set in SF Pro — 331 of the 337 text runs across Табло,
+   * Служители and Роли. SF Pro cannot be licensed for the web, but on Apple
+   * devices it is the system face, so the system stack leads and Apple gets
+   * exactly what is drawn. Windows falls to Segoe UI Variable, which is close
+   * in proportion. Inter is last and is not loaded: naming it first, as this
+   * did, only meant the design held by accident on machines without it.
+   */
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI',
+    system-ui, 'Inter', sans-serif;
+
+  /*
+   * The V2 type scale (Figma sheet 841:2 → Text styles). Tailwind's defaults
+   * cover 12/16, 14/20 and 16/24 by coincidence; 13, 15, 17, 22, 26, 52 and 72
+   * do not exist there, and neither does the negative tracking the large
+   * numbers carry. Figma's weights sit on SF Pro's variable axis — 274, 510,
+   * 590 — and are given here as the nearest static ones.
+   */
+  --text-display-72: 4.5rem;
+  --text-display-72--line-height: 1;
+  --text-display-72--letter-spacing: -2px;
+  --text-display-52: 3.25rem;
+  --text-display-52--line-height: 3.25rem;
+  --text-display-52--letter-spacing: -1.5px;
+  --text-display-26: 1.625rem;
+  --text-display-26--line-height: 2.1875rem;
+  --text-display-26--letter-spacing: -1.5px;
+  --text-number-30: 1.875rem;
+  --text-number-30--line-height: 2rem;
+  --text-number-30--letter-spacing: -0.86px;
+  --text-number-18: 1.125rem;
+  --text-number-18--line-height: 1.375rem;
+  --text-number-18--letter-spacing: -1px;
+  --text-number-13: 0.8125rem;
+  --text-number-13--line-height: 1.125rem;
+  --text-number-13--letter-spacing: -1px;
+  --text-title-22: 1.375rem;
+  --text-title-22--line-height: 1.625rem;
+  --text-body-15: 0.9375rem;
+  --text-body-15--line-height: 1.25rem;
+  --text-body-13: 0.8125rem;
+  --text-body-13--line-height: 1rem;
 }
 
 html,
@@ -172,6 +214,15 @@ body,
 
 body {
   @apply bg-black text-ink antialiased;
+
+  /*
+   * `lang="bg"` is right for hyphenation, spell-check and screen readers, but
+   * it also switches SF Pro to its Bulgarian localized Cyrillic — the cursive
+   * д, и, т forms. The mock-ups are drawn with the standard shapes, so the
+   * substitution is turned off here. Delete this line if the design session
+   * decides the portal should use the Bulgarian forms.
+   */
+  font-feature-settings: 'locl' 0;
 }
 
 /*

@@ -44,7 +44,7 @@ export function LoginPage() {
             <InovaWordmark size={20} />
           </div>
 
-          <h1 className="mt-7 text-2xl font-semibold tracking-tight">Добре дошли отново</h1>
+          <h1 className="mt-7 text-title-22 font-medium">Добре дошли отново</h1>
           <p className="mt-1.5 text-sm text-ink-muted">Влезте, за да управлявате портфолиото си.</p>
 
           <form onSubmit={submit} className="mt-7 space-y-4">
