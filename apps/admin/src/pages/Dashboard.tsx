@@ -1,29 +1,34 @@
+import { Link } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
-import { Building2, FileMagnifyingGlass, Plus, UploadSimple } from '../components/icons';
+import {
+  ArrowRight,
+  Building2,
+  FileMagnifyingGlass,
+  Plus,
+  UploadSimple,
+} from '../components/icons';
 import { Chip, SolidIconButton } from '../components/ui';
 
 /**
- * Табло, laid out as drawn in Figma Screens 859:1073 — a wide Баланс над a
- * narrow column of two document cards and the signals card, with Календар and
- * Преглед на сгради down the right.
+ * Табло, laid out as drawn in Figma Screens 859:1073 — a wide Баланс above a
+ * narrow Документи card and the signals card, with Календар and Преглед на
+ * сгради down the right.
  *
  * Every figure on that mock-up belongs to a milestone that has not shipped:
  * the balance to M3–M4, the signals to M6, the calendar's events to M11, the
- * buildings to M2. None of them is invented here — each slot shows «—» and
- * says which milestone fills it. The month grid is the one thing this page can
+ * buildings to M2. None of them is invented here — each slot shows «—» and the
+ * card carries its milestone. The month grid is the one thing this page can
  * compute honestly, so it is real.
  */
 export function DashboardPage() {
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-      <div className="space-y-4 xl:col-span-2">
+    // Grid 1136 = 696 + 20 + 420, and the left column 696 = 320 + 20 + 356.
+    <div className="grid grid-cols-1 gap-x-5 gap-y-4 xl:grid-cols-[696fr_420fr]">
+      <div className="space-y-4">
         <BalanceCard />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="space-y-4">
-            <UploadCard />
-            <ReportCard />
-          </div>
+        <div className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-[320fr_356fr]">
+          <DocumentsCard />
           <SignalsCard />
         </div>
       </div>
@@ -36,28 +41,38 @@ export function DashboardPage() {
   );
 }
 
-/** A dashboard card: the glass, the entrance, and the milestone marker. */
+/**
+ * A dashboard card. The header carries whatever the card leads with on the
+ * left and, on the right, the link to its own section and the milestone that
+ * will fill it.
+ */
 function Card({
+  lead,
+  action,
+  milestone,
   children,
   delay = 0,
   className = '',
-  milestone,
 }: {
+  lead?: ReactNode;
+  action?: ReactNode;
+  milestone: string;
   children: ReactNode;
   delay?: number;
   className?: string;
-  milestone: string;
 }) {
   return (
     <motion.section
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay }}
-      className={`glass relative flex flex-col p-6 ${className}`}
+      className={`glass flex flex-col p-6 ${className}`}
     >
-      <span className="absolute top-5 right-5 z-10">
+      <header className="flex items-start gap-3">
+        <div className="min-w-0 flex-1">{lead}</div>
+        {action}
         <Chip muted>{milestone}</Chip>
-      </span>
+      </header>
       {children}
     </motion.section>
   );
@@ -68,14 +83,28 @@ function Blank({ className = '' }: { className?: string }) {
   return <span className={`text-ink-faint ${className}`}>—</span>;
 }
 
+/** The disc that leads from a dashboard card to its own section. */
+function SectionArrow({ to, label }: { to: string; label: string }) {
+  return (
+    <Link to={to} aria-label={label} title={label} className="shrink-0">
+      <span className="glass-solid flex h-8 w-8 items-center justify-center rounded-full">
+        <ArrowRight size={16} />
+      </span>
+    </Link>
+  );
+}
+
 function BalanceCard() {
   return (
-    <Card milestone="M3–M4">
-      <div className="flex flex-wrap items-baseline justify-between gap-2 pr-16">
-        <h2 className="text-base font-semibold">Баланс</h2>
-        <p className="text-xs text-ink-muted">Портфолио</p>
-      </div>
-
+    <Card
+      milestone="M3–M4"
+      lead={
+        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+          <h2 className="text-base font-semibold">Баланс</h2>
+          <p className="text-xs text-ink-muted">Портфолио</p>
+        </div>
+      }
+    >
       <p className="num mt-2 text-5xl font-semibold tracking-tight">
         <Blank />
       </p>
@@ -121,7 +150,7 @@ function Figure({ label }: { label: string }) {
 }
 
 /**
- * The collected share. The ring is drawn at zero rather than at a plausible
+ * The collected share. The ring is drawn empty rather than at a plausible
  * angle: an arc at 71% would read as a measured number.
  */
 function CollectedRing() {
@@ -141,49 +170,55 @@ function CollectedRing() {
   );
 }
 
-function UploadCard() {
+function DocumentsCard() {
   return (
-    <Card milestone="M4" delay={0.05} className="items-center text-center">
-      <RoundGlyph>
-        <UploadSimple size={22} />
-      </RoundGlyph>
-      <h2 className="mt-4 text-base font-semibold">Качи документ</h2>
-      <p className="mt-1.5 text-sm text-ink-muted">
-        Фактури за плащане, документи за сгради и други.
-      </p>
-      <span className="mt-4">
-        <button
-          type="button"
-          disabled
-          title="Хранилището на документи идва с M4."
-          className="glass-control rounded-full px-4 py-2 text-sm font-semibold text-ink disabled:opacity-40"
-        >
-          Избери файл
-        </button>
-      </span>
+    <Card milestone="M4" delay={0.05} className="justify-center gap-6">
+      <DocumentBlock
+        glyph={<UploadSimple size={22} />}
+        title="Качи документ"
+        body="Фактури за плащане, документи за сгради и други."
+        action="Избери файл"
+        why="Хранилището на документи идва с M4."
+      />
+      <hr className="border-glass-divider" />
+      <DocumentBlock
+        glyph={<FileMagnifyingGlass size={22} />}
+        title="Всичко важно в една справка"
+        body="Преглед на данни, експорт в PDF и печат."
+        action="Направи справка"
+        why="Справките идват с M4."
+      />
     </Card>
   );
 }
 
-function ReportCard() {
+function DocumentBlock({
+  glyph,
+  title,
+  body,
+  action,
+  why,
+}: {
+  glyph: ReactNode;
+  title: string;
+  body: string;
+  action: string;
+  why: string;
+}) {
   return (
-    <Card milestone="M4" delay={0.1} className="items-center text-center">
-      <RoundGlyph>
-        <FileMagnifyingGlass size={22} />
-      </RoundGlyph>
-      <h2 className="mt-4 text-base font-semibold">Всичко важно в една справка</h2>
-      <p className="mt-1.5 text-sm text-ink-muted">Преглед на данни, експорт в PDF и печат.</p>
-      <span className="mt-4">
-        <button
-          type="button"
-          disabled
-          title="Справките идват с M4."
-          className="glass-control rounded-full px-4 py-2 text-sm font-semibold text-ink disabled:opacity-40"
-        >
-          Направи справка
-        </button>
-      </span>
-    </Card>
+    <div className="flex flex-col items-center text-center">
+      <RoundGlyph>{glyph}</RoundGlyph>
+      <h2 className="mt-4 text-base font-semibold">{title}</h2>
+      <p className="mt-1.5 text-sm text-ink-muted">{body}</p>
+      <button
+        type="button"
+        disabled
+        title={why}
+        className="glass-control mt-4 rounded-full px-4 py-2 text-sm font-semibold text-ink disabled:opacity-40"
+      >
+        {action}
+      </button>
+    </div>
   );
 }
 
@@ -205,11 +240,12 @@ const SIGNAL_FACETS = ['Чакащи', 'Планирани', 'Спешни', 'Р
 
 function SignalsCard() {
   return (
-    <Card milestone="M6" delay={0.15}>
-      <div className="flex items-center gap-3 pr-16">
-        <Segmented options={['Сигнали', 'Анкети']} selected="Сигнали" />
-      </div>
-
+    <Card
+      milestone="M6"
+      delay={0.1}
+      lead={<Segmented options={['Сигнали', 'Анкети']} selected="Сигнали" />}
+      action={<SectionArrow to="/issues" label="Към нередностите" />}
+    >
       <p className="num mt-6 text-center text-6xl font-semibold tracking-tight">
         <Blank />
       </p>
@@ -298,14 +334,12 @@ function CalendarCard() {
   const days = monthGrid(today);
 
   return (
-    <Card milestone="M11" delay={0.2}>
-      <div className="flex items-center gap-3 pr-16">
-        <h2 className="text-base font-semibold">Календар</h2>
-      </div>
-      <div className="mt-3">
-        <Segmented options={['Ден', 'Месец']} selected="Месец" />
-      </div>
-
+    <Card
+      milestone="M11"
+      delay={0.15}
+      lead={<h2 className="text-base font-semibold">Календар</h2>}
+      action={<Segmented options={['Ден', 'Месец']} selected="Месец" />}
+    >
       <p className="mt-5 text-center text-sm font-medium">
         {MONTHS[today.getMonth()]} <span className="num">{today.getFullYear()}</span>
       </p>
@@ -346,21 +380,24 @@ function CalendarCard() {
 
 function BuildingsCard() {
   return (
-    <Card milestone="M2" delay={0.25}>
-      <div className="flex items-start gap-3 pr-16">
-        <div className="min-w-0 flex-1">
+    <Card
+      milestone="M2"
+      delay={0.2}
+      action={<SectionArrow to="/buildings" label="Към сградите" />}
+      lead={
+        <>
           <h2 className="text-base font-semibold">Преглед на сгради</h2>
           <p className="num mt-0.5 text-xs text-ink-muted">
             <Blank /> сгради · <Blank /> апартамента
           </p>
-        </div>
-      </div>
-
+        </>
+      }
+    >
       <div className="mt-5 flex items-start gap-4">
-        <Tile label="Добави" caption="нова сграда" disabled>
+        <Tile label="Добави" caption="нова сграда">
           <Plus size={22} />
         </Tile>
-        <Tile label="Сгради" caption="идват с M2" disabled>
+        <Tile label="Сгради" caption="идват с M2">
           <Building2 size={22} />
         </Tile>
       </div>
@@ -372,16 +409,14 @@ function Tile({
   children,
   label,
   caption,
-  disabled,
 }: {
   children: ReactNode;
   label: string;
   caption: string;
-  disabled: boolean;
 }) {
   return (
-    <span className={`flex w-20 flex-col items-center text-center ${disabled ? 'opacity-55' : ''}`}>
-      <SolidIconButton label={label} disabled={disabled} size={56}>
+    <span className="flex w-20 flex-col items-center text-center opacity-55">
+      <SolidIconButton label={label} disabled size={56}>
         {children}
       </SolidIconButton>
       <span className="mt-2 text-xs font-medium">{label}</span>

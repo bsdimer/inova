@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useResolvedTheme } from '../lib/theme';
 
 /**
@@ -18,20 +18,32 @@ export function AppBackground() {
   const theme = useResolvedTheme();
   const ref = useRef<HTMLImageElement>(null);
 
-  const markReady = useCallback(() => {
-    // Two frames: one for the photograph to paint, one for the compositor to
-    // pick up the filtered layers above it.
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => {
-        document.documentElement.dataset.bgReady = 'true';
-      }),
-    );
-  }, []);
-
-  // A cached image can finish before React attaches the load handler.
   useEffect(() => {
-    if (ref.current?.complete) markReady();
-  }, [markReady, theme]);
+    const img = ref.current;
+    if (!img) return;
+    let cancelled = false;
+
+    // Off while this photograph is on its way in, so the gate below can only
+    // ever switch the blur on over a picture that has already painted.
+    delete document.documentElement.dataset.bgReady;
+
+    const ready = () =>
+      // `decode()` resolves when the bitmap is ready, not merely fetched — a
+      // cached image otherwise reports `complete` before it has ever painted,
+      // and the compositor then samples an empty backdrop and keeps it. The
+      // two frames after it are for the photograph to paint and for the
+      // filtered layers above it to be re-composited.
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          if (!cancelled) document.documentElement.dataset.bgReady = 'true';
+        }),
+      );
+
+    img.decode().then(ready, ready);
+    return () => {
+      cancelled = true;
+    };
+  }, [theme]);
 
   return (
     <div className="app-background" aria-hidden>
@@ -41,8 +53,6 @@ export function AppBackground() {
         src={theme === 'dark' ? '/bg-dark.webp' : '/bg-light.webp'}
         alt=""
         fetchPriority="high"
-        onLoad={markReady}
-        onError={markReady}
         className="h-full w-full object-cover"
       />
       <span className="app-scrim" />

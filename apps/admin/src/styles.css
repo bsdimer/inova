@@ -194,11 +194,12 @@ body {
 .app-scrim {
   position: absolute;
   inset: 0;
+  /* The values on the Scrim layer of every Screens frame, both themes. */
   background-image: linear-gradient(
     180deg,
-    rgb(0 0 0 / 0.42) 0%,
-    rgb(0 0 0 / 0.18) 38%,
-    rgb(0 0 0 / 0.3) 100%
+    rgb(29 29 31 / 0.52) 0%,
+    rgb(29 29 31 / 0.3) 50%,
+    rgb(29 29 31 / 0.55) 100%
   );
 }
 
