@@ -88,7 +88,7 @@ export function RolesPage() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="text-title-22 font-medium">Роли</h1>
-          <p className="mt-1 text-sm text-ink-muted">
+          <p className="text-body-14 mt-1 text-ink-muted">
             Всяка роля е набор от права от общия каталог. Обхватът — кои сгради — се задава при
             назначаване, в Служители.
           </p>

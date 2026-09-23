@@ -18,7 +18,8 @@ export function Avatar({ name, size = 36 }: { name: string; size?: number }) {
       style={{
         width: size,
         height: size,
-        fontSize: size * 0.34,
+        fontSize: size * (1 / 3),
+        lineHeight: '16px',
         background: 'var(--glass-avatar)',
         boxShadow: 'inset 0 0 0 1px var(--glass-avatar-edge)',
       }}
@@ -45,7 +46,7 @@ export function PrimaryButton({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className="cta px-5 py-2.5 text-sm font-semibold transition-opacity disabled:opacity-45"
+      className="cta text-body-14 px-5 py-2.5 font-semibold transition-opacity disabled:opacity-45"
     >
       {children}
     </button>
@@ -70,7 +71,7 @@ export function GhostButton({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`glass-control rounded-full px-4 py-2 text-sm font-semibold transition-opacity disabled:opacity-40 ${
+      className={`glass-control text-body-14 rounded-full px-4 py-2 font-semibold transition-opacity disabled:opacity-40 ${
         danger ? 'text-status-urgent' : 'text-ink'
       }`}
     >
@@ -145,11 +146,11 @@ export function SolidIconButton({
 export function Chip({ children, muted = false }: { children: ReactNode; muted?: boolean }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap ${
-        muted ? 'text-ink-faint' : 'text-ink-soft'
+      className={`text-label-12 inline-flex items-center rounded-full px-2.5 py-1 font-semibold whitespace-nowrap ${
+        muted ? 'text-ink-soft' : 'text-ink'
       }`}
       style={{
-        background: 'var(--glass-chip)',
+        background: 'var(--glass-inner-strong)',
         boxShadow: 'inset 0 0 0 1px var(--glass-edge-soft)',
       }}
     >
@@ -390,8 +391,8 @@ export function StatusDot({
   const color = onPanel && tone !== 'muted' ? `var(--panel-status-${tone})` : DOT_COLOR[tone];
   return (
     <span
-      className={`inline-flex items-center gap-2 text-sm whitespace-nowrap ${
-        onPanel ? 'text-panel-ink' : 'text-ink-soft'
+      className={`text-body-14 inline-flex items-center gap-2 font-medium whitespace-nowrap ${
+        onPanel ? 'text-panel-ink' : 'text-ink'
       }`}
     >
       <span

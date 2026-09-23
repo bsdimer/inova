@@ -92,7 +92,7 @@ export function TenantsPage() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="text-title-22 font-medium">Организации</h1>
-          <p className="mt-1 text-sm text-ink-muted">
+          <p className="text-body-14 mt-1 text-ink-muted">
             Компаниите за управление на имоти на платформата. Влизането в организация се записва в
             одитния ѝ дневник.
           </p>

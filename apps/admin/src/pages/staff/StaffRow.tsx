@@ -20,17 +20,17 @@ import {
 } from './model';
 
 const INVITE_ICON: Record<InviteState, ReactNode> = {
-  activated: <CircleCheck size={14} />,
-  'code-sent': <Clock size={14} />,
-  none: <CircleAlert size={14} />,
+  activated: <CircleCheck size={16} />,
+  'code-sent': <Clock size={16} />,
+  none: <CircleAlert size={16} />,
 };
 
 /** Invite outcome: an icon carries the tone, the words carry the meaning. */
 function InviteCell({ member }: { member: StaffMember }) {
   const state = inviteStateOf(member);
-  if (state === 'none') return <span className="text-sm text-ink-faint">—</span>;
+  if (state === 'none') return <span className="text-body-13-tight text-ink-soft">—</span>;
   return (
-    <span className="inline-flex items-center gap-2 text-sm whitespace-nowrap text-ink-soft">
+    <span className="text-body-13-tight inline-flex items-center gap-1.5 whitespace-nowrap text-ink-soft">
       <span
         className="shrink-0"
         style={{
@@ -80,7 +80,7 @@ function RowAction({ member, busy, onAction }: RowProps) {
   );
 }
 
-const CELL = 'px-3 first:pl-6 last:pr-6 align-middle';
+const CELL = 'px-3 align-middle';
 
 export function StaffRow(props: RowProps) {
   const { member, roles, scope, isSelf, busy } = props;
@@ -98,8 +98,8 @@ export function StaffRow(props: RowProps) {
         <div className="flex items-center gap-3">
           <Avatar name={member.fullName} size={36} />
           <span className="min-w-0">
-            <span className="block truncate font-medium">{member.fullName}</span>
-            <span className="block truncate text-xs text-ink-faint">
+            <span className="text-body-14 block truncate font-semibold">{member.fullName}</span>
+            <span className="text-body-13-tight block truncate text-ink-soft">
               {isSelf && 'вие'}
               <span className="@4xl:hidden">
                 {isSelf && ' · '}
@@ -109,9 +109,9 @@ export function StaffRow(props: RowProps) {
           </span>
         </div>
       </td>
-      <td className={`${CELL} hidden text-ink-muted @4xl:table-cell`}>
-        <p className="truncate text-sm">{member.email ?? '—'}</p>
-        <p className="num truncate text-xs">{member.phone ?? '—'}</p>
+      <td className={`${CELL} hidden text-ink-soft @4xl:table-cell`}>
+        <p className="text-body-14 truncate">{member.email ?? '—'}</p>
+        <p className="num text-body-13-tight truncate">{member.phone ?? '—'}</p>
       </td>
       <td className={CELL}>
         <StatusDot tone={STATUS_TONES[member.status]}>{STATUS_LABELS[member.status]}</StatusDot>
@@ -125,14 +125,14 @@ export function StaffRow(props: RowProps) {
           {more.length > 0 && <Chip muted>+{more.length}</Chip>}
         </div>
       </td>
-      <td className={`${CELL} hidden text-sm whitespace-nowrap text-ink-muted @4xl:table-cell`}>
-        {scope ?? '—'}
+      <td className={`${CELL} hidden text-ink-soft @4xl:table-cell`}>
+        <p className="text-body-14 truncate">{scope ?? '—'}</p>
       </td>
       <td className={`${CELL} hidden @5xl:table-cell`}>
         <InviteCell member={member} />
       </td>
       <td
-        className={`${CELL} num hidden pr-1 text-sm whitespace-nowrap text-ink-muted @5xl:table-cell`}
+        className={`${CELL} num text-body-13-tight hidden pr-1 whitespace-nowrap text-ink-soft @5xl:table-cell`}
       >
         {formatSince(member.since)}
       </td>
@@ -155,8 +155,8 @@ export function StaffCard(props: RowProps) {
       <div className="flex items-start gap-3">
         <Avatar name={member.fullName} size={36} />
         <div className="min-w-0 flex-1">
-          <p className="truncate font-medium">{member.fullName}</p>
-          <p className="num truncate text-xs text-ink-faint">
+          <p className="text-body-14 truncate font-semibold">{member.fullName}</p>
+          <p className="num text-body-13-tight truncate text-ink-soft">
             {isSelf && 'вие · '}
             {[member.email, member.phone].filter(Boolean).join(' · ') || '—'}
           </p>
@@ -170,7 +170,7 @@ export function StaffCard(props: RowProps) {
         {more.length > 0 && <Chip muted>+{more.length}</Chip>}
       </div>
 
-      <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
+      <div className="text-body-13 mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-ink-soft">
         <InviteCell member={member} />
         <span>{scope ?? '—'}</span>
         <span className="num">от {formatSince(member.since)}</span>
