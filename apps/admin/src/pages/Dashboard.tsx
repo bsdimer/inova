@@ -8,7 +8,7 @@ import {
   Plus,
   UploadSimple,
 } from '../components/icons';
-import { Chip, SolidIconButton } from '../components/ui';
+import { Chip, SecondaryButton, SolidIconButton } from '../components/ui';
 
 /**
  * Табло, laid out as drawn in Figma Screens 859:1073 — a wide Баланс above a
@@ -100,8 +100,8 @@ function BalanceCard() {
       milestone="M3–M4"
       lead={
         <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-          <h2 className="text-base font-medium">Баланс</h2>
-          <p className="text-xs text-ink-muted">Портфолио</p>
+          <h2 className="text-title-16 font-medium text-ink-soft">Баланс</h2>
+          <p className="text-body-13-tight text-ink-muted">Портфолио</p>
         </div>
       }
     >
@@ -116,19 +116,14 @@ function BalanceCard() {
           <Figure label="Задължения" />
         </div>
         <div className="ml-auto flex flex-col gap-2">
-          <button
-            type="button"
-            disabled
-            title="Начисленията и касата идват с M3–M4."
-            className="glass-solid rounded-full px-5 py-2.5 text-sm font-semibold disabled:opacity-45"
-          >
+          <SecondaryButton disabled title="Начисленията и касата идват с M3–M4.">
             Виж детайли
-          </button>
+          </SecondaryButton>
           <button
             type="button"
             disabled
             title="Известията за задължения идват с M7."
-            className="cta px-5 py-2.5 text-sm font-semibold disabled:opacity-45"
+            className="cta text-body-14 px-7 py-3 font-semibold disabled:opacity-45"
           >
             Изпрати известия
           </button>
@@ -141,8 +136,8 @@ function BalanceCard() {
 function Figure({ label }: { label: string }) {
   return (
     <div>
-      <p className="text-xs text-ink-muted">{label}</p>
-      <p className="num mt-0.5 text-base font-medium">
+      <p className="text-body-15-tight text-ink-soft">{label}</p>
+      <p className="num text-number-18 mt-0.5 font-light">
         <Blank />
       </p>
     </div>
@@ -162,10 +157,10 @@ function CollectedRing() {
         boxShadow: 'inset 0 0 0 2px var(--ring-track)',
       }}
     >
-      <span className="num text-number-18 font-light">
+      <span className="num text-number-30">
         <Blank />
       </span>
-      <span className="text-[11px] text-ink-muted">събрани</span>
+      <span className="text-body-14 text-ink-soft">събрани</span>
     </div>
   );
 }
@@ -174,7 +169,7 @@ function DocumentsCard() {
   return (
     <Card milestone="M4" delay={0.05} className="justify-center gap-6">
       <DocumentBlock
-        glyph={<UploadSimple size={22} />}
+        glyph={<UploadSimple size={28} />}
         title="Качи документ"
         body="Фактури за плащане, документи за сгради и други."
         action="Избери файл"
@@ -182,7 +177,7 @@ function DocumentsCard() {
       />
       <hr className="border-glass-divider" />
       <DocumentBlock
-        glyph={<FileMagnifyingGlass size={22} />}
+        glyph={<FileMagnifyingGlass size={28} />}
         title="Всичко важно в една справка"
         body="Преглед на данни, експорт в PDF и печат."
         action="Направи справка"
@@ -208,16 +203,13 @@ function DocumentBlock({
   return (
     <div className="flex flex-col items-center text-center">
       <RoundGlyph>{glyph}</RoundGlyph>
-      <h2 className="mt-4 text-base font-semibold">{title}</h2>
-      <p className="mt-1.5 text-sm text-ink-muted">{body}</p>
-      <button
-        type="button"
-        disabled
-        title={why}
-        className="glass-control mt-4 rounded-full px-4 py-2 text-sm font-semibold text-ink disabled:opacity-40"
-      >
-        {action}
-      </button>
+      <h2 className="text-title-22 mt-3 font-medium">{title}</h2>
+      <p className="text-body-14 mt-2 text-ink-muted">{body}</p>
+      <span className="mt-2">
+        <SecondaryButton disabled title={why}>
+          {action}
+        </SecondaryButton>
+      </span>
     </div>
   );
 }
@@ -225,11 +217,8 @@ function DocumentBlock({
 function RoundGlyph({ children }: { children: ReactNode }) {
   return (
     <span
-      className="flex h-14 w-14 items-center justify-center rounded-full text-ink-soft"
-      style={{
-        background: 'var(--glass-inner)',
-        boxShadow: 'inset 0 0 0 1px var(--glass-edge-soft)',
-      }}
+      className="glass-solid flex h-16 w-16 items-center justify-center rounded-full"
+      style={{ boxShadow: '0 0 14px var(--glow-near)' }}
     >
       {children}
     </span>
@@ -249,13 +238,13 @@ function SignalsCard() {
       <p className="num mt-6 text-center text-display-72 font-light">
         <Blank />
       </p>
-      <p className="mt-1 text-center text-sm text-ink-muted">отворени нередности</p>
+      <p className="text-body-14 mt-1 text-center text-ink-soft">отворени нередности</p>
 
       <div className="mt-5 grid grid-cols-2 gap-2">
         {SIGNAL_FACETS.map((facet) => (
           <span
             key={facet}
-            className="glass-control flex items-center justify-between rounded-full px-3.5 py-2 text-sm text-ink-soft"
+            className="glass-control text-body-14 flex items-center justify-between rounded-full px-3.5 py-2 text-ink-soft"
           >
             {facet}
             <Blank className="num" />
@@ -263,10 +252,8 @@ function SignalsCard() {
         ))}
       </div>
 
-      <p className="mt-6 text-xs font-semibold tracking-wider text-ink-faint uppercase">
-        Спешни сега
-      </p>
-      <p className="mt-2 text-sm text-ink-muted">
+      <p className="text-overline-12 mt-6 font-semibold text-ink-faint uppercase">Спешни сега</p>
+      <p className="text-body-14 mt-2 text-ink-muted">
         Сигналите на жителите идват с раздела «Нередности» (M6).
       </p>
     </Card>
@@ -281,7 +268,7 @@ function Segmented({ options, selected }: { options: readonly string[]; selected
         <span
           key={option}
           aria-current={option === selected ? 'true' : undefined}
-          className={`rounded-full px-3 py-1 text-xs font-medium ${
+          className={`text-label-12 rounded-full px-3 py-1 font-medium ${
             option === selected ? 'glass-control-active' : 'text-ink-faint'
           }`}
         >
@@ -337,23 +324,23 @@ function CalendarCard() {
     <Card
       milestone="M11"
       delay={0.15}
-      lead={<h2 className="text-base font-medium">Календар</h2>}
+      lead={<h2 className="text-title-16 font-medium text-ink-soft">Календар</h2>}
       action={<Segmented options={['Ден', 'Месец']} selected="Месец" />}
     >
-      <p className="mt-5 text-center text-sm font-medium">
+      <p className="text-body-14 mt-5 text-center font-medium">
         {MONTHS[today.getMonth()]} <span className="num">{today.getFullYear()}</span>
       </p>
 
       <div className="mt-3 grid grid-cols-7 gap-y-1 text-center">
         {WEEKDAYS.map((d) => (
-          <span key={d} className="pb-1 text-[11px] text-ink-faint">
+          <span key={d} className="text-label-12 pb-1 text-ink-faint">
             {d}
           </span>
         ))}
         {days.map((d, i) => (
           <span
             key={i}
-            className={`num mx-auto flex h-8 w-8 items-center justify-center rounded-full text-sm ${
+            className={`num text-body-14 mx-auto flex h-8 w-8 items-center justify-center rounded-full ${
               d.inMonth ? 'text-ink-soft' : 'text-ink-faint opacity-50'
             }`}
             style={
@@ -368,10 +355,8 @@ function CalendarCard() {
         ))}
       </div>
 
-      <p className="mt-5 text-xs font-semibold tracking-wider text-ink-faint uppercase">
-        Предстоящи
-      </p>
-      <p className="mt-2 text-sm text-ink-muted">
+      <p className="text-overline-12 mt-5 font-semibold text-ink-faint uppercase">Предстоящи</p>
+      <p className="text-body-14 mt-2 text-ink-muted">
         Общи събрания, отчети и задачи на екипа се появяват тук с раздела «Задачи» (M11).
       </p>
     </Card>
@@ -386,8 +371,8 @@ function BuildingsCard() {
       action={<SectionArrow to="/buildings" label="Към сградите" />}
       lead={
         <>
-          <h2 className="text-base font-medium">Преглед на сгради</h2>
-          <p className="num mt-0.5 text-xs text-ink-muted">
+          <h2 className="text-title-16 font-medium text-ink-soft">Преглед на сгради</h2>
+          <p className="num text-body-13-tight mt-0.5 text-ink-muted">
             <Blank /> сгради · <Blank /> апартамента
           </p>
         </>
@@ -419,8 +404,8 @@ function Tile({
       <SolidIconButton label={label} disabled size={56}>
         {children}
       </SolidIconButton>
-      <span className="mt-2 text-xs font-medium">{label}</span>
-      <span className="text-[11px] text-ink-faint">{caption}</span>
+      <span className="text-label-12 mt-2 font-medium">{label}</span>
+      <span className="text-label-12 text-ink-faint">{caption}</span>
     </span>
   );
 }

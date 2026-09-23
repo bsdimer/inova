@@ -53,6 +53,39 @@ export function PrimaryButton({
   );
 }
 
+/**
+ * `V2/Button Kind=Secondary`: a lifted pill, glass/inner behind a glass/edge
+ * hairline. Not `GhostButton`, which is the recessed control fill, and not the
+ * solid white disc — the mock-ups use all three for different jobs.
+ */
+export function SecondaryButton({
+  children,
+  onClick,
+  disabled = false,
+  title,
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  title?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className="text-body-14 rounded-full px-7 py-3 font-semibold text-ink transition-opacity disabled:opacity-45"
+      style={{
+        background: 'var(--glass-inner)',
+        boxShadow: 'inset 0 0 0 1px var(--glass-edge)',
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
 export function GhostButton({
   children,
   onClick,
