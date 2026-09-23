@@ -6,7 +6,7 @@ Part of the [implementation plan](../implementation-plan.md). Milestone order an
 
 ## Goal
 
-The shell search box ("сграда, апартамент, жител") finds a building, an apartment or a resident from any admin page.
+The shell search box ("Сграда, апартамент, жител или телефон") finds a building, an apartment or a resident from any admin page. Phone is a way to reach a resident, not a fourth result type.
 
 ## Dependencies
 
