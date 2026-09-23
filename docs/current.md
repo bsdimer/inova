@@ -40,9 +40,10 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
   drawers, modals and menus, all generated from that file's V2 Glass and V2
   Layout variables. The light and dark themes both exist and are chosen from
   the account menu or the OS. Icons are Phosphor Light, the set the screens
-  are drawn with. Navigation is the nine items the stakeholder confirmed on
-  2026-09-22:
-  Табло · Задачи · Известия · Сгради · Жители · Финанси · Нередности ·
+  are drawn with. Navigation is the nine items of the Figma sidebar, in the
+  order settled in WHI-24 (after the 2026-09-22 list: «Финанси» moved to
+  fourth, «Нередности» renamed «Сигнали»):
+  Табло · Задачи · Известия · Финанси · Сгради · Жители · Сигнали ·
   Служители · Роли. A platform administrator gets a rail of its own instead —
   Общ преглед · Организации · Одитен дневник, with the ПЛАТФОРМА marker — and,
   once inside an organization, the banner that says the visit is audited and

@@ -40,7 +40,7 @@ const PERMISSION_GROUPS: Record<string, string> = {
   payments: 'Плащания',
   notifications: 'Комуникация',
   surveys: 'Анкети',
-  issues: 'Нередности',
+  issues: 'Сигнали',
   tasks: 'Задачи',
   documents: 'Документи',
   reports: 'Отчети',

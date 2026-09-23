@@ -18,8 +18,9 @@ export function Avatar({ name, size = 36 }: { name: string; size?: number }) {
       style={{
         width: size,
         height: size,
-        fontSize: size * (1 / 3),
-        lineHeight: '16px',
+        // V2/Avatar: 40 carries Body/14, 36 and below Label/12.
+        fontSize: size >= 40 ? 14 : size * (1 / 3),
+        lineHeight: size >= 40 ? '20px' : '16px',
         background: 'var(--glass-avatar)',
         boxShadow: 'inset 0 0 0 1px var(--glass-avatar-edge)',
       }}
@@ -63,11 +64,13 @@ export function SecondaryButton({
   onClick,
   disabled = false,
   title,
+  className = '',
 }: {
   children: ReactNode;
   onClick?: () => void;
   disabled?: boolean;
   title?: string;
+  className?: string;
 }) {
   return (
     <button
@@ -75,7 +78,7 @@ export function SecondaryButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className="text-body-14 rounded-full px-7 py-3 font-semibold text-ink transition-opacity disabled:opacity-45"
+      className={`text-body-14 h-11 rounded-full px-7 font-semibold text-ink transition-opacity disabled:opacity-45 ${className}`}
       style={{
         background: 'var(--glass-inner)',
         boxShadow: 'inset 0 0 0 1px var(--glass-edge)',

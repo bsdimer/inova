@@ -84,7 +84,7 @@ const financeRoute = createRoute({
 const issuesRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/issues',
-  component: () => <ComingSoonPage title="Нередности" milestone="M6" />,
+  component: () => <ComingSoonPage title="Сигнали" milestone="M6" />,
 });
 
 const noticesRoute = createRoute({

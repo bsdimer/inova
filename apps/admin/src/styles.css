@@ -79,6 +79,16 @@
   --space-col-gap: 20px;
   --blur-card: 28px;
   --blur-control: 16px;
+
+  /*
+   * Not a Figma variable: the top light of V2/Glass · card and · control is a
+   * fixed white 38 % inner shadow in both themes (design session, 23.09).
+   * `glass/inner` is the fill of inner surfaces, not this highlight.
+   */
+  --glass-highlight: rgb(255 255 255 / 0.38);
+
+  /* V2/Glow · CTA, two shadows; glow/far is clear by day, so only nights show both. */
+  --glow-cta: 0 0 16px var(--glow-near), 0 0 40px 4px var(--glow-far);
 }
 
 /* Only the values that differ from the light theme. */
@@ -311,7 +321,7 @@ body {
     background: var(--glass-card);
     box-shadow:
       inset 0 0 0 1px var(--glass-edge),
-      inset 0 1px 0 var(--glass-inner);
+      inset 0 1px 0 var(--glass-highlight);
     border-radius: var(--radius-card);
   }
 
@@ -320,7 +330,7 @@ body {
     background: var(--glass-data);
     box-shadow:
       inset 0 0 0 1px var(--glass-edge),
-      inset 0 1px 0 var(--glass-inner);
+      inset 0 1px 0 var(--glass-highlight);
     border-radius: var(--radius-card);
   }
 
@@ -329,7 +339,7 @@ body {
     background: var(--glass-input);
     box-shadow:
       inset 0 0 0 1px var(--glass-edge-soft),
-      inset 0 1px 0 var(--glass-inner-soft);
+      inset 0 1px 0 var(--glass-highlight);
   }
 
   /*
@@ -348,6 +358,49 @@ body {
     background: var(--glass-segment);
     color: var(--text-on-solid);
     box-shadow: inset 0 0 0 1px var(--glass-edge);
+  }
+
+  /*
+   * V2/Field's input (906:487): a pill recess with the full glass edge. Focus
+   * and error are the field's own states, drawn on the pill itself, so the
+   * input inside never draws the global ring on top of them.
+   */
+  .glass-field {
+    background: var(--glass-input);
+    box-shadow:
+      inset 0 0 0 1px var(--glass-edge),
+      inset 0 1px 0 var(--glass-highlight);
+    border-radius: var(--radius-pill);
+  }
+
+  .glass-field:focus-within {
+    box-shadow:
+      inset 0 0 0 1.5px var(--focus-edge),
+      0 0 14px var(--focus-glow);
+  }
+
+  .glass-field[data-invalid='true'] {
+    box-shadow: inset 0 0 0 1.5px var(--status-urgent);
+  }
+
+  .glass-field input:focus-visible {
+    box-shadow: none;
+  }
+
+  /* V2/NavItem Active=true — V2/Nav · active: inner light 0.35 over 2 px. */
+  .nav-active {
+    background: var(--glass-inner);
+    box-shadow:
+      inset 0 0 0 1px var(--glass-edge),
+      inset 0 1px 2px rgb(255 255 255 / 0.35);
+  }
+
+  /* V2/Calendar · Day State=today: a lit bar under the date, V2/Glow · indicator. */
+  .today-underline {
+    background: var(--light-source);
+    box-shadow:
+      0 0 7px 0.5px var(--glow-dot-near),
+      0 0 20px 1px var(--glow-dot-far);
   }
 
   /* Layered surfaces: drawer, modal, menu, filter sheet. */
@@ -373,7 +426,7 @@ body {
     color: var(--cta-text);
     box-shadow:
       inset 0 0 0 1px var(--cta-edge),
-      0 0 14px var(--glow-near);
+      var(--glow-cta);
     border-radius: var(--radius-pill);
   }
 
@@ -385,17 +438,19 @@ body {
 
 /*
  * Blur switches on only once the photograph has decoded — see AppBackground.
+ * The radius is half the variable: Figma's BACKGROUND_BLUR 28 renders as
+ * CSS blur(14px), and the variables keep Figma's numbers.
  * Declared outside the components layer so it wins over the base surfaces
  * without raising their specificity.
  */
 :root[data-bg-ready='true'] :is(.glass, .glass-data, .panel, .panel-strong) {
-  backdrop-filter: blur(var(--blur-card));
-  -webkit-backdrop-filter: blur(var(--blur-card));
+  backdrop-filter: blur(calc(var(--blur-card) / 2));
+  -webkit-backdrop-filter: blur(calc(var(--blur-card) / 2));
 }
 
-:root[data-bg-ready='true'] :is(.glass-control, .glass-control-active) {
-  backdrop-filter: blur(var(--blur-control));
-  -webkit-backdrop-filter: blur(var(--blur-control));
+:root[data-bg-ready='true'] :is(.glass-control, .glass-control-active, .glass-field) {
+  backdrop-filter: blur(calc(var(--blur-control) / 2));
+  -webkit-backdrop-filter: blur(calc(var(--blur-control) / 2));
 }
 
 /*

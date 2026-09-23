@@ -1,12 +1,24 @@
 import { useNavigate } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, LoaderCircle, Lock, Mail } from '../components/icons';
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, type ReactNode } from 'react';
 import { AppBackground } from '../components/AppBackground';
+import {
+  EnvelopeSimple,
+  Eye,
+  EyeOff,
+  LoaderCircle,
+  Lock,
+  TriangleAlert,
+} from '../components/icons';
 import { InovaWordmark } from '../components/Logo';
-import { ErrorNote } from '../components/ui';
 import { login } from '../lib/auth';
 
+/**
+ * Вход, as drawn in Figma Screens 911:3793 (light), 920:3865 (dark), 920:3885
+ * (error) and 920:3958 (402). The card is 440 wide with 40 of padding, 370
+ * with 24/28 on a phone; the gaps between its parts are the ones named in the
+ * frame (24 · 6 · 28 · 18 · 14 · 22).
+ */
 export function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -33,27 +45,34 @@ export function LoginPage() {
   return (
     <>
       <AppBackground />
-      <div className="app-content flex min-h-full flex-col items-center justify-center px-4 py-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45 }}
-          className="glass-data w-full max-w-sm p-7 sm:p-8"
-        >
-          <div className="text-ink">
-            <InovaWordmark size={20} />
-          </div>
+      {/*
+        The card sits in the middle of the screen, not of the space above the
+        tagline: equal padding top and bottom keeps it centred and clear of it.
+      */}
+      <div className="app-content relative flex min-h-full flex-col items-center px-4">
+        <div className="flex w-full flex-1 items-center justify-center py-[72px] sm:py-[88px]">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45 }}
+            className="glass-data w-full max-w-[440px] px-6 py-7 sm:p-10"
+          >
+            <div className="pt-2 pb-3 pl-2 text-ink">
+              <InovaWordmark size={22} />
+            </div>
 
-          <h1 className="mt-7 text-title-22 font-medium">Добре дошли отново</h1>
-          <p className="mt-1.5 text-sm text-ink-muted">Влезте, за да управлявате портфолиото си.</p>
+            <h1 className="mt-6 text-title-22 font-medium">Добре дошли отново</h1>
+            <p className="mt-1.5 text-body-14 text-ink-soft">
+              Влезте, за да управлявате портфолиото си.
+            </p>
 
-          <form onSubmit={submit} className="mt-7 space-y-4">
-            <label className="block">
-              <span className="mb-1.5 block text-xs font-semibold tracking-wider text-ink-muted uppercase">
-                Имейл
-              </span>
-              <span className="glass-control flex items-center gap-3 rounded-xl px-3.5 py-3">
-                <Mail size={16} className="shrink-0 text-ink-faint" />
+            <form onSubmit={submit} className="mt-7">
+              {/* The error belongs to the pair, and the mock-up hangs it under the first field. */}
+              <Field label="Имейл" error={error}>
+                <EnvelopeSimple
+                  size={20}
+                  className={`shrink-0 ${error ? 'text-status-urgent' : email ? 'text-ink' : 'text-ink-faint'}`}
+                />
                 <input
                   type="email"
                   required
@@ -61,78 +80,108 @@ export function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@company.bg"
-                  className="w-full bg-transparent text-sm font-medium text-ink outline-none placeholder:text-ink-faint"
+                  aria-invalid={error ? true : undefined}
+                  className={INPUT}
                 />
-              </span>
-            </label>
+              </Field>
 
-            <label className="block">
-              <span className="mb-1.5 block text-xs font-semibold tracking-wider text-ink-muted uppercase">
-                Парола
-              </span>
-              <span className="glass-control flex items-center gap-3 rounded-xl px-3.5 py-3">
-                <Lock size={16} className="shrink-0 text-ink-faint" />
-                <input
-                  type={reveal ? 'text' : 'password'}
-                  required
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••"
-                  className="w-full bg-transparent text-sm font-medium text-ink outline-none placeholder:text-ink-faint"
-                />
+              <div className="mt-[18px]">
+                <Field label="Парола">
+                  <Lock
+                    size={20}
+                    className={`shrink-0 ${password ? 'text-ink' : 'text-ink-faint'}`}
+                  />
+                  <input
+                    type={reveal ? 'text' : 'password'}
+                    required
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••••"
+                    aria-invalid={error ? true : undefined}
+                    className={INPUT}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setReveal((v) => !v)}
+                    aria-label={reveal ? 'Скрий паролата' : 'Покажи паролата'}
+                    className="shrink-0 rounded-full text-ink-muted transition-colors hover:text-ink"
+                  >
+                    {reveal ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </Field>
+              </div>
+
+              <div className="mt-3.5 flex justify-end pr-1">
                 <button
                   type="button"
-                  onClick={() => setReveal((v) => !v)}
-                  aria-label={reveal ? 'Скрий паролата' : 'Покажи паролата'}
-                  className="shrink-0 rounded-full p-0.5 text-ink-faint transition-colors hover:text-ink"
+                  onClick={() => setRecovery(true)}
+                  className="text-body-14 font-semibold text-ink-soft underline transition-colors hover:text-ink"
                 >
-                  {reveal ? <EyeOff size={16} /> : <Eye size={16} />}
+                  Забравена парола?
                 </button>
-              </span>
-            </label>
+              </div>
 
-            <div className="flex justify-end">
+              {/*
+                TODO(M1): public password recovery (B14). The mock-up has the
+                whole flow (954:6136 and on), but auth-service has no recovery
+                endpoint yet, so the link says who can help instead of pretending.
+              */}
+              {recovery && (
+                <p className="mt-3.5 flex gap-1.5 pl-0.5 text-body-13-tight text-ink">
+                  <TriangleAlert size={14} className="mt-px shrink-0 text-status-pending" />
+                  Възстановяването на парола още не е налично. Свържете се с администратора на
+                  организацията, който може да изпрати нов код за активиране.
+                </p>
+              )}
+
               <button
-                type="button"
-                onClick={() => setRecovery(true)}
-                className="text-xs font-medium text-ink-muted underline underline-offset-4 transition-colors hover:text-ink"
+                type="submit"
+                disabled={loading}
+                className="cta text-body-14 mt-[22px] flex h-11 w-full items-center justify-center gap-2 px-7 font-semibold transition-opacity disabled:opacity-60"
               >
-                Забравена парола?
+                {loading ? <LoaderCircle size={18} className="animate-spin" /> : 'Влез'}
               </button>
-            </div>
+            </form>
+          </motion.div>
+        </div>
 
-            {/*
-              TODO(M1): public password recovery (B14). The screen offers the
-              link because the mock-up does, but auth-service has no recovery
-              endpoint yet, so it says who can help instead of pretending.
-            */}
-            {recovery && (
-              <p className="rounded-xl px-3.5 py-2.5 text-xs text-ink-soft" style={GLASS_NOTE}>
-                Възстановяването на парола още не е налично. Свържете се с администратора на
-                организацията, който може да изпрати нов код за активиране.
-              </p>
-            )}
-
-            <ErrorNote message={error} />
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="cta flex w-full items-center justify-center gap-2 py-3.5 text-sm font-semibold transition-opacity disabled:opacity-60"
-            >
-              {loading ? <LoaderCircle size={18} className="animate-spin" /> : 'Влез'}
-            </button>
-          </form>
-        </motion.div>
-
-        <p className="mt-6 text-xs text-ink-faint">Общност за жилищни сгради и квартали.</p>
+        <p className="absolute inset-x-0 bottom-10 text-center text-body-13-tight text-ink-soft sm:bottom-14">
+          Порталът за управление на Вашите имоти.
+        </p>
       </div>
     </>
   );
 }
 
-const GLASS_NOTE = {
-  background: 'var(--glass-chip)',
-  boxShadow: 'inset 0 0 0 1px var(--glass-edge-soft)',
-} as const;
+const INPUT =
+  'min-w-0 flex-1 bg-transparent text-body-15 font-medium text-ink outline-none placeholder:text-ink-faint';
+
+/** V2/Field (906:487): overline label, the pill, and the message under it in the error state. */
+function Field({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string | null;
+  children: ReactNode;
+}) {
+  return (
+    <label className="flex flex-col gap-2">
+      <span className="text-overline-12 font-semibold text-ink-muted uppercase">{label}</span>
+      <span
+        className="glass-field flex items-center gap-3 px-[18px] py-[15px]"
+        data-invalid={error ? 'true' : undefined}
+      >
+        {children}
+      </span>
+      {error && (
+        <span role="alert" className="flex gap-1.5 pt-0.5 pl-0.5 text-body-13-tight text-ink">
+          <TriangleAlert size={14} className="mt-px shrink-0 text-status-urgent" />
+          {error}
+        </span>
+      )}
+    </label>
+  );
+}

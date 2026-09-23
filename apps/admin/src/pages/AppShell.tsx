@@ -16,6 +16,7 @@ import {
   Moon,
   Search,
   Shield,
+  ShieldCheck,
   Sun,
   UserCog,
   Users,
@@ -38,20 +39,20 @@ import {
 } from '../lib/tenant';
 
 /**
- * Order confirmed by the stakeholder on 2026-09-22. "Задачи" comes before
- * "Известия"; the section behind it is M11 and does not exist yet, so the item
- * leads to the placeholder rather than being hidden.
+ * Order as drawn in V2/Sidebar (859:1466), settled after 22.09 in WHI-24:
+ * «Финанси» moved up to fourth, and «Нередности» became «Сигнали» everywhere.
+ * Sections that do not exist yet lead to the placeholder rather than hiding.
  */
 const NAV = [
   { to: '/', label: 'Табло', icon: LayoutGrid },
   { to: '/tasks', label: 'Задачи', icon: CircleCheck },
   { to: '/notices', label: 'Известия', icon: Bell },
+  { to: '/finance', label: 'Финанси', icon: Wallet },
   { to: '/buildings', label: 'Сгради', icon: Building2 },
   { to: '/residents', label: 'Жители', icon: Users },
-  { to: '/finance', label: 'Финанси', icon: Wallet },
-  { to: '/issues', label: 'Нередности', icon: CircleAlert },
+  { to: '/issues', label: 'Сигнали', icon: CircleAlert },
   { to: '/staff', label: 'Служители', icon: UserCog },
-  { to: '/roles', label: 'Роли', icon: Shield },
+  { to: '/roles', label: 'Роли', icon: ShieldCheck },
 ] as const;
 
 /**
@@ -174,22 +175,19 @@ function NavList({ nav, pathname }: { nav: NavItems; pathname: string }) {
           <Link
             key={to}
             to={to}
-            className={`relative flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm transition-colors ${
-              active ? 'font-semibold text-ink' : 'font-medium text-ink-muted hover:text-ink'
+            className={`relative flex items-center gap-3 rounded-[var(--radius-nav)] px-3.5 py-[11px] text-body-14 transition-colors ${
+              active ? 'font-semibold text-ink' : 'font-medium text-ink-soft hover:text-ink'
             }`}
           >
             {active && (
+              // V2/NavItem Active=true: glass/inner with the full edge and a soft top light.
               <motion.span
                 layoutId="nav-pill"
-                className="absolute inset-0 rounded-2xl"
-                style={{
-                  background: 'var(--glass-inner)',
-                  boxShadow: 'inset 0 0 0 1px var(--glass-edge-soft)',
-                }}
+                className="nav-active absolute inset-0 rounded-[var(--radius-nav)]"
                 transition={{ type: 'spring', damping: 30, stiffness: 340 }}
               />
             )}
-            <Icon size={18} className="relative shrink-0 opacity-90" />
+            <Icon size={22} className="relative shrink-0" />
             <span className="relative truncate">{label}</span>
           </Link>
         );
@@ -198,19 +196,24 @@ function NavList({ nav, pathname }: { nav: NavItems; pathname: string }) {
   );
 }
 
-function AccountBlock({ session }: { session: Session }) {
+/** The sidebar's foot: a 100 px rule, then who is signed in. */
+function SidebarFooter({ session }: { session: Session }) {
   const platform = usePlatformScope();
   const name = session?.user.fullName ?? '—';
   return (
-    <div className="flex items-center gap-3 px-1.5">
-      <Avatar name={name} size={40} />
-      <span className="min-w-0">
-        <span className="block truncate text-sm font-semibold">{name}</span>
-        <span className="block truncate text-xs text-ink-muted">
-          {roleLabel(session, platform)}
+    <>
+      <hr className="w-25 border-glass-divider" />
+      <div className="flex items-center gap-3 pt-2 pl-1.5">
+        <Avatar name={name} size={40} />
+        <span className="flex min-w-0 flex-col gap-0.5">
+          <span className="truncate text-body-14 font-semibold">{name}</span>
+          {/* The sidebar names the role alone; the top bar adds the organization. */}
+          <span className="truncate text-body-13-tight text-ink-muted">
+            {roleLabel(session, platform).split(' · ')[0]}
+          </span>
         </span>
-      </span>
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -244,16 +247,15 @@ function Rail({
   platform: boolean;
 }) {
   return (
-    <aside className="glass hidden w-58 shrink-0 flex-col p-5 lg:flex">
-      <div className={`px-1.5 pt-1 text-ink ${platform ? 'pb-4' : 'pb-6'}`}>
+    // V2/Sidebar (850:260): 232 wide, 20 of padding, 8 between its parts.
+    <aside className="glass hidden w-58 shrink-0 flex-col gap-2 p-5 lg:flex">
+      <div className="pt-2 pb-3 pl-2 text-ink">
         <InovaWordmark size={22} />
       </div>
       {platform && <PlatformBadge />}
       <NavList nav={nav} pathname={pathname} />
       <div className="flex-1" />
-      <div className="mt-6 border-t border-glass-divider pt-4">
-        <AccountBlock session={session} />
-      </div>
+      <SidebarFooter session={session} />
     </aside>
   );
 }
@@ -283,8 +285,8 @@ function MobileNav({
         transition={{ type: 'spring', damping: 30, stiffness: 320 }}
         className="glass absolute top-3 bottom-3 left-3 flex w-64 flex-col p-5"
       >
-        <div className="flex items-start justify-between pb-6">
-          <span className="px-1.5 pt-1 text-ink">
+        <div className="flex items-start justify-between pb-2">
+          <span className="pt-2 pb-3 pl-2 text-ink">
             <InovaWordmark size={22} />
           </span>
           <button
@@ -299,9 +301,7 @@ function MobileNav({
         {platform && <PlatformBadge />}
         <NavList nav={nav} pathname={pathname} />
         <div className="flex-1" />
-        <div className="mt-6 border-t border-glass-divider pt-4">
-          <AccountBlock session={session} />
-        </div>
+        <SidebarFooter session={session} />
       </motion.aside>
     </div>
   );
@@ -309,7 +309,8 @@ function MobileNav({
 
 function Topbar({ onOpenNav, session }: { onOpenNav: () => void; session: Session }) {
   return (
-    <header className="flex items-center gap-3">
+    // V2/Topbar (850:312): search 380 wide, a spacer, the bell and the account, 20 apart.
+    <header className="flex h-14 items-center gap-3 sm:gap-5">
       <button
         type="button"
         onClick={onOpenNav}
@@ -320,25 +321,28 @@ function Topbar({ onOpenNav, session }: { onOpenNav: () => void; session: Sessio
       </button>
 
       {/* TODO(M2b): unified search over buildings, apartments and residents. */}
-      <label className="glass-control flex h-12 min-w-0 flex-1 items-center gap-3 rounded-full px-5 sm:max-w-xl">
-        <Search size={17} className="shrink-0 text-ink-faint" />
+      <label className="glass-field flex h-12 min-w-0 flex-1 items-center gap-2.5 px-4 sm:max-w-[380px]">
+        <Search size={20} className="shrink-0 text-ink-muted" />
         <input
           type="search"
           disabled
-          placeholder="Търсене — сграда, апартамент, жител"
+          placeholder="Сграда, апартамент, жител или телефон"
           aria-label="Общо търсене"
-          className="w-full bg-transparent text-sm font-medium text-ink outline-none placeholder:text-ink-faint disabled:cursor-not-allowed"
+          className="w-full min-w-0 bg-transparent text-body-14 text-ink outline-none placeholder:text-ink-muted disabled:cursor-not-allowed"
         />
       </label>
 
-      <div className="ml-auto flex shrink-0 items-center gap-2">
-        {/* TODO(M7): unread notice count; the mock-up shows a badge, the API has no counter yet. */}
+      <div className="ml-auto flex shrink-0 items-center gap-3 sm:gap-5">
+        {/*
+          TODO(M7): the unread dot. The mock-up lights one on the bell, but the
+          API has no counter yet, and a dot that is always on would be a lie.
+        */}
         <Link
           to="/notices"
           aria-label="Известия"
-          className="glass-control flex h-11 w-11 items-center justify-center rounded-full text-ink"
+          className="flex h-11 w-11 items-center justify-center rounded-full text-ink"
         >
-          <Bell size={18} />
+          <Bell size={22} />
         </Link>
         <AccountMenu session={session} />
       </div>
@@ -388,16 +392,16 @@ function AccountMenu({ session }: { session: Session }) {
           aria-haspopup="menu"
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
-          className="glass-control flex h-11 items-center gap-2.5 rounded-full py-1 pr-3 pl-1.5 text-left text-ink"
+          className="flex items-center gap-3 rounded-full py-1 pr-1 text-left text-ink"
         >
-          <Avatar name={name} size={34} />
-          <span className="hidden min-w-0 sm:block">
-            <span className="block truncate text-sm font-semibold">{name}</span>
-            <span className="block truncate text-xs text-ink-muted">
+          <Avatar name={name} size={36} />
+          <span className="hidden min-w-0 flex-col sm:flex">
+            <span className="truncate text-body-14 font-semibold">{name}</span>
+            <span className="truncate text-body-13-tight text-ink-muted">
               {roleLabel(session, platform)}
             </span>
           </span>
-          <ChevronDown size={14} className="shrink-0 opacity-70" />
+          <ChevronDown size={18} className="shrink-0" />
         </button>
       }
     >

@@ -46,7 +46,8 @@ export async function login(email: string, password: string): Promise<Session> {
     body: JSON.stringify({ email, password }),
   });
   if (!res.ok) {
-    throw new Error(res.status === 401 ? 'Wrong email or password.' : 'Something went wrong.');
+    // The wording is the one V2/Field's error state carries (906:486).
+    throw new Error(res.status === 401 ? 'Имейлът или паролата не съвпадат.' : 'Нещо се обърка.');
   }
   const session = (await res.json()) as Session;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
