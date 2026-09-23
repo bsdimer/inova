@@ -14,7 +14,6 @@ import {
   type FacetOption,
   type StatusTone,
 } from '../components/ui';
-import { InovaMark } from '../components/Logo';
 import { api, ApiError, type ProvisionResult, type TenantSummary } from '../lib/api';
 import { setSelectedTenantId } from '../lib/tenant';
 
@@ -43,6 +42,41 @@ function formatDate(iso: string): string {
   const d = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+}
+
+/** The four counters the mock-up draws; the API has none of them yet. */
+const COUNT_COLUMNS = ['Сгради', 'Имоти', 'Жители', 'Служители'] as const;
+
+/** «преди 6 дни» under the creation date, as the row draws it. */
+function relativeAge(iso: string): string {
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+  if (days <= 0) return 'днес';
+  if (days === 1) return 'вчера';
+  if (days < 30) return `преди ${days} дни`;
+  const months = Math.floor(days / 30);
+  return months === 1 ? 'преди месец' : `преди ${months} месеца`;
+}
+
+/** A rounded square with the initials, not the round avatar a person gets. */
+function OrgTile({ name }: { name: string }) {
+  const initials = name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('');
+  return (
+    <span
+      aria-hidden
+      className="text-body-13 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-semibold"
+      style={{
+        background: 'var(--glass-avatar)',
+        boxShadow: 'inset 0 0 0 1px var(--glass-avatar-edge)',
+      }}
+    >
+      {initials}
+    </span>
+  );
 }
 
 export function TenantsPage() {
@@ -131,45 +165,65 @@ export function TenantsPage() {
         className="glass-data overflow-hidden"
       >
         {/*
-          The mock-up also carries Сгради / Жители / Служители counts.
-          TODO(M2): `/platform/tenants` returns no counters, and inventing them
-          would read as real numbers, so those columns wait for the API.
+          Columns are the contract of `V2/Table · Row · Organization`
+          (1146:674) for inner width 1096: 258/96/96/104/112/160/140/130.
+          TODO(M2): `/platform/tenants` returns no building, property,
+          resident or staff counters. The columns are drawn, so they stay —
+          each one shows «—» rather than a number nobody measured.
         */}
-        <table className="w-full table-fixed text-left text-sm">
+        <table className="mx-5 w-[calc(100%-2.5rem)] table-fixed text-left">
           <colgroup>
-            <col style={{ width: '44%' }} />
-            <col style={{ width: '20%' }} />
-            <col style={{ width: '20%' }} />
-            <col style={{ width: '16%' }} />
+            <col style={{ width: '23.54%' }} />
+            <col style={{ width: '8.76%' }} />
+            <col style={{ width: '8.76%' }} />
+            <col style={{ width: '9.49%' }} />
+            <col style={{ width: '10.22%' }} />
+            <col style={{ width: '14.60%' }} />
+            <col style={{ width: '12.77%' }} />
+            <col style={{ width: '11.86%' }} />
           </colgroup>
           <thead>
-            <tr className="text-xs font-semibold tracking-wider text-ink-faint uppercase">
-              <th scope="col" className="px-3 pt-5 pb-3 pl-6">
+            <tr className="text-overline-12 text-ink-soft uppercase">
+              <th scope="col" className="px-3 pt-5 pb-3 font-semibold">
                 Организация
               </th>
-              <th scope="col" className="px-3 pt-5 pb-3">
+              {COUNT_COLUMNS.map((label) => (
+                <th
+                  key={label}
+                  scope="col"
+                  className="hidden px-3 pt-5 pb-3 text-right font-semibold lg:table-cell"
+                >
+                  {label}
+                </th>
+              ))}
+              <th scope="col" className="px-3 pt-5 pb-3 font-semibold">
                 Статус
               </th>
-              <th scope="col" className="hidden px-3 pt-5 pb-3 sm:table-cell">
+              <th scope="col" className="hidden px-3 pt-5 pb-3 font-semibold sm:table-cell">
                 Създадена
               </th>
-              <th scope="col" className="px-3 pt-5 pr-6 pb-3" />
+              <th scope="col" className="px-3 pt-5 pb-3" />
             </tr>
           </thead>
           <tbody>
             {tenants.isLoading &&
               Array.from({ length: 3 }, (_, i) => (
                 <tr key={i} className="border-t border-glass-divider">
-                  <td className="h-16 px-3 pl-6">
+                  <td className="h-16 px-3">
                     <SkeletonBar className="w-2/3" />
                   </td>
+                  {COUNT_COLUMNS.map((label) => (
+                    <td key={label} className="hidden px-3 lg:table-cell">
+                      <SkeletonBar className="ml-auto w-8" />
+                    </td>
+                  ))}
                   <td className="px-3">
                     <SkeletonBar className="w-1/2" />
                   </td>
                   <td className="hidden px-3 sm:table-cell">
                     <SkeletonBar className="w-1/2" />
                   </td>
-                  <td className="px-3 pr-6">
+                  <td className="px-3">
                     <SkeletonBar className="ml-auto w-12" />
                   </td>
                 </tr>
@@ -180,31 +234,50 @@ export function TenantsPage() {
                 key={tenant.id}
                 className="h-16 border-t border-glass-divider transition-colors hover:bg-glass-inner-soft"
               >
-                <td className="px-3 pl-6">
+                <td className="px-3 align-middle">
                   <div className="flex items-center gap-3">
-                    <InovaMark size={34} />
+                    <OrgTile name={tenant.name} />
                     <span className="min-w-0">
-                      <span className="block truncate font-medium">{tenant.name}</span>
-                      <span className="block truncate text-xs text-ink-faint">
+                      <span className="text-body-14 block truncate font-semibold">
+                        {tenant.name}
+                      </span>
+                      <span className="text-body-13-tight block truncate text-ink-soft">
                         ключ {tenant.key}
                       </span>
                     </span>
                   </div>
                 </td>
-                <td className="px-3">
+                {COUNT_COLUMNS.map((label) => (
+                  <td
+                    key={label}
+                    className="num text-number-16 hidden px-3 text-right align-middle font-medium text-ink-faint lg:table-cell"
+                  >
+                    —
+                  </td>
+                ))}
+                <td className="px-3 align-middle">
                   <StatusDot tone={STATUS_TONES[tenant.status]}>
                     {STATUS_LABELS[tenant.status]}
                   </StatusDot>
                 </td>
-                <td className="num hidden px-3 text-sm whitespace-nowrap text-ink-muted sm:table-cell">
-                  {formatDate(tenant.createdAt)}
+                <td className="hidden px-3 align-middle text-ink-soft sm:table-cell">
+                  <p className="num text-body-14 whitespace-nowrap">
+                    {formatDate(tenant.createdAt)}
+                  </p>
+                  <p className="text-body-13-tight whitespace-nowrap">
+                    {relativeAge(tenant.createdAt)}
+                  </p>
                 </td>
-                <td className="px-3 pr-6">
-                  <div className="flex justify-end">
+                <td className="px-3 align-middle">
+                  <div className="flex items-center justify-end gap-2">
                     <button
                       type="button"
                       onClick={() => enter(tenant)}
-                      className="glass-control flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium text-ink"
+                      className="text-body-13 flex h-8 items-center gap-1.5 rounded-full px-3 font-medium text-ink"
+                      style={{
+                        background: 'var(--glass-inner)',
+                        boxShadow: 'inset 0 0 0 1px var(--glass-edge)',
+                      }}
                     >
                       Влез <ArrowRight size={14} />
                     </button>
@@ -215,7 +288,7 @@ export function TenantsPage() {
 
             {!tenants.isLoading && visible.length === 0 && (
               <tr className="border-t border-glass-divider">
-                <td colSpan={4} className="px-6 py-12 text-center text-sm text-ink-muted">
+                <td colSpan={8} className="text-body-14 px-6 py-12 text-center text-ink-muted">
                   Няма организации по тези филтри.
                 </td>
               </tr>

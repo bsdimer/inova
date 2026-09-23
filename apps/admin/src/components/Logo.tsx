@@ -24,22 +24,3 @@ export function InovaWordmark({ size = 24 }: { size?: number }) {
     </span>
   );
 }
-
-/** Square mark for a tight row, e.g. an organization tile. */
-export function InovaMark({ size = 40 }: { size?: number }) {
-  return (
-    <span
-      aria-hidden
-      className="flex items-center justify-center rounded-[30%] font-semibold"
-      style={{
-        width: size,
-        height: size,
-        fontSize: size * 0.5,
-        background: 'var(--glass-avatar)',
-        boxShadow: 'inset 0 0 0 1px var(--glass-avatar-edge)',
-      }}
-    >
-      i
-    </span>
-  );
-}
