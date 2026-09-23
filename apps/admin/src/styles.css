@@ -15,6 +15,7 @@
   --glass-inner-strong: rgb(255 255 255 / 0.22);
   --glass-inner-soft: rgb(255 255 255 / 0.12);
   --glass-solid: rgb(255 255 255 / 0.92);
+  --glass-scrim: rgb(0 0 0 / 0.32);
   --glass-segment: rgb(255 255 255 / 0.86);
   --glass-avatar: rgb(255 255 255 / 0.18);
   --glass-avatar-edge: rgb(255 255 255 / 0.45);
@@ -65,6 +66,8 @@
   --panel-text: rgb(29 29 31);
   --panel-text-inverse: rgb(255 255 255);
   --panel-control: rgb(255 255 255 / 0.9);
+  --panel-check-edge: rgb(115 115 120 / 0.45);
+  --panel-footer: rgb(255 255 255 / 0.6);
   --glass-chip: rgb(0 0 0 / 0.22);
   --radius-card: 28px;
   --radius-row: 12px;
@@ -114,6 +117,8 @@
   --panel-text: rgb(255 255 255);
   --panel-text-inverse: rgb(29 29 31);
   --panel-control: rgb(255 255 255 / 0.1);
+  --panel-check-edge: rgb(255 255 255 / 0.4);
+  --panel-footer: rgb(25 27 31 / 0.6);
   --glass-chip: rgb(0 0 0 / 0.3);
 }
 
@@ -139,6 +144,7 @@
   --color-glass-avatar: var(--glass-avatar);
   --color-glass-segment: var(--glass-segment);
   --color-glass-solid: var(--glass-solid);
+  --color-glass-scrim: var(--glass-scrim);
   --color-cta: var(--cta-fill);
   --color-cta-text: var(--cta-text);
   --color-panel: var(--panel-fill);
@@ -152,6 +158,8 @@
   --color-panel-border: var(--panel-border);
   --color-panel-divider: var(--panel-divider);
   --color-panel-control: var(--panel-control);
+  --color-panel-check-edge: var(--panel-check-edge);
+  --color-panel-footer: var(--panel-footer);
   --color-status-pending: var(--status-pending);
   --color-status-planned: var(--status-planned);
   --color-status-urgent: var(--status-urgent);
@@ -174,14 +182,18 @@
     system-ui, 'Inter', sans-serif;
 
   /*
-   * The V2 type scale (Figma sheet 841:2 → Text styles). Tailwind's defaults
-   * cover 12/16, 14/20 and 16/24 by coincidence; 13, 15, 17, 22, 26, 52 and 72
-   * do not exist there, and neither does the negative tracking the large
-   * numbers carry. Figma's weights sit on SF Pro's variable axis — 274, 510,
-   * 590 — and are given here as the nearest static ones.
+   * The V2 text styles, all twenty-six, from the sheet
+   * design/inova-admin/glass-tokens.md → Типографика. Tailwind's own sizes are
+   * not a substitute: only three of them happen to match a V2 style, and the
+   * negative tracking the numbers carry has no default at all. Weight stays at
+   * the call site — `font-light`, `font-medium`, `font-semibold` — because one
+   * size serves several weights.
+   *
+   * Figma's weights sit on SF Pro's variable axis (274, 510, 590); these are
+   * the nearest static ones.
    */
   --text-display-72: 4.5rem;
-  --text-display-72--line-height: 1;
+  --text-display-72--line-height: 4.5rem;
   --text-display-72--letter-spacing: -2px;
   --text-display-52: 3.25rem;
   --text-display-52--line-height: 3.25rem;
@@ -189,21 +201,50 @@
   --text-display-26: 1.625rem;
   --text-display-26--line-height: 2.1875rem;
   --text-display-26--letter-spacing: -1.5px;
+
   --text-number-30: 1.875rem;
   --text-number-30--line-height: 2rem;
   --text-number-30--letter-spacing: -0.86px;
   --text-number-18: 1.125rem;
   --text-number-18--line-height: 1.375rem;
   --text-number-18--letter-spacing: -1px;
+  --text-number-16: 1rem;
+  --text-number-16--line-height: 1.5rem;
+  --text-number-15: 0.9375rem;
+  --text-number-15--line-height: 1.25rem;
+  --text-number-15--letter-spacing: -1px;
   --text-number-13: 0.8125rem;
   --text-number-13--line-height: 1.125rem;
   --text-number-13--letter-spacing: -1px;
+  --text-number-11: 0.6875rem;
+  --text-number-11--line-height: 0.9375rem;
+  --text-number-11--letter-spacing: -1px;
+
   --text-title-22: 1.375rem;
   --text-title-22--line-height: 1.625rem;
+  --text-title-16: 1rem;
+  --text-title-16--line-height: 1.5rem;
+  --text-title-16-tight: 1rem;
+  --text-title-16-tight--line-height: 1.375rem;
+
   --text-body-15: 0.9375rem;
   --text-body-15--line-height: 1.25rem;
+  --text-body-15-tight: 0.9375rem;
+  --text-body-15-tight--line-height: 1.125rem;
+  --text-body-14: 0.875rem;
+  --text-body-14--line-height: 1.25rem;
   --text-body-13: 0.8125rem;
-  --text-body-13--line-height: 1rem;
+  --text-body-13--line-height: 1.125rem;
+  --text-body-13-tight: 0.8125rem;
+  --text-body-13-tight--line-height: 1rem;
+
+  --text-label-14: 0.875rem;
+  --text-label-14--line-height: 1.125rem;
+  --text-label-12: 0.75rem;
+  --text-label-12--line-height: 1rem;
+  --text-overline-12: 0.75rem;
+  --text-overline-12--line-height: 1rem;
+  --text-overline-12--letter-spacing: 0.05em;
 }
 
 html,
