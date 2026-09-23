@@ -36,7 +36,14 @@ export function StaffTable({ strip, children }: { strip?: ReactNode; children: R
       <table className="mx-5 w-[calc(100%-2.5rem)] table-fixed text-left">
         <colgroup>
           {COLUMNS.map((column, i) => (
-            <col key={i} style={{ width: column.width }} />
+            // A hidden <td> still leaves its <col> holding the width, which
+            // squeezes the visible cells into each other. The column has to be
+            // taken out of the layout too.
+            <col
+              key={i}
+              className={column.className.replace('table-cell', 'table-column')}
+              style={{ width: column.width }}
+            />
           ))}
         </colgroup>
         <thead>

@@ -172,14 +172,18 @@ export function TenantsPage() {
           each one shows «—» rather than a number nobody measured.
         */}
         <table className="mx-5 w-[calc(100%-2.5rem)] table-fixed text-left">
+          {/*
+            A hidden <td> still leaves its <col> holding the width, so the
+            column has to leave the layout with the cells it belongs to.
+          */}
           <colgroup>
             <col style={{ width: '23.54%' }} />
-            <col style={{ width: '8.76%' }} />
-            <col style={{ width: '8.76%' }} />
-            <col style={{ width: '9.49%' }} />
-            <col style={{ width: '10.22%' }} />
+            <col className="hidden lg:table-column" style={{ width: '8.76%' }} />
+            <col className="hidden lg:table-column" style={{ width: '8.76%' }} />
+            <col className="hidden lg:table-column" style={{ width: '9.49%' }} />
+            <col className="hidden lg:table-column" style={{ width: '10.22%' }} />
             <col style={{ width: '14.60%' }} />
-            <col style={{ width: '12.77%' }} />
+            <col className="hidden sm:table-column" style={{ width: '12.77%' }} />
             <col style={{ width: '11.86%' }} />
           </colgroup>
           <thead>
