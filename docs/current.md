@@ -26,7 +26,7 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
 - Core API (`:4000`): JWKS JWT verify, `X-Tenant-Id` + DB membership re-check, permission guards, RLS via `SET LOCAL app.tenant_id`. Tenant profile/staff/audit, staff+roles CRUD (admin-role lock, last-admin guard), super_admin tenant provisioning, public brand config, health. **Current multi-membership JWT/context flow must be adapted to a single tenant-account realm; platform identities remain separate.**
 - Passwords: argon2id (2026-09-22; the code had used bcrypt while the plan said argon2id). A legacy bcrypt hash is verified once and upgraded on that login. `pnpm install` now needs to build one native module (`argon2`, prebuilt binaries for macOS/Linux/Alpine).
 - Hardening (2026-09-21, defects in running code — not phase work): auth-service connects as its own `inova_auth` DB role and the cross-tenant identity-scope policies are granted to it alone (migration `0003`), so core-api's `inova_app` can no longer read other tenants' memberships or invite codes by setting a session variable; the strict limit on login/activate/resend really applies (the deployed value `'true'` had parsed to `NaN` and disabled it — malformed settings now stop the service); rate limiting is per client behind the edge proxy (`TRUST_PROXY_HOPS=1`); one-time codes are logged only when `CODE_DELIVERY=log` is set on purpose, otherwise a production process refuses to start.
-- Auth gaps against the plan (B13–B15, decided 2026-09-21, not built): activation still looks a code up by hash alone across tenants and never uses `attempts`; there is no public password recovery; `resend-code` finds the user by phone globally, and answers an unknown phone faster than a pending one (it skips the code rewrite and delivery). All of this are part of the M1 refactor.
+- Auth gaps against the plan (B13–B15, decided 2026-09-21, not built): activation still looks a code up by hash alone across tenants and never uses `attempts`; there is no public password recovery; `resend-code` finds the user by phone globally, and answers an unknown phone faster than a pending one (it skips the code rewrite and delivery). All of this is part of the M1 refactor.
 - Mobile: production-ready auth against live auth-service — activate → set-password,
   login, resend-code (phone → E.164), silent refresh, logout, session gate on tabs;
   release builds default to `https://portal.whitenova.tech/auth/v1` (`EXPO_PUBLIC_AUTH_URL`
@@ -64,20 +64,21 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
 
 ## Tests (release blockers)
 
-45 integration tests against real Postgres + RLS + the non-privileged `inova_app` / `inova_auth` roles, plus 38 unit tests:
+46 integration tests against real Postgres + RLS + the non-privileged `inova_app` / `inova_auth` roles, plus 44 unit tests:
 
 | Suite                                           | Count | Job                |
 | ----------------------------------------------- | ----- | ------------------ |
 | `apps/api/test/tenant-isolation.e2e.test.ts`    | 13    | `tenant-isolation` |
 | `apps/api/test/tenant-schema.contract.test.ts`  | 7     | `tenant-isolation` |
 | `apps/api/test/staff-roles.e2e.test.ts`         | 13    | `auth` (RBAC)      |
-| `apps/auth-service/test/auth-flows.e2e.test.ts` | 9     | `auth`             |
+| `apps/auth-service/test/auth-flows.e2e.test.ts` | 10    | `auth`             |
 | `apps/auth-service/test/rate-limit.e2e.test.ts` | 3     | `auth`             |
 | `apps/auth-service/test/db-helper.e2e.test.ts`  | 2     | `auth`             |
 | `packages/shared` Money                         | 4     | `unit`             |
 | `packages/shared` RuntimeEnv, MockCodeDelivery  | 13    | `unit`             |
 | `packages/shared` login form checks             | 15    | `unit`             |
-| `apps/auth-service` PasswordHasher              | 6     | `unit`             |
+| `apps/auth-service` PasswordHasher              | 7     | `unit`             |
+| `apps/auth-service` AuthService login failures  | 5     | `unit`             |
 
 Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migrations`.
 
