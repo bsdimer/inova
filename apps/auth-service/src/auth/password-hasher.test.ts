@@ -38,6 +38,12 @@ describe('PasswordHasher', () => {
     expect(hasher.needsRehash(weak)).toBe(true);
   });
 
+  it('keeps the dummy login hash on the current argon2id parameters', async () => {
+    expect(PasswordHasher.DUMMY_HASH.startsWith('$argon2id$')).toBe(true);
+    expect(hasher.needsRehash(PasswordHasher.DUMMY_HASH)).toBe(false);
+    expect(await hasher.verify(PasswordHasher.DUMMY_HASH, '')).toBe(false);
+  });
+
   it('rejects unknown or malformed hashes without throwing', async () => {
     expect(await hasher.verify('plaintext', 'plaintext')).toBe(false);
     expect(await hasher.verify('$argon2id$garbage', 'pw')).toBe(false);

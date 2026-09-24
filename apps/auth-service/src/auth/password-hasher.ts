@@ -21,6 +21,15 @@ export class PasswordHasher {
     parallelism: 1,
   } as const;
 
+  /**
+   * Verified against when a login has no usable stored hash, so every failed
+   * login costs one argon2id verification and response time does not tell an
+   * attacker which e-mails have an account. Made with ARGON2 above from a
+   * random password nobody knows; the unit test fails if the two drift apart.
+   */
+  static readonly DUMMY_HASH =
+    '$argon2id$v=19$m=19456,t=2,p=1$Rm7kuidyoLKREwzHvkVTZw$OIr01lclAQP53dtnb7Ru/VZEMMwc5k+eb6Q3KOw9aRQ';
+
   hash(password: string): Promise<string> {
     return argon2.hash(password, PasswordHasher.ARGON2);
   }

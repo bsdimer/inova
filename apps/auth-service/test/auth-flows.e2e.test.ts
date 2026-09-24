@@ -64,6 +64,41 @@ describe('password login', () => {
     expect(unknown.status).toBe(401);
     expect(wrong.body.message).toBe(unknown.body.message);
   });
+
+  it('answers every failed login with the same 401 body, whatever the account state', async () => {
+    const db = new pg.Client({ connectionString: migratorUrl });
+    await db.connect();
+    try {
+      await db.query(
+        `INSERT INTO users (email, full_name, password_hash, status) VALUES
+           ('suspended@inova.bg', 'Suspended', $1, 'suspended'),
+           ('nopassword@inova.bg', 'No Password', NULL, 'active')`,
+        [await bcrypt.hash('nope', 4)],
+      );
+
+      const attempts = await Promise.all(
+        ['ghost@inova.bg', 'maria@inova.bg', 'suspended@inova.bg', 'nopassword@inova.bg'].map(
+          (email) => post('/auth/login', { email, password: 'nope' }),
+        ),
+      );
+      const [unknown, ...others] = attempts;
+      expect(unknown.status).toBe(401);
+      expect(unknown.body).toEqual({
+        statusCode: 401,
+        message: 'Invalid credentials',
+        error: 'Unauthorized',
+      });
+      for (const res of others) {
+        expect(res.status).toBe(401);
+        expect(res.body).toEqual(unknown.body);
+      }
+    } finally {
+      await db.query(
+        `DELETE FROM users WHERE email IN ('suspended@inova.bg', 'nopassword@inova.bg')`,
+      );
+      await db.end();
+    }
+  });
 });
 
 describe('invite-code activation (B7)', () => {
