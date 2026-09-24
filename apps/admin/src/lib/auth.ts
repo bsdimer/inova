@@ -3,6 +3,8 @@
  * TODO(M1): silent refresh on 401 + core-api client with X-Tenant-Id header.
  */
 
+import { loginFailure, type LoginFailure } from '@inova/shared';
+
 const AUTH_URL = import.meta.env.VITE_AUTH_URL ?? 'http://localhost:4001/v1';
 const STORAGE_KEY = 'inova.session';
 
@@ -39,16 +41,25 @@ export function clearSession(): void {
   localStorage.removeItem(STORAGE_KEY);
 }
 
-export async function login(email: string, password: string): Promise<Session> {
-  const res = await fetch(`${AUTH_URL}/auth/login`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  });
-  if (!res.ok) {
-    // The wording is the one V2/Field's error state carries (906:486).
-    throw new Error(res.status === 401 ? 'Имейлът или паролата не съвпадат.' : 'Нещо се обърка.');
+/** A sign-in that did not succeed, with what the form should say about it. */
+export class LoginError extends Error {
+  constructor(readonly failure: LoginFailure) {
+    super(failure);
   }
+}
+
+export async function login(email: string, password: string): Promise<Session> {
+  let res: Response;
+  try {
+    res = await fetch(`${AUTH_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+  } catch {
+    throw new LoginError(loginFailure(null));
+  }
+  if (!res.ok) throw new LoginError(loginFailure(res.status));
   const session = (await res.json()) as Session;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
   return session;

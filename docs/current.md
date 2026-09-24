@@ -57,14 +57,14 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
   Contract for the full Табло: [features/admin-dashboard.md](features/admin-dashboard.md);
   it added M2b (unified search) and M11 (staff tasks/calendar) to the plan and
   extended M6 (issue priority), M7 (debtors audience, unread count) and M9.
-- Quality gates: `pnpm verify` (format, lint, typecheck, unit, integration, architecture contracts, build). `pnpm test:unit` now covers `apps/api` and `apps/auth-service` too (co-located `src/**/*.test.ts`, hermetic, excluded from the build); `apps/auth-service` has the first six — the `PasswordHasher` units that came with argon2id — and `apps/api` still has none. The testing policy is in `AGENTS.md` → Testing. Admin and mobile still have no test runner. GitHub Actions CI installs pnpm from `package.json` `packageManager` (`pnpm@10.34.5`); do not also pass `version` to `pnpm/action-setup`.
+- Quality gates: `pnpm verify` (format, lint, typecheck, unit, integration, architecture contracts, build). `pnpm test:unit` now covers `apps/api` and `apps/auth-service` too (co-located `src/**/*.test.ts`, hermetic, excluded from the build); `apps/auth-service` has the first six — the `PasswordHasher` units that came with argon2id — and `apps/api` still has none. The testing policy is in `AGENTS.md` → Testing. Admin and mobile still have no test runner; the admin sign-in form's checks live in `packages/shared` (`validateLoginForm`, `loginFailure`) and are unit-tested there. GitHub Actions CI installs pnpm from `package.json` `packageManager` (`pnpm@10.34.5`); do not also pass `version` to `pnpm/action-setup`.
   Locally the repo needs **Node >= 22** (`engines`): on Node 20.11 `verify`
   dies at `test:unit` before any project code runs, because rolldown imports
   `util.styleText` (added in Node 20.12).
 
 ## Tests (release blockers)
 
-48 integration tests against real Postgres + RLS + the non-privileged `inova_app` / `inova_auth` roles, plus 23 unit tests:
+45 integration tests against real Postgres + RLS + the non-privileged `inova_app` / `inova_auth` roles, plus 38 unit tests:
 
 | Suite                                           | Count | Job                |
 | ----------------------------------------------- | ----- | ------------------ |
@@ -76,6 +76,7 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
 | `apps/auth-service/test/db-helper.e2e.test.ts`  | 2     | `auth`             |
 | `packages/shared` Money                         | 4     | `unit`             |
 | `packages/shared` RuntimeEnv, MockCodeDelivery  | 13    | `unit`             |
+| `packages/shared` login form checks             | 15    | `unit`             |
 | `apps/auth-service` PasswordHasher              | 6     | `unit`             |
 
 Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migrations`.
