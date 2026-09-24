@@ -33,11 +33,13 @@ charges; `currency` on money columns.
 
 ## Admin / mobile
 
-Building assessment setup; the building screen **Входни такси** with
-**Фиксирани разходи** and **Временни разходи** as two rule lists, a dry-run
-preview and the rule-change history (D26); charge list. «Такса» names only
-такса Домоуправление. **Плащания** is the name for payments to outside firms
-and contractors — no ledger in M3, expenses stay P1. Mobile: obligations +
+Building assessment setup; the building screen **Входни такси** with three
+sections — **Фиксирани разходи** (rule list, with the rule-change history at
+its foot), **Временни разходи** (rule list) and **Входни такси · <месец>** (the
+month's charges per property) — and a dry-run preview (D26). On the phone
+each section is one glass card. «Такса» names only такса Домоуправление.
+**Плащания** is the name for payments to outside firms and contractors when
+such a section appears — none is drawn today, expenses stay P1. Mobile: obligations +
 IBAN / payment reference with copy.
 
 ## Required tests (future release blockers)
