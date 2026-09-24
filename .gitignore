@@ -10,6 +10,12 @@ node_modules/
 
 # builds
 dist/
+
+# Playwright output (apps/admin/e2e): kept by CI as an artifact, not committed
+e2e-screens/
+playwright-report/
+test-results/
+blob-report/
 build/
 .turbo/
 *.tsbuildinfo

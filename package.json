@@ -13,6 +13,7 @@
     "test": "pnpm test:unit && pnpm test:integration",
     "test:unit": "turbo test:unit",
     "test:integration": "turbo test:integration",
+    "test:e2e": "turbo build --filter=@inova/auth-service --filter=@inova/api && pnpm --filter @inova/admin test:e2e",
     "check:stubs": "node scripts/check-stubs.mjs",
     "check:brands": "node scripts/check-brands.mjs",
     "check:routes": "node scripts/check-routes.mjs",

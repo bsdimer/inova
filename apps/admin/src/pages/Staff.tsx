@@ -166,7 +166,10 @@ export function StaffPage() {
     onRetry: () => void staff.refetch(),
   });
 
+  // Until the list has arrived there is nothing to call empty: the skeleton
+  // rows stand in, not «Още няма акаунти», which used to flash on every visit.
   const emptyBody = buildEmptyBody({
+    loaded: !staff.isPending,
     denied,
     tenantName,
     members,
@@ -209,7 +212,7 @@ export function StaffPage() {
         <StaffTable strip={strip}>
           {emptyBody ? (
             <BodyMessage>{emptyBody}</BodyMessage>
-          ) : staff.isLoading ? (
+          ) : staff.isPending ? (
             <SkeletonRows />
           ) : (
             visible.map((member) => <StaffRow key={member.userId} {...rowProps(member)} />)
@@ -221,7 +224,7 @@ export function StaffPage() {
         <StaffCards strip={strip}>
           {emptyBody ? (
             <div className="glass-data">{emptyBody}</div>
-          ) : staff.isLoading ? (
+          ) : staff.isPending ? (
             <div className="glass-data space-y-3 p-4">
               <div className="h-16 animate-pulse rounded-2xl bg-glass-inner" />
               <div className="h-16 animate-pulse rounded-2xl bg-glass-inner" />
@@ -276,6 +279,7 @@ const STATUS_FOR_ACTION: Record<Exclude<RowAction, 'change-role'>, StaffMember['
 
 /** The body when there are no rows to show, or null when there are. */
 function buildEmptyBody(input: {
+  loaded: boolean;
   denied: boolean;
   tenantName: string;
   members: StaffMember[];
@@ -294,6 +298,7 @@ function buildEmptyBody(input: {
       </EmptyState>
     );
   }
+  if (!input.loaded) return null;
   if (input.members.length === 0) {
     return (
       <EmptyState

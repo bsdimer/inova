@@ -167,13 +167,56 @@ jobs:
       - name: Isolation + schema contract
         run: pnpm --filter @inova/api test:isolation
 
+  # The admin's main flows in a real browser against the real services on a
+  # fresh, seeded database (docs/plan/testing-release.md → End-to-end (web)).
+  # Screenshots of the key screens are kept with every run.
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: inova
+          POSTGRES_PASSWORD: inova
+          POSTGRES_DB: inova
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U inova"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:migrate && pnpm db:seed
+      - run: pnpm --filter @inova/admin exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - name: Keep the screenshots and the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-${{ github.run_number }}
+          path: |
+            apps/admin/e2e-screens/
+            apps/admin/playwright-report/
+            apps/admin/test-results/
+          if-no-files-found: ignore
+          retention-days: 14
+
   # Deploys develop to test only. main does not deploy until a production
   # environment exists; to enable it, extend the condition to main and pass
   # `production` for it (that GitHub environment already has an approval gate).
   deploy:
     name: deploy
     if: github.event_name == 'push' && github.ref_name == 'develop'
-    needs: [static, unit, build, migrations, auth, tenant-isolation]
+    needs: [static, unit, build, migrations, auth, tenant-isolation, e2e]
     uses: ./.github/workflows/deploy.yml
     with:
       environment: test
