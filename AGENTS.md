@@ -170,10 +170,11 @@ visual fixes do not need it.
 Logic ships with its tests **in the same change**. "Tests to follow" is not
 done, and a change whose tests were not run is not verified.
 
-| Kind        | Covers                                                                                                                                              | Lives in                                                                         | Runs with               |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ----------------------- |
-| Unit        | Logic with no I/O: calculations, allocation, state machines, validators, mappers, the decision part of a guard or policy                            | next to the code, `src/**/*.test.ts`                                             | `pnpm test:unit`        |
-| Integration | Anything whose correctness depends on Postgres/RLS, HTTP routing, guards, transactions or queues: every endpoint, table and migration-enforced rule | `apps/<service>/test/*.e2e.test.ts`, real Postgres as `inova_app` (no BYPASSRLS) | `pnpm test:integration` |
+| Kind        | Covers                                                                                                                                              | Lives in                                                                         | Runs with                      |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------ |
+| Unit        | Logic with no I/O: calculations, allocation, state machines, validators, mappers, the decision part of a guard or policy                            | next to the code, `src/**/*.test.ts`                                             | `pnpm test:unit`               |
+| Integration | Anything whose correctness depends on Postgres/RLS, HTTP routing, guards, transactions or queues: every endpoint, table and migration-enforced rule | `apps/<service>/test/*.e2e.test.ts`, real Postgres as `inova_app` (no BYPASSRLS) | `pnpm test:integration`        |
+| Browser     | An admin flow as a user meets it, against the real services on the seeded database: what a screen shows, what an action does, the errors it names   | `apps/admin/e2e/*.spec.ts` (Playwright)                                          | `pnpm test:e2e` (CI job `e2e`) |
 
 - **Every new or changed behaviour has a test that fails without it.** Most
   backend work needs both kinds: unit tests for the rules, an integration test
@@ -191,17 +192,20 @@ done, and a change whose tests were not run is not verified.
   fixtures or ordering assumptions. Mock only at the process boundary (HTTP
   client, queue, S3, clock). **Never mock the database in an integration
   test** — RLS and constraints are the thing under test.
-- Use the existing runner (vitest) and helpers; do not add a second one.
+- Use the existing runners — vitest for unit and integration, Playwright for
+  browser flows — and their helpers; do not add another.
 - Judgement, not a coverage number: layout, copy and token changes, DI wiring
   and trivial pass-through code do not need a test written for them. There is
   no coverage threshold to game.
 - **Frontend:** follow the `inova-frontend` skill's `references/testing.md`.
-  Admin and mobile have no test runner yet, so put pure logic that deserves a
-  test (formatting, display math, schemas) in `packages/shared`, and record
-  manual flow/visual QA in the work-log entry. A changed admin or mobile
-  screen is not done without a screenshot of the rendered result in the PR,
-  taken by the agent from the preview, the simulator or a Playwright run once
-  admin has one — never "please check".
+  A changed admin flow gets a browser test in `apps/admin/e2e`; the admin
+  has no component runner and mobile no runner at all, so pure logic that
+  deserves a test (formatting, display math, schemas) goes to
+  `packages/shared`, and what no test covers is recorded as manual QA in the
+  work-log entry. A changed admin or mobile screen is not done without a
+  screenshot of the rendered result in the PR — from the preview, the
+  simulator, or the `e2e-screens/` the CI `e2e` job keeps with every run —
+  never "please check".
 - Never skip, weaken or delete a test to get green. Report the real output.
 
 ## Closing a phase

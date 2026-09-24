@@ -57,7 +57,7 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
   Contract for the full Табло: [features/admin-dashboard.md](features/admin-dashboard.md);
   it added M2b (unified search) and M11 (staff tasks/calendar) to the plan and
   extended M6 (issue priority), M7 (debtors audience, unread count) and M9.
-- Quality gates: `pnpm verify` (format, lint, typecheck, unit, integration, architecture contracts, build). `pnpm test:unit` now covers `apps/api` and `apps/auth-service` too (co-located `src/**/*.test.ts`, hermetic, excluded from the build); `apps/auth-service` has the first six — the `PasswordHasher` units that came with argon2id — and `apps/api` still has none. The testing policy is in `AGENTS.md` → Testing. Admin and mobile still have no test runner; the admin sign-in form's checks live in `packages/shared` (`validateLoginForm`, `loginFailure`) and are unit-tested there. GitHub Actions CI installs pnpm from `package.json` `packageManager` (`pnpm@10.34.5`); do not also pass `version` to `pnpm/action-setup`.
+- Quality gates: `pnpm verify` (format, lint, typecheck, unit, integration, architecture contracts, build). `pnpm test:unit` now covers `apps/api` and `apps/auth-service` too (co-located `src/**/*.test.ts`, hermetic, excluded from the build); `apps/auth-service` has the first six — the `PasswordHasher` units that came with argon2id — and `apps/api` still has none. The testing policy is in `AGENTS.md` → Testing. Admin flows run in a real browser: Playwright in `apps/admin/e2e` (`pnpm test:e2e`, CI job `e2e`, which the deploy waits for) covers sign-in with every error it names, the Служители and Организации lists, and entering and leaving an organization; each run keeps screenshots of the key screens. The admin has no component runner and mobile no runner; the sign-in form's checks live in `packages/shared` (`validateLoginForm`, `loginFailure`) and are unit-tested there. GitHub Actions CI installs pnpm from `package.json` `packageManager` (`pnpm@10.34.5`); do not also pass `version` to `pnpm/action-setup`.
   Locally the repo needs **Node >= 22** (`engines`): on Node 20.11 `verify`
   dies at `test:unit` before any project code runs, because rolldown imports
   `util.styleText` (added in Node 20.12).
@@ -79,6 +79,8 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
 | `packages/shared` login form checks             | 15    | `unit`             |
 | `apps/auth-service` PasswordHasher              | 7     | `unit`             |
 | `apps/auth-service` AuthService login failures  | 5     | `unit`             |
+
+Browser (Playwright, `apps/admin/e2e`, CI job `e2e`): 19 — sign-in 7, Служители 5, Организации 3, screenshots 4.
 
 Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migrations`.
 
