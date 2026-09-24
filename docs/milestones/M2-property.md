@@ -22,6 +22,9 @@ currently implemented global-user model to tenant-scoped account realms.
 (+ soft-delete/effective-date columns). All tenant-owned: `tenant_id` leading
 PK/indexes, RLS. Apartment rows keep UUID technical ids and enforce the unique
 business key `(tenant_id, building_id, entrance_id, floor, apartment_number)`.
+A building has `city` and `district` as separate columns (D24). An apartment
+has `rooms` (integer) and a property type of `apartment`, `garage`, `shop` or
+`storage` (D26).
 The schema contract test must pass on the new tables without being rewritten.
 
 ## Backend
@@ -38,6 +41,9 @@ The schema contract test must pass on the new tables without being rewritten.
   calculations.
 - Occupancy request / verify / reject (fallback).
 - Occupancy-scoped resident guards.
+- Apartment correction is an ordinary edit with an audit-journal row, no
+  approval; there is no "move" — a real move is an approved end of occupancy
+  plus a new invite on the new apartment (D25, B10).
 - Reasoned resident/occupancy/apartment removal request; `super_admin`
   approve/reject/apply with archival/end-dating and audit history.
 - Building-scoped house-manager assignments independent of employer: tenant
@@ -48,7 +54,8 @@ The schema contract test must pass on the new tables without being rewritten.
 Portfolio tree, building setup/activation, apartment detail, “add resident”
 (role + effective date → invite → delivery/activation status), multiple owners,
 designated owner document recipient, verification queue, corrections,
-removal-request queue, approved end occupancy / move, manager assignment.
+removal-request queue, approved end occupancy (no move — D25), manager
+assignment. The buildings list filters by град and квартал (D24).
 
 ## Mobile
 
@@ -61,7 +68,10 @@ survey proposal/voting are hidden and server-blocked for tenant/occupant roles.
 
 ## Required tests
 
-- Import edge cases (bad rows, dry-run vs commit).
+- Import edge cases (bad rows, dry-run vs commit); `city`, `district`,
+  `rooms` and the property type are mapped and validated.
+- Apartment correction writes an audit row and needs no approval; ending an
+  occupancy still does (D25).
 - Apartment natural-key uniqueness includes floor.
 - Same email/phone can register in two tenants but not twice in one tenant;
   auth/reset/invite responses never reveal the other realm.
@@ -94,6 +104,8 @@ Not part of M2 acceptance, but unblocked by it (scope in
   name/phone/email in plain, indexable columns so M2b needs no schema change.
 - **M11 staff tasks and calendar** — tasks reference `building_id` /
   `entrance_id`.
+- **Building page counters (D24)** — M6 issues and the surveys module filter
+  by one `building_id`; M2 only keeps the id plain and indexable.
 - Dashboard building and apartment counts and the "add building" tile
   ([features/admin-dashboard.md](../features/admin-dashboard.md)).
 

@@ -21,8 +21,11 @@ charges; `currency` on money columns.
 ## Backend
 
 - Building assessment basis configured during setup: `fixed`, `per_area`,
-  `per_occupant`, `per_ideal_part`, with room for later bases.
-- Fee-rule CRUD with effective dating/versioning.
+  `per_occupant`, `per_ideal_part`, `per_room`, with room for later bases.
+- Fee-rule CRUD with effective dating/versioning. Two kinds (D26): a
+  **fixed** rule charges every month; a **temporary** rule carries
+  `valid_from` / `valid_to` and charges only the periods it covers, optionally
+  scoped to a property type (`apartment`, `garage`, `shop`, `storage`).
 - Fee-generation job (BullMQ, tenant TZ, idempotent on
   `(rule_version, apartment, period)`), using the residents/pets/ideal parts
   effective for the applicable period.
@@ -30,14 +33,19 @@ charges; `currency` on money columns.
 
 ## Admin / mobile
 
-Building assessment setup, rule builder, charge list, dry-run preview. Mobile:
-obligations + IBAN / payment reference with copy.
+Building assessment setup; **Фиксирани разходи** and **Временни разходи** as
+two rule lists with a dry-run preview and the rule-change history (D26);
+charge list. **Плащания** on the building page is a section name for payments
+to outside firms — no ledger in M3, expenses stay P1. Mobile: obligations +
+IBAN / payment reference with copy.
 
 ## Required tests (future release blockers)
 
 - Golden-file financial tests (building basis × effective-dated population ×
   apartment → expected charges).
 - No-proration boundary (mid-month change applies next period).
+- `per_room` basis and a property-type-scoped temporary rule in the golden
+  files; a temporary rule charges nothing outside `valid_from` / `valid_to`.
 - Idempotent re-run of generation; timezone boundary (`Europe/Sofia`).
 
 ## Acceptance
