@@ -64,7 +64,7 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
 
 ## Tests (release blockers)
 
-46 integration tests against real Postgres + RLS + the non-privileged `inova_app` / `inova_auth` roles, plus 44 unit tests:
+48 integration tests against real Postgres + RLS + the non-privileged `inova_app` / `inova_auth` roles, plus 44 unit tests:
 
 | Suite                                           | Count | Job                |
 | ----------------------------------------------- | ----- | ------------------ |

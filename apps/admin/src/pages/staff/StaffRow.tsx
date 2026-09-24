@@ -15,6 +15,7 @@ import {
   STATUS_TONES,
   formatSince,
   inviteStateOf,
+  scopeCellOf,
   type InviteState,
   type RowAction,
 } from './model';
@@ -83,7 +84,7 @@ function RowAction({ member, busy, onAction }: RowProps) {
 const CELL = 'px-3 align-middle';
 
 export function StaffRow(props: RowProps) {
-  const { member, roles, scope, isSelf, busy } = props;
+  const { member, roles, isSelf, busy } = props;
   const [primary, ...more] = roles;
   const contact = member.email ?? member.phone ?? '—';
 
@@ -124,7 +125,7 @@ export function StaffRow(props: RowProps) {
         </div>
       </td>
       <td className={`${CELL} hidden text-ink-soft @4xl:table-cell`}>
-        <p className="text-body-14 truncate">{scope ?? '—'}</p>
+        <p className="text-body-14 truncate">{scopeCellOf(member) ?? '—'}</p>
       </td>
       <td className={`${CELL} hidden @5xl:table-cell`}>
         <InviteCell member={member} />
