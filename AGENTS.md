@@ -29,9 +29,9 @@ platform's own "inova" brand.
 3. Update [docs/current.md](docs/current.md) only when what works, blockers, or
    Next up actually changed.
 4. Add one entry to `docs/work-log/YYYY-MM.md` in the checked shape:
-   `## YYYY-MM-DD — title (#PR)`, then **Changed:**, **Verified:** and
+   `## YYYY-MM-DD — title (#PR, WHI-nn)`, then **Changed:**, **Verified:** and
    **Remains:**, one or two sentences each, **at most 700 characters in all**
-   (`pnpm check:worklog` enforces it). The long form — what, why, how it was
+   (`pnpm check:worklog` enforces the shape, the issue and the length). The long form — what, why, how it was
    verified — belongs in the PR description and the commit message, not here:
    the work-log is the index of change sets, the PR is the record.
 5. Keep Next up accurate.
@@ -105,7 +105,7 @@ files. Index: [docs/README.md](docs/README.md).
 ```
 apps/auth-service   NestJS identity (port 4001) — JWT + JWKS, memberships
 apps/api            NestJS core API (port 4000) — domain modules under src/modules/
-apps/worker         (from M1) BullMQ jobs — reuses api modules
+apps/worker         planned before M3: BullMQ jobs, reuses api modules
 apps/admin          React 19 + Vite + Tailwind 4 + TanStack Router/Query
 apps/mobile         Expo (SDK 57) + expo-router + Reanimated 4
 packages/shared     Money, Zod schemas, shared types (build before dependents)
@@ -242,29 +242,34 @@ issue is written for those readers.
   that change nothing get no issue.
 - **Title:** what the reader gains, in plain words. "Residents can recover a
   forgotten password by email or phone", not "add POST /auth/recovery".
-- **Description**, three short parts, no jargon:
+- **Description**, four short parts, no jargon:
   - **What changes for the product** — two to four sentences.
   - **Why now** — one or two sentences.
+  - **Done when** — two to four checks the stakeholder can run without
+    reading code: "a resident gets the code by SMS and signs in", "a third
+    wrong code starts a wait". These are the acceptance criteria stated at
+    Start step 5; the PR is reviewed against them. Design issues skip this.
   - **Plan reference** — the exact file and section the work implements:
     `docs/plan/security.md §6.1`, `docs/milestones/M1-identity.md → Account
 recovery`, a feature brief, or decision ids such as B13 or D19, linked to
     the file on GitHub (`https://github.com/bsdimer/inova/blob/develop/…`).
   - No file paths, commands, table names or acronyms outside that last line.
-    The technical detail belongs in the PR description.
+    The technical detail — routes, tables, tests — belongs in the PR
+    description, not in the issue.
 - **Fields:** project `inova`. Phase work goes under the milestone named after
   its phase file (`M1 — Identity`, `M2 — Property`, …) — create it when it is
   missing; plan and harness work has no milestone. Label `Feature` for a new
   capability, `Improvement` for plan, harness and refactoring work, `Bug` for a
   defect in running code. Assignee: the person running the session.
 - **Status:** `In Progress` on creation → `In Review` when the PR opens (add
-  the PR as a link on the issue; put `Linear: WHI-nn` as the first line of the
-  PR body) → `Done` when the PR merges into `develop` → `Canceled`, with a
+  the PR as a link on the issue) → `Done` when the PR merges into `develop` → `Canceled`, with a
   comment saying why, if the work is dropped. Never `Done` before the merge,
   and never `Done` for a phase before [Closing a phase](#closing-a-phase)
   holds.
 - **Cross-references:** work-log heading `## YYYY-MM-DD — title (#PR, WHI-nn)`,
   or `(WHI-nn)` before the PR exists; `pnpm check:worklog` rejects an entry
-  without the issue. The PR template opens with the `Linear: WHI-` line.
+  without the issue. The PR body starts with `Linear: WHI-nn` — the template
+  has the line, CI fails the PR without it.
 - **Design issues** carry `Design`. They are written in Bulgarian for the
   stakeholder, have no PR, and close when the decision they settle lands in
   [docs/plan/decisions.md](docs/plan/decisions.md). Technical anchors — phase
