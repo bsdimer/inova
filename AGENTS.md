@@ -272,8 +272,10 @@ recovery`, a feature brief, or decision ids such as B13 or D19, linked to
   and move the issue to In Review on open and Done on merge.
 - **Design issues** carry `Design`. They are written in Bulgarian for the
   stakeholder, have no PR, and close when the decision they settle lands in
-  [docs/plan/decisions.md](docs/plan/decisions.md). Technical anchors — phase
-  ids, paths, token names — stay English.
+  [docs/plan/decisions.md](docs/plan/decisions.md): a comment on the issue
+  names the decision id (`Решено → D26`) and the PR that carries it, and the
+  PR's issue lists what it settles, so either side leads to the other.
+  Technical anchors — phase ids, paths, token names — stay English.
 
 ## Where to read more
 
