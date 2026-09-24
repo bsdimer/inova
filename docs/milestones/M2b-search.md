@@ -6,7 +6,7 @@ Part of the [implementation plan](../implementation-plan.md). Milestone order an
 
 ## Goal
 
-The shell search box ("Сграда, имот, жител или телефон" — «имот» is the interface's word for any property, an apartment, a garage or a shop, decided in WHI-43) finds a building, a property or a resident from any admin page. Phone is a way to reach a resident, not a fourth result type.
+The shell search box ("Сграда, апартамент, жител или телефон") finds a building, an apartment or a resident from any admin page. Phone is a way to reach a resident, not a fourth result type.
 
 ## Dependencies
 
