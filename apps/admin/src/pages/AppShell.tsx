@@ -30,6 +30,8 @@ import { InovaWordmark } from '../components/Logo';
 import { Avatar, MenuItem, Popover } from '../components/ui';
 import { api, type TenantContext } from '../lib/api';
 import { clearSession, getSession } from '../lib/auth';
+import { designFixtureOn } from '../lib/designFixture';
+import { useUnreadCount } from '../lib/notices';
 import { setTheme, useThemeChoice, type ThemeChoice } from '../lib/theme';
 import {
   clearSelectedTenantId,
@@ -96,6 +98,11 @@ export function AppShell() {
           </motion.main>
         </div>
       </div>
+
+      {/* Literal guard, folded at build time — see lib/designFixture.ts. */}
+      {(import.meta.env.DEV || import.meta.env.VITE_DESIGN_FIXTURES === '1') && designFixtureOn && (
+        <DesignDataNote />
+      )}
 
       <MobileNav
         open={navOpen}
@@ -167,6 +174,7 @@ type NavItems = readonly { to: string; label: string; icon: typeof Bell }[];
 type Session = ReturnType<typeof getSession>;
 
 function NavList({ nav, pathname }: { nav: NavItems; pathname: string }) {
+  const unread = useUnreadCount();
   return (
     <nav className="flex flex-col gap-1">
       {nav.map(({ to, label, icon: Icon }) => {
@@ -192,7 +200,13 @@ function NavList({ nav, pathname }: { nav: NavItems; pathname: string }) {
               />
             )}
             <Icon size={22} className="relative shrink-0" />
-            <span className="relative truncate">{label}</span>
+            <span className="relative flex-1 truncate">{label}</span>
+            {to === '/notices' && unread ? (
+              // V2/Badge (846:244): the unread count on Известия.
+              <span className="num text-label-12 relative rounded-full bg-[var(--badge-fill)] px-[7px] py-0.5 font-semibold text-[color:var(--badge-text)]">
+                {unread}
+              </span>
+            ) : null}
           </Link>
         );
       })}
@@ -313,6 +327,7 @@ function MobileNav({
 }
 
 function Topbar({ onOpenNav, session }: { onOpenNav: () => void; session: Session }) {
+  const unread = useUnreadCount();
   return (
     // V2/Topbar (850:312): search 380 wide, a spacer, the bell and the account, 20 apart.
     <header className="flex h-14 items-center gap-3 sm:gap-5">
@@ -338,16 +353,34 @@ function Topbar({ onOpenNav, session }: { onOpenNav: () => void; session: Sessio
       </label>
 
       <div className="ml-auto flex shrink-0 items-center gap-3 sm:gap-5">
-        {/*
-          TODO(M7): the unread dot. The mock-up lights one on the bell, but the
-          API has no counter yet, and a dot that is always on would be a lie.
-        */}
+        {/* TODO(M7): the unread count comes with the notification feed (lib/notices.ts). */}
         <Link
           to="/notices"
-          aria-label="Известия"
-          className="flex h-11 w-11 items-center justify-center rounded-full text-ink"
+          aria-label={unread ? `Известия, ${unread} непрочетени` : 'Известия'}
+          className="relative flex h-11 w-11 items-center justify-center rounded-full text-ink"
         >
           <Bell size={22} />
+          {unread ? (
+            // The frame's lit dot: a soft halo and a bright core on the bell's shoulder.
+            <>
+              <span
+                aria-hidden
+                className="absolute top-0.5 left-5 h-[22px] w-[22px] rounded-full"
+                style={{
+                  background: 'radial-gradient(circle, var(--glow-dot-near) 0%, transparent 70%)',
+                  opacity: 0.6,
+                }}
+              />
+              <span
+                aria-hidden
+                className="absolute top-[9px] left-[27px] h-2 w-2 rounded-full"
+                style={{
+                  background: 'var(--light-source)',
+                  boxShadow: '0 0 6px 1px var(--glow-dot-near)',
+                }}
+              />
+            </>
+          ) : null}
         </Link>
         <AccountMenu session={session} />
       </div>
@@ -465,5 +498,19 @@ function AccountMenu({ session }: { session: Session }) {
         </MenuItem>
       </div>
     </Popover>
+  );
+}
+
+/**
+ * Says, on every screen, that the numbers are the design's and not real:
+ * the «design data» preview must never pass for the portal.
+ */
+function DesignDataNote() {
+  return (
+    <div className="pointer-events-none fixed inset-x-0 bottom-3 z-40 flex justify-center">
+      <span className="glass-control-active text-label-12 rounded-full px-3 py-1.5 font-semibold">
+        Данни от макета 859:1073 — не са реални
+      </span>
+    </div>
   );
 }
