@@ -33,19 +33,29 @@ import { useDashboardData, type DashboardData } from './dashboard/data';
 export function DashboardPage() {
   const data = useDashboardData();
   return (
-    // Grid 1136 = 696 + 20 + 420, and the left column 696 = 320 + 20 + 356.
-    // Both columns run to the foot of the screen, as the frame does: the second
-    // row on the left and Календар on the right take up what is left.
-    <div className="grid grid-cols-1 gap-x-5 gap-y-4 xl:h-full xl:grid-cols-[696fr_420fr]">
-      <div className="flex flex-col gap-4">
+    // One tree, four compositions (1074:9754), switched by `display: contents`
+    // so each card is written once:
+    // - ≥ 1280: 1136 = 696 + 20 + 420; the left column is Баланс over
+    //   Документи 320 + Сигнали 356, the right Календар over Сгради. Both run
+    //   to the foot of the screen. When the opened rail narrows the page to
+    //   1104 (821:1456), Календар and Сигнали keep their width and Баланс and
+    //   Документи give up the 32.
+    // - 1024–1279: Баланс across, then Документи, Сигнали and Календар in
+    //   296 / 364 / 336, then Сгради across (816:11473).
+    // - 768–1023: Баланс across, then two 376 columns — Сигнали over Документи,
+    //   Календар over Сгради (818:1379).
+    // - a phone: one column — Баланс, Сигнали, Календар, Сгради, Документи
+    //   (818:11596).
+    <div className="grid grid-cols-1 gap-x-5 gap-y-4 md:grid-cols-2 lg:grid-cols-[296fr_364fr_336fr] xl:h-full xl:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="contents xl:flex xl:flex-col xl:gap-4">
         <BalanceCard balance={data.balance} today={data.today} />
-        <div className="grid flex-1 grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-[320fr_356fr]">
+        <div className="contents md:flex md:flex-col md:gap-4 lg:contents xl:grid xl:flex-1 xl:grid-cols-[minmax(0,1fr)_356px] xl:gap-x-5">
           <DocumentsCard />
           <SignalsCard signals={data.signals} today={data.today} />
         </div>
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className="contents md:flex md:flex-col md:gap-4 lg:contents xl:flex">
         <CalendarCard calendar={data.calendar} today={data.today} />
         <BuildingsCard buildings={data.buildings} />
       </div>
@@ -177,7 +187,11 @@ function Money({
 function BalanceCard({ balance, today }: { balance: DashboardData['balance']; today: Date }) {
   const month = MONTHS[today.getMonth()];
   return (
-    <Card milestone="M3–M4" className="gap-2.5">
+    // On a phone the card is 16 in at the sides and 20 at top and bottom (818:11656).
+    <Card
+      milestone="M3–M4"
+      className="gap-2.5 px-[17px] py-[21px] md:col-span-2 md:p-[25px] lg:col-span-3"
+    >
       <header className="flex items-center gap-3">
         <h2 className="text-title-16 flex-1 font-medium text-ink-soft">Баланс</h2>
         <p className="num text-body-13-tight whitespace-nowrap text-ink-muted">
@@ -194,7 +208,7 @@ function BalanceCard({ balance, today }: { balance: DashboardData['balance']; to
       </header>
 
       {/* The hero sum sits where the frame puts it: 129 in from the card's content edge. */}
-      <div className="flex h-[52px] items-end sm:pl-[129px]">
+      <div className="flex h-[52px] items-end justify-center md:justify-start md:pl-[129px]">
         {balance ? (
           <Money minor={balance.charged} currency={balance.currency} size="hero" />
         ) : (
@@ -204,19 +218,25 @@ function BalanceCard({ balance, today }: { balance: DashboardData['balance']; to
         )}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
-        <BalanceBubbles
-          left={<Stat label="Платили" minor={balance?.collected} currency={balance?.currency} />}
-          centre={
-            <CollectedRing
-              percent={balance ? collectedPercent(balance.collected, balance.charged) : null}
-            />
-          }
-          right={
-            <Stat label="Задължения" minor={balance?.outstanding} currency={balance?.currency} />
-          }
-        />
-        <div className="flex w-[200px] flex-col gap-2.5">
+      {/*
+        A phone draws the bubbles at 0.8 (336 × 123) above two buttons across
+        the card, 16 below them.
+      */}
+      <div className="flex flex-col items-center gap-4 md:flex-row md:justify-between md:gap-2.5">
+        <div className="max-md:[zoom:0.8]">
+          <BalanceBubbles
+            left={<Stat label="Платили" minor={balance?.collected} currency={balance?.currency} />}
+            centre={
+              <CollectedRing
+                percent={balance ? collectedPercent(balance.collected, balance.charged) : null}
+              />
+            }
+            right={
+              <Stat label="Задължения" minor={balance?.outstanding} currency={balance?.currency} />
+            }
+          />
+        </div>
+        <div className="flex w-full flex-col gap-2.5 md:w-[200px] md:min-w-0">
           <SecondaryButton disabled title="Начисленията и касата идват с M3–M4." className="w-full">
             Виж детайли
           </SecondaryButton>
@@ -334,7 +354,12 @@ function CollectedRing({ percent }: { percent: number | null }) {
 
 function DocumentsCard() {
   return (
-    <Card milestone="M4" delay={0.05} className="items-center justify-center gap-5">
+    // Last on a phone, under Сигнали on a tablet, first in the row from 1024.
+    <Card
+      milestone="M4"
+      delay={0.05}
+      className="order-last items-center justify-center gap-5 md:flex-1 lg:order-none"
+    >
       <DocumentBlock
         glyph={<UploadSimple size={28} />}
         title="Качи документ"
@@ -368,9 +393,11 @@ function DocumentBlock({
   why: string;
 }) {
   return (
-    <div className="flex w-full flex-col items-center gap-3 text-center">
+    // Stacked and centred from 1024; below it the disc stands to the left of
+    // the text, 16 apart (818:1531).
+    <div className="flex w-full items-center gap-4 lg:flex-col lg:gap-3 lg:text-center">
       <GlowDisc>{glyph}</GlowDisc>
-      <div className="flex w-full flex-col items-center gap-2">
+      <div className="flex min-w-0 flex-1 flex-col items-start gap-2 lg:w-full lg:items-center">
         <h2 className="text-title-22 font-medium">{title}</h2>
         <p className="text-body-14 text-ink-muted">{body}</p>
         <SecondaryButton disabled title={why} className="min-w-[152px]">
@@ -403,7 +430,8 @@ const SIGNAL_TAGS = [
 
 function SignalsCard({ signals, today }: { signals: DashboardData['signals']; today: Date }) {
   return (
-    <Card milestone="M6" delay={0.1} className="gap-[25px]">
+    // 601 tall as composed, whatever the list holds; a short window closes the gaps.
+    <Card milestone="M6" delay={0.1} className="min-h-[601px] gap-[25px] tight:min-h-0 tight:gap-4">
       <header className="flex h-8 items-center justify-between">
         <Toggle options={['Сигнали', 'Анкети']} selected="Сигнали" />
         <SectionArrow to="/issues" label="Към сигналите" />
@@ -441,7 +469,7 @@ function SignalsCard({ signals, today }: { signals: DashboardData['signals']; to
         ))}
       </div>
 
-      <div className="flex flex-col gap-2 pt-8">
+      <div className="flex flex-col gap-2 pt-8 tight:pt-[18px]">
         <Overline>Спешни сега</Overline>
         {signals ? (
           signals.urgent.map((signal) => (
@@ -520,7 +548,13 @@ function CalendarCard({ calendar, today }: { calendar: DashboardData['calendar']
   const title = MONTHS[shown.month] ?? '';
 
   return (
-    <Card milestone="M11" delay={0.15} className="flex-1 gap-1.5">
+    // The card's height is the composition's, not its list's (tablo spec §8):
+    // 687 with four events, 621 with three; a short window lets it shrink.
+    <Card
+      milestone="M11"
+      delay={0.15}
+      className="min-h-[687px] flex-1 gap-1.5 lg:max-xl:min-h-[621px] tight:min-h-0"
+    >
       <header className="flex h-8 items-center gap-2">
         <h2 className="text-title-16 flex-1 font-medium text-ink-soft">Календар</h2>
         <Toggle options={['Ден', 'Месец']} selected="Месец" />
@@ -600,11 +634,13 @@ function CalendarCard({ calendar, today }: { calendar: DashboardData['calendar']
       <div className="flex flex-col gap-2 pt-2.5">
         <Overline>Предстоящи</Overline>
         {calendar ? (
-          calendar.upcoming.map((event) => (
+          calendar.upcoming.map((event, i) => (
             // V2/Event (846:344): the day in its own small square, then what and where.
+            // The list never grows with the screen; where the card is shorter
+            // (1024–1279, and a short window) it lists three.
             <div
               key={event.id}
-              className="flex h-14 items-center gap-2.5 rounded-[var(--radius-row)] py-2.5 pr-3 pl-2.5"
+              className={`${i >= 3 ? 'lg:max-xl:hidden tight:hidden' : ''} flex h-14 items-center gap-2.5 rounded-[var(--radius-row)] py-2.5 pr-3 pl-2.5`}
               style={{ background: 'var(--glass-inner)' }}
             >
               <span
@@ -632,7 +668,7 @@ function CalendarCard({ calendar, today }: { calendar: DashboardData['calendar']
 function BuildingsCard({ buildings }: { buildings: DashboardData['buildings'] }) {
   return (
     // The frame's card is 214 tall: its tiles run 8 into the bottom padding.
-    <Card milestone="M2" delay={0.2} className="gap-4 pb-[17px]">
+    <Card milestone="M2" delay={0.2} className="gap-4 pb-[17px] lg:col-span-3">
       <header className="flex items-center gap-2.5">
         <div className="min-w-0 flex-1">
           <h2 className="text-title-16 font-medium text-ink-soft">Преглед на сгради</h2>
@@ -656,7 +692,8 @@ function BuildingsCard({ buildings }: { buildings: DashboardData['buildings'] })
         Four slots across, as drawn: «Добави» first, then one per building.
         TODO(M2): «Добави» opening the add-building flow.
       */}
-      <div className="grid grid-cols-4">
+      {/* Across the page (1024–1279) the tiles keep 120 each, 12 apart, from the left. */}
+      <div className="grid grid-cols-4 lg:max-xl:grid-cols-[repeat(4,120px)] lg:max-xl:gap-x-3">
         <Tile
           disc={
             <GlowDisc>
@@ -695,7 +732,8 @@ function Tile({ disc, name, caption }: { disc: ReactNode; name: string; caption:
     <span className="flex min-w-0 flex-col items-center gap-2 text-center">
       {disc}
       <span className="text-body-14 max-w-full truncate font-semibold">{name}</span>
-      <span className="text-label-12 max-w-full truncate text-ink-muted">{caption}</span>
+      {/* 80 wide on a tablet and a phone, where «платили 25/60» takes two lines. */}
+      <span className="text-label-12 max-w-full text-ink-muted">{caption}</span>
     </span>
   );
 }

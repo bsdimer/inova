@@ -57,3 +57,42 @@ for (const theme of ['light', 'dark'] as const) {
     await page.screenshot(shot(`tablo-maket-${theme}`));
   });
 }
+
+/** The responsive ladder (1074:9754), with the design's data, light. */
+const WIDTHS = [
+  { name: '1280', width: 1280, height: 800 },
+  { name: '1180', width: 1180, height: 820 },
+  { name: '820', width: 820, height: 1180 },
+  { name: '402', width: 402, height: 874 },
+] as const;
+
+for (const { name, width, height } of WIDTHS) {
+  test(`Табло at ${name}`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await openSignedIn(page, ORG_ADMIN, '/?fixture=design');
+    await expect(page.getByText('37 609', { exact: false })).toBeVisible();
+    await settled(page);
+    await page.screenshot({ ...shot(`tablo-${name}`), fullPage: true });
+
+    // The menu at this width: the rail's tooltip, or the sidebar over the page, or the drawer.
+    if (width >= 1280) {
+      await page.locator('aside').getByRole('link', { name: 'Сгради' }).hover();
+      await page.waitForTimeout(600);
+    } else {
+      await page.getByRole('button', { name: 'Отвори менюто' }).click();
+      await page.waitForTimeout(600);
+    }
+    await page.screenshot(shot(`tablo-${name}-menu`));
+  });
+}
+
+test('Табло at 1536 with the rail opened in place', async ({ page }) => {
+  await page.setViewportSize({ width: 1536, height: 780 });
+  await openSignedIn(page, ORG_ADMIN, '/?fixture=design');
+  await expect(page.getByText('37 609', { exact: false })).toBeVisible();
+  await settled(page);
+  await page.locator('aside').click({ position: { x: 36, y: 600 } });
+  await page.mouse.move(900, 400);
+  await page.waitForTimeout(300);
+  await page.screenshot(shot('tablo-1536-rail-open'));
+});
