@@ -1,7 +1,10 @@
 # Frontend testing
 
-- There is no admin/mobile e2e suite yet (harness Phase 3). Do not skip
-  `pnpm verify` because of that.
+- Admin flows have browser tests: Playwright in `apps/admin/e2e`, run by
+  `pnpm test:e2e` against the real services on the seeded local database and
+  by the CI job `e2e`, which also keeps screenshots of the key screens
+  (`e2e-screens/`). A changed flow changes or adds its spec. Mobile has no
+  e2e suite yet. Neither replaces `pnpm verify`.
 - Every feature brief includes a test plan. Treat it as the minimum test
   contract for the change; do not add tests only to satisfy a line-count rule.
 - Use TDD for behavior with meaningful failure modes: validation, forms,

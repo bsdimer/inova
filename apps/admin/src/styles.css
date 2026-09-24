@@ -1,6 +1,30 @@
 @import 'tailwindcss';
 
 /*
+ * The responsive ladder (Figma «V2 · Адаптив (Табло)», 1074:9754): the full
+ * sidebar starts at 1728, the width the screens are drawn at. lg (1024), xl
+ * (1280) and 2xl (1536) are Tailwind's own and match the ladder's other steps.
+ */
+@theme {
+  --breakpoint-3xl: 108rem;
+  /* From 2400 the 1728 composition is drawn ×1.25 (see the zoom rule below). */
+  --breakpoint-4xl: 150rem;
+}
+
+/*
+ * A window 960–1116 tall is short of the 1117 the dashboard is drawn for, and
+ * the spec (tablo-functional-spec §8) makes it fit in three moves: the page
+ * margin drops to 16, the signals card closes its gaps to 16 and 18, and the
+ * calendar lists three events instead of four. Shorter windows scroll; the
+ * 2400+ scale-up is the 1728 composition and is left alone.
+ */
+@custom-variant tight {
+  @media (min-width: 1280px) and (max-width: 2399px) and (min-height: 960px) and (max-height: 1116px) {
+    @slot;
+  }
+}
+
+/*
  * Glass design tokens. Values are generated from the Figma variable
  * collections "V2 Glass" (Светла / Тъмна) and "V2 Layout" in the design file;
  * the generated sheet is on its Foundations page. Do not hand tune a value
@@ -15,6 +39,7 @@
   --glass-inner-strong: rgb(255 255 255 / 0.22);
   --glass-inner-soft: rgb(255 255 255 / 0.12);
   --glass-solid: rgb(255 255 255 / 0.92);
+  --glass-scrim: rgb(0 0 0 / 0.32);
   --glass-segment: rgb(255 255 255 / 0.86);
   --glass-avatar: rgb(255 255 255 / 0.18);
   --glass-avatar-edge: rgb(255 255 255 / 0.45);
@@ -65,6 +90,8 @@
   --panel-text: rgb(29 29 31);
   --panel-text-inverse: rgb(255 255 255);
   --panel-control: rgb(255 255 255 / 0.9);
+  --panel-check-edge: rgb(115 115 120 / 0.45);
+  --panel-footer: rgb(255 255 255 / 0.6);
   --glass-chip: rgb(0 0 0 / 0.22);
   --radius-card: 28px;
   --radius-row: 12px;
@@ -76,6 +103,16 @@
   --space-col-gap: 20px;
   --blur-card: 28px;
   --blur-control: 16px;
+
+  /*
+   * Not a Figma variable: the top light of V2/Glass · card and · control is a
+   * fixed white 38 % inner shadow in both themes (design session, 23.09).
+   * `glass/inner` is the fill of inner surfaces, not this highlight.
+   */
+  --glass-highlight: rgb(255 255 255 / 0.38);
+
+  /* V2/Glow · CTA, two shadows; glow/far is clear by day, so only nights show both. */
+  --glow-cta: 0 0 16px var(--glow-near), 0 0 40px 4px var(--glow-far);
 }
 
 /* Only the values that differ from the light theme. */
@@ -114,6 +151,8 @@
   --panel-text: rgb(255 255 255);
   --panel-text-inverse: rgb(29 29 31);
   --panel-control: rgb(255 255 255 / 0.1);
+  --panel-check-edge: rgb(255 255 255 / 0.4);
+  --panel-footer: rgb(25 27 31 / 0.6);
   --glass-chip: rgb(0 0 0 / 0.3);
 }
 
@@ -139,6 +178,7 @@
   --color-glass-avatar: var(--glass-avatar);
   --color-glass-segment: var(--glass-segment);
   --color-glass-solid: var(--glass-solid);
+  --color-glass-scrim: var(--glass-scrim);
   --color-cta: var(--cta-fill);
   --color-cta-text: var(--cta-text);
   --color-panel: var(--panel-fill);
@@ -152,6 +192,8 @@
   --color-panel-border: var(--panel-border);
   --color-panel-divider: var(--panel-divider);
   --color-panel-control: var(--panel-control);
+  --color-panel-check-edge: var(--panel-check-edge);
+  --color-panel-footer: var(--panel-footer);
   --color-status-pending: var(--status-pending);
   --color-status-planned: var(--status-planned);
   --color-status-urgent: var(--status-urgent);
@@ -174,14 +216,18 @@
     system-ui, 'Inter', sans-serif;
 
   /*
-   * The V2 type scale (Figma sheet 841:2 → Text styles). Tailwind's defaults
-   * cover 12/16, 14/20 and 16/24 by coincidence; 13, 15, 17, 22, 26, 52 and 72
-   * do not exist there, and neither does the negative tracking the large
-   * numbers carry. Figma's weights sit on SF Pro's variable axis — 274, 510,
-   * 590 — and are given here as the nearest static ones.
+   * The V2 text styles, all twenty-six, from the sheet
+   * design/inova-admin/glass-tokens.md → Типографика. Tailwind's own sizes are
+   * not a substitute: only three of them happen to match a V2 style, and the
+   * negative tracking the numbers carry has no default at all. Weight stays at
+   * the call site — `font-light`, `font-medium`, `font-semibold` — because one
+   * size serves several weights.
+   *
+   * Figma's weights sit on SF Pro's variable axis (274, 510, 590); these are
+   * the nearest static ones.
    */
   --text-display-72: 4.5rem;
-  --text-display-72--line-height: 1;
+  --text-display-72--line-height: 4.5rem;
   --text-display-72--letter-spacing: -2px;
   --text-display-52: 3.25rem;
   --text-display-52--line-height: 3.25rem;
@@ -189,21 +235,50 @@
   --text-display-26: 1.625rem;
   --text-display-26--line-height: 2.1875rem;
   --text-display-26--letter-spacing: -1.5px;
+
   --text-number-30: 1.875rem;
   --text-number-30--line-height: 2rem;
   --text-number-30--letter-spacing: -0.86px;
   --text-number-18: 1.125rem;
   --text-number-18--line-height: 1.375rem;
   --text-number-18--letter-spacing: -1px;
+  --text-number-16: 1rem;
+  --text-number-16--line-height: 1.5rem;
+  --text-number-15: 0.9375rem;
+  --text-number-15--line-height: 1.25rem;
+  --text-number-15--letter-spacing: -1px;
   --text-number-13: 0.8125rem;
   --text-number-13--line-height: 1.125rem;
   --text-number-13--letter-spacing: -1px;
+  --text-number-11: 0.6875rem;
+  --text-number-11--line-height: 0.9375rem;
+  --text-number-11--letter-spacing: -1px;
+
   --text-title-22: 1.375rem;
   --text-title-22--line-height: 1.625rem;
+  --text-title-16: 1rem;
+  --text-title-16--line-height: 1.5rem;
+  --text-title-16-tight: 1rem;
+  --text-title-16-tight--line-height: 1.375rem;
+
   --text-body-15: 0.9375rem;
   --text-body-15--line-height: 1.25rem;
+  --text-body-15-tight: 0.9375rem;
+  --text-body-15-tight--line-height: 1.125rem;
+  --text-body-14: 0.875rem;
+  --text-body-14--line-height: 1.25rem;
   --text-body-13: 0.8125rem;
-  --text-body-13--line-height: 1rem;
+  --text-body-13--line-height: 1.125rem;
+  --text-body-13-tight: 0.8125rem;
+  --text-body-13-tight--line-height: 1rem;
+
+  --text-label-14: 0.875rem;
+  --text-label-14--line-height: 1.125rem;
+  --text-label-12: 0.75rem;
+  --text-label-12--line-height: 1rem;
+  --text-overline-12: 0.75rem;
+  --text-overline-12--line-height: 1rem;
+  --text-overline-12--letter-spacing: 0.05em;
 }
 
 html,
@@ -242,6 +317,19 @@ body {
   overflow: hidden;
 }
 
+/*
+ * The BG photo layer of every Screens frame carries LAYER_BLUR 6 — CSS
+ * blur(3px), half the Figma radius. The photograph is pushed 6 px past each
+ * edge so the blur does not fade the screen's border to the page colour.
+ */
+.app-background img {
+  position: absolute;
+  inset: -6px;
+  width: calc(100% + 12px);
+  height: calc(100% + 12px);
+  filter: blur(3px);
+}
+
 .app-scrim {
   position: absolute;
   inset: 0;
@@ -270,7 +358,7 @@ body {
     background: var(--glass-card);
     box-shadow:
       inset 0 0 0 1px var(--glass-edge),
-      inset 0 1px 0 var(--glass-inner);
+      inset 0 1px 0 var(--glass-highlight);
     border-radius: var(--radius-card);
   }
 
@@ -279,16 +367,18 @@ body {
     background: var(--glass-data);
     box-shadow:
       inset 0 0 0 1px var(--glass-edge),
-      inset 0 1px 0 var(--glass-inner);
+      inset 0 1px 0 var(--glass-highlight);
     border-radius: var(--radius-card);
   }
 
-  /* Controls: a field, the search, an inactive facet, the sort pill. */
+  /*
+   * Controls: an inactive facet, the sort pill, a ghost button. V2/Facet and
+   * V2/Sort carry the full edge and only the blur — no top highlight; the
+   * search and the fields have that (.glass-field).
+   */
   .glass-control {
     background: var(--glass-input);
-    box-shadow:
-      inset 0 0 0 1px var(--glass-edge-soft),
-      inset 0 1px 0 var(--glass-inner-soft);
+    box-shadow: inset 0 0 0 1px var(--glass-edge);
   }
 
   /*
@@ -300,14 +390,132 @@ body {
   .glass-solid {
     background: var(--glass-solid);
     color: var(--text-on-solid);
-    box-shadow: inset 0 0 0 1px var(--glass-edge);
   }
 
   /* An active facet reads as lifted rather than recessed. */
+  /* V2/Facet Active=true and V2/Chip: selected/tag, no edge. */
   .glass-control-active {
-    background: var(--glass-segment);
+    background: var(--selected-tag);
     color: var(--text-on-solid);
-    box-shadow: inset 0 0 0 1px var(--glass-edge);
+  }
+
+  /*
+   * A table card (V2/Table): 20 / 12 / 16 of padding inside a 1 px edge, so
+   * the header starts 13 down and 21 in, as the frames measure it. Header and
+   * rows each end on their own divider.
+   */
+  .table-card {
+    padding: 13px 21px 17px;
+  }
+
+  /*
+   * Separate borders, so the divider adds its 1 px to the row as in Figma
+   * (header 40 + 1, row 64 + 1); a collapsed border would share it instead.
+   * A cell's height includes that border, hence 41 and 65 at the call sites.
+   */
+  .table-card table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .table-card :is(th, td) {
+    border-bottom: 1px solid var(--glass-divider);
+  }
+
+  /*
+   * V2/Field's input (906:487): a pill recess with the full glass edge. Focus
+   * and error are the field's own states, drawn on the pill itself, so the
+   * input inside never draws the global ring on top of them.
+   */
+  .glass-field {
+    background: var(--glass-input);
+    box-shadow:
+      inset 0 0 0 1px var(--glass-edge),
+      inset 0 1px 0 var(--glass-highlight);
+    border-radius: var(--radius-pill);
+  }
+
+  .glass-field:focus-within {
+    box-shadow:
+      inset 0 0 0 1.5px var(--focus-edge),
+      0 0 14px var(--focus-glow);
+  }
+
+  .glass-field[data-invalid='true'] {
+    box-shadow: inset 0 0 0 1.5px var(--status-urgent);
+  }
+
+  /*
+   * `.glass-blur` adds V2/Glass · blur 16 (CSS 8) to a small pill that has its
+   * own fill — the secondary button, a signal tag, an avatar in the shell.
+   * Only where the design puts it: never on rows of a scrolling list.
+   */
+
+  /* V2/NavItem Active=true — V2/Nav · active: inner light 0.35 over 2 px. */
+  .nav-active {
+    background: var(--glass-inner);
+    box-shadow:
+      inset 0 0 0 1px var(--glass-edge),
+      inset 0 1px 2px rgb(255 255 255 / 0.35);
+  }
+
+  /*
+   * V2/Nav item and V2/Rail item, State=hover (846:284, 1784:39362): a soft
+   * plate, glass/inner-soft with no edge, blur or light, fading in over 150 ms.
+   * The active item keeps its own look.
+   */
+  .nav-item {
+    transition: background-color 150ms ease;
+  }
+
+  .nav-item:not([data-active]):is(:hover, :focus-visible) {
+    background-color: var(--glass-inner-soft);
+  }
+
+  /*
+   * V2/Tooltip · panel (1784:39369), beside a rail icon: 8 to its right, after
+   * 400 ms of hover, at once on keyboard focus, gone the moment either ends.
+   */
+  .rail-tip {
+    position: absolute;
+    top: 50%;
+    left: calc(100% + 8px);
+    translate: 0 -50%;
+    padding: 6px 10px;
+    border-radius: var(--radius-row);
+    background: var(--panel-fill-strong);
+    color: var(--panel-text);
+    box-shadow: 0 12px 16px rgb(0 0 0 / 0.28);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0s;
+  }
+
+  .nav-item:hover .rail-tip {
+    opacity: 1;
+    transition-delay: 400ms;
+  }
+
+  .nav-item:focus-visible .rail-tip {
+    opacity: 1;
+    transition-delay: 0s;
+  }
+
+  /* The drawer and the menu opened over the page stand on a shadow of their own. */
+  .nav-overlay {
+    box-shadow:
+      inset 0 0 0 1px var(--glass-edge),
+      inset 0 1px 0 var(--glass-highlight),
+      0 18px 44px rgb(0 0 0 / 0.3);
+  }
+
+  /* V2/Calendar · Day State=today: a lit bar under the date, V2/Glow · indicator. */
+  .today-underline {
+    background: var(--light-source);
+    box-shadow:
+      0 0 7px 0.5px var(--glow-dot-near),
+      0 0 20px 1px var(--glow-dot-far);
   }
 
   /* Layered surfaces: drawer, modal, menu, filter sheet. */
@@ -333,7 +541,7 @@ body {
     color: var(--cta-text);
     box-shadow:
       inset 0 0 0 1px var(--cta-edge),
-      0 0 14px var(--glow-near);
+      var(--glow-cta);
     border-radius: var(--radius-pill);
   }
 
@@ -345,17 +553,24 @@ body {
 
 /*
  * Blur switches on only once the photograph has decoded — see AppBackground.
+ * The radius is half the variable: Figma's BACKGROUND_BLUR 28 renders as
+ * CSS blur(14px), and the variables keep Figma's numbers.
  * Declared outside the components layer so it wins over the base surfaces
  * without raising their specificity.
+ *
+ * The prefixed property comes first, everywhere below: the build's minifier
+ * treats the pair as one property and keeps only the last, so with the
+ * standard one first every build shipped only `-webkit-backdrop-filter`,
+ * which Chrome ignores — no blur at all in Chrome until this was found on 24.09.2026.
  */
 :root[data-bg-ready='true'] :is(.glass, .glass-data, .panel, .panel-strong) {
-  backdrop-filter: blur(var(--blur-card));
-  -webkit-backdrop-filter: blur(var(--blur-card));
+  -webkit-backdrop-filter: blur(calc(var(--blur-card) / 2));
+  backdrop-filter: blur(calc(var(--blur-card) / 2));
 }
 
-:root[data-bg-ready='true'] :is(.glass-control, .glass-control-active) {
-  backdrop-filter: blur(var(--blur-control));
-  -webkit-backdrop-filter: blur(var(--blur-control));
+:root[data-bg-ready='true'] :is(.glass-control, .glass-control-active, .glass-field, .glass-blur) {
+  -webkit-backdrop-filter: blur(calc(var(--blur-control) / 2));
+  backdrop-filter: blur(calc(var(--blur-control) / 2));
 }
 
 /*
@@ -367,6 +582,41 @@ body {
   box-shadow:
     inset 0 0 0 1.5px var(--focus-edge),
     0 0 14px var(--focus-glow);
+}
+
+/* V2/Nav · active carries a heavier blur of its own: Figma 24, CSS 12. */
+:root[data-bg-ready='true'] .nav-active {
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+/*
+ * A field draws its focus on the pill (.glass-field:focus-within), so the input
+ * inside must not draw the ring above as well. Unlayered, like that ring:
+ * inside @layer components it would lose to it whatever its specificity.
+ */
+.glass-field input:focus-visible {
+  box-shadow: none;
+}
+
+/*
+ * A menu item's focus is V2/Focus ring standing 3 px outside the item
+ * (1784:39371): the hover plate, or the active look, with the ring around it.
+ * Unlayered for the same reason as the rule above.
+ */
+.nav-item:focus-visible {
+  box-shadow: none;
+}
+
+.nav-item:focus-visible::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: calc(var(--nav-radius, 14px) + 3px);
+  box-shadow:
+    inset 0 0 0 1.5px var(--focus-edge),
+    0 0 14px var(--focus-glow);
+  pointer-events: none;
 }
 
 /* Inside a light panel the same ring has to darken instead of glow. */
@@ -394,8 +644,8 @@ select:not(:disabled),
   :root :is(.glass, .glass-data, .glass-control, .glass-control-active, .panel, .panel-strong),
   :root[data-bg-ready='true']
     :is(.glass, .glass-data, .glass-control, .glass-control-active, .panel, .panel-strong) {
-    backdrop-filter: none;
     -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 
   .glass,
@@ -428,9 +678,14 @@ select:not(:disabled),
   }
 }
 
-/* The mockups are drawn at 1728; above 2400 everything scales with the root. */
+/*
+ * From 2400 the whole 1728 composition is drawn 1.25 times larger (the 2560
+ * frame, 824:1609). The spec says «root font-size 20px, everything in rem»,
+ * but most measures here are the frames' pixels, so the root is zoomed instead:
+ * the same result for every length, px or rem.
+ */
 @media (min-width: 2400px) {
   html {
-    font-size: 20px;
+    zoom: 1.25;
   }
 }

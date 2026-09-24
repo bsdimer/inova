@@ -1,5 +1,9 @@
 node_modules
 dist
+dist-e2e
+playwright-report
+test-results
+e2e-screens
 .turbo
 .expo
 .tooling

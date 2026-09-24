@@ -1,61 +1,78 @@
 import { Link } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
+import { collectedPercent, counted, moneyParts, paidLine, signalAge } from '@inova/shared';
+import { BalanceBubbles } from '../components/BalanceBubbles';
 import {
   ArrowRight,
   Building2,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  CircleCheck,
+  Clock,
   FileMagnifyingGlass,
   Plus,
+  TriangleAlert,
   UploadSimple,
 } from '../components/icons';
-import { Chip, SolidIconButton } from '../components/ui';
+import { SecondaryButton } from '../components/ui';
+import { useDashboardData, type DashboardData } from './dashboard/data';
 
 /**
  * Табло, laid out as drawn in Figma Screens 859:1073 — a wide Баланс above a
  * narrow Документи card and the signals card, with Календар and Преглед на
  * сгради down the right.
  *
- * Every figure on that mock-up belongs to a milestone that has not shipped:
- * the balance to M3–M4, the signals to M6, the calendar's events to M11, the
- * buildings to M2. None of them is invented here — each slot shows «—» and the
- * card carries its milestone. The month grid is the one thing this page can
- * compute honestly, so it is real.
+ * Every card takes its data from `useDashboardData()`. Until a card's
+ * milestone ships its slot is `null` and shows «—» — the balance M3–M4, the
+ * signals M6, the calendar's events M11, the buildings M2. The «design data»
+ * preview (`?fixture=design`, dev and test builds only) fills them with the
+ * frame's own numbers so the layout can be checked against it.
  */
 export function DashboardPage() {
+  const data = useDashboardData();
   return (
-    // Grid 1136 = 696 + 20 + 420, and the left column 696 = 320 + 20 + 356.
-    <div className="grid grid-cols-1 gap-x-5 gap-y-4 xl:grid-cols-[696fr_420fr]">
-      <div className="space-y-4">
-        <BalanceCard />
-        <div className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-[320fr_356fr]">
+    // One tree, four compositions (1074:9754), switched by `display: contents`
+    // so each card is written once:
+    // - ≥ 1280: 1136 = 696 + 20 + 420; the left column is Баланс over
+    //   Документи 320 + Сигнали 356, the right Календар over Сгради. Both run
+    //   to the foot of the screen. When the opened rail narrows the page to
+    //   1104 (821:1456), Календар and Сигнали keep their width and Баланс and
+    //   Документи give up the 32.
+    // - 1024–1279: Баланс across, then Документи, Сигнали and Календар in
+    //   296 / 364 / 336, then Сгради across (816:11473).
+    // - 768–1023: Баланс across, then two 376 columns — Сигнали over Документи,
+    //   Календар over Сгради (818:1379).
+    // - a phone: one column — Баланс, Сигнали, Календар, Сгради, Документи
+    //   (818:11596).
+    <div className="grid grid-cols-1 gap-x-5 gap-y-4 md:grid-cols-2 lg:grid-cols-[296fr_364fr_336fr] xl:h-full xl:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="contents xl:flex xl:flex-col xl:gap-4">
+        <BalanceCard balance={data.balance} today={data.today} />
+        <div className="contents md:flex md:flex-col md:gap-4 lg:contents xl:grid xl:flex-1 xl:grid-cols-[minmax(0,1fr)_356px] xl:gap-x-5">
           <DocumentsCard />
-          <SignalsCard />
+          <SignalsCard signals={data.signals} today={data.today} />
         </div>
       </div>
 
-      <div className="space-y-4">
-        <CalendarCard />
-        <BuildingsCard />
+      <div className="contents md:flex md:flex-col md:gap-4 lg:contents xl:flex">
+        <CalendarCard calendar={data.calendar} today={data.today} />
+        <BuildingsCard buildings={data.buildings} />
       </div>
     </div>
   );
 }
 
 /**
- * A dashboard card. The header carries whatever the card leads with on the
- * left and, on the right, the link to its own section and the milestone that
- * will fill it.
+ * A dashboard card: glass, 24 of padding inside a 1 px edge (25 to the
+ * content, as the frames measure it). `milestone` is what fills it.
  */
 function Card({
-  lead,
-  action,
   milestone,
   children,
   delay = 0,
   className = '',
 }: {
-  lead?: ReactNode;
-  action?: ReactNode;
   milestone: string;
   children: ReactNode;
   delay?: number;
@@ -66,13 +83,9 @@ function Card({
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay }}
-      className={`glass flex flex-col p-6 ${className}`}
+      title={`Данните идват с ${milestone}.`}
+      className={`glass flex flex-col p-[25px] ${className}`}
     >
-      <header className="flex items-start gap-3">
-        <div className="min-w-0 flex-1">{lead}</div>
-        {action}
-        <Chip muted>{milestone}</Chip>
-      </header>
       {children}
     </motion.section>
   );
@@ -83,52 +96,155 @@ function Blank({ className = '' }: { className?: string }) {
   return <span className={`text-ink-faint ${className}`}>—</span>;
 }
 
-/** The disc that leads from a dashboard card to its own section. */
+/** V2/Button · Circle (846:142): the 32 px disc that leads to a card's section. */
 function SectionArrow({ to, label }: { to: string; label: string }) {
   return (
-    <Link to={to} aria-label={label} title={label} className="shrink-0">
-      <span className="glass-solid flex h-8 w-8 items-center justify-center rounded-full">
-        <ArrowRight size={16} />
-      </span>
+    <Link
+      to={to}
+      aria-label={label}
+      className="glass-solid flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+    >
+      <ArrowRight size={16} />
     </Link>
   );
 }
 
-function BalanceCard() {
+/** V2/Toggle (846:240). One option is real today; the other waits for its section. */
+function Toggle({ options, selected }: { options: readonly string[]; selected: string }) {
   return (
+    <span
+      className="inline-flex shrink-0 items-center gap-0.5 rounded-full p-1"
+      style={{
+        background: 'var(--glass-inner-soft)',
+        boxShadow: 'inset 0 0 0 1px var(--glass-edge)',
+      }}
+    >
+      {options.map((option) => (
+        <span
+          key={option}
+          aria-current={option === selected ? 'true' : undefined}
+          className={`text-label-12 rounded-full px-2.5 py-1 font-semibold ${
+            option === selected ? 'bg-glass-segment text-ink-solid' : 'text-ink-soft'
+          }`}
+        >
+          {option}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/** V2/Label/12 Semibold · overline, as the list headings draw it. */
+function Overline({ children }: { children: ReactNode }) {
+  return (
+    <p className="text-overline-12 pb-0.5 font-semibold text-ink-muted uppercase">{children}</p>
+  );
+}
+
+const MONTHS = [
+  'януари',
+  'февруари',
+  'март',
+  'април',
+  'май',
+  'юни',
+  'юли',
+  'август',
+  'септември',
+  'октомври',
+  'ноември',
+  'декември',
+];
+
+/**
+ * V2/Money (846:383): the whole part large and the cents with the currency
+ * raised beside it, top-aligned. `hero` is Display 52 + 26, `stat` Number
+ * 18 + 13 Light.
+ */
+function Money({
+  minor,
+  currency,
+  size,
+}: {
+  minor: bigint;
+  currency: string;
+  size: 'hero' | 'stat';
+}) {
+  const { whole, cents } = moneyParts(minor, currency);
+  return size === 'hero' ? (
+    <span className="num flex items-start gap-1.5 font-medium tracking-[-1.5px]">
+      <span className="text-display-52">{whole}</span>
+      <span className="text-display-26">{cents}</span>
+    </span>
+  ) : (
+    <span className="num flex items-start gap-px font-light tracking-[-1px]">
+      <span className="text-number-18">{whole}</span>
+      <span className="text-number-13">{cents}</span>
+    </span>
+  );
+}
+
+function BalanceCard({ balance, today }: { balance: DashboardData['balance']; today: Date }) {
+  const month = MONTHS[today.getMonth()];
+  return (
+    // On a phone the card is 16 in at the sides and 20 at top and bottom (818:11656).
     <Card
       milestone="M3–M4"
-      lead={
-        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-          <h2 className="text-base font-medium">Баланс</h2>
-          <p className="text-xs text-ink-muted">Портфолио</p>
-        </div>
-      }
+      className="gap-2.5 px-[17px] py-[21px] md:col-span-2 md:p-[25px] lg:col-span-3"
     >
-      <p className="num mt-2 text-display-52 font-medium">
-        <Blank />
-      </p>
+      <header className="flex items-center gap-3">
+        <h2 className="text-title-16 flex-1 font-medium text-ink-soft">Баланс</h2>
+        <p className="num text-body-13-tight whitespace-nowrap text-ink-muted">
+          Портфолио ·{' '}
+          {balance ? (
+            counted(balance.buildingCount, 'сграда', 'сгради')
+          ) : (
+            <>
+              <Blank /> сгради
+            </>
+          )}{' '}
+          · {month}
+        </p>
+      </header>
 
-      <div className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-6">
-        <div className="flex items-center gap-5">
-          <Figure label="Платили" />
-          <CollectedRing />
-          <Figure label="Задължения" />
+      {/* The hero sum sits where the frame puts it: 129 in from the card's content edge. */}
+      <div className="flex h-[52px] items-end justify-center md:justify-start md:pl-[129px]">
+        {balance ? (
+          <Money minor={balance.charged} currency={balance.currency} size="hero" />
+        ) : (
+          <p className="num text-display-52 font-medium">
+            <Blank />
+          </p>
+        )}
+      </div>
+
+      {/*
+        A phone draws the bubbles at 0.8 (336 × 123) above two buttons across
+        the card, 16 below them.
+      */}
+      <div className="flex flex-col items-center gap-4 md:flex-row md:justify-between md:gap-2.5">
+        <div className="max-md:[zoom:0.8]">
+          <BalanceBubbles
+            left={<Stat label="Платили" minor={balance?.collected} currency={balance?.currency} />}
+            centre={
+              <CollectedRing
+                percent={balance ? collectedPercent(balance.collected, balance.charged) : null}
+              />
+            }
+            right={
+              <Stat label="Задължения" minor={balance?.outstanding} currency={balance?.currency} />
+            }
+          />
         </div>
-        <div className="ml-auto flex flex-col gap-2">
-          <button
-            type="button"
-            disabled
-            title="Начисленията и касата идват с M3–M4."
-            className="glass-solid rounded-full px-5 py-2.5 text-sm font-semibold disabled:opacity-45"
-          >
+        <div className="flex w-full flex-col gap-2.5 md:w-[200px] md:min-w-0">
+          <SecondaryButton disabled title="Начисленията и касата идват с M3–M4." className="w-full">
             Виж детайли
-          </button>
+          </SecondaryButton>
           <button
             type="button"
             disabled
             title="Известията за задължения идват с M7."
-            className="cta px-5 py-2.5 text-sm font-semibold disabled:opacity-45"
+            className="cta text-body-14 h-11 w-full px-7 font-semibold disabled:opacity-45"
           >
             Изпрати известия
           </button>
@@ -138,51 +254,122 @@ function BalanceCard() {
   );
 }
 
-function Figure({ label }: { label: string }) {
+function Stat({ label, minor, currency }: { label: string; minor?: bigint; currency?: string }) {
   return (
-    <div>
-      <p className="text-xs text-ink-muted">{label}</p>
-      <p className="num mt-0.5 text-base font-medium">
-        <Blank />
-      </p>
+    <div className="flex flex-col items-center gap-[3px] whitespace-nowrap">
+      <p className="text-body-15-tight text-ink-soft">{label}</p>
+      {minor !== undefined && currency ? (
+        <Money minor={minor} currency={currency} size="stat" />
+      ) : (
+        <p className="num text-number-18 font-light">
+          <Blank />
+        </p>
+      )}
     </div>
   );
 }
 
 /**
- * The collected share. The ring is drawn empty rather than at a plausible
- * angle: an arc at 71% would read as a measured number.
+ * V2/Progress ring (849:214), 136 across: the track, and — once there is a
+ * share to show — the arc from the top clockwise with its glow and the lit
+ * dot at its end. The light is the ring/* variables, white by day and warm
+ * by night. Without data only the track is drawn: an arc at any angle reads
+ * as a measured share.
  */
-function CollectedRing() {
+const RING = { size: 135.88, r: 57.605 };
+
+function CollectedRing({ percent }: { percent: number | null }) {
+  const c = RING.size / 2;
+  const length = 2 * Math.PI * RING.r;
+  const angle = ((percent ?? 0) / 100) * 2 * Math.PI;
+  const dot = { x: c + RING.r * Math.sin(angle), y: c - RING.r * Math.cos(angle) };
+  const arc = {
+    cx: c,
+    cy: c,
+    r: RING.r,
+    fill: 'none',
+    strokeLinecap: 'round' as const,
+    strokeDasharray: `${(length * (percent ?? 0)) / 100} ${length}`,
+    transform: `rotate(-90 ${c} ${c})`,
+  };
   return (
-    <div
-      className="flex h-24 w-24 shrink-0 flex-col items-center justify-center rounded-full"
-      style={{
-        background: 'var(--glass-inner-soft)',
-        boxShadow: 'inset 0 0 0 2px var(--ring-track)',
-      }}
-    >
-      <span className="num text-number-18 font-light">
-        <Blank />
-      </span>
-      <span className="text-[11px] text-ink-muted">събрани</span>
+    <div className="relative h-[136px] w-[136px]">
+      <svg
+        aria-hidden
+        viewBox={`0 0 ${RING.size} ${RING.size}`}
+        className="absolute inset-0 h-full w-full overflow-visible"
+      >
+        <defs>
+          <filter id="ring-soft" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="2" />
+          </filter>
+          <filter id="ring-dot-soft" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="4" />
+          </filter>
+        </defs>
+        <circle
+          cx={c}
+          cy={c}
+          r={RING.r}
+          fill="none"
+          stroke="var(--ring-track)"
+          strokeWidth={1.75}
+        />
+        {percent !== null && percent > 0 && (
+          <>
+            <circle
+              {...arc}
+              stroke="var(--ring-halo-near)"
+              strokeWidth={6}
+              opacity={0.8}
+              filter="url(#ring-soft)"
+              style={{ filter: 'drop-shadow(0 0 24px var(--ring-halo-far))' }}
+            />
+            <circle {...arc} stroke="var(--ring-core)" strokeWidth={1.75} />
+            <circle
+              cx={dot.x}
+              cy={dot.y}
+              r={11}
+              fill="var(--ring-halo-near)"
+              opacity={0.85}
+              filter="url(#ring-dot-soft)"
+            />
+            <circle
+              cx={dot.x}
+              cy={dot.y}
+              r={4}
+              fill="var(--ring-core)"
+              style={{ filter: 'drop-shadow(0 0 3px var(--glow-dot-near))' }}
+            />
+          </>
+        )}
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
+        <span className="num text-number-30">{percent === null ? <Blank /> : `${percent}%`}</span>
+        <span className="text-body-14 text-ink-soft">събрани</span>
+      </div>
     </div>
   );
 }
 
 function DocumentsCard() {
   return (
-    <Card milestone="M4" delay={0.05} className="justify-center gap-6">
+    // Last on a phone, under Сигнали on a tablet, first in the row from 1024.
+    <Card
+      milestone="M4"
+      delay={0.05}
+      className="order-last items-center justify-center gap-5 md:flex-1 lg:order-none"
+    >
       <DocumentBlock
-        glyph={<UploadSimple size={22} />}
+        glyph={<UploadSimple size={28} />}
         title="Качи документ"
         body="Фактури за плащане, документи за сгради и други."
         action="Избери файл"
         why="Хранилището на документи идва с M4."
       />
-      <hr className="border-glass-divider" />
+      <hr className="w-full border-glass-divider" />
       <DocumentBlock
-        glyph={<FileMagnifyingGlass size={22} />}
+        glyph={<FileMagnifyingGlass size={28} />}
         title="Всичко важно в една справка"
         body="Преглед на данни, експорт в PDF и печат."
         action="Направи справка"
@@ -206,221 +393,347 @@ function DocumentBlock({
   why: string;
 }) {
   return (
-    <div className="flex flex-col items-center text-center">
-      <RoundGlyph>{glyph}</RoundGlyph>
-      <h2 className="mt-4 text-base font-semibold">{title}</h2>
-      <p className="mt-1.5 text-sm text-ink-muted">{body}</p>
-      <button
-        type="button"
-        disabled
-        title={why}
-        className="glass-control mt-4 rounded-full px-4 py-2 text-sm font-semibold text-ink disabled:opacity-40"
-      >
-        {action}
-      </button>
+    // Stacked and centred from 1024; below it the disc stands to the left of
+    // the text, 16 apart (818:1531).
+    <div className="flex w-full items-center gap-4 lg:flex-col lg:gap-3 lg:text-center">
+      <GlowDisc>{glyph}</GlowDisc>
+      <div className="flex min-w-0 flex-1 flex-col items-start gap-2 lg:w-full lg:items-center">
+        <h2 className="text-title-22 font-medium">{title}</h2>
+        <p className="text-body-14 text-ink-muted">{body}</p>
+        <SecondaryButton disabled title={why} className="min-w-[152px]">
+          {action}
+        </SecondaryButton>
+      </div>
     </div>
   );
 }
 
-function RoundGlyph({ children }: { children: ReactNode }) {
+/** The 64 px white disc with the CTA glow: Документи's blocks and «Добави». */
+function GlowDisc({ children }: { children: ReactNode }) {
   return (
     <span
-      className="flex h-14 w-14 items-center justify-center rounded-full text-ink-soft"
-      style={{
-        background: 'var(--glass-inner)',
-        boxShadow: 'inset 0 0 0 1px var(--glass-edge-soft)',
-      }}
+      className="glass-solid flex h-16 w-16 shrink-0 items-center justify-center rounded-full"
+      style={{ boxShadow: 'var(--glow-cta)' }}
     >
       {children}
     </span>
   );
 }
 
-const SIGNAL_FACETS = ['Чакащи', 'Планирани', 'Спешни', 'Решени'] as const;
+/** V2/Tag (846:218), unselected: the status lives in the icon's colour, never the text's. */
+const SIGNAL_TAGS = [
+  { key: 'pending', label: 'Чакащи', icon: Clock, tone: 'text-status-pending' },
+  { key: 'planned', label: 'Планирани', icon: CalendarDays, tone: 'text-status-planned' },
+  { key: 'urgent', label: 'Спешни', icon: TriangleAlert, tone: 'text-status-urgent' },
+  { key: 'resolved', label: 'Решени', icon: CircleCheck, tone: 'text-status-resolved' },
+] as const;
 
-function SignalsCard() {
+function SignalsCard({ signals, today }: { signals: DashboardData['signals']; today: Date }) {
   return (
-    <Card
-      milestone="M6"
-      delay={0.1}
-      lead={<Segmented options={['Сигнали', 'Анкети']} selected="Сигнали" />}
-      action={<SectionArrow to="/issues" label="Към нередностите" />}
-    >
-      <p className="num mt-6 text-center text-display-72 font-light">
-        <Blank />
-      </p>
-      <p className="mt-1 text-center text-sm text-ink-muted">отворени нередности</p>
+    // 601 tall as composed, whatever the list holds; a short window closes the gaps.
+    <Card milestone="M6" delay={0.1} className="min-h-[601px] gap-[25px] tight:min-h-0 tight:gap-4">
+      <header className="flex h-8 items-center justify-between">
+        <Toggle options={['Сигнали', 'Анкети']} selected="Сигнали" />
+        <SectionArrow to="/issues" label="Към сигналите" />
+      </header>
 
-      <div className="mt-5 grid grid-cols-2 gap-2">
-        {SIGNAL_FACETS.map((facet) => (
+      <div className="flex flex-col items-center gap-0.5 pb-1.5 text-center">
+        <p className="num text-display-72 font-light">{signals ? signals.openCount : <Blank />}</p>
+        <p className="text-body-14 text-ink-soft">
+          {signals
+            ? `отворени ${signals.openCount === 1 ? 'сигнал' : 'сигнала'} в ${counted(
+                signals.buildingCount,
+                'сграда',
+                'сгради',
+              )}`
+            : 'отворени сигнала'}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-x-3 gap-y-[11px]">
+        {SIGNAL_TAGS.map(({ key, label, icon: Icon, tone }) => (
           <span
-            key={facet}
-            className="glass-control flex items-center justify-between rounded-full px-3.5 py-2 text-sm text-ink-soft"
+            key={key}
+            className="glass-blur flex h-11 min-w-0 items-center gap-1.5 rounded-full p-3"
+            style={{
+              background: 'var(--glass-inner-strong)',
+              boxShadow: 'inset 0 0 0 1px var(--glass-edge-soft)',
+            }}
           >
-            {facet}
-            <Blank className="num" />
+            <Icon size={20} className={`shrink-0 ${tone}`} />
+            <span className="text-body-14 truncate font-medium">{label}</span>
+            <span className="num text-number-16 ml-auto font-medium">
+              {signals ? signals.counters[key] : <Blank />}
+            </span>
           </span>
         ))}
       </div>
 
-      <p className="mt-6 text-xs font-semibold tracking-wider text-ink-faint uppercase">
-        Спешни сега
-      </p>
-      <p className="mt-2 text-sm text-ink-muted">
-        Сигналите на жителите идват с раздела «Нередности» (M6).
-      </p>
+      <div className="flex flex-col gap-2 pt-8 tight:pt-[18px]">
+        <Overline>Спешни сега</Overline>
+        {signals ? (
+          signals.urgent.map((signal) => (
+            // V2/Signal (846:358): the colour is the dot's, the text stays white.
+            <div
+              key={signal.id}
+              className="flex h-14 items-center gap-2.5 rounded-[var(--radius-signal)] px-3 py-2.5"
+              style={{ background: 'var(--glass-inner)' }}
+            >
+              <span
+                aria-hidden
+                className="h-[7px] w-[7px] shrink-0 rounded-full"
+                style={{
+                  background: 'var(--status-urgent)',
+                  boxShadow: '0 0 5px 0.5px var(--status-urgent)',
+                }}
+              />
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="text-body-14 truncate font-medium">{signal.title}</span>
+                <span className="text-body-13-tight truncate text-ink-muted">{signal.place}</span>
+              </span>
+              <span className="text-body-13-tight shrink-0 text-ink-muted">
+                {signalAge(signal.createdAt, today)}
+              </span>
+            </div>
+          ))
+        ) : (
+          <p className="text-body-14 text-ink-muted">
+            Спешните сигнали на жителите се появяват тук с M6.
+          </p>
+        )}
+      </div>
     </Card>
   );
 }
 
-/** The Ден / Месец and Сигнали / Анкети switches: one option is real today. */
-function Segmented({ options, selected }: { options: readonly string[]; selected: string }) {
-  return (
-    <span className="glass-control inline-flex rounded-full p-1">
-      {options.map((option) => (
-        <span
-          key={option}
-          aria-current={option === selected ? 'true' : undefined}
-          className={`rounded-full px-3 py-1 text-xs font-medium ${
-            option === selected ? 'glass-control-active' : 'text-ink-faint'
-          }`}
-        >
-          {option}
-        </span>
-      ))}
-    </span>
-  );
-}
-
 const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
-const MONTHS = [
-  'Януари',
-  'Февруари',
-  'Март',
-  'Април',
-  'Май',
-  'Юни',
-  'Юли',
-  'Август',
-  'Септември',
-  'Октомври',
-  'Ноември',
-  'Декември',
-];
+
+const isoDay = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 /**
- * Six weeks from Monday, the way the mock-up draws them. The days either side
- * of the month are dimmed rather than hidden, so the grid never reflows.
+ * The weeks of a month from Monday, as many as it spans — the mock-up's
+ * September 2026 needs five. Days either side of the month are shown faint.
  */
-function monthGrid(today: Date): { day: number; inMonth: boolean; isToday: boolean }[] {
-  const first = new Date(today.getFullYear(), today.getMonth(), 1);
+function monthGrid(
+  year: number,
+  month: number,
+  today: Date,
+): { day: number; iso: string; inMonth: boolean; isToday: boolean }[] {
+  const first = new Date(year, month, 1);
   const offset = (first.getDay() + 6) % 7; // Sunday is 0 in JS, Monday leads here.
-  const start = new Date(first);
-  start.setDate(1 - offset);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells = Math.ceil((offset + daysInMonth) / 7) * 7;
 
-  return Array.from({ length: 42 }, (_, i) => {
-    const date = new Date(start);
-    date.setDate(start.getDate() + i);
+  return Array.from({ length: cells }, (_, i) => {
+    const date = new Date(year, month, 1 - offset + i);
     return {
       day: date.getDate(),
-      inMonth: date.getMonth() === today.getMonth(),
+      iso: isoDay(date),
+      inMonth: date.getMonth() === month,
       isToday: date.toDateString() === today.toDateString(),
     };
   });
 }
 
-function CalendarCard() {
-  const today = new Date();
-  const days = monthGrid(today);
+function CalendarCard({ calendar, today }: { calendar: DashboardData['calendar']; today: Date }) {
+  const [shown, setShown] = useState({ year: today.getFullYear(), month: today.getMonth() });
+  const days = monthGrid(shown.year, shown.month, today);
+  const eventDays = new Set(calendar?.eventDays ?? []);
+  const step = (by: number) =>
+    setShown(({ year, month }) => {
+      const next = new Date(year, month + by, 1);
+      return { year: next.getFullYear(), month: next.getMonth() };
+    });
+  const title = MONTHS[shown.month] ?? '';
 
   return (
+    // The card's height is the composition's, not its list's (tablo spec §8):
+    // 687 with four events, 621 with three; a short window lets it shrink.
     <Card
       milestone="M11"
       delay={0.15}
-      lead={<h2 className="text-base font-medium">Календар</h2>}
-      action={<Segmented options={['Ден', 'Месец']} selected="Месец" />}
+      className="min-h-[687px] flex-1 gap-1.5 lg:max-xl:min-h-[621px] tight:min-h-0"
     >
-      <p className="mt-5 text-center text-sm font-medium">
-        {MONTHS[today.getMonth()]} <span className="num">{today.getFullYear()}</span>
-      </p>
+      <header className="flex h-8 items-center gap-2">
+        <h2 className="text-title-16 flex-1 font-medium text-ink-soft">Календар</h2>
+        <Toggle options={['Ден', 'Месец']} selected="Месец" />
+      </header>
 
-      <div className="mt-3 grid grid-cols-7 gap-y-1 text-center">
+      <div className="flex h-11 items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => step(-1)}
+          aria-label="Предишен месец"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-ink"
+        >
+          <ChevronLeft size={18} />
+        </button>
+        <p className="text-body-14 flex-1 text-center font-semibold">
+          {title.charAt(0).toUpperCase() + title.slice(1)} <span className="num">{shown.year}</span>
+        </p>
+        <button
+          type="button"
+          onClick={() => step(1)}
+          aria-label="Следващ месец"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-ink"
+        >
+          <ChevronRight size={18} />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-7">
         {WEEKDAYS.map((d) => (
-          <span key={d} className="pb-1 text-[11px] text-ink-faint">
+          <span
+            key={d}
+            className="text-label-12 flex h-[26px] items-center justify-center font-medium text-ink-muted"
+          >
             {d}
           </span>
         ))}
-        {days.map((d, i) => (
+      </div>
+
+      <div className="grid grid-cols-7 gap-y-1.5">
+        {days.map((d) => (
           <span
-            key={i}
-            className={`num mx-auto flex h-8 w-8 items-center justify-center rounded-full text-sm ${
-              d.inMonth ? 'text-ink-soft' : 'text-ink-faint opacity-50'
-            }`}
-            style={
-              d.isToday
-                ? { background: 'var(--selected-day)', color: 'var(--text-on-solid)' }
-                : undefined
-            }
+            key={d.iso}
             aria-current={d.isToday ? 'date' : undefined}
+            className="flex h-10 flex-col items-center justify-center gap-[3px]"
           >
-            {d.day}
+            <span
+              className={`num text-label-12 ${
+                d.isToday
+                  ? 'font-semibold text-[color:var(--light-source)]'
+                  : d.inMonth
+                    ? 'text-ink'
+                    : 'text-ink-faint'
+              }`}
+            >
+              {d.day}
+            </span>
+            {d.isToday ? (
+              <span className="today-underline h-0.5 w-[18px] rounded-[1px]" />
+            ) : (
+              d.inMonth &&
+              eventDays.has(d.iso) && (
+                // V2/Calendar · Day Event=true: a lit dot under the date.
+                <span
+                  aria-label="има задачи"
+                  className="h-[5px] w-[5px] rounded-full"
+                  style={{
+                    background: 'var(--light-source)',
+                    boxShadow: '0 0 7px 0.5px var(--glow-dot-near)',
+                  }}
+                />
+              )
+            )}
           </span>
         ))}
       </div>
 
-      <p className="mt-5 text-xs font-semibold tracking-wider text-ink-faint uppercase">
-        Предстоящи
-      </p>
-      <p className="mt-2 text-sm text-ink-muted">
-        Общи събрания, отчети и задачи на екипа се появяват тук с раздела «Задачи» (M11).
-      </p>
-    </Card>
-  );
-}
-
-function BuildingsCard() {
-  return (
-    <Card
-      milestone="M2"
-      delay={0.2}
-      action={<SectionArrow to="/buildings" label="Към сградите" />}
-      lead={
-        <>
-          <h2 className="text-base font-medium">Преглед на сгради</h2>
-          <p className="num mt-0.5 text-xs text-ink-muted">
-            <Blank /> сгради · <Blank /> апартамента
+      <div className="flex flex-col gap-2 pt-2.5">
+        <Overline>Предстоящи</Overline>
+        {calendar ? (
+          calendar.upcoming.map((event, i) => (
+            // V2/Event (846:344): the day in its own small square, then what and where.
+            // The list never grows with the screen; where the card is shorter
+            // (1024–1279, and a short window) it lists three.
+            <div
+              key={event.id}
+              className={`${i >= 3 ? 'lg:max-xl:hidden tight:hidden' : ''} flex h-14 items-center gap-2.5 rounded-[var(--radius-row)] py-2.5 pr-3 pl-2.5`}
+              style={{ background: 'var(--glass-inner)' }}
+            >
+              <span
+                className="num text-label-12 flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg font-semibold"
+                style={{ background: 'var(--glass-inner)' }}
+              >
+                {Number(event.date.slice(8))}
+              </span>
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="text-body-14 truncate font-medium">{event.title}</span>
+                <span className="text-body-13-tight truncate text-ink-muted">{event.place}</span>
+              </span>
+            </div>
+          ))
+        ) : (
+          <p className="text-body-14 text-ink-muted">
+            Общи събрания, отчети и задачи на екипа се появяват тук с M11.
           </p>
-        </>
-      }
-    >
-      <div className="mt-5 flex items-start gap-4">
-        <Tile label="Добави" caption="нова сграда">
-          <Plus size={22} />
-        </Tile>
-        <Tile label="Сгради" caption="идват с M2">
-          <Building2 size={22} />
-        </Tile>
+        )}
       </div>
     </Card>
   );
 }
 
-function Tile({
-  children,
-  label,
-  caption,
-}: {
-  children: ReactNode;
-  label: string;
-  caption: string;
-}) {
+function BuildingsCard({ buildings }: { buildings: DashboardData['buildings'] }) {
   return (
-    <span className="flex w-20 flex-col items-center text-center opacity-55">
-      <SolidIconButton label={label} disabled size={56}>
-        {children}
-      </SolidIconButton>
-      <span className="mt-2 text-xs font-medium">{label}</span>
-      <span className="text-[11px] text-ink-faint">{caption}</span>
+    // The frame's card is 214 tall: its tiles run 8 into the bottom padding.
+    <Card milestone="M2" delay={0.2} className="gap-4 pb-[17px] lg:col-span-3">
+      <header className="flex items-center gap-2.5">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-title-16 font-medium text-ink-soft">Преглед на сгради</h2>
+          <p className="num text-body-13-tight text-ink-muted">
+            {buildings ? (
+              <>
+                {counted(buildings.buildingCount, 'сграда', 'сгради')} ·{' '}
+                {counted(buildings.apartmentCount, 'апартамент', 'апартамента')}
+              </>
+            ) : (
+              <>
+                <Blank /> сгради · <Blank /> апартамента
+              </>
+            )}
+          </p>
+        </div>
+        <SectionArrow to="/buildings" label="Към сградите" />
+      </header>
+
+      {/*
+        Four slots across, as drawn: «Добави» first, then one per building.
+        TODO(M2): «Добави» opening the add-building flow.
+      */}
+      {/* Across the page (1024–1279) the tiles keep 120 each, 12 apart, from the left. */}
+      <div className="grid grid-cols-4 lg:max-xl:grid-cols-[repeat(4,120px)] lg:max-xl:gap-x-3">
+        <Tile
+          disc={
+            <GlowDisc>
+              <Plus size={24} />
+            </GlowDisc>
+          }
+          name="Добави"
+          caption="нова сграда"
+        />
+        {buildings?.buildings.slice(0, 3).map((building) => (
+          <Tile
+            key={building.id}
+            disc={
+              // V2/Building tile (846:360): a lifted glass disc, the building in it.
+              <span
+                className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full"
+                style={{
+                  background: 'var(--glass-inner-strong)',
+                  boxShadow: 'inset 0 0 0 1px var(--glass-inner-strong)',
+                }}
+              >
+                <Building2 size={30} />
+              </span>
+            }
+            name={building.name}
+            caption={paidLine(building.paid, building.charged)}
+          />
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function Tile({ disc, name, caption }: { disc: ReactNode; name: string; caption: string }) {
+  return (
+    <span className="flex min-w-0 flex-col items-center gap-2 text-center">
+      {disc}
+      <span className="text-body-14 max-w-full truncate font-semibold">{name}</span>
+      {/* 80 wide on a tablet and a phone, where «платили 25/60» takes two lines. */}
+      <span className="text-label-12 max-w-full text-ink-muted">{caption}</span>
     </span>
   );
 }
