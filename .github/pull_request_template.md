@@ -1,4 +1,4 @@
-Linear: WHI-
+Closes WHI-
 
 ## What changes
 

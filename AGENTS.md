@@ -14,7 +14,8 @@ platform's own "inova" brand.
 3. Start with **one** relevant extra file: a milestone under `docs/milestones/`,
    a plan topic under `docs/plan/`, an ADR under `docs/decisions/`, the linked feature brief under
    `docs/features/`, or the frontend skill (see below). Load a linked reference
-   later only when the task stage needs it.
+   later only when the task stage needs it; never the whole plan. Index:
+   [docs/README.md](docs/README.md).
 4. Check `git status`.
 5. State the task's acceptance criteria before editing, and which tests will
    prove them (see [Testing](#testing)).
@@ -24,8 +25,11 @@ platform's own "inova" brand.
 
 **Finish**
 
-1. Run `pnpm verify` (the executable Definition of Done).
-2. Confirm no secrets and no unmarked mocks (`TODO(M<n>)` or `MOCK`).
+1. Run `pnpm verify` — the Definition of Done: format check, lint, typecheck,
+   unit and integration tests, architecture contracts, build. Finishing a
+   task is not closing a phase (see [Closing a phase](#closing-a-phase)).
+2. Confirm no secrets, no unmarked mocks (`TODO(M<n>)` or `MOCK`), no
+   commented-out code and no unrelated refactors.
 3. Update [docs/current.md](docs/current.md) only when what works, blockers, or
    Next up actually changed.
 4. Add one entry to `docs/work-log/YYYY-MM.md` in the checked shape:
@@ -35,13 +39,8 @@ platform's own "inova" brand.
    verified — belongs in the PR description and the commit message, not here:
    the work-log is the index of change sets, the PR is the record.
 5. Keep Next up accurate.
-6. Move the Linear issue to **In Review** when the PR opens (with the PR as a
-   link on the issue) and to **Done** once it merges into `develop`.
-
-The implementation plan is split: [docs/implementation-plan.md](docs/implementation-plan.md)
-is a short index, topics live in `docs/plan/`, phases in `docs/milestones/`. Load
-only the one file the task needs — never the whole set — and skip old status
-files. Index: [docs/README.md](docs/README.md).
+6. Check the Linear issue moved to **In Review** when the PR opened and to
+   **Done** after the merge into `develop`; set it by hand only if it did not.
 
 ## Non-negotiable working rules
 
@@ -180,8 +179,7 @@ done, and a change whose tests were not run is not verified.
   invalid input, and a cross-tenant case added to the tenant-isolation suite.
   **New tenant-owned table:** the schema contract test must pass unchanged.
 - **Money:** unit tests on the arithmetic (`Money`, never floats), integration
-  tests for append-only and `Idempotency-Key` behaviour. Finance,
-  tenant-isolation and auth suites are release blockers (rule 4).
+  tests for append-only and `Idempotency-Key` behaviour.
 - Test through the public surface — a service method, an HTTP route — not
   private internals. Cover the failure modes that really occur: empty result,
   duplicate/retry, malformed payload, upstream timeout or 4xx/5xx.
@@ -261,34 +259,21 @@ recovery`, a feature brief, or decision ids such as B13 or D19, linked to
   missing; plan and harness work has no milestone. Label `Feature` for a new
   capability, `Improvement` for plan, harness and refactoring work, `Bug` for a
   defect in running code. Assignee: the person running the session.
-- **Status:** `In Progress` on creation → `In Review` when the PR opens (add
-  the PR as a link on the issue) → `Done` when the PR merges into `develop` → `Canceled`, with a
-  comment saying why, if the work is dropped. Never `Done` before the merge,
+- **Status:** `In Progress` on creation → `In Review` when the PR opens →
+  `Done` when the PR merges into `develop` → `Canceled`, with a comment saying
+  why, if the work is dropped. The GitHub integration makes the In Review and
+  Done moves from the `Closes` line; set them by hand only when it did not. Never `Done` before the merge,
   and never `Done` for a phase before [Closing a phase](#closing-a-phase)
   holds.
 - **Cross-references:** work-log heading `## YYYY-MM-DD — title (#PR, WHI-nn)`,
   or `(WHI-nn)` before the PR exists; `pnpm check:worklog` rejects an entry
-  without the issue. The PR body starts with `Linear: WHI-nn` — the template
-  has the line, CI fails the PR without it.
+  without the issue. The PR body starts with `Closes WHI-nn` — the template
+  has the line, CI fails the PR without it, and Linear reads it to link the PR
+  and move the issue to In Review on open and Done on merge.
 - **Design issues** carry `Design`. They are written in Bulgarian for the
   stakeholder, have no PR, and close when the decision they settle lands in
   [docs/plan/decisions.md](docs/plan/decisions.md). Technical anchors — phase
   ids, paths, token names — stay English.
-
-## Definition of done
-
-`pnpm verify` is green. That runs format check, lint, typecheck, unit tests,
-integration tests, architecture contracts, and build. Also:
-
-1. New or changed logic has unit and/or integration tests in the same change,
-   per [Testing](#testing); finance, isolation and auth suites stay green.
-   Finishing a task is not closing a phase — that needs [Closing a phase](#closing-a-phase).
-2. Mocks/stubs are marked `TODO(M<n>)` or `MOCK`.
-3. `docs/current.md` is updated when living state changed; the monthly work-log
-   has one entry in the checked shape (Finish step 4) for the change set.
-4. No secrets, no commented-out code, no unrelated refactors.
-5. The change set's Linear issue exists, links the PR, and is `Done` after the
-   merge ([Tracking in Linear](#tracking-in-linear)).
 
 ## Where to read more
 
