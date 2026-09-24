@@ -18,12 +18,16 @@ export {
   Buildings as Building2,
   CalendarBlank as CalendarDays,
   CaretDown as ChevronDown,
+  CaretLeft as ChevronLeft,
+  CaretRight as ChevronRight,
   Check,
   CheckCircle as CircleCheck,
   CircleNotch as LoaderCircle,
   Clock,
   DotsThree as MoreHorizontal,
   Envelope as Mail,
+  // V2/Field draws the e-mail glyph as the plain envelope.
+  EnvelopeSimple,
   // Phosphor has no envelope-with-plus; the invite action uses a plain one.
   EnvelopeSimple as MailPlus,
   Eye,

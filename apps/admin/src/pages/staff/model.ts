@@ -88,6 +88,14 @@ export function scopeOf(member: StaffMember): string | null {
   return member.status === 'revoked' ? null : 'Всички сгради';
 }
 
+/**
+ * The same scope in the table, where the ОБХВАТ header already says what it
+ * is: the row draws the bare «Всички» (872:1999).
+ */
+export function scopeCellOf(member: StaffMember): string | null {
+  return member.status === 'revoked' ? null : 'Всички';
+}
+
 export type SortPreset = 'attention' | 'name' | 'newest';
 
 export const SORT_LABELS: Record<SortPreset, string> = {
