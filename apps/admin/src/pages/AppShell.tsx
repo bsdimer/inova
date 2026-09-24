@@ -346,7 +346,7 @@ function Topbar({ onOpenNav, session }: { onOpenNav: () => void; session: Sessio
         <input
           type="search"
           disabled
-          placeholder="Сграда, апартамент, жител или телефон"
+          placeholder="Сграда, имот, жител или телефон"
           aria-label="Общо търсене"
           className="w-full min-w-0 bg-transparent text-body-14 text-ink outline-none placeholder:text-ink-muted disabled:cursor-not-allowed"
         />
