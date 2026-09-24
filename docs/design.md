@@ -38,6 +38,11 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   - `backdrop-filter` goes only on first-level glass (cards, shell, panels),
     never on rows or inside a scrolling list;
   - never use `LAYER_BLUR` on glass;
+  - `will-change` only on glass that actually animates (the rail expanding),
+    never across the board;
+  - no blur on text, and at most one glow per card;
+  - check glass on a Windows laptop with integrated graphics in Chrome and
+    Firefox — a Mac hides the cost of `backdrop-filter`;
   - with `prefers-reduced-transparency`, panels become solid.
 - The photo sits in a `position: fixed; inset: 0; z-index: -1` layer with a
   gradient scrim. Do not use `background-attachment: fixed`, which is broken
@@ -138,9 +143,9 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   open target, and opening a row is not selecting it.
 - Names and prose truncate to one line with an ellipsis, and the full text
   appears in a tooltip. Numbers, dates and IDs never truncate. Exceptions:
-  the reason cell in requests wraps to a few lines and the full text is in
-  the review panel; in the import error table and the search dropdown long
-  names wrap.
+  the reason cell in requests wraps to at most two lines with an ellipsis
+  and the full text is in the review panel; in the import error table and
+  the search dropdown long names wrap.
 - Numbers are right-aligned with `font-variant-numeric: tabular-nums`. In
   money, the stotinki are raised and smaller; the sizes are the Figma text
   styles. A hero sum is centred on its integer part: the stotinki are placed
