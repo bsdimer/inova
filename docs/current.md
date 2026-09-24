@@ -1,6 +1,6 @@
 # Current status
 
-**Last updated:** 2026-09-22
+**Last updated:** 2026-09-24
 **Current milestone:** M1 tenant-account realm refactor, then M2 Property hierarchy
 **Focus:** apply the B8 tenant-scoped account decision, including secure multi-tenant session switching and multi-role mobile views, before M2 locks identity references; then build property hierarchy so mobile can drop mock building/apartment data.
 
@@ -63,7 +63,7 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
 
 ## Tests (release blockers)
 
-45 integration tests against real Postgres + RLS + the non-privileged `inova_app` / `inova_auth` roles, plus 23 unit tests:
+48 integration tests against real Postgres + RLS + the non-privileged `inova_app` / `inova_auth` roles, plus 23 unit tests:
 
 | Suite                                           | Count | Job                |
 | ----------------------------------------------- | ----- | ------------------ |
@@ -72,6 +72,7 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
 | `apps/api/test/staff-roles.e2e.test.ts`         | 13    | `auth` (RBAC)      |
 | `apps/auth-service/test/auth-flows.e2e.test.ts` | 9     | `auth`             |
 | `apps/auth-service/test/rate-limit.e2e.test.ts` | 3     | `auth`             |
+| `apps/auth-service/test/db-helper.e2e.test.ts`  | 2     | `auth`             |
 | `packages/shared` Money                         | 4     | `unit`             |
 | `packages/shared` RuntimeEnv, MockCodeDelivery  | 13    | `unit`             |
 | `apps/auth-service` PasswordHasher              | 6     | `unit`             |
