@@ -299,7 +299,7 @@ function SignalsCard() {
         {SIGNAL_TAGS.map(({ label, icon: Icon, tone }) => (
           <span
             key={label}
-            className="flex h-11 min-w-0 items-center gap-1.5 rounded-full p-3"
+            className="glass-blur flex h-11 min-w-0 items-center gap-1.5 rounded-full p-3"
             style={{
               background: 'var(--glass-inner-strong)',
               boxShadow: 'inset 0 0 0 1px var(--glass-edge-soft)',

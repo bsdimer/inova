@@ -4,7 +4,15 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 're
 import { createPortal } from 'react-dom';
 
 /** Initials on glass. Two letters, because Bulgarian names are two words. */
-export function Avatar({ name, size = 36 }: { name: string; size?: number }) {
+export function Avatar({
+  name,
+  size = 36,
+  className = '',
+}: {
+  name: string;
+  size?: number;
+  className?: string;
+}) {
   const initials = name
     .trim()
     .split(/\s+/)
@@ -14,7 +22,7 @@ export function Avatar({ name, size = 36 }: { name: string; size?: number }) {
   return (
     <span
       aria-hidden
-      className="flex shrink-0 items-center justify-center rounded-full font-semibold"
+      className={`flex shrink-0 items-center justify-center rounded-full font-semibold ${className}`}
       style={{
         width: size,
         height: size,
@@ -78,7 +86,7 @@ export function SecondaryButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`text-body-14 h-11 rounded-full px-7 font-semibold text-ink transition-opacity disabled:opacity-45 ${className}`}
+      className={`glass-blur text-body-14 h-11 rounded-full px-7 font-semibold text-ink transition-opacity disabled:opacity-45 ${className}`}
       style={{
         background: 'var(--glass-inner)',
         boxShadow: 'inset 0 0 0 1px var(--glass-edge)',

@@ -175,8 +175,12 @@ function NavList({ nav, pathname }: { nav: NavItems; pathname: string }) {
           <Link
             key={to}
             to={to}
-            className={`relative flex items-center gap-3 rounded-[var(--radius-nav)] px-3.5 py-[11px] text-body-14 transition-colors ${
-              active ? 'font-semibold text-ink' : 'font-medium text-ink-soft hover:text-ink'
+            // The active item's 1 px edge is a real border in Figma, so it stands
+            // 46 tall where the others are 44 (11 + 22 + 11).
+            className={`relative flex items-center gap-3 rounded-[var(--radius-nav)] px-3.5 text-body-14 transition-colors ${
+              active
+                ? 'py-3 font-semibold text-ink'
+                : 'py-[11px] font-medium text-ink-soft hover:text-ink'
             }`}
           >
             {active && (
@@ -204,7 +208,7 @@ function SidebarFooter({ session }: { session: Session }) {
     <>
       <hr className="w-25 border-glass-divider" />
       <div className="flex items-center gap-3 pt-2 pl-1.5">
-        <Avatar name={name} size={40} />
+        <Avatar name={name} size={40} className="glass-blur" />
         <span className="flex min-w-0 flex-col gap-0.5">
           <span className="truncate text-body-14 font-semibold">{name}</span>
           {/* The sidebar names the role alone; the top bar adds the organization. */}
@@ -247,8 +251,9 @@ function Rail({
   platform: boolean;
 }) {
   return (
-    // V2/Sidebar (850:260): 232 wide, 20 of padding, 8 between its parts.
-    <aside className="glass hidden w-58 shrink-0 flex-col gap-2 p-5 lg:flex">
+    // V2/Sidebar (850:260): 232 wide, 20 of padding inside a 1 px edge (21 to
+    // the content, as the frame measures it), 8 between its parts.
+    <aside className="glass hidden w-58 shrink-0 flex-col gap-2 p-[21px] lg:flex">
       <div className="pt-2 pb-3 pl-2 text-ink">
         <InovaWordmark size={22} />
       </div>
@@ -394,7 +399,7 @@ function AccountMenu({ session }: { session: Session }) {
           onClick={() => setOpen((v) => !v)}
           className="flex items-center gap-3 rounded-full py-1 pr-1 text-left text-ink"
         >
-          <Avatar name={name} size={36} />
+          <Avatar name={name} size={36} className="glass-blur" />
           <span className="hidden min-w-0 flex-col sm:flex">
             <span className="truncate text-body-14 font-semibold">{name}</span>
             <span className="truncate text-body-13-tight text-ink-muted">

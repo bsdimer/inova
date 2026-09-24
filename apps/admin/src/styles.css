@@ -383,6 +383,12 @@ body {
     box-shadow: inset 0 0 0 1.5px var(--status-urgent);
   }
 
+  /*
+   * `.glass-blur` adds V2/Glass · blur 16 (CSS 8) to a small pill that has its
+   * own fill — the secondary button, a signal tag, an avatar in the shell.
+   * Only where the design puts it: never on rows of a scrolling list.
+   */
+
   /* V2/NavItem Active=true — V2/Nav · active: inner light 0.35 over 2 px. */
   .nav-active {
     background: var(--glass-inner);
@@ -444,7 +450,7 @@ body {
   -webkit-backdrop-filter: blur(calc(var(--blur-card) / 2));
 }
 
-:root[data-bg-ready='true'] :is(.glass-control, .glass-control-active, .glass-field) {
+:root[data-bg-ready='true'] :is(.glass-control, .glass-control-active, .glass-field, .glass-blur) {
   backdrop-filter: blur(calc(var(--blur-control) / 2));
   -webkit-backdrop-filter: blur(calc(var(--blur-control) / 2));
 }
@@ -458,6 +464,12 @@ body {
   box-shadow:
     inset 0 0 0 1.5px var(--focus-edge),
     0 0 14px var(--focus-glow);
+}
+
+/* V2/Nav · active carries a heavier blur of its own: Figma 24, CSS 12. */
+:root[data-bg-ready='true'] .nav-active {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 /*
