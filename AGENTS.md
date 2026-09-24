@@ -202,7 +202,8 @@ done, and a change whose tests were not run is not verified.
   test (formatting, display math, schemas) in `packages/shared`, and record
   manual flow/visual QA in the work-log entry. A changed admin or mobile
   screen is not done without a screenshot of the rendered result in the PR,
-  taken by the agent from the preview or simulator — never "please check".
+  taken by the agent from the preview, the simulator or a Playwright run once
+  admin has one — never "please check".
 - Never skip, weaken or delete a test to get green. Report the real output.
 
 ## Closing a phase
