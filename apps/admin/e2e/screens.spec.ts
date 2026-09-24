@@ -46,3 +46,14 @@ test('Организации', async ({ page }) => {
   await settled(page);
   await page.screenshot(shot('organizacii'));
 });
+
+for (const theme of ['light', 'dark'] as const) {
+  test(`Табло with the design's data, ${theme}`, async ({ page }) => {
+    await openSignedIn(page, ORG_ADMIN, '/?fixture=design');
+    await page.evaluate((t) => localStorage.setItem('inova.theme', t), theme);
+    await page.reload();
+    await expect(page.getByText('37 609', { exact: false })).toBeVisible();
+    await settled(page);
+    await page.screenshot(shot(`tablo-maket-${theme}`));
+  });
+}

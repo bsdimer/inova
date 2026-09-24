@@ -19,6 +19,7 @@ const steps = [
   ['check:worklog', ['pnpm', 'check:worklog']],
   ['check:migrations', ['pnpm', 'check:migrations']],
   ['build', ['pnpm', 'build']],
+  ['check:no-design-data', ['pnpm', 'check:no-design-data']],
 ];
 
 function run(name, argv) {

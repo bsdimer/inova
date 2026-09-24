@@ -293,6 +293,19 @@ body {
   overflow: hidden;
 }
 
+/*
+ * The BG photo layer of every Screens frame carries LAYER_BLUR 6 — CSS
+ * blur(3px), half the Figma radius. The photograph is pushed 6 px past each
+ * edge so the blur does not fade the screen's border to the page colour.
+ */
+.app-background img {
+  position: absolute;
+  inset: -6px;
+  width: calc(100% + 12px);
+  height: calc(100% + 12px);
+  filter: blur(3px);
+}
+
 .app-scrim {
   position: absolute;
   inset: 0;
