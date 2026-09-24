@@ -1,6 +1,13 @@
-import { ArrowUpDown, ChevronDown, Search, SlidersHorizontal } from '../../components/icons';
+import { SlidersHorizontal } from '../../components/icons';
 import { useState } from 'react';
-import { Drawer, Facet, FilterChip, Popover, type FacetOption } from '../../components/ui';
+import {
+  Drawer,
+  Facet,
+  FilterChip,
+  SearchField,
+  SortSelect,
+  type FacetOption,
+} from '../../components/ui';
 import type { Role } from '../../lib/api';
 import {
   INVITE_LABELS,
@@ -12,7 +19,6 @@ import {
   hasActiveFacets,
   hasAnyFilter,
   type InviteState,
-  type SortPreset,
   type StaffFilters,
 } from './model';
 
@@ -24,8 +30,6 @@ const STATUS_OPTIONS: FacetOption[] = STATUS_ORDER.map((value) => ({
 const INVITE_OPTIONS: FacetOption[] = (['activated', 'code-sent'] as InviteState[]).map(
   (value) => ({ value, label: INVITE_LABELS[value] }),
 );
-
-const SORT_OPTIONS = Object.keys(SORT_LABELS) as SortPreset[];
 
 interface ToolbarProps {
   filters: StaffFilters;
@@ -50,22 +54,19 @@ export function StaffToolbar(props: ToolbarProps) {
     : `${total} ${total === 1 ? 'служител' : 'служители'}`;
 
   return (
+    // V2 Toolbar: the filters, then the result line, 12 apart and 12 between items.
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2.5">
-        <label className="glass-control flex h-12 min-w-56 flex-1 items-center gap-3 rounded-full px-5">
-          <Search size={16} className="shrink-0 text-ink-faint" />
-          <input
-            type="search"
-            value={filters.search}
-            onChange={(e) => set('search', e.target.value)}
-            placeholder="Търси по име, имейл или телефон"
-            aria-label="Търсене в служителите"
-            className="w-full bg-transparent text-sm font-medium text-ink outline-none placeholder:text-ink-faint"
-          />
-        </label>
+      <div className="flex flex-wrap items-center gap-3">
+        <SearchField
+          value={filters.search}
+          onChange={(next) => set('search', next)}
+          placeholder="Търси по име, имейл или телефон"
+          label="Търсене в служителите"
+          className="flex-1"
+        />
 
         {/* Facets have room of their own only from md up; below that they live in the sheet. */}
-        <div className="hidden flex-wrap items-center gap-2.5 md:flex">
+        <div className="hidden flex-wrap items-center gap-3 md:flex">
           <Facet
             label="Статус"
             options={STATUS_OPTIONS}
@@ -98,7 +99,7 @@ export function StaffToolbar(props: ToolbarProps) {
         <button
           type="button"
           onClick={() => setSheetOpen(true)}
-          className={`flex h-12 items-center gap-2 rounded-full px-4 text-sm font-medium md:hidden ${
+          className={`text-body-14 flex h-12 items-center gap-2 rounded-full px-4 font-medium md:hidden ${
             facetCount(filters) > 0 ? 'glass-control-active' : 'glass-control text-ink'
           }`}
         >
@@ -108,8 +109,8 @@ export function StaffToolbar(props: ToolbarProps) {
         </button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2.5">
-        <span className="num text-sm font-medium text-ink-soft" aria-live="polite">
+      <div className="flex min-h-11 flex-wrap items-center gap-3 px-1">
+        <span className="num text-body-14 font-medium text-ink" aria-live="polite">
           {count}
         </span>
         {active.map((key) => (
@@ -121,13 +122,17 @@ export function StaffToolbar(props: ToolbarProps) {
           <button
             type="button"
             onClick={clearFacets}
-            className="text-sm font-medium text-ink-muted underline underline-offset-4 transition-colors hover:text-ink"
+            className="text-body-14 font-medium text-ink underline transition-opacity hover:opacity-80"
           >
             Изчисти
           </button>
         )}
         <div className="ml-auto">
-          <SortControl value={filters.sort} onChange={(next) => set('sort', next)} />
+          <SortSelect
+            value={filters.sort}
+            options={SORT_LABELS}
+            onChange={(next) => set('sort', next)}
+          />
         </div>
       </div>
 
@@ -138,57 +143,6 @@ export function StaffToolbar(props: ToolbarProps) {
         roleOptions={roleOptions}
       />
     </div>
-  );
-}
-
-function SortControl({
-  value,
-  onChange,
-}: {
-  value: SortPreset;
-  onChange: (next: SortPreset) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  return (
-    <Popover
-      open={open}
-      onClose={() => setOpen(false)}
-      align="right"
-      anchor={
-        <button
-          type="button"
-          aria-haspopup="listbox"
-          aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
-          className="glass-control flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-ink"
-        >
-          <ArrowUpDown size={14} className="opacity-70" />
-          <span className="truncate">{SORT_LABELS[value]}</span>
-          <ChevronDown size={14} className="opacity-70" />
-        </button>
-      }
-    >
-      <ul role="listbox" className="min-w-60">
-        {SORT_OPTIONS.map((preset) => (
-          <li key={preset}>
-            <button
-              type="button"
-              role="option"
-              aria-selected={value === preset}
-              onClick={() => {
-                onChange(preset);
-                setOpen(false);
-              }}
-              className={`w-full rounded-xl px-3 py-2 text-left text-sm transition-colors hover:bg-panel-row ${
-                value === preset ? 'font-semibold text-panel-ink' : 'font-medium text-panel-ink'
-              }`}
-            >
-              {SORT_LABELS[preset]}
-            </button>
-          </li>
-        ))}
-      </ul>
-    </Popover>
   );
 }
 

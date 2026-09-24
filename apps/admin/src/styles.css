@@ -334,12 +334,14 @@ body {
     border-radius: var(--radius-card);
   }
 
-  /* Controls: a field, the search, an inactive facet, the sort pill. */
+  /*
+   * Controls: an inactive facet, the sort pill, a ghost button. V2/Facet and
+   * V2/Sort carry the full edge and only the blur — no top highlight; the
+   * search and the fields have that (.glass-field).
+   */
   .glass-control {
     background: var(--glass-input);
-    box-shadow:
-      inset 0 0 0 1px var(--glass-edge-soft),
-      inset 0 1px 0 var(--glass-highlight);
+    box-shadow: inset 0 0 0 1px var(--glass-edge);
   }
 
   /*
@@ -354,10 +356,33 @@ body {
   }
 
   /* An active facet reads as lifted rather than recessed. */
+  /* V2/Facet Active=true and V2/Chip: selected/tag, no edge. */
   .glass-control-active {
-    background: var(--glass-segment);
+    background: var(--selected-tag);
     color: var(--text-on-solid);
-    box-shadow: inset 0 0 0 1px var(--glass-edge);
+  }
+
+  /*
+   * A table card (V2/Table): 20 / 12 / 16 of padding inside a 1 px edge, so
+   * the header starts 13 down and 21 in, as the frames measure it. Header and
+   * rows each end on their own divider.
+   */
+  .table-card {
+    padding: 13px 21px 17px;
+  }
+
+  /*
+   * Separate borders, so the divider adds its 1 px to the row as in Figma
+   * (header 40 + 1, row 64 + 1); a collapsed border would share it instead.
+   * A cell's height includes that border, hence 41 and 65 at the call sites.
+   */
+  .table-card table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .table-card :is(th, td) {
+    border-bottom: 1px solid var(--glass-divider);
   }
 
   /*

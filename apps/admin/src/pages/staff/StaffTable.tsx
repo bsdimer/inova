@@ -9,14 +9,38 @@ import { SkeletonBar } from '../../components/ui';
  * container width, and the less important columns fold away as it narrows.
  */
 const COLUMNS = [
-  { label: 'Служител', width: '20.44%', className: '', bar: 'w-3/4' },
-  { label: 'Контакт', width: '13.87%', className: 'hidden @4xl:table-cell', bar: 'w-2/3' },
-  { label: 'Статус', width: '10.22%', className: '', bar: 'w-1/2' },
-  { label: 'Роли', width: '16.42%', className: '', bar: 'w-3/4' },
-  { label: 'Обхват', width: '9.12%', className: 'hidden @4xl:table-cell', bar: 'w-2/3' },
-  { label: 'Покана', width: '17.88%', className: 'hidden @5xl:table-cell', bar: 'w-2/3' },
-  { label: 'От', width: '7.30%', className: 'hidden @5xl:table-cell', bar: 'w-1/2' },
-  { label: '', width: '4.75%', className: '', bar: 'ml-auto w-8' },
+  { label: 'Служител', width: '20.44%', className: '', col: '', bar: 'w-3/4' },
+  {
+    label: 'Контакт',
+    width: '13.87%',
+    className: 'hidden @4xl:table-cell',
+    col: 'hidden @4xl:table-column',
+    bar: 'w-2/3',
+  },
+  { label: 'Статус', width: '10.22%', className: '', col: '', bar: 'w-1/2' },
+  { label: 'Роли', width: '16.42%', className: '', col: '', bar: 'w-3/4' },
+  {
+    label: 'Обхват',
+    width: '9.12%',
+    className: 'hidden @4xl:table-cell',
+    col: 'hidden @4xl:table-column',
+    bar: 'w-2/3',
+  },
+  {
+    label: 'Покана',
+    width: '17.88%',
+    className: 'hidden @5xl:table-cell',
+    col: 'hidden @5xl:table-column',
+    bar: 'w-2/3',
+  },
+  {
+    label: 'От',
+    width: '7.30%',
+    className: 'hidden @5xl:table-cell',
+    col: 'hidden @5xl:table-column',
+    bar: 'w-1/2',
+  },
+  { label: '', width: '4.75%', className: '', col: '', bar: 'ml-auto w-8' },
 ] as const;
 
 export const COLUMN_COUNT = COLUMNS.length;
@@ -31,29 +55,23 @@ export function StaffTable({ strip, children }: { strip?: ReactNode; children: R
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
-      className="glass-data @container overflow-hidden"
+      className="glass-data table-card @container overflow-hidden"
     >
-      <table className="mx-5 w-[calc(100%-2.5rem)] table-fixed text-left">
+      <table className="w-full table-fixed text-left">
         <colgroup>
           {COLUMNS.map((column, i) => (
             // A hidden <td> still leaves its <col> holding the width, which
             // squeezes the visible cells into each other. The column has to be
             // taken out of the layout too.
-            <col
-              key={i}
-              className={column.className.replace('table-cell', 'table-column')}
-              style={{ width: column.width }}
-            />
+            // The class is spelled out rather than derived from the cell's:
+            // Tailwind only generates classes it can read in the source.
+            <col key={i} className={column.col} style={{ width: column.width }} />
           ))}
         </colgroup>
         <thead>
           <tr className="text-overline-12 font-semibold text-ink-soft uppercase">
             {COLUMNS.map((column, i) => (
-              <th
-                key={i}
-                scope="col"
-                className={`px-3 pt-5 pb-3 font-semibold ${column.className}`}
-              >
+              <th key={i} scope="col" className={`h-[41px] px-3 font-semibold ${column.className}`}>
                 {column.label}
               </th>
             ))}
@@ -78,9 +96,9 @@ export function SkeletonRows({ rows = 3 }: { rows?: number }) {
   return (
     <>
       {Array.from({ length: rows }, (_, i) => (
-        <tr key={i} className="border-t border-glass-divider">
+        <tr key={i}>
           {COLUMNS.map((column, c) => (
-            <td key={c} className={`h-16 px-3 first:pl-6 last:pr-6 ${column.className}`}>
+            <td key={c} className={`h-[65px] px-3 ${column.className}`}>
               <SkeletonBar className={column.bar} />
             </td>
           ))}
@@ -93,7 +111,7 @@ export function SkeletonRows({ rows = 3 }: { rows?: number }) {
 export function BodyMessage({ children }: { children: ReactNode }) {
   return (
     <tr>
-      <td colSpan={COLUMN_COUNT} className="border-t border-glass-divider p-0">
+      <td colSpan={COLUMN_COUNT} className="p-0">
         {children}
       </td>
     </tr>

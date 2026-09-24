@@ -89,9 +89,7 @@ export function StaffRow(props: RowProps) {
 
   return (
     <tr
-      className={`h-16 border-t border-glass-divider transition-colors ${
-        busy ? 'opacity-45' : 'hover:bg-glass-inner-soft'
-      }`}
+      className={`h-[65px] transition-colors ${busy ? 'opacity-45' : 'hover:bg-glass-inner-soft'}`}
       aria-busy={busy}
     >
       <td className={CELL}>

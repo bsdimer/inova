@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Check, Plus, Search, Sparkles } from '../components/icons';
+import { ArrowLeft, ArrowRight, Check, Sparkles } from '../components/icons';
 import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import {
@@ -8,7 +8,9 @@ import {
   Field,
   Modal,
   PrimaryButton,
+  SearchField,
   SkeletonBar,
+  SortSelect,
   StatusDot,
   panelInputClass,
   type FacetOption,
@@ -37,12 +39,20 @@ const STATUS_OPTIONS: FacetOption[] = (
   ['active', 'trial', 'suspended', 'offboarded'] as TenantStatus[]
 ).map((value) => ({ value, label: STATUS_LABELS[value] }));
 
-/** 16.09.2026 — hand-built, since bg-BG appends " г." to a formatted date. */
+/** 16.09.26, as the row draws it — hand-built, since bg-BG appends " г.". */
 function formatDate(iso: string): string {
   const d = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, '0');
-  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${pad(d.getFullYear() % 100)}`;
 }
+
+type TenantSort = 'newest' | 'name';
+
+/** The frame draws the first; «Име А–Я» is the wording Служители already uses. */
+const SORT_LABELS: Record<TenantSort, string> = {
+  newest: 'Първо последно създадените',
+  name: 'Име А–Я',
+};
 
 /** The four counters the mock-up draws; the API has none of them yet. */
 const COUNT_COLUMNS = ['Сгради', 'Имоти', 'Жители', 'Служители'] as const;
@@ -85,6 +95,7 @@ export function TenantsPage() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<string[]>([]);
+  const [sort, setSort] = useState<TenantSort>('newest');
 
   const tenants = useQuery({
     queryKey: ['platform', 'tenants'],
@@ -94,14 +105,17 @@ export function TenantsPage() {
   const all = useMemo(() => tenants.data ?? [], [tenants.data]);
   const visible = useMemo(() => {
     const needle = search.trim().toLowerCase();
-    return all.filter(
+    const matching = all.filter(
       (tenant) =>
         (needle === '' ||
           tenant.name.toLowerCase().includes(needle) ||
           tenant.key.toLowerCase().includes(needle)) &&
         (status.length === 0 || status.includes(tenant.status)),
     );
-  }, [all, search, status]);
+    return [...matching].sort((a, b) =>
+      sort === 'name' ? a.name.localeCompare(b.name, 'bg') : b.createdAt.localeCompare(a.createdAt),
+    );
+  }, [all, search, status, sort]);
 
   const summary = useMemo(() => {
     const trial = all.filter((t) => t.status === 'trial').length;
@@ -122,8 +136,9 @@ export function TenantsPage() {
   };
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    // Page head, toolbar and table stand 16 apart (V2 frames: 72 + 50 → 138, 242 → 258).
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
         <div className="min-w-0">
           <h1 className="text-title-22 font-medium">Организации</h1>
           <p className="text-body-14 mt-1 text-ink-muted">
@@ -132,37 +147,37 @@ export function TenantsPage() {
           </p>
         </div>
         <PrimaryButton onClick={() => setWizardOpen(true)}>
-          <span className="flex items-center gap-2">
-            <Plus size={16} />
-            <span>
-              Нова<span className="hidden sm:inline"> организация</span>
-            </span>
-          </span>
+          Нова<span className="hidden sm:inline"> организация</span>
         </PrimaryButton>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2.5">
-        <label className="glass-control flex h-12 min-w-56 flex-1 items-center gap-3 rounded-full px-5">
-          <Search size={16} className="shrink-0 text-ink-faint" />
-          <input
-            type="search"
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <SearchField
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={setSearch}
             placeholder="Търси организация по име или ключ"
-            aria-label="Търсене в организациите"
-            className="w-full bg-transparent text-sm font-medium text-ink outline-none placeholder:text-ink-faint"
+            label="Търсене в организациите"
+            className="flex-1"
           />
-        </label>
-        <Facet label="Статус" options={STATUS_OPTIONS} selected={status} onChange={setStatus} />
-      </div>
+          <Facet label="Статус" options={STATUS_OPTIONS} selected={status} onChange={setStatus} />
+        </div>
 
-      <p className="num text-sm font-medium text-ink-soft">{summary}</p>
+        <div className="flex min-h-11 flex-wrap items-center gap-3 px-1">
+          <p className="num text-body-14 font-medium text-ink" aria-live="polite">
+            {summary}
+          </p>
+          <div className="ml-auto">
+            <SortSelect value={sort} options={SORT_LABELS} onChange={setSort} />
+          </div>
+        </div>
+      </div>
 
       <motion.div
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
-        className="glass-data overflow-hidden"
+        className="glass-data table-card overflow-hidden"
       >
         {/*
           Columns are the contract of `V2/Table · Row · Organization`
@@ -171,7 +186,7 @@ export function TenantsPage() {
           resident or staff counters. The columns are drawn, so they stay —
           each one shows «—» rather than a number nobody measured.
         */}
-        <table className="mx-5 w-[calc(100%-2.5rem)] table-fixed text-left">
+        <table className="w-full table-fixed text-left">
           {/*
             A hidden <td> still leaves its <col> holding the width, so the
             column has to leave the layout with the cells it belongs to.
@@ -188,32 +203,32 @@ export function TenantsPage() {
           </colgroup>
           <thead>
             <tr className="text-overline-12 text-ink-soft uppercase">
-              <th scope="col" className="px-3 pt-5 pb-3 font-semibold">
+              <th scope="col" className="h-[41px] px-3 font-semibold">
                 Организация
               </th>
               {COUNT_COLUMNS.map((label) => (
                 <th
                   key={label}
                   scope="col"
-                  className="hidden px-3 pt-5 pb-3 text-right font-semibold lg:table-cell"
+                  className="hidden h-[41px] px-3 text-right font-semibold lg:table-cell"
                 >
                   {label}
                 </th>
               ))}
-              <th scope="col" className="px-3 pt-5 pb-3 font-semibold">
+              <th scope="col" className="h-[41px] px-3 font-semibold">
                 Статус
               </th>
-              <th scope="col" className="hidden px-3 pt-5 pb-3 font-semibold sm:table-cell">
+              <th scope="col" className="hidden h-[41px] px-3 font-semibold sm:table-cell">
                 Създадена
               </th>
-              <th scope="col" className="px-3 pt-5 pb-3" />
+              <th scope="col" className="h-[41px] px-3" />
             </tr>
           </thead>
           <tbody>
             {tenants.isLoading &&
               Array.from({ length: 3 }, (_, i) => (
-                <tr key={i} className="border-t border-glass-divider">
-                  <td className="h-16 px-3">
+                <tr key={i}>
+                  <td className="h-[65px] px-3">
                     <SkeletonBar className="w-2/3" />
                   </td>
                   {COUNT_COLUMNS.map((label) => (
@@ -234,10 +249,7 @@ export function TenantsPage() {
               ))}
 
             {visible.map((tenant) => (
-              <tr
-                key={tenant.id}
-                className="h-16 border-t border-glass-divider transition-colors hover:bg-glass-inner-soft"
-              >
+              <tr key={tenant.id} className="h-[65px] transition-colors hover:bg-glass-inner-soft">
                 <td className="px-3 align-middle">
                   <div className="flex items-center gap-3">
                     <OrgTile name={tenant.name} />
@@ -277,7 +289,7 @@ export function TenantsPage() {
                     <button
                       type="button"
                       onClick={() => enter(tenant)}
-                      className="text-body-13 flex h-8 items-center gap-1.5 rounded-full px-3 font-medium text-ink"
+                      className="glass-blur text-body-13 flex h-8 items-center gap-1.5 rounded-full px-3 font-medium text-ink"
                       style={{
                         background: 'var(--glass-inner)',
                         boxShadow: 'inset 0 0 0 1px var(--glass-edge)',
@@ -291,7 +303,7 @@ export function TenantsPage() {
             ))}
 
             {!tenants.isLoading && visible.length === 0 && (
-              <tr className="border-t border-glass-divider">
+              <tr>
                 <td colSpan={8} className="text-body-14 px-6 py-12 text-center text-ink-muted">
                   Няма организации по тези филтри.
                 </td>

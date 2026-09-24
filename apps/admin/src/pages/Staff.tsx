@@ -179,8 +179,9 @@ export function StaffPage() {
   });
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    // Page head, toolbar and table stand 16 apart (V2 frames: 72 + 50 → 138, 242 → 258).
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
         <div className="min-w-0">
           <h1 className="text-title-22 font-medium">Служители</h1>
           <p className="text-body-14 mt-1 text-ink-muted">
@@ -189,12 +190,7 @@ export function StaffPage() {
         </div>
         {canManage && (
           <PrimaryButton onClick={() => setInviteOpen(true)}>
-            <span className="flex items-center gap-2">
-              <MailPlus size={16} />
-              <span>
-                Покани<span className="hidden sm:inline"> служител</span>
-              </span>
-            </span>
+            Покани<span className="hidden sm:inline"> служител</span>
           </PrimaryButton>
         )}
       </div>

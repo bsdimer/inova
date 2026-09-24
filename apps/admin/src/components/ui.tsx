@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { Check, ChevronDown, X } from './icons';
+import { ArrowUpDown, Check, ChevronDown, Search, X } from './icons';
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -55,7 +55,8 @@ export function PrimaryButton({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className="cta text-body-14 px-5 py-2.5 font-semibold transition-opacity disabled:opacity-45"
+      // V2/Button Kind=Primary (846:130): 44 tall, 28 either side.
+      className="cta text-body-14 h-11 px-7 font-semibold transition-opacity disabled:opacity-45"
     >
       {children}
     </button>
@@ -203,26 +204,103 @@ export function Chip({ children, muted = false }: { children: ReactNode; muted?:
   );
 }
 
-/** Active-filter pill: says what it filters and how to drop it. */
+/** V2/Chip Kind=filter (868:297): says what it filters and how to drop it. */
 export function FilterChip({ children, onClear }: { children: ReactNode; onClear: () => void }) {
   return (
-    <span
-      className="inline-flex items-center gap-1.5 rounded-full py-1 pr-1.5 pl-3 text-xs font-medium whitespace-nowrap text-ink-soft"
-      style={{
-        background: 'var(--glass-chip)',
-        boxShadow: 'inset 0 0 0 1px var(--glass-edge-soft)',
-      }}
-    >
+    <span className="glass-control-active text-label-12 inline-flex items-center gap-1 rounded-full py-1.5 pr-2 pl-3 font-semibold whitespace-nowrap">
       {children}
       <button
         type="button"
         onClick={onClear}
         aria-label="Премахни филтъра"
-        className="rounded-full p-0.5 text-ink-muted transition-colors hover:text-ink"
+        className="rounded-full transition-opacity hover:opacity-70"
       >
-        <X size={12} />
+        <X size={14} />
       </button>
     </span>
+  );
+}
+
+/** V2/Search (846:293): the list search above a table. */
+export function SearchField({
+  value,
+  onChange,
+  placeholder,
+  label,
+  className = '',
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  placeholder: string;
+  label: string;
+  className?: string;
+}) {
+  return (
+    <label className={`glass-field flex h-12 min-w-56 items-center gap-2.5 px-4 ${className}`}>
+      <Search size={20} className="shrink-0 text-ink-muted" />
+      <input
+        type="search"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        aria-label={label}
+        className="text-body-14 w-full min-w-0 bg-transparent text-ink outline-none placeholder:text-ink-muted"
+      />
+    </label>
+  );
+}
+
+/** V2/Sort (868:324): the sort preset of a list, one of a few named orders. */
+export function SortSelect<T extends string>({
+  value,
+  options,
+  onChange,
+}: {
+  value: T;
+  options: Record<T, string>;
+  onChange: (next: T) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Popover
+      open={open}
+      onClose={() => setOpen(false)}
+      align="right"
+      anchor={
+        <button
+          type="button"
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+          className="glass-control text-body-14 flex h-11 items-center gap-2 rounded-full px-3.5 font-medium text-ink"
+        >
+          <ArrowUpDown size={16} className="shrink-0" />
+          <span className="truncate">{options[value]}</span>
+          <ChevronDown size={16} className="shrink-0" />
+        </button>
+      }
+    >
+      <ul role="listbox" className="min-w-60">
+        {(Object.keys(options) as T[]).map((preset) => (
+          <li key={preset}>
+            <button
+              type="button"
+              role="option"
+              aria-selected={value === preset}
+              onClick={() => {
+                onChange(preset);
+                setOpen(false);
+              }}
+              className={`w-full rounded-xl px-3 py-2 text-left text-sm text-panel-ink transition-colors hover:bg-panel-row ${
+                value === preset ? 'font-semibold' : 'font-medium'
+              }`}
+            >
+              {options[preset]}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </Popover>
   );
 }
 
@@ -362,13 +440,14 @@ export function Facet({
           aria-haspopup="listbox"
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
-          className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-opacity disabled:cursor-not-allowed disabled:opacity-40 ${
+          // V2/Facet (867:338): 44 tall, the edge drawn inside; active turns
+          // light and names nothing more — the chips below say what is chosen.
+          className={`text-body-14 flex h-11 items-center gap-1.5 rounded-full pr-3.5 pl-4 font-medium whitespace-nowrap transition-opacity disabled:cursor-not-allowed disabled:opacity-40 ${
             active ? 'glass-control-active' : 'glass-control text-ink'
           }`}
         >
           {label}
-          {active && <span className="num text-xs opacity-70">{selected.length}</span>}
-          <ChevronDown size={14} className="opacity-70" />
+          <ChevronDown size={16} className="shrink-0" />
         </button>
       }
     >
