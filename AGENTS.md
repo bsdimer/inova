@@ -38,7 +38,10 @@ platform's own "inova" brand.
    (`pnpm check:worklog` enforces the shape, the issue and the length). The long form — what, why, how it was
    verified — belongs in the PR description and the commit message, not here:
    the work-log is the index of change sets, the PR is the record.
-5. Keep Next up accurate.
+5. Keep Next up accurate. If an instruction, a doc or a tool got in the way
+   and you worked around it, write it down in the PR — problem, consequence,
+   smallest fix, one line each — and point to it from **Remains**. A silent
+   workaround hides a broken harness.
 6. Check the Linear issue moved to **In Review** when the PR opened and to
    **Done** after the merge into `develop`; set it by hand only if it did not.
 
@@ -146,6 +149,9 @@ If port 4000 is taken: `API_PORT=4100`.
 - Animations: Reanimated (mobile), framer-motion (admin). CTAs slide up;
   pressables use `PressableScale`.
 - Keep user-facing strings extractable for `packages/i18n` (bg/en).
+- One concept, one name — the same word in Figma, code, docs and the UI
+  («Входни такси», not «Такси» here and «Начисления» there). An ambiguous
+  word gets refined, not reused.
 
 For larger frontend work, read and follow the canonical
 [`inova-frontend`](.cursor/skills/inova-frontend/SKILL.md) workflow. Cursor may
@@ -194,7 +200,9 @@ done, and a change whose tests were not run is not verified.
 - **Frontend:** follow the `inova-frontend` skill's `references/testing.md`.
   Admin and mobile have no test runner yet, so put pure logic that deserves a
   test (formatting, display math, schemas) in `packages/shared`, and record
-  manual flow/visual QA in the work-log entry.
+  manual flow/visual QA in the work-log entry. A changed admin or mobile
+  screen is not done without a screenshot of the rendered result in the PR,
+  taken by the agent from the preview or simulator — never "please check".
 - Never skip, weaken or delete a test to get green. Report the real output.
 
 ## Closing a phase
