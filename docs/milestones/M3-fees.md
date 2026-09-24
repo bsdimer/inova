@@ -21,8 +21,13 @@ charges; `currency` on money columns.
 ## Backend
 
 - Building assessment basis configured during setup: `fixed`, `per_area`,
-  `per_occupant`, `per_ideal_part`, with room for later bases.
-- Fee-rule CRUD with effective dating/versioning.
+  `per_occupant`, `per_ideal_part`, `per_room`, with room for later bases.
+- Fee-rule CRUD with effective dating/versioning. Two kinds (D26): a
+  **fixed** rule charges every month; a **temporary** rule carries
+  `valid_from` / `valid_to` and charges only the periods it covers. Its scope
+  is one of: chosen properties (a stored list of property ids, any type — the
+  screen picks them by search with chips), an entrance, the whole building, or
+  a property type (`apartment`, `garage`, `shop`, `storage`).
 - Fee-generation job (BullMQ, tenant TZ, idempotent on
   `(rule_version, apartment, period)`), using the residents/pets/ideal parts
   effective for the applicable period.
@@ -30,14 +35,23 @@ charges; `currency` on money columns.
 
 ## Admin / mobile
 
-Building assessment setup, rule builder, charge list, dry-run preview. Mobile:
-obligations + IBAN / payment reference with copy.
+Building assessment setup; the building screen **Входни такси** with three
+sections — **Фиксирани разходи** (rule list, with the rule-change history at
+its foot), **Временни разходи** (rule list) and **Входни такси · <месец>** (the
+month's charges per property) — and a dry-run preview (D26). On the phone
+each section is one glass card. «Такса» names only такса Домоуправление.
+**Плащания** is the name for payments to outside firms and contractors when
+such a section appears — none is drawn today, expenses stay P1. Mobile: obligations +
+IBAN / payment reference with copy.
 
 ## Required tests (future release blockers)
 
 - Golden-file financial tests (building basis × effective-dated population ×
   apartment → expected charges).
 - No-proration boundary (mid-month change applies next period).
+- `per_room` basis, a property-type-scoped and a chosen-properties temporary
+  rule in the golden files; a temporary rule charges nothing outside
+  `valid_from` / `valid_to` and nothing to a property outside its list.
 - Idempotent re-run of generation; timezone boundary (`Europe/Sofia`).
 
 ## Acceptance

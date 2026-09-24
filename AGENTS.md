@@ -5,44 +5,6 @@ Technology for property-management companies: NestJS backend services, React
 admin panel, Expo resident app, PostgreSQL. Bulgarian pilot under the
 platform's own "inova" brand.
 
-## Session ritual (every task)
-
-**Start**
-
-1. Read this file.
-2. Read [docs/current.md](docs/current.md) — the only living status document.
-3. Start with **one** relevant extra file: a milestone under `docs/milestones/`,
-   a plan topic under `docs/plan/`, an ADR under `docs/decisions/`, the linked feature brief under
-   `docs/features/`, or the frontend skill (see below). Load a linked reference
-   later only when the task stage needs it.
-4. Check `git status`.
-5. State the task's acceptance criteria before editing, and which tests will
-   prove them (see [Testing](#testing)).
-6. Create the task's Linear issue and set it **In Progress** (see
-   [Tracking in Linear](#tracking-in-linear)). Never before this point, never
-   for work you are not starting.
-
-**Finish**
-
-1. Run `pnpm verify` (the executable Definition of Done).
-2. Confirm no secrets and no unmarked mocks (`TODO(M<n>)` or `MOCK`).
-3. Update [docs/current.md](docs/current.md) only when what works, blockers, or
-   Next up actually changed.
-4. Add one entry to `docs/work-log/YYYY-MM.md` in the checked shape:
-   `## YYYY-MM-DD — title (#PR)`, then **Changed:**, **Verified:** and
-   **Remains:**, one or two sentences each, **at most 700 characters in all**
-   (`pnpm check:worklog` enforces it). The long form — what, why, how it was
-   verified — belongs in the PR description and the commit message, not here:
-   the work-log is the index of change sets, the PR is the record.
-5. Keep Next up accurate.
-6. Move the Linear issue to **In Review** when the PR opens (with the PR as a
-   link on the issue) and to **Done** once it merges into `develop`.
-
-The implementation plan is split: [docs/implementation-plan.md](docs/implementation-plan.md)
-is a short index, topics live in `docs/plan/`, phases in `docs/milestones/`. Load
-only the one file the task needs — never the whole set — and skip old status
-files. Index: [docs/README.md](docs/README.md).
-
 ## Non-negotiable working rules
 
 1. **Never commit secrets.** No signing keys, APNs keys, Stripe keys, service
@@ -55,9 +17,66 @@ files. Index: [docs/README.md](docs/README.md).
 5. Do not re-litigate items marked RESOLVED/Decided in
    [docs/plan/decisions.md](docs/plan/decisions.md) or
    [docs/architecture.md](docs/architecture.md).
-6. **A phase closes only on green tests.** No milestone is marked Done —
-   in its file, in `docs/current.md`, in a commit or a PR — until the tests it
-   requires exist and pass. See [Closing a phase](#closing-a-phase).
+6. **A phase closes only on green tests** — see [Closing a phase](#closing-a-phase).
+
+## Architecture invariants (do not violate)
+
+- **Tenant isolation:** every tenant-owned table has `tenant_id` as the _leading_
+  column of its primary key and tenant-scoped indexes; audited identity-scope
+  lookup indexes may lead with their global lookup key. RLS on all such tables;
+  the app DB role never bypasses RLS. Client-supplied brand/bundle/tenant config
+  is **never** an authorization input — only authenticated membership (JWT
+  verified server-side, DB re-check for sensitive operations).
+- **Money:** integer minor units in code (`Money` in `packages/shared`), decimal
+  strings / `NUMERIC(14,2)` at rest, explicit `currency` column. **No floats.**
+- **Financial records are append-only:** corrections via reversal/credit-note
+  rows, never UPDATE/DELETE.
+- **Idempotency:** money-creating POSTs take an `Idempotency-Key`; webhooks
+  dedupe on `(provider, provider_event_id)`.
+- **Services:** auth-service owns identity; core-api verifies JWTs via JWKS
+  locally; async side effects go through the worker via BullMQ, never inline in
+  request handlers.
+- **Migrations are plain SQL** (RLS, triggers, partitioning are hand-written).
+
+## Session ritual (every task)
+
+**Start**
+
+1. Read this file.
+2. Read [docs/current.md](docs/current.md) — the only living status document.
+3. Start with **one** relevant extra file: a milestone under `docs/milestones/`,
+   a plan topic under `docs/plan/`, an ADR under `docs/decisions/`, the linked feature brief under
+   `docs/features/`, or the frontend skill (see below). Load a linked reference
+   later only when the task stage needs it; never the whole plan. Index:
+   [docs/README.md](docs/README.md).
+4. Check `git status`.
+5. State the task's acceptance criteria before editing, and which tests will
+   prove them (see [Testing](#testing)).
+6. Create the task's Linear issue and set it **In Progress** (see
+   [Tracking in Linear](#tracking-in-linear)). Never before this point, never
+   for work you are not starting.
+
+**Finish**
+
+1. Run `pnpm verify` — the Definition of Done: format check, lint, typecheck,
+   unit and integration tests, architecture contracts, build. Finishing a
+   task is not closing a phase (see [Closing a phase](#closing-a-phase)).
+2. Confirm no secrets, no unmarked mocks (`TODO(M<n>)` or `MOCK`), no
+   commented-out code and no unrelated refactors.
+3. Update [docs/current.md](docs/current.md) only when what works, blockers, or
+   Next up actually changed.
+4. Add one entry to `docs/work-log/YYYY-MM.md` in the checked shape:
+   `## YYYY-MM-DD — title (#PR, WHI-nn)`, then **Changed:**, **Verified:** and
+   **Remains:**, one or two sentences each, **at most 700 characters in all**
+   (`pnpm check:worklog` enforces the shape, the issue and the length). The long form — what, why, how it was
+   verified — belongs in the PR description and the commit message, not here:
+   the work-log is the index of change sets, the PR is the record.
+5. Keep Next up accurate. If an instruction, a doc or a tool got in the way
+   and you worked around it, write it down in the PR — problem, consequence,
+   smallest fix, one line each — and point to it from **Remains**. A silent
+   workaround hides a broken harness.
+6. Check the Linear issue moved to **In Review** when the PR opened and to
+   **Done** after the merge into `develop`; set it by hand only if it did not.
 
 ## Branching and environments (GitFlow)
 
@@ -81,31 +100,12 @@ files. Index: [docs/README.md](docs/README.md).
   point builds at `https://test-portal.whitenova.tech/auth/v1` with
   `EXPO_PUBLIC_AUTH_URL`.
 
-## Architecture invariants (do not violate)
-
-- **Tenant isolation:** every tenant-owned table has `tenant_id` as the _leading_
-  column of its primary key and tenant-scoped indexes; audited identity-scope
-  lookup indexes may lead with their global lookup key. RLS on all such tables;
-  the app DB role never bypasses RLS. Client-supplied brand/bundle/tenant config
-  is **never** an authorization input — only authenticated membership (JWT
-  verified server-side, DB re-check for sensitive operations).
-- **Money:** integer minor units in code (`Money` in `packages/shared`), decimal
-  strings / `NUMERIC(14,2)` at rest, explicit `currency` column. **No floats.**
-- **Financial records are append-only:** corrections via reversal/credit-note
-  rows, never UPDATE/DELETE.
-- **Idempotency:** money-creating POSTs take an `Idempotency-Key`; webhooks
-  dedupe on `(provider, provider_event_id)`.
-- **Services:** auth-service owns identity; core-api verifies JWTs via JWKS
-  locally; async side effects go through the worker via BullMQ, never inline in
-  request handlers.
-- **Migrations are plain SQL** (RLS, triggers, partitioning are hand-written).
-
 ## Repository layout
 
 ```
 apps/auth-service   NestJS identity (port 4001) — JWT + JWKS, memberships
 apps/api            NestJS core API (port 4000) — domain modules under src/modules/
-apps/worker         (from M1) BullMQ jobs — reuses api modules
+apps/worker         planned before M3: BullMQ jobs, reuses api modules
 apps/admin          React 19 + Vite + Tailwind 4 + TanStack Router/Query
 apps/mobile         Expo (SDK 57) + expo-router + Reanimated 4
 packages/shared     Money, Zod schemas, shared types (build before dependents)
@@ -147,6 +147,9 @@ If port 4000 is taken: `API_PORT=4100`.
 - Animations: Reanimated (mobile), framer-motion (admin). CTAs slide up;
   pressables use `PressableScale`.
 - Keep user-facing strings extractable for `packages/i18n` (bg/en).
+- One concept, one name — the same word in Figma, code, docs and the UI
+  («Входни такси», not «Такси» here and «Начисления» there). An ambiguous
+  word gets refined, not reused.
 
 For larger frontend work, read and follow the canonical
 [`inova-frontend`](.cursor/skills/inova-frontend/SKILL.md) workflow. Cursor may
@@ -180,8 +183,7 @@ done, and a change whose tests were not run is not verified.
   invalid input, and a cross-tenant case added to the tenant-isolation suite.
   **New tenant-owned table:** the schema contract test must pass unchanged.
 - **Money:** unit tests on the arithmetic (`Money`, never floats), integration
-  tests for append-only and `Idempotency-Key` behaviour. Finance,
-  tenant-isolation and auth suites are release blockers (rule 4).
+  tests for append-only and `Idempotency-Key` behaviour.
 - Test through the public surface — a service method, an HTTP route — not
   private internals. Cover the failure modes that really occur: empty result,
   duplicate/retry, malformed payload, upstream timeout or 4xx/5xx.
@@ -196,7 +198,10 @@ done, and a change whose tests were not run is not verified.
 - **Frontend:** follow the `inova-frontend` skill's `references/testing.md`.
   Admin and mobile have no test runner yet, so put pure logic that deserves a
   test (formatting, display math, schemas) in `packages/shared`, and record
-  manual flow/visual QA in the work-log entry.
+  manual flow/visual QA in the work-log entry. A changed admin or mobile
+  screen is not done without a screenshot of the rendered result in the PR,
+  taken by the agent from the preview, the simulator or a Playwright run once
+  admin has one — never "please check".
 - Never skip, weaken or delete a test to get green. Report the real output.
 
 ## Closing a phase
@@ -242,46 +247,42 @@ issue is written for those readers.
   that change nothing get no issue.
 - **Title:** what the reader gains, in plain words. "Residents can recover a
   forgotten password by email or phone", not "add POST /auth/recovery".
-- **Description**, three short parts, no jargon:
+- **Description**, four short parts, no jargon:
   - **What changes for the product** — two to four sentences.
   - **Why now** — one or two sentences.
+  - **Done when** — two to four checks the stakeholder can run without
+    reading code: "a resident gets the code by SMS and signs in", "a third
+    wrong code starts a wait". These are the acceptance criteria stated at
+    Start step 5; the PR is reviewed against them. Design issues skip this.
   - **Plan reference** — the exact file and section the work implements:
     `docs/plan/security.md §6.1`, `docs/milestones/M1-identity.md → Account
 recovery`, a feature brief, or decision ids such as B13 or D19, linked to
     the file on GitHub (`https://github.com/bsdimer/inova/blob/develop/…`).
   - No file paths, commands, table names or acronyms outside that last line.
-    The technical detail belongs in the PR description.
+    The technical detail — routes, tables, tests — belongs in the PR
+    description, not in the issue.
 - **Fields:** project `inova`. Phase work goes under the milestone named after
   its phase file (`M1 — Identity`, `M2 — Property`, …) — create it when it is
   missing; plan and harness work has no milestone. Label `Feature` for a new
   capability, `Improvement` for plan, harness and refactoring work, `Bug` for a
   defect in running code. Assignee: the person running the session.
-- **Status:** `In Progress` on creation → `In Review` when the PR opens (add
-  the PR as a link on the issue; put `Linear: WHI-nn` as the first line of the
-  PR body) → `Done` when the PR merges into `develop` → `Canceled`, with a
-  comment saying why, if the work is dropped. Never `Done` before the merge,
+- **Status:** `In Progress` on creation → `In Review` when the PR opens →
+  `Done` when the PR merges into `develop` → `Canceled`, with a comment saying
+  why, if the work is dropped. The GitHub integration makes the In Review and
+  Done moves from the `Closes` line; set them by hand only when it did not. Never `Done` before the merge,
   and never `Done` for a phase before [Closing a phase](#closing-a-phase)
   holds.
-- **Cross-references:** work-log heading `## YYYY-MM-DD — title (#PR, WHI-nn)`.
+- **Cross-references:** work-log heading `## YYYY-MM-DD — title (#PR, WHI-nn)`,
+  or `(WHI-nn)` before the PR exists; `pnpm check:worklog` rejects an entry
+  without the issue. The PR body starts with `Closes WHI-nn` — the template
+  has the line, CI fails the PR without it, and Linear reads it to link the PR
+  and move the issue to In Review on open and Done on merge.
 - **Design issues** carry `Design`. They are written in Bulgarian for the
   stakeholder, have no PR, and close when the decision they settle lands in
-  [docs/plan/decisions.md](docs/plan/decisions.md). Technical anchors — phase
-  ids, paths, token names — stay English.
-
-## Definition of done
-
-`pnpm verify` is green. That runs format check, lint, typecheck, unit tests,
-integration tests, architecture contracts, and build. Also:
-
-1. New or changed logic has unit and/or integration tests in the same change,
-   per [Testing](#testing); finance, isolation and auth suites stay green.
-   Finishing a task is not closing a phase — that needs [Closing a phase](#closing-a-phase).
-2. Mocks/stubs are marked `TODO(M<n>)` or `MOCK`.
-3. `docs/current.md` is updated when living state changed; the monthly work-log
-   has one entry in the checked shape (Finish step 4) for the change set.
-4. No secrets, no commented-out code, no unrelated refactors.
-5. The change set's Linear issue exists, links the PR, and is `Done` after the
-   merge ([Tracking in Linear](#tracking-in-linear)).
+  [docs/plan/decisions.md](docs/plan/decisions.md): a comment on the issue
+  names the decision id (`Решено → D26`) and the PR that carries it, and the
+  PR's issue lists what it settles, so either side leads to the other.
+  Technical anchors — phase ids, paths, token names — stay English.
 
 ## Where to read more
 

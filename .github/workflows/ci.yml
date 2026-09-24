@@ -40,6 +40,19 @@ jobs:
       - run: pnpm check:routes
       - run: pnpm check:agent-harness
       - run: pnpm check:worklog
+      # Every PR names its Linear issue on the first line (AGENTS.md → Tracking
+      # in Linear). "Closes" is the word Linear reads to link the PR to the
+      # issue and move it on open and merge; the PR template starts with it.
+      - name: PR names its Linear issue
+        if: github.event_name == 'pull_request'
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          first_line="$(printf '%s\n' "$PR_BODY" | head -n 1 | tr -d '\r')"
+          if ! printf '%s' "$first_line" | grep -Eq '^Closes WHI-[0-9]+$'; then
+            echo "The PR body must start with 'Closes WHI-nn' (got: '$first_line')."
+            exit 1
+          fi
 
   unit:
     name: unit
