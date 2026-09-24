@@ -91,8 +91,13 @@ export class AuthService {
         .where(sql`lower(${users.email}) = lower(${email})`);
 
       const storedHash = user?.status === 'active' ? user.passwordHash : null;
-      const valid = storedHash !== null && (await this.passwords.verify(storedHash, password));
-      if (!valid) {
+      // Verify even without a usable hash: skipping argon2 would answer an
+      // unknown or inactive account faster than a wrong password (B13–B15).
+      const matches = await this.passwords.verify(
+        storedHash ?? PasswordHasher.DUMMY_HASH,
+        password,
+      );
+      if (!user || storedHash === null || !matches) {
         throw new UnauthorizedException('Invalid credentials');
       }
       // Legacy bcrypt hashes (and weaker argon2 parameters) are upgraded on
