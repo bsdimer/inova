@@ -28,6 +28,8 @@ Tasks section (list + create/edit form), reached from a **"Задачи" item in
 
 Recurrence, reminders/push to the assignee, entries derived from other modules (issue planned date, survey closing, fee-generation day), resident-visible events. A general-assembly event becomes resident-facing only through a notice.
 
+**Scope change (D23, 2026-09-24):** contractor visits (cleaning, technician) become resident-visible calendar entries before the pilot. Who enters them and what residents see is open — [decisions.md](../plan/decisions.md) Still open, item 12. Staff tasks stay staff-only.
+
 ## Tests
 
 Tenant-isolation suite + schema contract on `tasks`; building-scope visibility; complete/reopen round-trip with `completed_by`; timezone boundary (23:30 Europe/Sofia lands on the right day); calendar counts vs list.

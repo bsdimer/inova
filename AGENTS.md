@@ -262,7 +262,9 @@ recovery`, a feature brief, or decision ids such as B13 or D19, linked to
   comment saying why, if the work is dropped. Never `Done` before the merge,
   and never `Done` for a phase before [Closing a phase](#closing-a-phase)
   holds.
-- **Cross-references:** work-log heading `## YYYY-MM-DD — title (#PR, WHI-nn)`.
+- **Cross-references:** work-log heading `## YYYY-MM-DD — title (#PR, WHI-nn)`,
+  or `(WHI-nn)` before the PR exists; `pnpm check:worklog` rejects an entry
+  without the issue. The PR template opens with the `Linear: WHI-` line.
 - **Design issues** carry `Design`. They are written in Bulgarian for the
   stakeholder, have no PR, and close when the decision they settle lands in
   [docs/plan/decisions.md](docs/plan/decisions.md). Technical anchors — phase
