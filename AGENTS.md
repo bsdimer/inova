@@ -132,11 +132,13 @@ If port 4000 is taken: `API_PORT=4100`.
 
 ## UI conventions
 
-- Colors/gradients come from brand tokens — mobile:
-  `apps/mobile/src/theme/tokens.ts` (mirror of `brands/inova/brand.json`);
-  admin: Tailwind `@theme` in `apps/admin/src/styles.css`. No hardcoded hex in
-  screens. Palette: Santiago Orange `#EB5E28`, cold foam `#EFECE3`, gold black
-  `#1D1D1F`, warm dark `#2C2324`, landmark `#766754`, stone `#A79D90`.
+- Colors/gradients come from tokens, never hardcoded hex in screens. Mobile:
+  `apps/mobile/src/theme/tokens.ts` (mirror of `brands/inova/brand.json`;
+  palette Santiago Orange `#EB5E28`, cold foam `#EFECE3`, gold black
+  `#1D1D1F`, warm dark `#2C2324`, landmark `#766754`, stone `#A79D90`).
+  Admin: the V2 glass tokens in `apps/admin/src/styles.css`, generated from
+  the Figma variables; the rules the frames do not show are in
+  [docs/design.md](docs/design.md).
 - Mobile widths: `rs(wide, narrow)` from `src/theme/responsive.ts`. `wide` is
   the 402pt (iPhone 17) size, `narrow` is the 375pt size. The helper
   interpolates between them and scales outside that range (clamped), so do
@@ -144,8 +146,8 @@ If port 4000 is taken: `API_PORT=4100`.
   second width check.
 - Android is first-class: `elevation` plus iOS shadows; Platform-guard iOS-only APIs.
 - Light and dark via `useTheme()`; no raw `StyleSheet` colors.
-- Animations: Reanimated (mobile), framer-motion (admin). CTAs slide up;
-  pressables use `PressableScale`.
+- Animations: Reanimated (mobile), framer-motion (admin). Mobile CTAs slide
+  up; pressables use `PressableScale`.
 - Keep user-facing strings extractable for `packages/i18n` (bg/en).
 - One concept, one name — the same word in Figma, code, docs and the UI
   («Входни такси», not «Такси» here and «Начисления» there). An ambiguous
@@ -290,14 +292,15 @@ recovery`, a feature brief, or decision ids such as B13 or D19, linked to
 
 ## Where to read more
 
-| Need                               | File                                                       |
-| ---------------------------------- | ---------------------------------------------------------- |
-| Living status, Next up             | [docs/current.md](docs/current.md)                         |
-| Architecture + decided trade-offs  | [docs/architecture.md](docs/architecture.md)               |
-| Plan index + section (§) map       | [docs/implementation-plan.md](docs/implementation-plan.md) |
-| Stakeholder decisions, assumptions | [docs/plan/decisions.md](docs/plan/decisions.md)           |
-| Domain, data model, API, security  | [docs/plan/](docs/plan/)                                   |
-| Milestone scope + acceptance       | [docs/milestones/](docs/milestones/)                       |
-| Session history                    | [docs/work-log/](docs/work-log/)                           |
-| Feature scope + acceptance         | [docs/features/](docs/features/)                           |
-| Frontend workflow                  | `.cursor/skills/inova-frontend/SKILL.md`                   |
+| Need                                 | File                                                       |
+| ------------------------------------ | ---------------------------------------------------------- |
+| Living status, Next up               | [docs/current.md](docs/current.md)                         |
+| Architecture + decided trade-offs    | [docs/architecture.md](docs/architecture.md)               |
+| Plan index + section (§) map         | [docs/implementation-plan.md](docs/implementation-plan.md) |
+| Stakeholder decisions, assumptions   | [docs/plan/decisions.md](docs/plan/decisions.md)           |
+| Domain, data model, API, security    | [docs/plan/](docs/plan/)                                   |
+| Milestone scope + acceptance         | [docs/milestones/](docs/milestones/)                       |
+| Session history                      | [docs/work-log/](docs/work-log/)                           |
+| Feature scope + acceptance           | [docs/features/](docs/features/)                           |
+| Frontend workflow                    | `.cursor/skills/inova-frontend/SKILL.md`                   |
+| Admin design rules beyond the frames | [docs/design.md](docs/design.md)                           |

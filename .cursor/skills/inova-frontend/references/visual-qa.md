@@ -5,7 +5,8 @@
 - Check the other routes that share the state you touched (tenant switcher,
   session, query cache).
 - Empty, error, and loading states — not only the happy path.
-- Desktop and a narrow viewport if layout changed.
+- Admin at the design widths 1728, 1280, 1024 and 402 if layout changed,
+  light and dark.
 - Mobile: light and dark; iOS and Android back. If a simulator is not
   available, say what you could not verify.
 - Confirm no hardcoded hex landed on the screen.

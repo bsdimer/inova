@@ -13,6 +13,7 @@ One source of truth per kind of information. New sessions read
 | Milestone / phase scope      | [milestones/](milestones/)                            | Working on that milestone                                                    |
 | Session history              | [work-log/](work-log/)                                | Index of change sets; the PR holds the detail                                |
 | Stakeholder view of the work | Linear, project `inova` (workspace `white-label-app`) | Plain-language task per change set; rule in `AGENTS.md` → Tracking in Linear |
+| Admin design rules           | [design.md](design.md)                                | Building or checking an admin screen: windows, tables, glass in CSS          |
 | Feature scope + acceptance   | [features/](features/)                                | Medium or large feature work                                                 |
 | ADRs                         | [decisions/](decisions/)                              | When an ADR exists for the topic                                             |
 
