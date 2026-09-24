@@ -56,7 +56,12 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
   is real. A local-only «design data» preview (`?fixture=design`, dev server
   and the browser-test build) fills the cards with the numbers of Figma
   859:1073 to check the layout; the deployed build carries none of it
-  (`check:no-design-data`).
+  (`check:no-design-data`). The shell and Табло follow the responsive ladder
+  (Figma 1074:9754): the full sidebar from 1728, a 72 rail that opens in place
+  at 1536–1727 and over the page at 1024–1535, a top bar with a drawer below
+  1024; Табло recomposes at 1024, 768 and on a phone, fits a 960–1116 tall
+  window, and from 2400 is drawn ×1.25. Menu items have their hover and
+  keyboard-focus look, the rail its tooltips.
   Contract for the full Табло: [features/admin-dashboard.md](features/admin-dashboard.md);
   it added M2b (unified search) and M11 (staff tasks/calendar) to the plan and
   extended M6 (issue priority), M7 (debtors audience, unread count) and M9.
@@ -84,7 +89,7 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
 | `apps/auth-service` PasswordHasher              | 7     | `unit`             |
 | `apps/auth-service` AuthService login failures  | 5     | `unit`             |
 
-Browser (Playwright, `apps/admin/e2e`, CI job `e2e`): 23 — sign-in 7, Табло 2, Служители 5, Организации 3, screenshots 6.
+Browser (Playwright, `apps/admin/e2e`, CI job `e2e`): 37 — sign-in 7, Табло 3, widths 8, Служители 5, Организации 3, screenshots 11.
 
 Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migrations`, `check:no-design-data`.
 

@@ -54,3 +54,15 @@ test('the design data fills every card with the frame’s numbers', async ({ pag
   await expect(buildings).toContainText('платили 25/60');
   await expect(page.locator('aside nav a', { hasText: 'Известия' })).toContainText('3');
 });
+
+test('the glass blurs in the built portal, in Chrome too', async ({ page }) => {
+  // Regression: the minifier kept only the -webkit- declaration, which Chrome
+  // ignores, so the deployed cards had no blur behind them.
+  await openSignedIn(page, ORG_ADMIN, '/');
+  await expect(page.locator('html')).toHaveAttribute('data-bg-ready', 'true');
+  await expect(card(page, 'Баланс')).toHaveCSS('backdrop-filter', 'blur(14px)');
+  await expect(page.getByRole('searchbox', { name: 'Общо търсене' }).locator('..')).toHaveCSS(
+    'backdrop-filter',
+    'blur(8px)',
+  );
+});
