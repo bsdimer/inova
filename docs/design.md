@@ -44,6 +44,12 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   in iOS Safari.
 - The dark theme is the token mode plus the night photo. Nothing is painted
   by hand.
+- Only the card clips its content. Wrappers of glowing buttons never use
+  `overflow: hidden`, or the halo is cut in a straight line. A glow around a
+  thin stroke (the progress arc) is a blurred copy of the stroke underneath;
+  `drop-shadow` on a 1.75 px line gives almost no light.
+- The glass density is a brand parameter. Contrast is checked on a render
+  of each white-label brand, not once on the inova photo.
 
 ## Windows and navigation
 
@@ -57,11 +63,25 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   | A work place (Апартамент, search results) or a multi-step process (import, «Нова организация») | its own page                                                       | its own page                                                        |
 
 - If the user entered data and then presses × or back, ask «Да се откажа ли?».
+- A secondary window keeps the screen under it in place: the list under a
+  drawer is dimmed, not replaced, and after closing the user is exactly where
+  they were.
+- When a page is shorter than the window, its footer with the actions sits at
+  the bottom of the window, not in the middle.
+- The tabs of one section (Жители) share one page title; each tab's
+  explanation is a strip above the table, so switching tabs does not read as
+  leaving the section.
 - Panels and windows keep the header and footer fixed; only the body
   scrolls. On 402, the main action of a view screen is pinned full width at
   the bottom.
 - Search on 402 is a mode over the current screen: the field on top and
-  «Отказ» on the right. A search result opens a normal page.
+  «Отказ» on the right, which returns to the screen the user came from. A
+  search result opens a normal page. The search dropdown has no scrim (it
+  already sits on a panel with a shadow); its bottom row with keyboard hints
+  is always visible.
+- Platform scope has no global search: the header search is hidden and the
+  filter search finds organisations by name and key. The organisation key
+  never appears inside a tenant.
 - Breadcrumbs are one component:
   - the current page is the last item;
   - on 402 the middle levels collapse to «…»;
@@ -75,17 +95,31 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
 - Inside an organisation entered from the platform, a strip on every screen
   says where the user is, that the visit is audited, and how to leave — the
   audited `platform_access` rule is in [plan/security.md](plan/security.md).
+  On 402 the strip is one line under the top bar: where the user is, plus
+  «Върни се».
 
 ## Responsive
 
 - The shell follows the ladder in Figma `1074:9754`:
   - from 1728: the full sidebar (232);
-  - 1536–1727: a 72 rail that expands in place and pushes the content;
+  - 1536–1727: a 72 rail that expands in place and pushes the content; it
+    opens on hover after a delay or on a click on the brand mark, on touch
+    only on tap, and closes when the pointer leaves, on Esc or on a click
+    outside; over its empty part the cursor is `col-resize`, over the icons
+    a pointer;
   - 1024–1535: the rail expands over the page, modal, with a scrim, closing
     on Esc or a tap outside;
-  - below 1024: a top bar with a drawer.
+  - below 1024: a top bar with a drawer that closes on ×, a tap on the scrim
+    or a swipe left; focus then returns to the menu button.
 - The content column is 1136 wide and centred; cards never stretch. From 2400
   the whole layout is drawn ×1.25 (root font-size, sizes in rem).
+- Nothing is clipped and there is never a horizontal scroll: a card that
+  would drop below its minimum width reflows instead (Balance needs 692, so
+  on tablet it goes full width).
+- Height: cards keep their height, the page scrolls and the photo stays
+  fixed. Vertical page padding is 24 when the content does not fit and up to
+  64 when it does. Between 960 and 1116 the dashboard compresses (3 upcoming
+  events instead of 4, tighter gaps in Сигнали); below 960 it scrolls.
 - Tables become cards on 402. On 768 they become a list, and the facets fold
   into «Филтри (n)».
 - On 402:
@@ -99,13 +133,18 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
 ## Tables
 
 - A row is 64 high plus a 1 px divider, with no zebra striping. Hover uses
-  `glass/inner-soft`.
+  `glass/inner-soft`. The row identifier is styled as a link but stays white
+  on glass: underline on hover plus the pointer cursor. The whole row is one
+  open target, and opening a row is not selecting it.
 - Names and prose truncate to one line with an ellipsis, and the full text
-  appears in a tooltip. Numbers, dates and IDs never truncate. The
-  exception: the reason cell in requests wraps to at most three lines.
+  appears in a tooltip. Numbers, dates and IDs never truncate. Exceptions:
+  the reason cell in requests wraps to a few lines and the full text is in
+  the review panel; in the import error table and the search dropdown long
+  names wrap.
 - Numbers are right-aligned with `font-variant-numeric: tabular-nums`. In
   money, the stotinki are raised and smaller; the sizes are the Figma text
-  styles.
+  styles. A hero sum is centred on its integer part: the stotinki are placed
+  so they do not shift the centre.
 - Every data view has these states: loading (skeleton), empty, no results
   (names the active filters and gives a way out), error with retry, no
   rights, read-only.
@@ -116,6 +155,8 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   - is grouped, with at most 5 per group and a count in each group header;
   - opens from 2 characters;
   - has four states: results, loading, empty, error.
+- Import: the column mapping survives a re-upload of the file; the dry run
+  checks and writes nothing.
 
 ## Controls, focus and motion
 
@@ -123,16 +164,25 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   stated next to it. Options the user cannot pick are shown, locked, with the
   reason. The opacities are tokens.
 - Field errors show a red edge, an icon and a message line.
+- The status pills on the dashboard's Сигнали card are filters with
+  `default` and `selected` states; the list heading and content follow the
+  selected pill. «Предложени» in Анкети works the same way.
+- Picking a day in the calendar switches the toggle to «Ден» and shows that
+  day's tasks. "Today" and "selected" are independent states and can both
+  apply.
 - Danger menu items use `panel/status-urgent`; disabled items are dimmed.
 - Focus:
   - one ring from the tokens `--focus-edge` and `--focus-glow`, no separate
-    `outline`;
+    `outline`; it has two variants — white on glass, dark on light `panel/*`
+    surfaces — and is never thinner than 1.5 px;
   - it shows only on `:focus-visible` and is never removed;
-  - fields use their own focus state and get no second ring.
+  - fields use their own focus state and get no second ring;
+  - keyboard focus on a nav item shows the hover plate plus the ring.
 - Nav item hover: `--glass-inner-soft` with no edge, blur or shadow, 150 ms;
   sizes are the Figma component.
 - Rail tooltip: to the right of the item, `--panel-fill-strong`, appears
-  after 400 ms or at once on keyboard focus.
+  after 400 ms or at once on keyboard focus. The expanded sidebar has no
+  tooltips.
 - Motion:
   - the dashboard ring draws once;
   - no count-up numbers;
@@ -152,4 +202,7 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   - the roles are Собственик and Наемател, never «Жител»;
   - «Оттегли» is withdrawing one's own request, as opposed to a rejection.
 - A count label names what is counted: «4 реда с грешки», not «4 грешки».
-- Plan codes (B9, D16) never appear in UI text.
+- Plan codes (B9, D16) never appear inside UI sentences; a milestone marker
+  («M3») may only be a separate badge on a deferred element.
+- Lifetimes of links and codes shown on screen come from the endpoint
+  response, never hard-coded (B13 in [plan/decisions.md](plan/decisions.md)).
