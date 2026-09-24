@@ -134,6 +134,9 @@ Defects in running code, fixed without starting the B8 or B13–B15 work:
   used bcrypt (cost 10). Existing bcrypt hashes are upgraded on the next
   successful login. `TODO(M1)`: drop the bcrypt verification path once no
   `$2` hash remains.
+- Login runs one argon2id verification on every failure (a dummy hash when
+  the account is unknown, inactive or has no password), so response time no
+  longer tells which e-mails have an account (2026-09-24).
 
 ## Required tests (release blockers)
 
