@@ -10,6 +10,7 @@ node_modules/
 
 # builds
 dist/
+dist-e2e/
 
 # Playwright output (apps/admin/e2e): kept by CI as an artifact, not committed
 e2e-screens/

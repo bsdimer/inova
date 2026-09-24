@@ -20,6 +20,11 @@ export default tseslint.config(
   {
     ignores: [
       '**/dist/**',
+      // Playwright output and the browser-test build of the admin.
+      '**/dist-e2e/**',
+      '**/playwright-report/**',
+      '**/test-results/**',
+      '**/e2e-screens/**',
       '**/.turbo/**',
       '**/node_modules/**',
       '**/.expo/**',

@@ -51,9 +51,12 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
   search + facets, sort presets, all ten table states, and one light disc per
   row that opens the roles-and-scope drawer, which holds every row action and
   explains the blocked ones; below `md` the rows become cards with a filter
-  sheet. Табло is laid out as drawn, which until M2, M3–M4, M6 and M11 means
-  the cards are placeholders: every figure slot shows «—» with its milestone,
-  and only the month grid is real.
+  sheet. Табло is laid out as drawn and takes its data per card; until M2,
+  M3–M4, M6 and M11 ship, every figure slot shows «—» and only the month grid
+  is real. A local-only «design data» preview (`?fixture=design`, dev server
+  and the browser-test build) fills the cards with the numbers of Figma
+  859:1073 to check the layout; the deployed build carries none of it
+  (`check:no-design-data`).
   Contract for the full Табло: [features/admin-dashboard.md](features/admin-dashboard.md);
   it added M2b (unified search) and M11 (staff tasks/calendar) to the plan and
   extended M6 (issue priority), M7 (debtors audience, unread count) and M9.
@@ -64,7 +67,7 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
 
 ## Tests (release blockers)
 
-48 integration tests against real Postgres + RLS + the non-privileged `inova_app` / `inova_auth` roles, plus 44 unit tests:
+48 integration tests against real Postgres + RLS + the non-privileged `inova_app` / `inova_auth` roles, plus 54 unit tests:
 
 | Suite                                           | Count | Job                |
 | ----------------------------------------------- | ----- | ------------------ |
@@ -77,12 +80,13 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
 | `packages/shared` Money                         | 4     | `unit`             |
 | `packages/shared` RuntimeEnv, MockCodeDelivery  | 13    | `unit`             |
 | `packages/shared` login form checks             | 15    | `unit`             |
+| `packages/shared` dashboard display math        | 10    | `unit`             |
 | `apps/auth-service` PasswordHasher              | 7     | `unit`             |
 | `apps/auth-service` AuthService login failures  | 5     | `unit`             |
 
-Browser (Playwright, `apps/admin/e2e`, CI job `e2e`): 19 — sign-in 7, Служители 5, Организации 3, screenshots 4.
+Browser (Playwright, `apps/admin/e2e`, CI job `e2e`): 23 — sign-in 7, Табло 2, Служители 5, Организации 3, screenshots 6.
 
-Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migrations`.
+Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migrations`, `check:no-design-data`.
 
 ## Milestone honesty
 

@@ -61,10 +61,13 @@ export default defineConfig({
       timeout: 60_000,
     },
     {
-      command: `pnpm exec vite build && pnpm exec vite preview --port ${ADMIN_PORT} --strictPort`,
+      // Its own output folder: this build carries the «design data» preview
+      // (VITE_DESIGN_FIXTURES) and must never land in dist/, which deploys.
+      command: `pnpm exec vite build --outDir dist-e2e && pnpm exec vite preview --outDir dist-e2e --port ${ADMIN_PORT} --strictPort`,
       url: `http://localhost:${ADMIN_PORT}`,
       env: {
         VITE_AUTH_URL: AUTH_URL,
+        VITE_DESIGN_FIXTURES: '1',
         VITE_API_URL: API_URL,
       },
       reuseExistingServer: !CI,
