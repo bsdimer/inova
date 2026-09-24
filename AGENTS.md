@@ -5,6 +5,39 @@ Technology for property-management companies: NestJS backend services, React
 admin panel, Expo resident app, PostgreSQL. Bulgarian pilot under the
 platform's own "inova" brand.
 
+## Non-negotiable working rules
+
+1. **Never commit secrets.** No signing keys, APNs keys, Stripe keys, service
+   accounts, or `.env` files. `brands/` holds non-secret config only.
+2. **Follow the milestone order** unless the user says otherwise. Current target
+   is in `docs/current.md`. Do not build ahead of the plan.
+3. Mark every stub/mock: `// TODO(M<n>): ...` or a `MOCK` constant.
+4. Financial and tenant-isolation suites are release blockers — never skip,
+   weaken, or delete them to make CI pass.
+5. Do not re-litigate items marked RESOLVED/Decided in
+   [docs/plan/decisions.md](docs/plan/decisions.md) or
+   [docs/architecture.md](docs/architecture.md).
+6. **A phase closes only on green tests** — see [Closing a phase](#closing-a-phase).
+
+## Architecture invariants (do not violate)
+
+- **Tenant isolation:** every tenant-owned table has `tenant_id` as the _leading_
+  column of its primary key and tenant-scoped indexes; audited identity-scope
+  lookup indexes may lead with their global lookup key. RLS on all such tables;
+  the app DB role never bypasses RLS. Client-supplied brand/bundle/tenant config
+  is **never** an authorization input — only authenticated membership (JWT
+  verified server-side, DB re-check for sensitive operations).
+- **Money:** integer minor units in code (`Money` in `packages/shared`), decimal
+  strings / `NUMERIC(14,2)` at rest, explicit `currency` column. **No floats.**
+- **Financial records are append-only:** corrections via reversal/credit-note
+  rows, never UPDATE/DELETE.
+- **Idempotency:** money-creating POSTs take an `Idempotency-Key`; webhooks
+  dedupe on `(provider, provider_event_id)`.
+- **Services:** auth-service owns identity; core-api verifies JWTs via JWKS
+  locally; async side effects go through the worker via BullMQ, never inline in
+  request handlers.
+- **Migrations are plain SQL** (RLS, triggers, partitioning are hand-written).
+
 ## Session ritual (every task)
 
 **Start**
@@ -45,22 +78,6 @@ platform's own "inova" brand.
 6. Check the Linear issue moved to **In Review** when the PR opened and to
    **Done** after the merge into `develop`; set it by hand only if it did not.
 
-## Non-negotiable working rules
-
-1. **Never commit secrets.** No signing keys, APNs keys, Stripe keys, service
-   accounts, or `.env` files. `brands/` holds non-secret config only.
-2. **Follow the milestone order** unless the user says otherwise. Current target
-   is in `docs/current.md`. Do not build ahead of the plan.
-3. Mark every stub/mock: `// TODO(M<n>): ...` or a `MOCK` constant.
-4. Financial and tenant-isolation suites are release blockers — never skip,
-   weaken, or delete them to make CI pass.
-5. Do not re-litigate items marked RESOLVED/Decided in
-   [docs/plan/decisions.md](docs/plan/decisions.md) or
-   [docs/architecture.md](docs/architecture.md).
-6. **A phase closes only on green tests.** No milestone is marked Done —
-   in its file, in `docs/current.md`, in a commit or a PR — until the tests it
-   requires exist and pass. See [Closing a phase](#closing-a-phase).
-
 ## Branching and environments (GitFlow)
 
 | Branch      | Purpose                                 | Deploys to                                                 |
@@ -82,25 +99,6 @@ platform's own "inova" brand.
 - Mobile release builds point at `portal.whitenova.tech`, which is not live;
   point builds at `https://test-portal.whitenova.tech/auth/v1` with
   `EXPO_PUBLIC_AUTH_URL`.
-
-## Architecture invariants (do not violate)
-
-- **Tenant isolation:** every tenant-owned table has `tenant_id` as the _leading_
-  column of its primary key and tenant-scoped indexes; audited identity-scope
-  lookup indexes may lead with their global lookup key. RLS on all such tables;
-  the app DB role never bypasses RLS. Client-supplied brand/bundle/tenant config
-  is **never** an authorization input — only authenticated membership (JWT
-  verified server-side, DB re-check for sensitive operations).
-- **Money:** integer minor units in code (`Money` in `packages/shared`), decimal
-  strings / `NUMERIC(14,2)` at rest, explicit `currency` column. **No floats.**
-- **Financial records are append-only:** corrections via reversal/credit-note
-  rows, never UPDATE/DELETE.
-- **Idempotency:** money-creating POSTs take an `Idempotency-Key`; webhooks
-  dedupe on `(provider, provider_event_id)`.
-- **Services:** auth-service owns identity; core-api verifies JWTs via JWKS
-  locally; async side effects go through the worker via BullMQ, never inline in
-  request handlers.
-- **Migrations are plain SQL** (RLS, triggers, partitioning are hand-written).
 
 ## Repository layout
 

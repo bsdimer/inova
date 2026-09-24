@@ -1,54 +1,15 @@
 ---
-description: inova session harness — what to read, how to finish, where status lives
+description: inova session harness — AGENTS.md is the single source; this rule only points to it
 alwaysApply: true
 ---
 
 # inova harness
 
-This rule is the shareable development harness. It does not override
-`AGENTS.md` or milestone scope.
+Everything is in `AGENTS.md` at the repo root: the session ritual (start and
+finish), the non-negotiable rules, testing, closing a phase and tracking in
+Linear. Read it first and follow it; this rule adds nothing and overrides
+nothing.
 
-## Start of every task
-
-1. Read `AGENTS.md` (already in context) and `docs/current.md`.
-2. Open only one extra file: the relevant `docs/milestones/M*.md`, an ADR, or
-   `.cursor/skills/inova-frontend/SKILL.md` for larger UI work.
-3. Check `git status`. Do not build ahead of the current milestone in
-   `docs/current.md`.
-4. Create the Linear issue for this piece of work (team WhiteLabel, project
-   inova) in plain, non-technical words with a plan reference, and set it In
-   Progress — see `AGENTS.md` → Tracking in Linear. Never create issues for
-   work you are not starting.
-
-## Finish of every task
-
-1. Run `pnpm verify` from the repo root. That is the Definition of Done.
-   A milestone is marked Done only when its required tests exist and
-   `pnpm verify` passes as one command — see `AGENTS.md` → Closing a phase.
-2. Update `docs/current.md` only when what works, blockers, or Next up changed.
-3. Add one entry to `docs/work-log/YYYY-MM.md`: `## YYYY-MM-DD — title (#PR)`
-   + **Changed:** / **Verified:** / **Remains:**, at most 700 characters
-   (`pnpm check:worklog`). Detail goes in the PR description, not here.
-4. Mark mocks with `TODO(M<n>)` or `MOCK`. Never commit secrets or `.env`.
-5. Linear issue → In Review when the PR opens (link the PR), Done after the
-   merge into `develop`.
-
-For larger frontend work, read and follow the canonical `inova-frontend` skill;
-it selects the small, feature, domain, or bug route and uses a brief only when
-needed.
-
-## Do not
-
-- Load the whole plan. `docs/implementation-plan.md` is an index; open the one
-  `docs/plan/*.md` or `docs/milestones/*.md` file that holds the stakeholder
-  decision or domain rule you need.
-- Ship logic without tests in the same change: unit tests next to the code
-  (`src/**/*.test.ts`), integration tests in `apps/<service>/test/` against
-  real Postgres. See `AGENTS.md` → Testing.
-- Skip, weaken, or delete tenant-isolation or financial tests.
-- Use client-supplied brand/bundle/tenant config as authorization.
-- Import another core-api module's schema/tables.
-- Use floats for money.
-
-Small visual fixes: edit in place. Do not start brainstorming, worktrees, or
-subagents unless the user asked or the frontend skill was invoked.
+For larger frontend work, read and follow `.cursor/skills/inova-frontend/SKILL.md`.
+Small visual fixes: edit in place — no brainstorming, worktrees or subagents
+unless the user asked or the frontend skill was invoked.
