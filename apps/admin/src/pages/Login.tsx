@@ -97,12 +97,12 @@ export function LoginPage() {
         tagline: equal padding top and bottom keeps it centred and clear of it.
       */}
       <div className="app-content relative flex min-h-full flex-col items-center px-4">
-        <div className="flex w-full flex-1 items-center justify-center py-[72px] sm:py-[88px]">
+        <div className="flex w-full flex-1 items-center justify-center py-[4.5rem] sm:py-[5.5rem]">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45 }}
-            className="glass-data w-full max-w-[440px] px-6 py-7 sm:p-10"
+            className="glass-data w-full max-w-[27.5rem] px-6 py-7 sm:p-10"
           >
             <div className="pt-2 pb-3 pl-2 text-ink">
               <InovaWordmark size={22} />
@@ -120,7 +120,7 @@ export function LoginPage() {
               */}
               <Field label="Имейл" invalid={emailInvalid} message={emailMessage}>
                 <EnvelopeSimple
-                  size={20}
+                  size="1.25rem"
                   className={`shrink-0 ${emailInvalid ? 'text-status-urgent' : email ? 'text-ink' : 'text-ink-faint'}`}
                 />
                 <input
@@ -138,10 +138,10 @@ export function LoginPage() {
                 />
               </Field>
 
-              <div className="mt-[18px]">
+              <div className="mt-[1.125rem]">
                 <Field label="Парола" invalid={passwordInvalid} message={passwordMessage}>
                   <Lock
-                    size={20}
+                    size="1.25rem"
                     className={`shrink-0 ${passwordInvalid ? 'text-status-urgent' : password ? 'text-ink' : 'text-ink-faint'}`}
                   />
                   <input
@@ -163,7 +163,7 @@ export function LoginPage() {
                     aria-label={reveal ? 'Скрий паролата' : 'Покажи паролата'}
                     className="shrink-0 rounded-full text-ink-muted transition-colors hover:text-ink"
                   >
-                    {reveal ? <EyeOff size={20} /> : <Eye size={20} />}
+                    {reveal ? <EyeOff size="1.25rem" /> : <Eye size="1.25rem" />}
                   </button>
                 </Field>
               </div>
@@ -185,7 +185,7 @@ export function LoginPage() {
               */}
               {recovery && (
                 <p className="mt-3.5 flex gap-1.5 pl-0.5 text-body-13-tight text-ink">
-                  <TriangleAlert size={14} className="mt-px shrink-0 text-status-pending" />
+                  <TriangleAlert size="0.875rem" className="mt-px shrink-0 text-status-pending" />
                   Възстановяването на парола още не е налично. Свържете се с администратора на
                   организацията, който може да изпрати нов код за активиране.
                 </p>
@@ -194,9 +194,9 @@ export function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="cta text-body-14 mt-[22px] flex h-11 w-full items-center justify-center gap-2 px-7 font-semibold transition-opacity disabled:opacity-60"
+                className="cta text-body-14 mt-[1.375rem] flex h-11 w-full items-center justify-center gap-2 px-7 font-semibold transition-opacity disabled:opacity-60"
               >
-                {loading ? <LoaderCircle size={18} className="animate-spin" /> : 'Влез'}
+                {loading ? <LoaderCircle size="1.125rem" className="animate-spin" /> : 'Влез'}
               </button>
             </form>
           </motion.div>
@@ -233,14 +233,14 @@ function Field({
     <label className="flex flex-col gap-2">
       <span className="text-overline-12 font-semibold text-ink-muted uppercase">{label}</span>
       <span
-        className="glass-field flex items-center gap-3 px-[18px] py-[15px]"
+        className="glass-field flex items-center gap-3 px-[1.125rem] py-[0.9375rem]"
         data-invalid={invalid ? 'true' : undefined}
       >
         {children}
       </span>
       {message && (
         <span role="alert" className="flex gap-1.5 pt-0.5 pl-0.5 text-body-13-tight text-ink">
-          <TriangleAlert size={14} className="mt-px shrink-0 text-status-urgent" />
+          <TriangleAlert size="0.875rem" className="mt-px shrink-0 text-status-urgent" />
           {message}
         </span>
       )}

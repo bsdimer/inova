@@ -7,19 +7,21 @@
  */
 @theme {
   --breakpoint-3xl: 108rem;
-  /* From 2400 the 1728 composition is drawn ×1.25 (see the zoom rule below). */
-  --breakpoint-4xl: 150rem;
 }
 
 /*
- * A window 960–1116 tall is short of the 1117 the dashboard is drawn for, and
- * the spec (tablo-functional-spec §8) makes it fit in three moves: the page
- * margin drops to 16, the signals card closes its gaps to 16 and 18, and the
- * calendar lists three events instead of four. Shorter windows scroll; the
- * 2400+ scale-up is the 1728 composition and is left alone.
+ * A window too short for the dashboard's 989 plus 24 above and below, but at
+ * least 960, makes it fit in three moves (design README → Адаптив,
+ * 1920 × 980 frame 815:1546): the page margin drops to 16, the signals card
+ * closes its gaps to 16 and 18, and the calendar lists three events instead
+ * of four. Taller windows fit as drawn; shorter ones scroll. From 2400 the
+ * root is 20px, so the same band is 1.25 times taller.
  */
 @custom-variant tight {
-  @media (min-width: 1280px) and (max-width: 2399px) and (min-height: 960px) and (max-height: 1116px) {
+  @media (min-width: 1280px) and (max-width: 2399px) and (min-height: 960px) and (max-height: 1036px) {
+    @slot;
+  }
+  @media (min-width: 2400px) and (min-height: 1200px) and (max-height: 1295px) {
     @slot;
   }
 }
@@ -93,16 +95,16 @@
   --panel-check-edge: rgb(115 115 120 / 0.45);
   --panel-footer: rgb(255 255 255 / 0.6);
   --glass-chip: rgb(0 0 0 / 0.22);
-  --radius-card: 28px;
-  --radius-row: 12px;
-  --radius-signal: 14px;
-  --radius-nav: 16px;
-  --radius-pill: 9999px;
-  --space-card-pad: 24px;
-  --space-grid-gap: 16px;
-  --space-col-gap: 20px;
-  --blur-card: 28px;
-  --blur-control: 16px;
+  --radius-card: 1.75rem;
+  --radius-row: 0.75rem;
+  --radius-signal: 0.875rem;
+  --radius-nav: 1rem;
+  --radius-pill: 624.9375rem;
+  --space-card-pad: 1.5rem;
+  --space-grid-gap: 1rem;
+  --space-col-gap: 1.25rem;
+  --blur-card: 1.75rem;
+  --blur-control: 1rem;
 
   /*
    * Not a Figma variable: the top light of V2/Glass · card and · control is a
@@ -112,7 +114,7 @@
   --glass-highlight: rgb(255 255 255 / 0.38);
 
   /* V2/Glow · CTA, two shadows; glow/far is clear by day, so only nights show both. */
-  --glow-cta: 0 0 16px var(--glow-near), 0 0 40px 4px var(--glow-far);
+  --glow-cta: 0 0 1rem var(--glow-near), 0 0 2.5rem 0.25rem var(--glow-far);
 }
 
 /* Only the values that differ from the light theme. */
@@ -228,31 +230,31 @@
    */
   --text-display-72: 4.5rem;
   --text-display-72--line-height: 4.5rem;
-  --text-display-72--letter-spacing: -2px;
+  --text-display-72--letter-spacing: -0.125rem;
   --text-display-52: 3.25rem;
   --text-display-52--line-height: 3.25rem;
-  --text-display-52--letter-spacing: -1.5px;
+  --text-display-52--letter-spacing: -0.09375rem;
   --text-display-26: 1.625rem;
   --text-display-26--line-height: 2.1875rem;
-  --text-display-26--letter-spacing: -1.5px;
+  --text-display-26--letter-spacing: -0.09375rem;
 
   --text-number-30: 1.875rem;
   --text-number-30--line-height: 2rem;
-  --text-number-30--letter-spacing: -0.86px;
+  --text-number-30--letter-spacing: -0.05375rem;
   --text-number-18: 1.125rem;
   --text-number-18--line-height: 1.375rem;
-  --text-number-18--letter-spacing: -1px;
+  --text-number-18--letter-spacing: -0.0625rem;
   --text-number-16: 1rem;
   --text-number-16--line-height: 1.5rem;
   --text-number-15: 0.9375rem;
   --text-number-15--line-height: 1.25rem;
-  --text-number-15--letter-spacing: -1px;
+  --text-number-15--letter-spacing: -0.0625rem;
   --text-number-13: 0.8125rem;
   --text-number-13--line-height: 1.125rem;
-  --text-number-13--letter-spacing: -1px;
+  --text-number-13--letter-spacing: -0.0625rem;
   --text-number-11: 0.6875rem;
   --text-number-11--line-height: 0.9375rem;
-  --text-number-11--letter-spacing: -1px;
+  --text-number-11--letter-spacing: -0.0625rem;
 
   --text-title-22: 1.375rem;
   --text-title-22--line-height: 1.625rem;
@@ -324,10 +326,10 @@ body {
  */
 .app-background img {
   position: absolute;
-  inset: -6px;
-  width: calc(100% + 12px);
-  height: calc(100% + 12px);
-  filter: blur(3px);
+  inset: -0.375rem;
+  width: calc(100% + 0.75rem);
+  height: calc(100% + 0.75rem);
+  filter: blur(0.1875rem);
 }
 
 .app-scrim {
@@ -357,8 +359,8 @@ body {
   .glass {
     background: var(--glass-card);
     box-shadow:
-      inset 0 0 0 1px var(--glass-edge),
-      inset 0 1px 0 var(--glass-highlight);
+      inset 0 0 0 0.0625rem var(--glass-edge),
+      inset 0 0.0625rem 0 var(--glass-highlight);
     border-radius: var(--radius-card);
   }
 
@@ -366,8 +368,8 @@ body {
   .glass-data {
     background: var(--glass-data);
     box-shadow:
-      inset 0 0 0 1px var(--glass-edge),
-      inset 0 1px 0 var(--glass-highlight);
+      inset 0 0 0 0.0625rem var(--glass-edge),
+      inset 0 0.0625rem 0 var(--glass-highlight);
     border-radius: var(--radius-card);
   }
 
@@ -378,7 +380,7 @@ body {
    */
   .glass-control {
     background: var(--glass-input);
-    box-shadow: inset 0 0 0 1px var(--glass-edge);
+    box-shadow: inset 0 0 0 0.0625rem var(--glass-edge);
   }
 
   /*
@@ -405,7 +407,7 @@ body {
    * rows each end on their own divider.
    */
   .table-card {
-    padding: 13px 21px 17px;
+    padding: 0.8125rem 1.3125rem 1.0625rem;
   }
 
   /*
@@ -419,7 +421,7 @@ body {
   }
 
   .table-card :is(th, td) {
-    border-bottom: 1px solid var(--glass-divider);
+    border-bottom: 0.0625rem solid var(--glass-divider);
   }
 
   /*
@@ -430,19 +432,19 @@ body {
   .glass-field {
     background: var(--glass-input);
     box-shadow:
-      inset 0 0 0 1px var(--glass-edge),
-      inset 0 1px 0 var(--glass-highlight);
+      inset 0 0 0 0.0625rem var(--glass-edge),
+      inset 0 0.0625rem 0 var(--glass-highlight);
     border-radius: var(--radius-pill);
   }
 
   .glass-field:focus-within {
     box-shadow:
-      inset 0 0 0 1.5px var(--focus-edge),
-      0 0 14px var(--focus-glow);
+      inset 0 0 0 0.09375rem var(--focus-edge),
+      0 0 0.875rem var(--focus-glow);
   }
 
   .glass-field[data-invalid='true'] {
-    box-shadow: inset 0 0 0 1.5px var(--status-urgent);
+    box-shadow: inset 0 0 0 0.09375rem var(--status-urgent);
   }
 
   /*
@@ -455,8 +457,8 @@ body {
   .nav-active {
     background: var(--glass-inner);
     box-shadow:
-      inset 0 0 0 1px var(--glass-edge),
-      inset 0 1px 2px rgb(255 255 255 / 0.35);
+      inset 0 0 0 0.0625rem var(--glass-edge),
+      inset 0 0.0625rem 0.125rem rgb(255 255 255 / 0.35);
   }
 
   /*
@@ -479,13 +481,13 @@ body {
   .rail-tip {
     position: absolute;
     top: 50%;
-    left: calc(100% + 8px);
+    left: calc(100% + 0.5rem);
     translate: 0 -50%;
-    padding: 6px 10px;
+    padding: 0.375rem 0.625rem;
     border-radius: var(--radius-row);
     background: var(--panel-fill-strong);
     color: var(--panel-text);
-    box-shadow: 0 12px 16px rgb(0 0 0 / 0.28);
+    box-shadow: 0 0.75rem 1rem rgb(0 0 0 / 0.28);
     white-space: nowrap;
     pointer-events: none;
     opacity: 0;
@@ -505,33 +507,33 @@ body {
   /* The drawer and the menu opened over the page stand on a shadow of their own. */
   .nav-overlay {
     box-shadow:
-      inset 0 0 0 1px var(--glass-edge),
-      inset 0 1px 0 var(--glass-highlight),
-      0 18px 44px rgb(0 0 0 / 0.3);
+      inset 0 0 0 0.0625rem var(--glass-edge),
+      inset 0 0.0625rem 0 var(--glass-highlight),
+      0 1.125rem 2.75rem rgb(0 0 0 / 0.3);
   }
 
   /* V2/Calendar · Day State=today: a lit bar under the date, V2/Glow · indicator. */
   .today-underline {
     background: var(--light-source);
     box-shadow:
-      0 0 7px 0.5px var(--glow-dot-near),
-      0 0 20px 1px var(--glow-dot-far);
+      0 0 0.4375rem 0.03125rem var(--glow-dot-near),
+      0 0 1.25rem 0.0625rem var(--glow-dot-far);
   }
 
   /* Layered surfaces: drawer, modal, menu, filter sheet. */
   .panel {
     background: var(--panel-fill);
     box-shadow:
-      inset 0 0 0 1px var(--panel-edge),
-      0 18px 52px rgb(0 0 0 / 0.3);
+      inset 0 0 0 0.0625rem var(--panel-edge),
+      0 1.125rem 3.25rem rgb(0 0 0 / 0.3);
     color: var(--panel-text);
   }
 
   .panel-strong {
     background: var(--panel-fill-strong);
     box-shadow:
-      inset 0 0 0 1px var(--panel-edge),
-      0 18px 52px rgb(0 0 0 / 0.3);
+      inset 0 0 0 0.0625rem var(--panel-edge),
+      0 1.125rem 3.25rem rgb(0 0 0 / 0.3);
     color: var(--panel-text);
   }
 
@@ -540,7 +542,7 @@ body {
     background: var(--cta-fill);
     color: var(--cta-text);
     box-shadow:
-      inset 0 0 0 1px var(--cta-edge),
+      inset 0 0 0 0.0625rem var(--cta-edge),
       var(--glow-cta);
     border-radius: var(--radius-pill);
   }
@@ -580,14 +582,14 @@ body {
 :where(button, a, input, select, textarea, [tabindex]):focus-visible {
   outline: none;
   box-shadow:
-    inset 0 0 0 1.5px var(--focus-edge),
-    0 0 14px var(--focus-glow);
+    inset 0 0 0 0.09375rem var(--focus-edge),
+    0 0 0.875rem var(--focus-glow);
 }
 
 /* V2/Nav · active carries a heavier blur of its own: Figma 24, CSS 12. */
 :root[data-bg-ready='true'] .nav-active {
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(0.75rem);
+  backdrop-filter: blur(0.75rem);
 }
 
 /*
@@ -611,11 +613,11 @@ body {
 .nav-item:focus-visible::after {
   content: '';
   position: absolute;
-  inset: -3px;
-  border-radius: calc(var(--nav-radius, 14px) + 3px);
+  inset: -0.1875rem;
+  border-radius: calc(var(--nav-radius, 0.875rem) + 0.1875rem);
   box-shadow:
-    inset 0 0 0 1.5px var(--focus-edge),
-    0 0 14px var(--focus-glow);
+    inset 0 0 0 0.09375rem var(--focus-edge),
+    0 0 0.875rem var(--focus-glow);
   pointer-events: none;
 }
 
@@ -623,8 +625,8 @@ body {
 .panel :where(button, a, input, select, textarea, [tabindex]):focus-visible,
 .panel-strong :where(button, a, input, select, textarea, [tabindex]):focus-visible {
   box-shadow:
-    inset 0 0 0 1.5px var(--panel-border),
-    0 0 0 3px rgb(29 29 31 / 0.08);
+    inset 0 0 0 0.09375rem var(--panel-border),
+    0 0 0 0.1875rem rgb(29 29 31 / 0.08);
 }
 
 button:not(:disabled),
@@ -680,12 +682,11 @@ select:not(:disabled),
 
 /*
  * From 2400 the whole 1728 composition is drawn 1.25 times larger (the 2560
- * frame, 824:1609). The spec says «root font-size 20px, everything in rem»,
- * but most measures here are the frames' pixels, so the root is zoomed instead:
- * the same result for every length, px or rem.
+ * frame, 824:1609): every size here is in rem, so the root font size is all
+ * it takes. Media queries stay in px — they measure the window, not the design.
  */
 @media (min-width: 2400px) {
   html {
-    zoom: 1.25;
+    font-size: 20px;
   }
 }

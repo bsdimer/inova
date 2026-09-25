@@ -95,7 +95,7 @@ export function RolesPage() {
         </div>
         <PrimaryButton onClick={() => setEditorRole('new')}>
           <span className="flex items-center gap-2">
-            <Plus size={16} /> Нова роля
+            <Plus size="1rem" /> Нова роля
           </span>
         </PrimaryButton>
       </div>
@@ -142,13 +142,13 @@ export function RolesPage() {
               <div className="mt-5 flex items-center gap-2 border-t border-glass-divider pt-4">
                 {locked ? (
                   <span className="flex items-center gap-2 text-xs text-ink-muted">
-                    <Lock size={13} /> Системна роля — правата не се променят
+                    <Lock size="0.8125rem" /> Системна роля — правата не се променят
                   </span>
                 ) : (
                   <>
                     <GhostButton onClick={() => setEditorRole(role)}>
                       <span className="flex items-center gap-1.5">
-                        <Pencil size={13} /> Редактирай
+                        <Pencil size="0.8125rem" /> Редактирай
                       </span>
                     </GhostButton>
                     {!role.isSystem && (
@@ -158,7 +158,7 @@ export function RolesPage() {
                         onClick={() => remove.mutate(role.key)}
                       >
                         <span className="flex items-center gap-1.5">
-                          <Trash2 size={13} /> Изтрий
+                          <Trash2 size="0.8125rem" /> Изтрий
                         </span>
                       </GhostButton>
                     )}

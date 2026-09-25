@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUpDown, Check, ChevronDown, Search, X } from './icons';
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { rem } from '../lib/rem';
 
 /** Initials on glass. Two letters, because Bulgarian names are two words. */
 export function Avatar({
@@ -24,13 +25,13 @@ export function Avatar({
       aria-hidden
       className={`flex shrink-0 items-center justify-center rounded-full font-semibold ${className}`}
       style={{
-        width: size,
-        height: size,
+        width: rem(size),
+        height: rem(size),
         // V2/Avatar: 40 carries Body/14, 36 and below Label/12.
-        fontSize: size >= 40 ? 14 : size * (1 / 3),
-        lineHeight: size >= 40 ? '20px' : '16px',
+        fontSize: rem(size >= 40 ? 14 : size * (1 / 3)),
+        lineHeight: size >= 40 ? '1.25rem' : '1rem',
         background: 'var(--glass-avatar)',
-        boxShadow: 'inset 0 0 0 1px var(--glass-avatar-edge)',
+        boxShadow: 'inset 0 0 0 0.0625rem var(--glass-avatar-edge)',
       }}
     >
       {initials}
@@ -90,7 +91,7 @@ export function SecondaryButton({
       className={`glass-blur text-body-14 h-11 rounded-full px-7 font-semibold text-ink transition-opacity disabled:opacity-45 ${className}`}
       style={{
         background: 'var(--glass-inner)',
-        boxShadow: 'inset 0 0 0 1px var(--glass-edge)',
+        boxShadow: 'inset 0 0 0 0.0625rem var(--glass-edge)',
       }}
     >
       {children}
@@ -179,7 +180,7 @@ export function SolidIconButton({
       disabled={disabled}
       aria-label={label}
       title={label}
-      style={{ width: size, height: size }}
+      style={{ width: rem(size), height: rem(size) }}
       className="glass-solid flex shrink-0 items-center justify-center rounded-full transition-opacity hover:opacity-85 disabled:opacity-40"
     >
       {children}
@@ -196,7 +197,7 @@ export function Chip({ children, muted = false }: { children: ReactNode; muted?:
       }`}
       style={{
         background: 'var(--glass-inner-strong)',
-        boxShadow: 'inset 0 0 0 1px var(--glass-edge-soft)',
+        boxShadow: 'inset 0 0 0 0.0625rem var(--glass-edge-soft)',
       }}
     >
       {children}
@@ -215,7 +216,7 @@ export function FilterChip({ children, onClear }: { children: ReactNode; onClear
         aria-label="Премахни филтъра"
         className="rounded-full transition-opacity hover:opacity-70"
       >
-        <X size={14} />
+        <X size="0.875rem" />
       </button>
     </span>
   );
@@ -237,7 +238,7 @@ export function SearchField({
 }) {
   return (
     <label className={`glass-field flex h-12 min-w-56 items-center gap-2.5 px-4 ${className}`}>
-      <Search size={20} className="shrink-0 text-ink-muted" />
+      <Search size="1.25rem" className="shrink-0 text-ink-muted" />
       <input
         type="search"
         value={value}
@@ -274,9 +275,9 @@ export function SortSelect<T extends string>({
           onClick={() => setOpen((v) => !v)}
           className="glass-control text-body-14 flex h-11 items-center gap-2 rounded-full px-3.5 font-medium text-ink"
         >
-          <ArrowUpDown size={16} className="shrink-0" />
+          <ArrowUpDown size="1rem" className="shrink-0" />
           <span className="truncate">{options[value]}</span>
-          <ChevronDown size={16} className="shrink-0" />
+          <ChevronDown size="1rem" className="shrink-0" />
         </button>
       }
     >
@@ -447,7 +448,7 @@ export function Facet({
           }`}
         >
           {label}
-          <ChevronDown size={16} className="shrink-0" />
+          <ChevronDown size="1rem" className="shrink-0" />
         </button>
       }
     >
@@ -467,11 +468,13 @@ export function Facet({
                   className={`flex h-4 w-4 shrink-0 items-center justify-center rounded ${
                     checked ? 'bg-panel-ink text-panel-ink-inverse' : 'bg-panel-row-strong'
                   }`}
-                  style={{ boxShadow: checked ? 'none' : 'inset 0 0 0 1px var(--panel-border)' }}
+                  style={{
+                    boxShadow: checked ? 'none' : 'inset 0 0 0 0.0625rem var(--panel-border)',
+                  }}
                 >
                   {checked && (
                     <Check
-                      size={11}
+                      size="0.6875rem"
                       strokeWidth={3}
                       style={{ color: 'var(--panel-text-inverse)' }}
                     />
@@ -523,7 +526,7 @@ export function StatusDot({
         className="h-2 w-2 shrink-0 rounded-full"
         style={{
           background: color,
-          boxShadow: tone === 'muted' ? 'none' : `0 0 8px ${color}`,
+          boxShadow: tone === 'muted' ? 'none' : `0 0 0.5rem ${color}`,
         }}
       />
       {children}
@@ -576,7 +579,7 @@ export function TableStrip({
           aria-label="Затвори"
           className="rounded-full p-1 text-ink-muted transition-colors hover:text-ink"
         >
-          <X size={12} />
+          <X size="0.75rem" />
         </button>
       )}
     </div>
@@ -611,7 +614,7 @@ export function EmptyState({
         className="flex h-13 w-13 items-center justify-center rounded-2xl text-ink-soft"
         style={{
           background: 'var(--glass-inner)',
-          boxShadow: 'inset 0 0 0 1px var(--glass-edge-soft)',
+          boxShadow: 'inset 0 0 0 0.0625rem var(--glass-edge-soft)',
         }}
       >
         {icon}
@@ -705,7 +708,7 @@ export function Drawer({
             animate={{ x: 0, y: 0, opacity: 1 }}
             exit={{ y: 40, opacity: 0 }}
             transition={{ type: 'spring', damping: 30, stiffness: 320 }}
-            className="panel flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl sm:h-full sm:max-h-none sm:w-[420px] sm:rounded-none sm:rounded-l-3xl"
+            className="panel flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl sm:h-full sm:max-h-none sm:w-[26.25rem] sm:rounded-none sm:rounded-l-3xl"
           >
             <div className="shrink-0 border-b border-panel-divider px-5 py-4">{header}</div>
             <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
@@ -760,7 +763,7 @@ export function Modal({
                 className="rounded-full p-1.5 text-panel-ink-muted transition-colors hover:bg-panel-row hover:text-panel-ink"
                 aria-label="Затвори"
               >
-                <X size={18} />
+                <X size="1.125rem" />
               </button>
             </div>
             {children}
@@ -807,7 +810,7 @@ export function ErrorNote({ message }: { message: string | null }) {
       className="rounded-xl px-3.5 py-2.5 text-sm font-medium"
       style={{
         background: 'var(--glass-chip)',
-        boxShadow: 'inset 0 0 0 1px var(--status-urgent)',
+        boxShadow: 'inset 0 0 0 0.0625rem var(--status-urgent)',
         color: 'var(--text-primary)',
       }}
     >

@@ -13,10 +13,10 @@ export function ComingSoonPage({ title, milestone }: { title: string; milestone:
         className="flex h-16 w-16 items-center justify-center rounded-3xl text-ink-soft"
         style={{
           background: 'var(--glass-inner)',
-          boxShadow: 'inset 0 0 0 1px var(--glass-edge-soft)',
+          boxShadow: 'inset 0 0 0 0.0625rem var(--glass-edge-soft)',
         }}
       >
-        <Hammer size={26} />
+        <Hammer size="1.625rem" />
       </span>
       <h1 className="text-title-22 font-medium">{title}</h1>
       <p className="max-w-sm text-sm text-ink-muted">

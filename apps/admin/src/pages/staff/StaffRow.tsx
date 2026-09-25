@@ -21,9 +21,9 @@ import {
 } from './model';
 
 const INVITE_ICON: Record<InviteState, ReactNode> = {
-  activated: <CircleCheck size={16} />,
-  'code-sent': <Clock size={16} />,
-  none: <CircleAlert size={16} />,
+  activated: <CircleCheck size="1rem" />,
+  'code-sent': <Clock size="1rem" />,
+  none: <CircleAlert size="1rem" />,
 };
 
 /** Invite outcome: an icon carries the tone, the words carry the meaning. */
@@ -67,7 +67,7 @@ function RowAction({ member, busy, onAction }: RowProps) {
   if (busy) {
     return (
       <span className="flex h-8 w-8 items-center justify-center text-ink-muted">
-        <LoaderCircle size={16} className="animate-spin" />
+        <LoaderCircle size="1rem" className="animate-spin" />
       </span>
     );
   }
@@ -76,7 +76,7 @@ function RowAction({ member, busy, onAction }: RowProps) {
       label={`Роли и обхват — ${member.fullName}`}
       onClick={() => onAction('change-role')}
     >
-      <MoreHorizontal size={16} />
+      <MoreHorizontal size="1rem" />
     </SolidIconButton>
   );
 }
@@ -90,7 +90,7 @@ export function StaffRow(props: RowProps) {
 
   return (
     <tr
-      className={`h-[65px] transition-colors ${busy ? 'opacity-45' : 'hover:bg-glass-inner-soft'}`}
+      className={`h-[4.0625rem] transition-colors ${busy ? 'opacity-45' : 'hover:bg-glass-inner-soft'}`}
       aria-busy={busy}
     >
       <td className={CELL}>

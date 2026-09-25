@@ -106,12 +106,12 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
 - The shell follows the ladder in Figma `1074:9754`:
   - from 1728: the full sidebar (232);
   - 1536–1727: a 72 rail that expands in place and pushes the content; it
-    opens on hover after a delay or on a click on the brand mark, on touch
-    only on tap, and closes when the pointer leaves, on Esc or on a click
-    outside; over its empty part the cursor is `col-resize`, over the icons
-    a pointer;
+    opens on hover after a delay, on a click on its empty space or on the
+    brand mark (a second click on the empty space folds it), on touch only
+    on tap, and closes when the pointer leaves, on Esc or on a click outside;
+    over its empty part the cursor is `col-resize`, over the icons a pointer;
   - 1024–1535: the rail expands over the page, modal, with a scrim, closing
-    on Esc or a tap outside;
+    on Esc, a tap outside or the brand mark again;
   - below 1024: a top bar with a drawer that closes on ×, a tap on the scrim
     or a swipe left; focus then returns to the menu button.
 - The content column is 1136 wide and centred; cards never stretch. From 2400
@@ -124,7 +124,8 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   fixed. Vertical page padding is 24 when the content does not fit and up to
   64 when it does. From 1037 the dashboard fits as drawn; between 960 and
   1036 it compresses (3 upcoming events instead of 4, tighter gaps in
-  Сигнали); below 960 it scrolls.
+  Сигнали); below 960 it scrolls. At 1024–1279 «Предстоящи» always shows
+  three events — that is the composition (`816:11473`), not the height.
 - Tables become cards on 402. On 768 they become a list, and the facets fold
   into «Филтри (n)».
 - On 402:
