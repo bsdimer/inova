@@ -152,11 +152,10 @@ If port 4000 is taken: `API_PORT=4100`.
   («Входни такси», not «Такси» here and «Начисления» there). An ambiguous
   word gets refined, not reused.
 
-For any change under `apps/admin` or `apps/mobile`, read and follow the
-canonical [`inova-frontend`](.cursor/skills/inova-frontend/SKILL.md) workflow;
-its description says when to skip it (a copy change, a single token, a
-one-line style fix). Cursor may invoke it directly; Claude has a thin adapter;
-Codex follows this link.
+For larger frontend work, read and follow the canonical
+[`inova-frontend`](.cursor/skills/inova-frontend/SKILL.md) workflow. Cursor may
+invoke it directly; Claude has a thin adapter; Codex follows this link. Small
+visual fixes do not need it.
 
 ## Code style
 
@@ -257,7 +256,8 @@ issue is written for those readers.
   - **What changes for the product** — two to four sentences.
   - **Why now** — one or two sentences.
   - **Done when** — two to four checks the stakeholder can run without
-    reading code: "a resident gets the code by SMS and signs in", "after five wrong codes the resident asks for a new one". These are the acceptance criteria stated at
+    reading code: "a resident gets the code by SMS and signs in", "a third
+    wrong code starts a wait". These are the acceptance criteria stated at
     Start step 5; the PR is reviewed against them. Design issues skip this.
   - **Plan reference** — the exact file and section the work implements:
     `docs/plan/security.md §6.1`, `docs/milestones/M1-identity.md → Account
