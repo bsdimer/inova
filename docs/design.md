@@ -106,10 +106,12 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
 - The shell follows the ladder in Figma `1074:9754`:
   - from 1728: the full sidebar (232);
   - 1536–1727: a 72 rail that expands in place and pushes the content; it
-    opens on hover after a delay, on a click on its empty space or on the
-    brand mark (a second click on the empty space folds it), on touch only
-    on tap, and closes when the pointer leaves, on Esc or on a click outside;
-    over its empty part the cursor is `col-resize`, over the icons a pointer;
+    opens only on a click — on its empty space or on the brand mark — never
+    on hover, which would shift the page under a passing pointer (Helga,
+    25.09). A second click on the empty space, the wordmark, Esc or a click
+    outside folds it; the pointer leaving does not. Over its empty part the
+    cursor is `col-resize`, the sign that the click widens it; over the icons
+    a pointer;
   - 1024–1535: the rail expands over the page, modal, with a scrim, closing
     on Esc, a tap outside or the brand mark again;
   - below 1024: a top bar with a drawer that closes on ×, a tap on the scrim
