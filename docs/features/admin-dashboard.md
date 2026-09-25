@@ -6,10 +6,10 @@ each piece is built. Milestone scope lives in the phase files under
 [milestones/](../milestones/) (overview: [implementation-plan.md](../implementation-plan.md)
 §7); this file says how the pieces meet on one screen.
 
-**Design source:** Figma file `GJgbXLnOXLa6wxZDaKYK7T`, the row marked
-"★ ОСНОВЕН МАКЕТ". One screen in three states: `492:2` (Issues + Calendar
-"Month"), `561:35` (Surveys), `561:10747` (Calendar "Day"). Dark theme:
-`620:504`. Checked against the rendered frames on 2026-09-21. Visual decisions
+**Design source:** Figma file `GJgbXLnOXLa6wxZDaKYK7T`, page **Screens**,
+section «V2 · Табло»: light `859:1073`, dark `859:12319`, Анкети
+`1060:9305`, Календар «Ден» `1064:9563`. Checked against the rendered
+frames on 2026-09-21. Visual decisions
 (glass, sizes, responsive layout) belong to the design source, not to this
 brief.
 
@@ -57,12 +57,12 @@ without leaving the screen.
 
 ### Shell
 
-| Element                                      | Data                                                                                                                                                              | Built in                                         |
-| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| Navigation                                   | Dashboard, Buildings, Residents, Finance, Issues, Notices, Staff, Roles. Items are shown by permission. The super_admin Tenants console stays, outside this mock. | sections arrive with their milestones            |
-| "Notices" badge and bell                     | unread count from the notification feed: `GET /v1/me/notifications/unread-count`                                                                                  | M7                                               |
-| Search "Търсене — сграда, апартамент, жител" | `GET /v1/search?q=` → grouped results (buildings, apartments, residents), see M2b                                                                                 | M2b                                              |
-| Account block                                | initials, name, role · tenant name, menu                                                                                                                          | exists (M1); role label from the active role set |
+| Element                                  | Data                                                                                                                                                                                                                                                                                           | Built in                                         |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| Navigation                               | The nine items in the WHI-24 order: Табло · Задачи · Известия · Финанси · Сгради · Жители · Сигнали · Служители · Роли, shown by permission; D23 adds Документи, Справки, Анкети and Общност before the pilot (placement in WHI-32). The super_admin Tenants console stays, outside this mock. | sections arrive with their milestones            |
+| "Notices" badge and bell                 | unread count from the notification feed: `GET /v1/me/notifications/unread-count`                                                                                                                                                                                                               | M7                                               |
+| Search "Сграда, имот, жител или телефон" | `GET /v1/search?q=` → grouped results (buildings, properties, residents), see M2b                                                                                                                                                                                                              | M2b                                              |
+| Account block                            | initials, name, role · tenant name, menu                                                                                                                                                                                                                                                       | exists (M1); role label from the active role set |
 
 ### Balance ("Баланс")
 
@@ -123,12 +123,14 @@ Actions:
   `createdAt` (hours under a day, then days).
 - Needs `issues.read`. Arrow → Issues section.
 
-**Surveys ("Анкети")** — P1. `GET /v1/surveys/summary` →
+**Surveys ("Анкети")** — before the pilot: the surveys module leaves the P1
+wave (D23), its milestone is still to be cut. `GET /v1/surveys/summary` →
 `{ openCount, proposedCount, active: [{ id, buildingName, question, votedPercent, closesAt }] }`.
 "Предложени" = `pending_approval`, "Приключили" = `closed`. `votedPercent` =
 ballots cast / ballots issued under the survey's weighting mode. Until the
 surveys module ships and the tenant is entitled, the switch is hidden and the
-card shows Issues only. "Създай анкета": see open decision D16.
+card shows Issues only. "Създай анкета" is the manager's own survey (D16,
+resolved 2026-09-22); "Предложени" opens the residents' proposals queue.
 
 ### Calendar ("Календар")
 
@@ -172,8 +174,9 @@ One entity, `tasks` (M11). Evidence from the mock: "Отчет за вход Б"
 - Permission-driven: a user without `billing.read` sees no Balance card and
   no paid ratio; without `tasks.read` no Calendar; and so on. Hidden, not
   disabled.
-- Light theme sits on the brand photograph, dark theme on the dark surface;
-  both via brand tokens, no hardcoded hex.
+- Light theme sits on the brand photograph, dark theme on the night
+  photograph — the same glass in the dark token mode; both via tokens, no
+  hardcoded hex.
 - All copy is extracted to `packages/i18n` (bg/en).
 
 ## Delivery phases
@@ -181,16 +184,16 @@ One entity, `tasks` (M11). Evidence from the mock: "Отчет за вход Б"
 The dashboard is assembled in M9, but most of its data is owned by earlier
 milestones. Each card goes live when its source does.
 
-| Phase | Milestone           | What lands for the dashboard                                                                                                                                                                             |
-| ----- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1     | M2                  | building and apartment counts, "add building" tile                                                                                                                                                       |
-| 2     | M2b                 | unified search endpoint + shell search box                                                                                                                                                               |
-| 3     | M6                  | `issues.priority`, `GET /v1/issues/summary`; shared attachment infrastructure                                                                                                                            |
-| 4     | M7                  | unread count, `debtors` audience type (resolver wired in M9)                                                                                                                                             |
-| 5     | M11                 | tasks module: tables, API, permissions, Tasks section + calendar data                                                                                                                                    |
-| 6     | M9                  | balance and per-building rollups, debtor-reminder send, document library upload, report picker, **dashboard page assembly**, render-based contrast check                                                 |
-| 7     | P1 surveys          | `GET /v1/surveys/summary`, Surveys side of the switch                                                                                                                                                    |
-| any   | UI shell (optional) | The glass layout, light/dark, card components and shell may be built earlier against `MOCK` constants, exactly as today's `Dashboard.tsx` — every mock marked, none reaching a deployed build unflagged. |
+| Phase | Milestone            | What lands for the dashboard                                                                                                                                                                             |
+| ----- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | M2                   | building and apartment counts, "add building" tile                                                                                                                                                       |
+| 2     | M2b                  | unified search endpoint + shell search box                                                                                                                                                               |
+| 3     | M6                   | `issues.priority`, `GET /v1/issues/summary`; shared attachment infrastructure                                                                                                                            |
+| 4     | M7                   | unread count, `debtors` audience type (resolver wired in M9)                                                                                                                                             |
+| 5     | M11                  | tasks module: tables, API, permissions, Tasks section + calendar data                                                                                                                                    |
+| 6     | M9                   | balance and per-building rollups, debtor-reminder send, document library upload, report picker, **dashboard page assembly**, render-based contrast check                                                 |
+| 7     | Surveys module (D23) | `GET /v1/surveys/summary`, Surveys side of the switch                                                                                                                                                    |
+| any   | UI shell (optional)  | The glass layout, light/dark, card components and shell may be built earlier against `MOCK` constants, exactly as today's `Dashboard.tsx` — every mock marked, none reaching a deployed build unflagged. |
 
 ## Acceptance criteria
 
@@ -224,7 +227,6 @@ milestones. Each card goes live when its source does.
 
 Tracked in [plan/decisions.md](../plan/decisions.md) "Open decisions" as
 D11–D18; each has a recommended default that this brief already
-assumes. D12 is resolved (hero = charged). Still blocking: D13 (reminder
-recipients and copy), D15 (document owner), D16 (manager
-creates surveys — touches resolved D8, needs a stakeholder answer, not an
-engineering default).
+assumes. D12 (hero = charged) and D16 (the manager may author a survey)
+are resolved. Still blocking: D13 (reminder recipients and copy), D15
+(document owner).
