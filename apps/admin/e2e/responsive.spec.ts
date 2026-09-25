@@ -132,6 +132,9 @@ test('402 × 874: one column in the phone order, the drawer closes on a swipe (8
   const tops = await Promise.all(order.map(async (h) => (await box(card(page, h))).y));
   expect(tops).toEqual([...tops].sort((a, b) => a - b));
   expect(await box(card(page, 'Баланс'))).toMatchObject({ x: 16, y: 144, w: 370 });
+  // The bubbles at 0.8 (336 × 123), laid out at that size — no zoom, no transform.
+  const bubbles = card(page, 'Баланс').locator('.aspect-\\[420\\/154\\]');
+  expect(await box(bubbles)).toMatchObject({ w: 336, h: 123 });
   await expect(card(page, 'Баланс').getByRole('button', { name: 'Виж детайли' })).toHaveCSS(
     'width',
     '336px',
@@ -160,9 +163,42 @@ test('1920 × 980: a short window closes the gaps and lists three events (815:15
   expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(980);
 });
 
-test('2560 × 1340: the 1728 composition ×1.25, without a scroll (824:1609)', async ({ page }) => {
+test('2560 × 1340: the 1728 composition ×1.25 through rem, centred, without a scroll (824:1609)', async ({
+  page,
+}) => {
   await openAt(page, 2560, 1340);
-  expect(await box(page.locator('aside'))).toMatchObject({ x: 410, w: 290, h: 1236 });
-  expect(await box(page.getByRole('banner'))).toMatchObject({ x: 730, w: 1420 });
+  // The root font size does it — no zoom anywhere.
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).fontSize)).toBe(
+    '20px',
+  );
+  expect(
+    await page.evaluate(() =>
+      [...document.querySelectorAll('*')].some((el) => getComputedStyle(el).zoom !== '1'),
+    ),
+  ).toBe(false);
+  expect(await box(page.locator('aside'))).toMatchObject({ x: 410, y: 52, w: 290, h: 1236 });
+  expect(await box(page.getByRole('banner'))).toMatchObject({ x: 730, y: 52, w: 1420, h: 70 });
+  expect(await box(card(page, 'Баланс'))).toMatchObject({ w: 870, h: 375 });
+  await expect(card(page, 'Предстоящи').getByText('Проверка на асансьор')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(1340);
+});
+
+test('1728 × 1117: the frame everything is drawn at (859:1073)', async ({ page }) => {
+  await openAt(page, 1728, 1117);
+  expect(await box(page.locator('aside'))).toMatchObject({ x: 168, y: 64, w: 232, h: 989 });
+  expect(await box(page.getByRole('banner'))).toMatchObject({ x: 424, y: 64, w: 1136, h: 56 });
+  expect(await box(card(page, 'Баланс'))).toMatchObject({ x: 424, y: 136, w: 696, h: 300 });
+  expect(await box(card(page, 'Спешни сега'))).toMatchObject({ x: 764, w: 356, h: 601 });
+  expect(await box(card(page, 'Предстоящи'))).toMatchObject({ x: 1140, w: 420, h: 687 });
+  expect(await box(card(page, 'Преглед на сгради'))).toMatchObject({ y: 839, h: 214 });
+});
+
+test('1728 × 1050: the dashboard fits as drawn, centred between smaller margins', async ({
+  page,
+}) => {
+  // (1050 − 989) / 2: more than 24, less than 64, and nothing compressed.
+  await openAt(page, 1728, 1050);
+  expect(await box(page.locator('aside'))).toMatchObject({ y: 31, h: 989 });
+  await expect(card(page, 'Предстоящи').getByText('Проверка на асансьор')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(1050);
 });

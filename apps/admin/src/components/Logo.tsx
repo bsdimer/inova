@@ -1,3 +1,5 @@
+import { rem } from '../lib/rem';
+
 /**
  * Logo/Wordmark (Figma 9:25): «inova», a rule ending in a dot, and the byline,
  * 4 apart. Letter-spacing is 22 % of the size; the byline is 28 % of it with
@@ -10,7 +12,7 @@ export function InovaWordmark({ size = 22 }: { size?: number }) {
     <span className="inline-flex flex-col gap-1" aria-label="inova, by WhiteNova Technology">
       <span
         className="font-medium"
-        style={{ fontSize: size, lineHeight: `${size}px`, letterSpacing: size * 0.22 }}
+        style={{ fontSize: rem(size), lineHeight: rem(size), letterSpacing: rem(size * 0.22) }}
       >
         inova
       </span>
@@ -21,10 +23,10 @@ export function InovaWordmark({ size = 22 }: { size?: number }) {
       <span
         className="font-semibold uppercase"
         style={{
-          fontSize: size * 0.28,
+          fontSize: rem(size * 0.28),
           // 7.392 in Figma; the frame rounds the lockup up to a whole 42.
-          lineHeight: `${Math.ceil(size * 0.336)}px`,
-          letterSpacing: size * 0.055,
+          lineHeight: rem(Math.ceil(size * 0.336)),
+          letterSpacing: rem(size * 0.055),
         }}
         aria-hidden
       >

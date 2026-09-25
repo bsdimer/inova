@@ -103,7 +103,7 @@ export function StaffToolbar(props: ToolbarProps) {
             facetCount(filters) > 0 ? 'glass-control-active' : 'glass-control text-ink'
           }`}
         >
-          <SlidersHorizontal size={15} />
+          <SlidersHorizontal size="0.9375rem" />
           Филтри
           {facetCount(filters) > 0 && <span className="num">· {facetCount(filters)}</span>}
         </button>
@@ -219,12 +219,12 @@ function FilterSheet({
                         checked ? 'bg-panel-ink' : ''
                       }`}
                       style={{
-                        boxShadow: checked ? 'none' : 'inset 0 0 0 1px var(--panel-border)',
+                        boxShadow: checked ? 'none' : 'inset 0 0 0 0.0625rem var(--panel-border)',
                       }}
                     >
                       {checked && (
                         <span
-                          className="h-1.5 w-1.5 rounded-[1px]"
+                          className="h-1.5 w-1.5 rounded-[0.0625rem]"
                           style={{ background: 'var(--panel-text-inverse)' }}
                         />
                       )}

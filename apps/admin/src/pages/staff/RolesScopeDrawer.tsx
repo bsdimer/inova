@@ -98,7 +98,7 @@ export function RolesScopeDrawer({
             aria-label="Затвори"
             className="rounded-full p-1.5 text-panel-ink-muted transition-colors hover:bg-panel-row hover:text-panel-ink"
           >
-            <X size={18} />
+            <X size="1.125rem" />
           </button>
         </div>
       }
@@ -121,7 +121,7 @@ export function RolesScopeDrawer({
             disabled={!dirty || saving}
             className="flex items-center gap-2 rounded-full bg-panel-ink px-5 py-2 text-sm font-semibold text-panel-ink-inverse disabled:opacity-40"
           >
-            {saving && <LoaderCircle size={14} className="animate-spin" />}
+            {saving && <LoaderCircle size="0.875rem" className="animate-spin" />}
             Запази
           </button>
         </div>
@@ -155,7 +155,7 @@ export function RolesScopeDrawer({
                 >
                   <span
                     className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
-                    style={{ boxShadow: 'inset 0 0 0 1.5px var(--panel-border)' }}
+                    style={{ boxShadow: 'inset 0 0 0 0.09375rem var(--panel-border)' }}
                   >
                     {checked && (
                       <span
@@ -199,21 +199,21 @@ export function RolesScopeDrawer({
           )}
           {protection ? (
             <p className="mt-3 flex gap-2 rounded-2xl bg-panel-row px-3.5 py-3 text-xs text-panel-status-urgent">
-              <Info size={14} className="mt-0.5 shrink-0" />
+              <Info size="0.875rem" className="mt-0.5 shrink-0" />
               {protection}
             </p>
           ) : (
             <div className="mt-3 flex flex-wrap gap-2">
               {member.status === 'suspended' ? (
                 <AccountAction
-                  icon={<RotateCcw size={15} />}
+                  icon={<RotateCcw size="0.9375rem" />}
                   onClick={() => onAccountAction('reactivate')}
                 >
                   Възстанови достъпа
                 </AccountAction>
               ) : (
                 <AccountAction
-                  icon={<ShieldOff size={15} />}
+                  icon={<ShieldOff size="0.9375rem" />}
                   onClick={() => onAccountAction('suspend')}
                   disabled={member.status === 'invited'}
                   hint={
@@ -226,7 +226,7 @@ export function RolesScopeDrawer({
                 </AccountAction>
               )}
               <AccountAction
-                icon={<UserX size={15} />}
+                icon={<UserX size="0.9375rem" />}
                 onClick={() => onAccountAction('revoke')}
                 danger
               >

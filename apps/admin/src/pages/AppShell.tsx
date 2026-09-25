@@ -32,6 +32,7 @@ import { clearSession, getSession } from '../lib/auth';
 import { designFixtureOn } from '../lib/designFixture';
 import { type NavMode, useNavMode } from '../lib/navMode';
 import { useUnreadCount } from '../lib/notices';
+import { rem } from '../lib/rem';
 import { setTheme, useThemeChoice, type ThemeChoice } from '../lib/theme';
 import {
   clearSelectedTenantId,
@@ -108,22 +109,24 @@ export function AppShell() {
     <>
       <AppBackground />
       {/*
-        The page's margins, per 1074:9754: 16 on a phone, 24 from a tablet up,
-        the 72 rail + 24 + 1136 centred from 1280 (24 aside at 1280, 152 at
-        1536), and the 232 sidebar + 24 + 1136 centred from 1728 with 64 above
-        and below. The rail opened in place keeps its left edge and pushes the
-        page until the right margin is 24. From 2400 the root is zoomed ×1.25
-        (styles.css), and a zoomed page cannot size itself by the window's
-        height — Chrome does not zoom `dvh` — so there it is the 1728
-        composition, 989 tall, with 41 above and below: the 2560 × 1340 frame.
+        The page's margins, per 1074:9754 and the design README (Адаптив):
+        16 on a phone, 24 on a tablet; from 1024 the column is centred — the
+        72 rail + 24 + 1136 from 1280 (24 aside at 1280, 152 at 1536), the
+        232 sidebar + 24 + 1136 from 1728. Above and below: 24 when the page
+        does not fit the window, up to 64 when it does, the page centred in
+        between (the dashboard is 989 tall from 1280, 1239 at 1024–1279);
+        16 in a window the dashboard fits only compressed (`tight`). All in
+        rem, so from 2400, where the root is 20px, the same rule draws the
+        2560 × 1340 frame: 52 above and below. The rail opened in place keeps
+        its left edge and pushes the page until the right margin is 24.
       */}
       <div
-        className={`app-content flex min-h-full gap-6 p-4 md:p-6 xl:mx-auto xl:max-w-[1232px] xl:px-0 3xl:max-w-[1392px] 3xl:py-16 tight:py-4 4xl:min-h-0 4xl:py-[41px] ${
-          pushed ? 'xl:mr-6 xl:ml-[calc((100%-1232px)/2)] xl:max-w-none' : ''
+        className={`app-content flex min-h-full gap-6 px-4 py-[var(--pad-y)] [--pad-y:1rem] md:px-6 md:[--pad-y:1.5rem] lg:[--pad-y:clamp(1.5rem,calc((100dvh-77.4375rem)/2),4rem)] xl:mx-auto xl:max-w-[77rem] xl:px-0 xl:[--pad-y:clamp(1.5rem,calc((100dvh-61.8125rem)/2),4rem)] 3xl:max-w-[87rem] tight:[--pad-y:1rem] ${
+          pushed ? 'xl:mr-6 xl:ml-[calc((100%-77rem)/2)] xl:max-w-none' : ''
         }`}
       >
         {mode === 'full' && (
-          <aside className="glass sticky top-16 flex h-[calc(100dvh-128px)] w-58 shrink-0 flex-col gap-2 self-start p-[21px] tight:top-4 tight:h-[calc(100dvh-32px)] 4xl:top-[41px] 4xl:h-[989px]">
+          <aside className={`${stickyBox} w-58 p-[1.3125rem]`}>
             <SidebarBody {...shared} brand={<Brand />} />
           </aside>
         )}
@@ -136,8 +139,8 @@ export function AppShell() {
               // The rail's empty space toggles it; the items only navigate.
               if (e.target === e.currentTarget) setPinned((v) => !v);
             }}
-            className={`glass sticky top-6 z-20 flex h-[calc(100dvh-48px)] shrink-0 cursor-col-resize flex-col gap-2 self-start tight:top-4 tight:h-[calc(100dvh-32px)] ${
-              pushed ? 'w-58 p-[21px]' : 'w-[72px] items-center py-[13px]'
+            className={`${stickyBox} z-20 cursor-col-resize ${
+              pushed ? 'w-58 p-[1.3125rem]' : 'w-[4.5rem] items-center py-[0.8125rem]'
             }`}
           >
             {pushed ? (
@@ -170,7 +173,7 @@ export function AppShell() {
           />
         )}
 
-        <div className="flex min-w-0 flex-1 flex-col gap-3 md:gap-4 xl:max-w-[1136px]">
+        <div className="flex min-w-0 flex-1 flex-col gap-3 md:gap-4 xl:max-w-[71rem]">
           <Topbar
             mode={mode}
             menuButton={menuButton}
@@ -241,7 +244,7 @@ function PlatformVisitNote({ session }: { session: Session }) {
   const name = context.data?.tenant.name ?? 'организацията';
   return (
     <div className="glass flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-3.5">
-      <Lock size={17} className="shrink-0 text-ink-muted" />
+      <Lock size="1.0625rem" className="shrink-0 text-ink-muted" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold">Платформа → {name}</p>
         <p className="text-xs text-ink-muted">
@@ -286,8 +289,8 @@ function NavList({ nav, pathname }: { nav: NavItems; pathname: string }) {
             // rounded 14, the active one 16.
             className={`nav-item relative flex items-center gap-3 px-3.5 text-body-14 ${
               active
-                ? 'rounded-[var(--radius-nav)] py-3 font-semibold text-ink [--nav-radius:16px]'
-                : 'rounded-[var(--radius-signal)] py-[11px] font-medium text-ink-soft'
+                ? 'rounded-[var(--radius-nav)] py-3 font-semibold text-ink [--nav-radius:1rem]'
+                : 'rounded-[var(--radius-signal)] py-[0.6875rem] font-medium text-ink-soft'
             }`}
           >
             {active && (
@@ -298,11 +301,11 @@ function NavList({ nav, pathname }: { nav: NavItems; pathname: string }) {
                 transition={{ type: 'spring', damping: 30, stiffness: 340 }}
               />
             )}
-            <Icon size={22} className="relative shrink-0" />
+            <Icon size="1.375rem" className="relative shrink-0" />
             <span className="relative flex-1 truncate">{label}</span>
             {to === '/notices' && unread ? (
               // V2/Badge (846:244): the unread count on Известия.
-              <span className="num text-label-12 relative rounded-full bg-[var(--badge-fill)] px-[7px] py-0.5 font-semibold text-[color:var(--badge-text)]">
+              <span className="num text-label-12 relative rounded-full bg-[var(--badge-fill)] px-[0.4375rem] py-0.5 font-semibold text-[color:var(--badge-text)]">
                 {unread}
               </span>
             ) : null}
@@ -339,10 +342,10 @@ function PlatformBadge() {
   return (
     <div className="px-1.5 pb-5">
       <span
-        className="inline-flex rounded-[10px] px-2.5 py-[5px] text-[11px] font-semibold tracking-[0.8px] text-ink-soft uppercase"
+        className="inline-flex rounded-[0.625rem] px-2.5 py-[0.3125rem] text-[0.6875rem] font-semibold tracking-[0.05rem] text-ink-soft uppercase"
         style={{
           background: 'var(--glass-chip)',
-          boxShadow: 'inset 0 0 0 1px var(--glass-edge-soft)',
+          boxShadow: 'inset 0 0 0 0.0625rem var(--glass-edge-soft)',
         }}
       >
         Платформа
@@ -410,7 +413,7 @@ function RailBody({
           className="text-title-22 flex h-10 w-10 items-center justify-center rounded-full font-medium text-ink"
           style={{
             background: 'var(--glass-inner)',
-            boxShadow: 'inset 0 0 0 1px var(--glass-edge)',
+            boxShadow: 'inset 0 0 0 0.0625rem var(--glass-edge)',
           }}
         >
           i
@@ -427,18 +430,18 @@ function RailBody({
               data-active={active || undefined}
               aria-label={badge ? `${label}, ${badge} непрочетени` : label}
               className={`nav-item relative flex h-12 w-12 cursor-pointer items-center justify-center text-ink ${
-                active ? 'nav-active rounded-[16px] [--nav-radius:16px]' : 'rounded-[14px]'
+                active ? 'nav-active rounded-[1rem] [--nav-radius:1rem]' : 'rounded-[0.875rem]'
               }`}
             >
-              <Icon size={22} />
+              <Icon size="1.375rem" />
               {badge ? (
                 // In the rail the count becomes a lit dot on the bell (Rail item «Точка»).
                 <span
                   aria-hidden
-                  className="absolute top-[9px] left-[30px] h-2 w-2 rounded-full"
+                  className="absolute top-[0.5625rem] left-[1.875rem] h-2 w-2 rounded-full"
                   style={{
                     background: 'var(--light-source)',
-                    boxShadow: '0 0 6px 1px var(--glow-dot-near)',
+                    boxShadow: '0 0 0.375rem 0.0625rem var(--glow-dot-near)',
                   }}
                 />
               ) : null}
@@ -458,8 +461,11 @@ function RailBody({
   );
 }
 
-const railBox =
-  'glass sticky top-6 z-20 flex h-[calc(100dvh-48px)] w-[72px] shrink-0 flex-col items-center gap-2 self-start py-[13px] tight:top-4 tight:h-[calc(100dvh-32px)]';
+/** The sidebar and the rail stand still while the page scrolls, as tall as the window less its margins. */
+const stickyBox =
+  'glass sticky top-[var(--pad-y)] flex h-[calc(100dvh-2*var(--pad-y))] shrink-0 flex-col gap-2 self-start';
+
+const railBox = `${stickyBox} z-20 w-[4.5rem] items-center py-[0.8125rem]`;
 
 /**
  * 1024–1535: no room to push the page (827:1572), so the brand disc opens the
@@ -507,7 +513,7 @@ function ModalRail({
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -8 }}
               transition={{ duration: 0.15 }}
-              className="glass nav-overlay absolute flex w-58 flex-col gap-2 p-[21px]"
+              className="glass nav-overlay absolute flex w-58 flex-col gap-2 p-[1.3125rem]"
               style={{ left: box.left, top: box.top, height: box.height }}
             >
               <SidebarBody {...shared} brand={<Brand label="Затвори менюто" onClick={onClose} />} />
@@ -579,7 +585,7 @@ function Drawer({
               if (info.offset.x < -60 || info.velocity.x < -400) onClose();
               else void animate(x, 0, { type: 'spring', damping: 32, stiffness: 320 });
             }}
-            className="glass nav-overlay absolute top-3 bottom-3 left-3 flex w-[300px] flex-col gap-2 p-[21px]"
+            className="glass nav-overlay absolute top-3 bottom-3 left-3 flex w-[18.75rem] flex-col gap-2 p-[1.3125rem]"
           >
             <SidebarBody {...shared} brand={<Brand />} />
             <button
@@ -589,7 +595,7 @@ function Drawer({
               aria-label="Затвори менюто"
               className="absolute top-4 right-4 flex h-11 w-11 items-center justify-center rounded-full text-ink"
             >
-              <X size={20} />
+              <X size="1.25rem" />
             </button>
           </motion.aside>
         </div>
@@ -602,7 +608,7 @@ function Drawer({
 function GlobalSearch({ className = '' }: { className?: string }) {
   return (
     <label className={`glass-field flex h-12 min-w-0 items-center gap-2.5 px-4 ${className}`}>
-      <Search size={20} className="shrink-0 text-ink-muted" />
+      <Search size="1.25rem" className="shrink-0 text-ink-muted" />
       <input
         type="search"
         disabled
@@ -617,12 +623,12 @@ function GlobalSearch({ className = '' }: { className?: string }) {
 /** Icon/menu from V2/Topbar: three 18 × 1.5 bars in a 22 box. */
 function MenuBars() {
   return (
-    <span aria-hidden className="relative h-[22px] w-[22px]">
+    <span aria-hidden className="relative h-[1.375rem] w-[1.375rem]">
       {[4, 10.25, 16.5].map((top) => (
         <span
           key={top}
-          className="absolute left-0.5 h-[1.5px] w-[18px] rounded-[1px] bg-current"
-          style={{ top }}
+          className="absolute left-0.5 h-[0.09375rem] w-[1.125rem] rounded-[0.0625rem] bg-current"
+          style={{ top: rem(top) }}
         />
       ))}
     </span>
@@ -669,7 +675,7 @@ function Topbar({
   ) : (
     // V2/Topbar (850:312): search 380 wide, a spacer, the bell and the account, 20 apart.
     <header className="flex h-14 items-center gap-5">
-      <GlobalSearch className="flex-1 max-w-[380px]" />
+      <GlobalSearch className="flex-1 max-w-[23.75rem]" />
       <div className="ml-auto flex shrink-0 items-center gap-5">
         <NoticesBell />
         <AccountMenu session={session} />
@@ -687,13 +693,13 @@ function NoticesBell() {
       aria-label={unread ? `Известия, ${unread} непрочетени` : 'Известия'}
       className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink"
     >
-      <Bell size={22} />
+      <Bell size="1.375rem" />
       {unread ? (
         // The frame's lit dot: a soft halo and a bright core on the bell's shoulder.
         <>
           <span
             aria-hidden
-            className="absolute top-0.5 left-5 h-[22px] w-[22px] rounded-full"
+            className="absolute top-0.5 left-5 h-[1.375rem] w-[1.375rem] rounded-full"
             style={{
               background: 'radial-gradient(circle, var(--glow-dot-near) 0%, transparent 70%)',
               opacity: 0.6,
@@ -701,10 +707,10 @@ function NoticesBell() {
           />
           <span
             aria-hidden
-            className="absolute top-[9px] left-[27px] h-2 w-2 rounded-full"
+            className="absolute top-[0.5625rem] left-[1.6875rem] h-2 w-2 rounded-full"
             style={{
               background: 'var(--light-source)',
-              boxShadow: '0 0 6px 1px var(--glow-dot-near)',
+              boxShadow: '0 0 0.375rem 0.0625rem var(--glow-dot-near)',
             }}
           />
         </>
@@ -768,7 +774,7 @@ function AccountMenu({ session, compact = false }: { session: Session; compact?:
                   {roleLabel(session, platform)}
                 </span>
               </span>
-              <ChevronDown size={18} className="shrink-0" />
+              <ChevronDown size="1.125rem" className="shrink-0" />
             </>
           )}
         </button>
@@ -783,14 +789,14 @@ function AccountMenu({ session, compact = false }: { session: Session; compact?:
             {options.map((option) => (
               <MenuItem
                 key={option.id}
-                icon={<Building2 size={15} />}
+                icon={<Building2 size="0.9375rem" />}
                 onClick={() => {
                   setSelectedTenantId(option.id);
                   setOpen(false);
                 }}
                 trailing={
                   option.id === selectedTenantId ? (
-                    <Check size={14} className="opacity-70" />
+                    <Check size="0.875rem" className="opacity-70" />
                   ) : undefined
                 }
               >
@@ -813,10 +819,10 @@ function AccountMenu({ session, compact = false }: { session: Session; compact?:
         ).map(({ value, label, icon: Icon }) => (
           <MenuItem
             key={value}
-            icon={<Icon size={15} />}
+            icon={<Icon size="0.9375rem" />}
             onClick={() => setTheme(value)}
             trailing={
-              value === themeChoice ? <Check size={14} className="opacity-70" /> : undefined
+              value === themeChoice ? <Check size="0.875rem" className="opacity-70" /> : undefined
             }
           >
             {label}
@@ -824,7 +830,7 @@ function AccountMenu({ session, compact = false }: { session: Session; compact?:
         ))}
 
         <hr className="my-1.5 border-panel-divider" />
-        <MenuItem icon={<LogOut size={15} />} onClick={signOut}>
+        <MenuItem icon={<LogOut size="0.9375rem" />} onClick={signOut}>
           Изход
         </MenuItem>
       </div>
