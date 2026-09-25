@@ -71,7 +71,11 @@ export function StaffTable({ strip, children }: { strip?: ReactNode; children: R
         <thead>
           <tr className="text-overline-12 font-semibold text-ink-soft uppercase">
             {COLUMNS.map((column, i) => (
-              <th key={i} scope="col" className={`h-[41px] px-3 font-semibold ${column.className}`}>
+              <th
+                key={i}
+                scope="col"
+                className={`h-[2.5625rem] px-3 font-semibold ${column.className}`}
+              >
                 {column.label}
               </th>
             ))}
@@ -98,7 +102,7 @@ export function SkeletonRows({ rows = 3 }: { rows?: number }) {
       {Array.from({ length: rows }, (_, i) => (
         <tr key={i}>
           {COLUMNS.map((column, c) => (
-            <td key={c} className={`h-[65px] px-3 ${column.className}`}>
+            <td key={c} className={`h-[4.0625rem] px-3 ${column.className}`}>
               <SkeletonBar className={column.bar} />
             </td>
           ))}

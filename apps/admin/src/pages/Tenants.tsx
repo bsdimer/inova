@@ -81,7 +81,7 @@ function OrgTile({ name }: { name: string }) {
       className="text-body-13 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-semibold"
       style={{
         background: 'var(--glass-avatar)',
-        boxShadow: 'inset 0 0 0 1px var(--glass-avatar-edge)',
+        boxShadow: 'inset 0 0 0 0.0625rem var(--glass-avatar-edge)',
       }}
     >
       {initials}
@@ -203,32 +203,32 @@ export function TenantsPage() {
           </colgroup>
           <thead>
             <tr className="text-overline-12 text-ink-soft uppercase">
-              <th scope="col" className="h-[41px] px-3 font-semibold">
+              <th scope="col" className="h-[2.5625rem] px-3 font-semibold">
                 Организация
               </th>
               {COUNT_COLUMNS.map((label) => (
                 <th
                   key={label}
                   scope="col"
-                  className="hidden h-[41px] px-3 text-right font-semibold lg:table-cell"
+                  className="hidden h-[2.5625rem] px-3 text-right font-semibold lg:table-cell"
                 >
                   {label}
                 </th>
               ))}
-              <th scope="col" className="h-[41px] px-3 font-semibold">
+              <th scope="col" className="h-[2.5625rem] px-3 font-semibold">
                 Статус
               </th>
-              <th scope="col" className="hidden h-[41px] px-3 font-semibold sm:table-cell">
+              <th scope="col" className="hidden h-[2.5625rem] px-3 font-semibold sm:table-cell">
                 Създадена
               </th>
-              <th scope="col" className="h-[41px] px-3" />
+              <th scope="col" className="h-[2.5625rem] px-3" />
             </tr>
           </thead>
           <tbody>
             {tenants.isLoading &&
               Array.from({ length: 3 }, (_, i) => (
                 <tr key={i}>
-                  <td className="h-[65px] px-3">
+                  <td className="h-[4.0625rem] px-3">
                     <SkeletonBar className="w-2/3" />
                   </td>
                   {COUNT_COLUMNS.map((label) => (
@@ -249,7 +249,10 @@ export function TenantsPage() {
               ))}
 
             {visible.map((tenant) => (
-              <tr key={tenant.id} className="h-[65px] transition-colors hover:bg-glass-inner-soft">
+              <tr
+                key={tenant.id}
+                className="h-[4.0625rem] transition-colors hover:bg-glass-inner-soft"
+              >
                 <td className="px-3 align-middle">
                   <div className="flex items-center gap-3">
                     <OrgTile name={tenant.name} />
@@ -292,10 +295,10 @@ export function TenantsPage() {
                       className="glass-blur text-body-13 flex h-8 items-center gap-1.5 rounded-full px-3 font-medium text-ink"
                       style={{
                         background: 'var(--glass-inner)',
-                        boxShadow: 'inset 0 0 0 1px var(--glass-edge)',
+                        boxShadow: 'inset 0 0 0 0.0625rem var(--glass-edge)',
                       }}
                     >
-                      Влез <ArrowRight size={14} />
+                      Влез <ArrowRight size="0.875rem" />
                     </button>
                   </div>
                 </td>
@@ -401,7 +404,7 @@ function ProvisionWizard({
                       : 'bg-panel-ink text-panel-ink-inverse'
                   }`}
                 >
-                  {state === 'done' ? <Check size={14} /> : i + 1}
+                  {state === 'done' ? <Check size="0.875rem" /> : i + 1}
                 </span>
                 <span
                   className={`hidden text-xs font-medium sm:block ${
@@ -446,7 +449,7 @@ function ProvisionWizard({
               </Field>
               <div className="flex justify-end">
                 <PanelButton disabled={!orgValid} onClick={() => setStep('admin')}>
-                  Напред <ArrowRight size={15} />
+                  Напред <ArrowRight size="0.9375rem" />
                 </PanelButton>
               </div>
             </div>
@@ -486,10 +489,10 @@ function ProvisionWizard({
               </Field>
               <div className="flex justify-between">
                 <PanelButton ghost onClick={() => setStep('org')}>
-                  <ArrowLeft size={14} /> Назад
+                  <ArrowLeft size="0.875rem" /> Назад
                 </PanelButton>
                 <PanelButton disabled={!adminValid} onClick={() => setStep('review')}>
-                  {adminFilled ? 'Напред' : 'Пропусни засега'} <ArrowRight size={15} />
+                  {adminFilled ? 'Напред' : 'Пропусни засега'} <ArrowRight size="0.9375rem" />
                 </PanelButton>
               </div>
             </div>
@@ -519,10 +522,10 @@ function ProvisionWizard({
               )}
               <div className="flex justify-between">
                 <PanelButton ghost onClick={() => setStep('admin')}>
-                  <ArrowLeft size={14} /> Назад
+                  <ArrowLeft size="0.875rem" /> Назад
                 </PanelButton>
                 <PanelButton disabled={provision.isPending} onClick={() => provision.mutate()}>
-                  <Sparkles size={15} />
+                  <Sparkles size="0.9375rem" />
                   {provision.isPending ? 'Създава…' : 'Създай организация'}
                 </PanelButton>
               </div>
@@ -532,7 +535,7 @@ function ProvisionWizard({
           {step === 'done' && result && (
             <div className="space-y-4 text-center">
               <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-panel-row">
-                <Check size={26} className="text-panel-status-resolved" />
+                <Check size="1.625rem" className="text-panel-status-resolved" />
               </span>
               <div>
                 <h3 className="font-semibold">{result.tenant.name} е готова</h3>

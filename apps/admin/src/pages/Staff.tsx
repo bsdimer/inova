@@ -292,7 +292,7 @@ function buildEmptyBody(input: {
 }): ReactNode {
   if (input.denied) {
     return (
-      <EmptyState icon={<Lock size={22} />} title="Ролята ви не може да вижда служители">
+      <EmptyState icon={<Lock size="1.375rem" />} title="Ролята ви не може да вижда служители">
         Преглеждането на акаунти изисква правото staff.read. Администратор на {input.tenantName}{' '}
         може да го добави към ролята ви.
       </EmptyState>
@@ -302,13 +302,13 @@ function buildEmptyBody(input: {
   if (input.members.length === 0) {
     return (
       <EmptyState
-        icon={<Users size={22} />}
+        icon={<Users size="1.375rem" />}
         title="Още няма акаунти на служители"
         action={
           input.canManage && (
             <PrimaryButton onClick={input.onInvite}>
               <span className="flex items-center gap-2">
-                <MailPlus size={16} /> Покани първия служител
+                <MailPlus size="1rem" /> Покани първия служител
               </span>
             </PrimaryButton>
           )
@@ -326,7 +326,7 @@ function buildEmptyBody(input: {
     if (input.filters.search.trim()) parts.push(`Търсенето е „${input.filters.search.trim()}“`);
     return (
       <EmptyState
-        icon={<Search size={22} />}
+        icon={<Search size="1.375rem" />}
         title="Няма служители по тези филтри"
         action={<GhostButton onClick={input.onReset}>Изчисти филтрите</GhostButton>}
       >
@@ -359,7 +359,7 @@ function pickStrip(input: {
     return (
       <TableStrip
         tone="danger"
-        icon={<CircleAlert size={14} />}
+        icon={<CircleAlert size="0.875rem" />}
         action={<GhostButton onClick={input.onRetry}>Опитай пак</GhostButton>}
       >
         Списъкът не можа да се зареди: {input.error.message}
@@ -368,7 +368,7 @@ function pickStrip(input: {
   }
   if (input.pending) {
     return (
-      <TableStrip tone="busy" icon={<LoaderCircle size={14} />}>
+      <TableStrip tone="busy" icon={<LoaderCircle size="0.875rem" />}>
         {ACTION_PROGRESS[input.pending.action]} {input.pending.member.fullName} — редът остава на
         мястото си, докато сървърът потвърди.
       </TableStrip>
@@ -379,7 +379,11 @@ function pickStrip(input: {
       <TableStrip
         tone={input.notice.tone}
         icon={
-          input.notice.tone === 'success' ? <CircleCheck size={14} /> : <CircleAlert size={14} />
+          input.notice.tone === 'success' ? (
+            <CircleCheck size="0.875rem" />
+          ) : (
+            <CircleAlert size="0.875rem" />
+          )
         }
         onDismiss={input.onDismiss}
       >
@@ -389,14 +393,14 @@ function pickStrip(input: {
   }
   if (input.refreshing) {
     return (
-      <TableStrip tone="info" icon={<RefreshCw size={13} />}>
+      <TableStrip tone="info" icon={<RefreshCw size="0.8125rem" />}>
         Обновява се — показва се последно зареденият списък
       </TableStrip>
     );
   }
   if (input.canManage === false) {
     return (
-      <TableStrip tone="muted" icon={<Eye size={14} />}>
+      <TableStrip tone="muted" icon={<Eye size="0.875rem" />}>
         Само за четене — ролята ви вижда акаунтите, но не може да кани, спира или променя роли.
       </TableStrip>
     );

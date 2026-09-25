@@ -21,7 +21,7 @@ export function BalanceBubbles({
   right: ReactNode;
 }) {
   return (
-    <div className="relative aspect-[420/154] w-[420px] max-w-full shrink-0">
+    <div className="relative aspect-[420/154] w-[26.25rem] max-w-full shrink-0">
       <svg
         aria-hidden
         viewBox="2 4 420 154"

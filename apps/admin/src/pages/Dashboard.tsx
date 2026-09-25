@@ -46,10 +46,10 @@ export function DashboardPage() {
     //   Календар over Сгради (818:1379).
     // - a phone: one column — Баланс, Сигнали, Календар, Сгради, Документи
     //   (818:11596).
-    <div className="grid grid-cols-1 gap-x-5 gap-y-4 md:grid-cols-2 lg:grid-cols-[296fr_364fr_336fr] xl:h-full xl:grid-cols-[minmax(0,1fr)_420px]">
+    <div className="grid grid-cols-1 gap-x-5 gap-y-4 md:grid-cols-2 lg:grid-cols-[296fr_364fr_336fr] xl:h-full xl:grid-cols-[minmax(0,1fr)_26.25rem]">
       <div className="contents xl:flex xl:flex-col xl:gap-4">
         <BalanceCard balance={data.balance} today={data.today} />
-        <div className="contents md:flex md:flex-col md:gap-4 lg:contents xl:grid xl:flex-1 xl:grid-cols-[minmax(0,1fr)_356px] xl:gap-x-5">
+        <div className="contents md:flex md:flex-col md:gap-4 lg:contents xl:grid xl:flex-1 xl:grid-cols-[minmax(0,1fr)_22.25rem] xl:gap-x-5">
           <DocumentsCard />
           <SignalsCard signals={data.signals} today={data.today} />
         </div>
@@ -84,7 +84,7 @@ function Card({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay }}
       title={`Данните идват с ${milestone}.`}
-      className={`glass flex flex-col p-[25px] ${className}`}
+      className={`glass flex flex-col p-[1.5625rem] ${className}`}
     >
       {children}
     </motion.section>
@@ -104,7 +104,7 @@ function SectionArrow({ to, label }: { to: string; label: string }) {
       aria-label={label}
       className="glass-solid flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
     >
-      <ArrowRight size={16} />
+      <ArrowRight size="1rem" />
     </Link>
   );
 }
@@ -116,7 +116,7 @@ function Toggle({ options, selected }: { options: readonly string[]; selected: s
       className="inline-flex shrink-0 items-center gap-0.5 rounded-full p-1"
       style={{
         background: 'var(--glass-inner-soft)',
-        boxShadow: 'inset 0 0 0 1px var(--glass-edge)',
+        boxShadow: 'inset 0 0 0 0.0625rem var(--glass-edge)',
       }}
     >
       {options.map((option) => (
@@ -172,12 +172,12 @@ function Money({
 }) {
   const { whole, cents } = moneyParts(minor, currency);
   return size === 'hero' ? (
-    <span className="num flex items-start gap-1.5 font-medium tracking-[-1.5px]">
+    <span className="num flex items-start gap-1.5 font-medium tracking-[-0.09375rem]">
       <span className="text-display-52">{whole}</span>
       <span className="text-display-26">{cents}</span>
     </span>
   ) : (
-    <span className="num flex items-start gap-px font-light tracking-[-1px]">
+    <span className="num flex items-start gap-px font-light tracking-[-0.0625rem]">
       <span className="text-number-18">{whole}</span>
       <span className="text-number-13">{cents}</span>
     </span>
@@ -190,7 +190,7 @@ function BalanceCard({ balance, today }: { balance: DashboardData['balance']; to
     // On a phone the card is 16 in at the sides and 20 at top and bottom (818:11656).
     <Card
       milestone="M3–M4"
-      className="gap-2.5 px-[17px] py-[21px] md:col-span-2 md:p-[25px] lg:col-span-3"
+      className="gap-2.5 px-[1.0625rem] py-[1.3125rem] md:col-span-2 md:p-[1.5625rem] lg:col-span-3"
     >
       <header className="flex items-center gap-3">
         <h2 className="text-title-16 flex-1 font-medium text-ink-soft">Баланс</h2>
@@ -208,7 +208,7 @@ function BalanceCard({ balance, today }: { balance: DashboardData['balance']; to
       </header>
 
       {/* The hero sum sits where the frame puts it: 129 in from the card's content edge. */}
-      <div className="flex h-[52px] items-end justify-center md:justify-start md:pl-[129px]">
+      <div className="flex h-[3.25rem] items-end justify-center md:justify-start md:pl-[8.0625rem]">
         {balance ? (
           <Money minor={balance.charged} currency={balance.currency} size="hero" />
         ) : (
@@ -223,7 +223,12 @@ function BalanceCard({ balance, today }: { balance: DashboardData['balance']; to
         the card, 16 below them.
       */}
       <div className="flex flex-col items-center gap-4 md:flex-row md:justify-between md:gap-2.5">
-        <div className="max-md:[zoom:0.8]">
+        {/*
+          Scaled, not re-laid-out: rescale(0.8) in the frame shrinks the text
+          with the bubbles. The negative margins give back the 84 × 30.8 the
+          transform frees, so the box takes 336 × 123.2 in the flow.
+        */}
+        <div className="max-md:-mr-[5.25rem] max-md:-mb-[1.925rem] max-md:origin-top-left max-md:scale-80">
           <BalanceBubbles
             left={<Stat label="Платили" minor={balance?.collected} currency={balance?.currency} />}
             centre={
@@ -236,7 +241,7 @@ function BalanceCard({ balance, today }: { balance: DashboardData['balance']; to
             }
           />
         </div>
-        <div className="flex w-full flex-col gap-2.5 md:w-[200px] md:min-w-0">
+        <div className="flex w-full flex-col gap-2.5 md:w-[12.5rem] md:min-w-0">
           <SecondaryButton disabled title="Начисленията и касата идват с M3–M4." className="w-full">
             Виж детайли
           </SecondaryButton>
@@ -256,7 +261,7 @@ function BalanceCard({ balance, today }: { balance: DashboardData['balance']; to
 
 function Stat({ label, minor, currency }: { label: string; minor?: bigint; currency?: string }) {
   return (
-    <div className="flex flex-col items-center gap-[3px] whitespace-nowrap">
+    <div className="flex flex-col items-center gap-[0.1875rem] whitespace-nowrap">
       <p className="text-body-15-tight text-ink-soft">{label}</p>
       {minor !== undefined && currency ? (
         <Money minor={minor} currency={currency} size="stat" />
@@ -293,7 +298,7 @@ function CollectedRing({ percent }: { percent: number | null }) {
     transform: `rotate(-90 ${c} ${c})`,
   };
   return (
-    <div className="relative h-[136px] w-[136px]">
+    <div className="relative h-[8.5rem] w-[8.5rem]">
       <svg
         aria-hidden
         viewBox={`0 0 ${RING.size} ${RING.size}`}
@@ -323,7 +328,7 @@ function CollectedRing({ percent }: { percent: number | null }) {
               strokeWidth={6}
               opacity={0.8}
               filter="url(#ring-soft)"
-              style={{ filter: 'drop-shadow(0 0 24px var(--ring-halo-far))' }}
+              style={{ filter: 'drop-shadow(0 0 1.5rem var(--ring-halo-far))' }}
             />
             <circle {...arc} stroke="var(--ring-core)" strokeWidth={1.75} />
             <circle
@@ -339,7 +344,7 @@ function CollectedRing({ percent }: { percent: number | null }) {
               cy={dot.y}
               r={4}
               fill="var(--ring-core)"
-              style={{ filter: 'drop-shadow(0 0 3px var(--glow-dot-near))' }}
+              style={{ filter: 'drop-shadow(0 0 0.1875rem var(--glow-dot-near))' }}
             />
           </>
         )}
@@ -361,7 +366,7 @@ function DocumentsCard() {
       className="order-last items-center justify-center gap-5 md:flex-1 lg:order-none"
     >
       <DocumentBlock
-        glyph={<UploadSimple size={28} />}
+        glyph={<UploadSimple size="1.75rem" />}
         title="Качи документ"
         body="Фактури за плащане, документи за сгради и други."
         action="Избери файл"
@@ -369,7 +374,7 @@ function DocumentsCard() {
       />
       <hr className="w-full border-glass-divider" />
       <DocumentBlock
-        glyph={<FileMagnifyingGlass size={28} />}
+        glyph={<FileMagnifyingGlass size="1.75rem" />}
         title="Всичко важно в една справка"
         body="Преглед на данни, експорт в PDF и печат."
         action="Направи справка"
@@ -400,7 +405,7 @@ function DocumentBlock({
       <div className="flex min-w-0 flex-1 flex-col items-start gap-2 lg:w-full lg:items-center">
         <h2 className="text-title-22 font-medium">{title}</h2>
         <p className="text-body-14 text-ink-muted">{body}</p>
-        <SecondaryButton disabled title={why} className="min-w-[152px]">
+        <SecondaryButton disabled title={why} className="min-w-[9.5rem]">
           {action}
         </SecondaryButton>
       </div>
@@ -431,7 +436,11 @@ const SIGNAL_TAGS = [
 function SignalsCard({ signals, today }: { signals: DashboardData['signals']; today: Date }) {
   return (
     // 601 tall as composed, whatever the list holds; a short window closes the gaps.
-    <Card milestone="M6" delay={0.1} className="min-h-[601px] gap-[25px] tight:min-h-0 tight:gap-4">
+    <Card
+      milestone="M6"
+      delay={0.1}
+      className="min-h-[37.5625rem] gap-[1.5625rem] tight:min-h-0 tight:gap-4"
+    >
       <header className="flex h-8 items-center justify-between">
         <Toggle options={['Сигнали', 'Анкети']} selected="Сигнали" />
         <SectionArrow to="/issues" label="Към сигналите" />
@@ -450,17 +459,17 @@ function SignalsCard({ signals, today }: { signals: DashboardData['signals']; to
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-x-3 gap-y-[11px]">
+      <div className="grid grid-cols-2 gap-x-3 gap-y-[0.6875rem]">
         {SIGNAL_TAGS.map(({ key, label, icon: Icon, tone }) => (
           <span
             key={key}
             className="glass-blur flex h-11 min-w-0 items-center gap-1.5 rounded-full p-3"
             style={{
               background: 'var(--glass-inner-strong)',
-              boxShadow: 'inset 0 0 0 1px var(--glass-edge-soft)',
+              boxShadow: 'inset 0 0 0 0.0625rem var(--glass-edge-soft)',
             }}
           >
-            <Icon size={20} className={`shrink-0 ${tone}`} />
+            <Icon size="1.25rem" className={`shrink-0 ${tone}`} />
             <span className="text-body-14 truncate font-medium">{label}</span>
             <span className="num text-number-16 ml-auto font-medium">
               {signals ? signals.counters[key] : <Blank />}
@@ -469,7 +478,7 @@ function SignalsCard({ signals, today }: { signals: DashboardData['signals']; to
         ))}
       </div>
 
-      <div className="flex flex-col gap-2 pt-8 tight:pt-[18px]">
+      <div className="flex flex-col gap-2 pt-8 tight:pt-[1.125rem]">
         <Overline>Спешни сега</Overline>
         {signals ? (
           signals.urgent.map((signal) => (
@@ -481,10 +490,10 @@ function SignalsCard({ signals, today }: { signals: DashboardData['signals']; to
             >
               <span
                 aria-hidden
-                className="h-[7px] w-[7px] shrink-0 rounded-full"
+                className="h-[0.4375rem] w-[0.4375rem] shrink-0 rounded-full"
                 style={{
                   background: 'var(--status-urgent)',
-                  boxShadow: '0 0 5px 0.5px var(--status-urgent)',
+                  boxShadow: '0 0 0.3125rem 0.03125rem var(--status-urgent)',
                 }}
               />
               <span className="flex min-w-0 flex-1 flex-col">
@@ -553,7 +562,7 @@ function CalendarCard({ calendar, today }: { calendar: DashboardData['calendar']
     <Card
       milestone="M11"
       delay={0.15}
-      className="min-h-[687px] flex-1 gap-1.5 lg:max-xl:min-h-[621px] tight:min-h-0"
+      className="min-h-[42.9375rem] flex-1 gap-1.5 lg:max-xl:min-h-[38.8125rem] tight:min-h-0"
     >
       <header className="flex h-8 items-center gap-2">
         <h2 className="text-title-16 flex-1 font-medium text-ink-soft">Календар</h2>
@@ -567,7 +576,7 @@ function CalendarCard({ calendar, today }: { calendar: DashboardData['calendar']
           aria-label="Предишен месец"
           className="flex h-8 w-8 items-center justify-center rounded-full text-ink"
         >
-          <ChevronLeft size={18} />
+          <ChevronLeft size="1.125rem" />
         </button>
         <p className="text-body-14 flex-1 text-center font-semibold">
           {title.charAt(0).toUpperCase() + title.slice(1)} <span className="num">{shown.year}</span>
@@ -578,7 +587,7 @@ function CalendarCard({ calendar, today }: { calendar: DashboardData['calendar']
           aria-label="Следващ месец"
           className="flex h-8 w-8 items-center justify-center rounded-full text-ink"
         >
-          <ChevronRight size={18} />
+          <ChevronRight size="1.125rem" />
         </button>
       </div>
 
@@ -586,7 +595,7 @@ function CalendarCard({ calendar, today }: { calendar: DashboardData['calendar']
         {WEEKDAYS.map((d) => (
           <span
             key={d}
-            className="text-label-12 flex h-[26px] items-center justify-center font-medium text-ink-muted"
+            className="text-label-12 flex h-[1.625rem] items-center justify-center font-medium text-ink-muted"
           >
             {d}
           </span>
@@ -598,7 +607,7 @@ function CalendarCard({ calendar, today }: { calendar: DashboardData['calendar']
           <span
             key={d.iso}
             aria-current={d.isToday ? 'date' : undefined}
-            className="flex h-10 flex-col items-center justify-center gap-[3px]"
+            className="flex h-10 flex-col items-center justify-center gap-[0.1875rem]"
           >
             <span
               className={`num text-label-12 ${
@@ -612,17 +621,17 @@ function CalendarCard({ calendar, today }: { calendar: DashboardData['calendar']
               {d.day}
             </span>
             {d.isToday ? (
-              <span className="today-underline h-0.5 w-[18px] rounded-[1px]" />
+              <span className="today-underline h-0.5 w-[1.125rem] rounded-[0.0625rem]" />
             ) : (
               d.inMonth &&
               eventDays.has(d.iso) && (
                 // V2/Calendar · Day Event=true: a lit dot under the date.
                 <span
                   aria-label="има задачи"
-                  className="h-[5px] w-[5px] rounded-full"
+                  className="h-[0.3125rem] w-[0.3125rem] rounded-full"
                   style={{
                     background: 'var(--light-source)',
-                    boxShadow: '0 0 7px 0.5px var(--glow-dot-near)',
+                    boxShadow: '0 0 0.4375rem 0.03125rem var(--glow-dot-near)',
                   }}
                 />
               )
@@ -644,7 +653,7 @@ function CalendarCard({ calendar, today }: { calendar: DashboardData['calendar']
               style={{ background: 'var(--glass-inner)' }}
             >
               <span
-                className="num text-label-12 flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg font-semibold"
+                className="num text-label-12 flex h-[1.875rem] w-[1.875rem] shrink-0 items-center justify-center rounded-lg font-semibold"
                 style={{ background: 'var(--glass-inner)' }}
               >
                 {Number(event.date.slice(8))}
@@ -668,7 +677,7 @@ function CalendarCard({ calendar, today }: { calendar: DashboardData['calendar']
 function BuildingsCard({ buildings }: { buildings: DashboardData['buildings'] }) {
   return (
     // The frame's card is 214 tall: its tiles run 8 into the bottom padding.
-    <Card milestone="M2" delay={0.2} className="gap-4 pb-[17px] lg:col-span-3">
+    <Card milestone="M2" delay={0.2} className="gap-4 pb-[1.0625rem] lg:col-span-3">
       <header className="flex items-center gap-2.5">
         <div className="min-w-0 flex-1">
           <h2 className="text-title-16 font-medium text-ink-soft">Преглед на сгради</h2>
@@ -693,11 +702,11 @@ function BuildingsCard({ buildings }: { buildings: DashboardData['buildings'] })
         TODO(M2): «Добави» opening the add-building flow.
       */}
       {/* Across the page (1024–1279) the tiles keep 120 each, 12 apart, from the left. */}
-      <div className="grid grid-cols-4 lg:max-xl:grid-cols-[repeat(4,120px)] lg:max-xl:gap-x-3">
+      <div className="grid grid-cols-4 lg:max-xl:grid-cols-[repeat(4,7.5rem)] lg:max-xl:gap-x-3">
         <Tile
           disc={
             <GlowDisc>
-              <Plus size={24} />
+              <Plus size="1.5rem" />
             </GlowDisc>
           }
           name="Добави"
@@ -712,10 +721,10 @@ function BuildingsCard({ buildings }: { buildings: DashboardData['buildings'] })
                 className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full"
                 style={{
                   background: 'var(--glass-inner-strong)',
-                  boxShadow: 'inset 0 0 0 1px var(--glass-inner-strong)',
+                  boxShadow: 'inset 0 0 0 0.0625rem var(--glass-inner-strong)',
                 }}
               >
-                <Building2 size={30} />
+                <Building2 size="1.875rem" />
               </span>
             }
             name={building.name}

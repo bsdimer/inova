@@ -59,8 +59,10 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
   (`check:no-design-data`). The shell and Табло follow the responsive ladder
   (Figma 1074:9754): the full sidebar from 1728, a 72 rail that opens in place
   at 1536–1727 and over the page at 1024–1535, a top bar with a drawer below
-  1024; Табло recomposes at 1024, 768 and on a phone, fits a 960–1116 tall
-  window, and from 2400 is drawn ×1.25. Menu items have their hover and
+  1024; Табло recomposes at 1024, 768 and on a phone, fits a 960–1036 tall
+  window, and from 2400 is drawn ×1.25 — every size is in rem and the root
+  font size is 20px there. Page margins follow the window height: 24 when the
+  page does not fit, up to 64 when it does, centred in between. Menu items have their hover and
   keyboard-focus look, the rail its tooltips.
   Contract for the full Табло: [features/admin-dashboard.md](features/admin-dashboard.md);
   it added M2b (unified search) and M11 (staff tasks/calendar) to the plan and
@@ -89,7 +91,7 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
 | `apps/auth-service` PasswordHasher              | 7     | `unit`             |
 | `apps/auth-service` AuthService login failures  | 5     | `unit`             |
 
-Browser (Playwright, `apps/admin/e2e`, CI job `e2e`): 37 — sign-in 7, Табло 3, widths 8, Служители 5, Организации 3, screenshots 11.
+Browser (Playwright, `apps/admin/e2e`, CI job `e2e`): 39 — sign-in 7, Табло 3, widths 10, Служители 5, Организации 3, screenshots 11.
 
 Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migrations`, `check:no-design-data`.
 
