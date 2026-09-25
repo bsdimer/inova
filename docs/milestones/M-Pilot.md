@@ -10,7 +10,7 @@ Inova live in production on the shared app.
 
 ## Dependencies
 
-M5, M5b (mobile issues/notices), M7, M9, M-Ops.
+M5, M5b (mobile issues/notices), M7, M9, M-Ops, and — since D23 — the surveys module (from the P1 wave), the Community forum (milestone to be cut), M11 with the resident-visible contractor calendar, and the tenant-named menu item in the brand config (Still open 13).
 
 ## Work
 

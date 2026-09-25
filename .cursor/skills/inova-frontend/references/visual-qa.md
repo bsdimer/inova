@@ -2,7 +2,7 @@
 
 - Admin: exercise the changed flow in the browser (click, type, submit,
   navigate). One screenshot is not verification.
-- Check the other routes that share the state you touched (tenant switcher,
+- Check the other routes that share the state you touched (organisation switcher,
   session, query cache).
 - Empty, error, and loading states — not only the happy path.
 - Admin at the ladder widths of Figma 1074:9754 — 1728, 1536, 1280, 1180,

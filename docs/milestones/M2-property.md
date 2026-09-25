@@ -1,6 +1,6 @@
 # M2 — Property hierarchy and resident linking
 
-**Status:** Not started. **Current target** (mobile-first).
+**Status:** Not started. Next after the M1 B8 refactor (mobile-first).
 
 ## Goal
 
@@ -23,8 +23,8 @@ currently implemented global-user model to tenant-scoped account realms.
 PK/indexes, RLS. Apartment rows keep UUID technical ids and enforce the unique
 business key `(tenant_id, building_id, entrance_id, floor, apartment_number)`.
 A building has `city` and `district` as separate columns (D24). An apartment
-has `rooms` (integer) and a property type of `apartment`, `garage`, `shop` or
-`storage` (D26).
+has `rooms` (integer) and a property type of `apartment`, `garage`, `shop`,
+`storage` or `parking_spot` (D26).
 The schema contract test must pass on the new tables without being rewritten.
 
 ## Backend
@@ -56,15 +56,13 @@ The schema contract test must pass on the new tables without being rewritten.
 Portfolio tree, building setup/activation, apartment detail, “add resident”
 (role + effective date → invite → delivery/activation status), multiple owners,
 designated owner document recipient, verification queue, corrections,
-removal-request queue with a История toggle for decided and withdrawn
-requests (D27), approved end occupancy (no move — D25), manager assignment. The buildings list filters by град and квартал (D24).
+removal-request queue with История for decided and withdrawn requests (D27), approved end occupancy (no move — D25), manager assignment. The buildings list filters by град and квартал (D24).
 
 ## Mobile
 
 Role-derived owner, tenant, occupant, and manager views in the active
 tenant/brand realm; explicit view switching when the account has multiple
-roles; tenant switching among separately authenticated accounts in the shared
-app; profile (contacts, effective-dated occupants and pets); fallback “add my
+roles; profile (contacts, effective-dated occupants and pets); fallback “add my
 apartment”. View selection never grants access. Owner-only features such as
 survey proposal/voting are hidden and server-blocked for tenant/occupant roles.
 
@@ -79,9 +77,9 @@ survey proposal/voting are hidden and server-blocked for tenant/occupant roles.
   auth/reset/invite responses never reveal the other realm.
 - Occupancy state machine.
 - Multiple co-owner access and owner-vs-tenant authorization differences.
-- Multi-role account behavior and tenant-switch isolation: selected views do
-  not grant permissions, and cached apartment data from tenant A is unavailable
-  after switching to tenant B.
+- Multi-role account behavior: selected views do not grant permissions. (The
+  tenant-switch isolation test — cached apartment data from tenant A
+  unavailable after switching to tenant B — moved to M10 with the switcher.)
 - Resident/pet effective-date boundaries.
 - Draft vs active apartment-removal rules; reason required; only super_admin
   applies approved removals; full audit coverage.
@@ -134,8 +132,8 @@ Moved verbatim from the implementation plan §7 when it was split. Where this an
 - **Dependencies:** M1, including the tenant-scoped account-realm refactor required by B8.
 - **DB:** `buildings, entrances, apartments, occupancies, pets, occupancy_requests, building_manager_assignments, removal_requests` (+ soft delete/effective-date columns). Apartment unique business key: `(tenant, building, entrance, floor, apartment_number)`.
 - **Backend:** draft-building CRUD + bulk import endpoint (CSV/XLSX) for buildings/apartments; building activation freezes direct apartment removal; **create-resident-on-apartment endpoint (creates/uses a tenant-local account + effective-dated occupancy + invite code)**; multiple simultaneous owners; owner vs tenant permission guards; effective-dated residents/pets; occupancy request/verify/reject; reasoned removal request + super_admin approve/reject/apply; building-scoped manager assignments for tenant staff, resident managers, or platform-employed managers.
-- **Admin:** portfolio tree UI, apartment detail, building setup/activation, **"add resident" flow** with owner/tenant/occupant role and effective date, multiple-owner support, designated owner document recipient, verification/removal queues, corrections, resident lifecycle (approved end occupancy/move), manager assignment.
-- **Mobile:** distinct role-derived owner/tenant/occupant/manager views in the active branded tenant context; explicit role/view and apartment switching where applicable; tenant switching among independently authenticated accounts in the shared app; profile screens (contacts, occupants, pets with effective dates); fallback "add my apartment" request flow. Owner-only features stay hidden and server-blocked for tenants/occupants, regardless of the selected view.
+- **Admin:** portfolio tree UI, apartment detail, building setup/activation, **"add resident" flow** with owner/tenant/occupant role and effective date, multiple-owner support, designated owner document recipient, verification/removal queues, corrections, resident lifecycle (approved end occupancy; no move — D25), manager assignment.
+- **Mobile:** distinct role-derived owner/tenant/occupant/manager views in the active branded tenant context; explicit role/view and apartment switching where applicable; tenant switching among independently authenticated accounts in the shared app (→ M10); profile screens (contacts, occupants, pets with effective dates); fallback "add my apartment" request flow. Owner-only features stay hidden and server-blocked for tenants/occupants, regardless of the selected view.
 - **Tests:** import edge cases; natural-key uniqueness including floor; duplicate email/phone across tenants but not within one tenant; multiple co-owner access; owner/tenant authorization differences; effective-date boundaries; draft vs active removal policy; removal approval audit; occupancy state machine; resident cannot see unlinked apartments.
 - **Acceptance:** inova's real structure importable from spreadsheet; verification round-trip works end to end.
 - **Risks:** source data is spreadsheets (B4 resolved) — obtain sample files early to fix column mappings for the bulk importer.

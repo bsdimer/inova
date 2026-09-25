@@ -6,7 +6,7 @@ Part of the [implementation plan](../implementation-plan.md). Milestone order an
 
 ## Goal
 
-Manager's daily cockpit and the debtor list; XLSX export of debtors and transactions. The screen contract — every card, its data, states, permissions and delivery phase — is [features/admin-dashboard.md](../features/admin-dashboard.md); design source Figma `GJgbXLnOXLa6wxZDaKYK7T` frames `492:2`, `561:35`, `561:10747`, dark `620:504`.
+Manager's daily cockpit and the debtor list; XLSX export of debtors and transactions. The screen contract — every card, its data, states, permissions and delivery phase — is [features/admin-dashboard.md](../features/admin-dashboard.md); design source: Figma `GJgbXLnOXLa6wxZDaKYK7T`, page Screens, section «V2 · Табло» (frames in the brief). **Scope added 2026-09-24 (D23):** the menu sections Документи (document library with overview, search and templates) and Справки (entry to the reports).
 
 ## Dependencies
 
@@ -40,4 +40,4 @@ Debtor XLSX matches on-screen data exactly; dashboard numbers match the oracle f
 
 ## Risks
 
-Open decisions D11–D18 (hero number, reminder defaults, document owner) change copy and defaults, not the contracts above — the endpoints return all amounts and accept a period, so none of them blocks backend work.
+Open decisions D13 and D15 (reminder defaults, document owner) change copy and defaults, not the contracts above — the endpoints return all amounts and accept a period, so none of them blocks backend work.
