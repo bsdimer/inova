@@ -14,7 +14,7 @@ M-Pilot (proves content depth for store review), brand config system (M0/M5). Th
 
 ## Work
 
-Brand build matrix in CI (EAS Build or fastlane lanes per brand), credentials store integration ([plan/white-label.md](../plan/white-label.md)), per-brand Firebase project + APNs key wiring, store metadata pipeline (fastlane deliver/supply), deep-link domain per brand, differentiation record + compliance checklist execution (§WL), partner account-access procedure executed with inova; shared-app invitation/org-code tenant selection (P1 feature).
+Brand build matrix in CI (EAS Build or fastlane lanes per brand), credentials store integration ([plan/white-label.md](../plan/white-label.md)), per-brand Firebase project + APNs key wiring, store metadata pipeline (fastlane deliver/supply), deep-link domain per brand, differentiation record + compliance checklist execution ([white-label.md](../plan/white-label.md)), partner account-access procedure executed with inova; shared-app invitation/org-code tenant selection (P1 feature).
 
 ## Acceptance
 
@@ -22,4 +22,4 @@ The first partner's dedicated app approved on both stores; a second test brand b
 
 ## Risks
 
-Apple 4.3(b) rejection — mitigations in §WL; account setup latency (D-U-N-S, Apple org verification can take weeks — **start during M-Pilot**).
+Apple 4.3(b) rejection — mitigations in [white-label.md](../plan/white-label.md); account setup latency (D-U-N-S, Apple org verification can take weeks — **start during M-Pilot**).
