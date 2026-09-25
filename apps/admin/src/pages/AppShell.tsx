@@ -27,7 +27,6 @@ import {
   useRef,
   useState,
   type MouseEvent,
-  type PointerEvent as ReactPointerEvent,
   type ReactNode,
   type RefObject,
 } from 'react';
@@ -89,14 +88,12 @@ export function AppShell() {
   const [overlay, setOverlay] = useState(false);
   useEffect(() => setOverlay(false), [pathname, mode]);
 
-  // The rail opened in place (1536–1727), as the design README has it
-  // (821:1456 and «Курсор на рейке»): it opens after the pointer rests on it
-  // or on a click on its empty space or its brand, and closes when the
-  // pointer leaves, on Esc, on a click outside, or on a second click on its
-  // empty space. A touch opens it only by a tap.
+  // The rail opened in place (1536–1727): only a click opens it — on its
+  // empty space, where the col-resize cursor says it widens, or on its brand.
+  // A second click there, the wordmark, Esc or a click outside closes it.
+  // Hover does nothing: the page would shift under a passing pointer.
   const [railOpen, setRailOpen] = useState(false);
   const pushRail = useRef<HTMLElement>(null);
-  const dwell = useRef<number | undefined>(undefined);
   useEffect(() => setRailOpen(false), [mode]);
   useEffect(() => {
     if (!railOpen) return;
@@ -112,23 +109,10 @@ export function AppShell() {
     };
   }, [railOpen]);
   const pushed = mode === 'push' && railOpen;
-  const railHandlers = {
-    onPointerEnter: (e: ReactPointerEvent) => {
-      if (e.pointerType !== 'mouse') return;
-      window.clearTimeout(dwell.current);
-      dwell.current = window.setTimeout(() => setRailOpen(true), 300);
-    },
-    onPointerLeave: (e: ReactPointerEvent) => {
-      if (e.pointerType !== 'mouse') return;
-      window.clearTimeout(dwell.current);
-      setRailOpen(false);
-    },
-    // Anything that is not an item or a button is the rail's empty space.
-    onClick: (e: MouseEvent) => {
-      if ((e.target as Element).closest('a, button')) return;
-      window.clearTimeout(dwell.current);
-      setRailOpen((open) => !open);
-    },
+  // Anything that is not an item or a button is the rail's empty space.
+  const toggleRail = (e: MouseEvent) => {
+    if ((e.target as Element).closest('a, button')) return;
+    setRailOpen((open) => !open);
   };
 
   const menuButton = useRef<HTMLButtonElement>(null);
@@ -165,7 +149,7 @@ export function AppShell() {
           // rail widens; over the icons and items it stays a pointer.
           <aside
             ref={pushRail}
-            {...railHandlers}
+            onClick={toggleRail}
             className={`${stickyBox} z-20 cursor-col-resize ${
               pushed ? 'w-58 p-[1.3125rem]' : 'w-[4.5rem] items-center py-[0.8125rem]'
             }`}
