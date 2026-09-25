@@ -27,7 +27,7 @@ charges; `currency` on money columns.
   `valid_from` / `valid_to` and charges only the periods it covers. Its scope
   is one of: chosen properties (a stored list of property ids, any type — the
   screen picks them by search with chips), an entrance, the whole building, or
-  a property type (`apartment`, `garage`, `shop`, `storage`).
+  a property type (`apartment`, `garage`, `shop`, `storage`, `parking_spot`).
 - Fee-generation job (BullMQ, tenant TZ, idempotent on
   `(rule_version, apartment, period)`), using the residents/pets/ideal parts
   effective for the applicable period.

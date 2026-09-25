@@ -32,7 +32,7 @@ Small, independently implementable, agent-sized items in build order. A planning
 
 - [ ] **16a.** Worker skeleton before M3: BullMQ consumer deployable, `inova_worker` DB role without BYPASSRLS, per-tenant job iteration with `SET LOCAL app.tenant_id` (D21), health check, deploy wiring
 - [ ] **16b.** Redis revocation denylist with the D20 failure mode (fail open for ordinary requests, closed for sensitive ones, logged and alerting)
-- [ ] **17.** Migration: buildings (with `city` and `district` — D24), entrances, apartments (unique building + entrance + floor + number; `rooms` and property type apartment/garage/shop/storage — D26), effective-dated occupancies/pets, occupancy_requests, building_manager_assignments, removal_requests
+- [ ] **17.** Migration: buildings (with `city` and `district` — D24), entrances, apartments (unique building + entrance + floor + number; `rooms` and property type apartment/garage/shop/storage/parking_spot — D26), effective-dated occupancies/pets, occupancy_requests, building_manager_assignments, removal_requests
 - [ ] **18.** Property draft/activation CRUD + multiple owners + owner/tenant guards + occupancy request/verify/reject + manager assignments + super_admin removal approval; apartment correction as a plain audited edit, no move (D25); removal request withdrawn or edited while pending, both request lists with a status filter (D27)
 - [ ] **19.** XLSX/CSV bulk import endpoint with dry-run + row-level error report
 - [ ] **19a.** Importer currency step (A-EUR): one-time BGN → EUR conversion at 1.95583, half-up per amount, reconciliation report with source, result and total rounding difference

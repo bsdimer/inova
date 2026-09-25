@@ -23,8 +23,8 @@ currently implemented global-user model to tenant-scoped account realms.
 PK/indexes, RLS. Apartment rows keep UUID technical ids and enforce the unique
 business key `(tenant_id, building_id, entrance_id, floor, apartment_number)`.
 A building has `city` and `district` as separate columns (D24). An apartment
-has `rooms` (integer) and a property type of `apartment`, `garage`, `shop` or
-`storage` (D26).
+has `rooms` (integer) and a property type of `apartment`, `garage`, `shop`,
+`storage` or `parking_spot` (D26).
 The schema contract test must pass on the new tables without being rewritten.
 
 ## Backend
