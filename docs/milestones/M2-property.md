@@ -1,6 +1,6 @@
 # M2 — Property hierarchy and resident linking
 
-**Status:** Not started. **Current target** (mobile-first).
+**Status:** Not started. Next after the M1 B8 refactor (mobile-first).
 
 ## Goal
 
@@ -63,8 +63,7 @@ requests (D27), approved end occupancy (no move — D25), manager assignment. Th
 
 Role-derived owner, tenant, occupant, and manager views in the active
 tenant/brand realm; explicit view switching when the account has multiple
-roles; tenant switching among separately authenticated accounts in the shared
-app; profile (contacts, effective-dated occupants and pets); fallback “add my
+roles; profile (contacts, effective-dated occupants and pets); fallback “add my
 apartment”. View selection never grants access. Owner-only features such as
 survey proposal/voting are hidden and server-blocked for tenant/occupant roles.
 
@@ -79,9 +78,9 @@ survey proposal/voting are hidden and server-blocked for tenant/occupant roles.
   auth/reset/invite responses never reveal the other realm.
 - Occupancy state machine.
 - Multiple co-owner access and owner-vs-tenant authorization differences.
-- Multi-role account behavior and tenant-switch isolation: selected views do
-  not grant permissions, and cached apartment data from tenant A is unavailable
-  after switching to tenant B.
+- Multi-role account behavior: selected views do not grant permissions. (The
+  tenant-switch isolation test — cached apartment data from tenant A
+  unavailable after switching to tenant B — moved to M10 with the switcher.)
 - Resident/pet effective-date boundaries.
 - Draft vs active apartment-removal rules; reason required; only super_admin
   applies approved removals; full audit coverage.

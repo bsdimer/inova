@@ -1,6 +1,6 @@
 # M-Ops — Environments, monitoring, runbooks
 
-**Status:** Not started. **Effort / sequencing:** M, continuous from M0.
+**Status:** Test environment deployed; the rest not started. **Effort / sequencing:** M, continuous from M0.
 
 Part of the [implementation plan](../implementation-plan.md). Milestone order and dependencies are in its §7. Section numbers (§) are the plan's own; its index maps each § to a file.
 

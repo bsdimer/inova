@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-09-24
 **Current milestone:** M1 tenant-account realm refactor, then M2 Property hierarchy
-**Focus:** apply the B8 tenant-scoped account decision, including secure multi-tenant session switching and multi-role mobile views, before M2 locks identity references; then build property hierarchy so mobile can drop mock building/apartment data.
+**Focus:** apply the B8 tenant-scoped account decision, including multi-role mobile views, before M2 locks identity references (the shared app's tenant switcher is M10, moved 2026-09-21); then build property hierarchy so mobile can drop mock building/apartment data.
 
 This is the only living status file. History: [work-log/](work-log/). Scope: [milestones/](milestones/). Non-technical view: Linear project `inova` (workspace `white-label-app`), one task per change set, created when the work starts — `AGENTS.md` → Tracking in Linear.
 
@@ -59,13 +59,14 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
   (`check:no-design-data`). The shell and Табло follow the responsive ladder
   (Figma 1074:9754): the full sidebar from 1728, a 72 rail that opens in place
   at 1536–1727 and over the page at 1024–1535, a top bar with a drawer below
-  1024; Табло recomposes at 1024, 768 and on a phone, fits a 960–1116 tall
-  window, and from 2400 is drawn ×1.25. Menu items have their hover and
+  1024; Табло recomposes at 1024, 820 and on a phone, fits as drawn from a
+  1037 tall window and compresses between 960 and 1036, and from 2400 is
+  drawn ×1.25. Menu items have their hover and
   keyboard-focus look, the rail its tooltips.
   Contract for the full Табло: [features/admin-dashboard.md](features/admin-dashboard.md);
   it added M2b (unified search) and M11 (staff tasks/calendar) to the plan and
   extended M6 (issue priority), M7 (debtors audience, unread count) and M9.
-- Quality gates: `pnpm verify` (format, lint, typecheck, unit, integration, architecture contracts, build). `pnpm test:unit` now covers `apps/api` and `apps/auth-service` too (co-located `src/**/*.test.ts`, hermetic, excluded from the build); `apps/auth-service` has the first six — the `PasswordHasher` units that came with argon2id — and `apps/api` still has none. The testing policy is in `AGENTS.md` → Testing. Admin flows run in a real browser: Playwright in `apps/admin/e2e` (`pnpm test:e2e`, CI job `e2e`, which the deploy waits for) covers sign-in with every error it names, the Служители and Организации lists, and entering and leaving an organization; each run keeps screenshots of the key screens. The admin has no component runner and mobile no runner; the sign-in form's checks live in `packages/shared` (`validateLoginForm`, `loginFailure`) and are unit-tested there. GitHub Actions CI installs pnpm from `package.json` `packageManager` (`pnpm@10.34.5`); do not also pass `version` to `pnpm/action-setup`.
+- Quality gates: `pnpm verify` (format, lint, typecheck, unit, integration, architecture contracts, build). `pnpm test:unit` now covers `apps/api` and `apps/auth-service` too (co-located `src/**/*.test.ts`, hermetic, excluded from the build). The testing policy is in `AGENTS.md` → Testing. Admin flows run in a real browser: Playwright in `apps/admin/e2e` (`pnpm test:e2e`, CI job `e2e`, which the deploy waits for) covers sign-in with every error it names, the Служители and Организации lists, and entering and leaving an organization; each run keeps screenshots of the key screens. The admin has no component runner and mobile no runner; the sign-in form's checks live in `packages/shared` (`validateLoginForm`, `loginFailure`) and are unit-tested there. GitHub Actions CI installs pnpm from `package.json` `packageManager` (`pnpm@10.34.5`); do not also pass `version` to `pnpm/action-setup`.
   Locally the repo needs **Node >= 22** (`engines`): on Node 20.11 `verify`
   dies at `test:unit` before any project code runs, because rolldown imports
   `util.styleText` (added in Node 20.12).
@@ -91,16 +92,16 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
 
 Browser (Playwright, `apps/admin/e2e`, CI job `e2e`): 37 — sign-in 7, Табло 3, widths 8, Служители 5, Организации 3, screenshots 11.
 
-Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migrations`, `check:no-design-data`.
+Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migrations`, `check:no-design-data`, `check:agent-harness`, `check:worklog`.
 
 ## Milestone honesty
 
-| Milestone                            | Status                                                                                                                                                                | Gaps vs original acceptance                                                                                                                                                                                                                                                                  |
-| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| M0 Foundations                       | Done for _local_ foundations; test environment now deployed                                                                                                           | Container deploy to the test host exists (GHCR images, compose, nginx, Let's Encrypt). Still no Terraform/OIDC, no generated OpenAPI clients, no “one command” full stack. Those belong to M-Ops / later. Lint and format are now real gates.                                                |
-| M1 Identity                          | Original global-user backend + admin screens implemented; B8 refactor required before M2                                                                              | Tenant-scoped accounts (same email/phone allowed independently per tenant), one-tenant-per-token authorization, secure local account portfolio/tenant switching, multi-role context, separate platform identities; then Redis denylist, worker, real delivery, silent refresh, audit viewer. |
-| M2 Property                          | Not started                                                                                                                                                           | —                                                                                                                                                                                                                                                                                            |
-| M5 Mobile / M9 Dashboard / M10 Brand | UI shells only; mobile surveys screens were built ahead of the plan and stay on `MOCK` data — surveys come before the pilot (D23), their milestone is still to be cut | Mock data until M2+ APIs exist.                                                                                                                                                                                                                                                              |
+| Milestone                            | Status                                                                                                                                                                                                               | Gaps vs original acceptance                                                                                                                                                                                                                                                                  |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| M0 Foundations                       | Done for _local_ foundations; test environment now deployed                                                                                                                                                          | Container deploy to the test host exists (GHCR images, compose, nginx, Let's Encrypt). Still no Terraform/OIDC, no generated OpenAPI clients, no “one command” full stack. Those belong to M-Ops / later. Lint and format are now real gates.                                                |
+| M1 Identity                          | Original global-user backend + admin screens implemented; B8 refactor required before M2                                                                                                                             | Tenant-scoped accounts (same email/phone allowed independently per tenant), one-tenant-per-token authorization, secure local account portfolio/tenant switching, multi-role context, separate platform identities; then Redis denylist, worker, real delivery, silent refresh, audit viewer. |
+| M2 Property                          | Not started                                                                                                                                                                                                          | —                                                                                                                                                                                                                                                                                            |
+| M5 Mobile / M9 Dashboard / M10 Brand | Mobile: UI shells on `MOCK` data; the surveys screens were built ahead of the plan — surveys come before the pilot (D23), their milestone is still to be cut. Admin Табло: shell on live APIs, empty slots until M2+ | Mock data until M2+ APIs exist.                                                                                                                                                                                                                                                              |
 
 ## Temporary mocks (greppable)
 
@@ -127,15 +128,15 @@ Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migr
   validated before M8 is locked.
 - Dashboard design decisions D13 (debtor-reminder recipients/copy) and D15
   (document-library categories) are open; D16 (the manager may author a
-  survey) was resolved 2026-09-22. They block the M9 dashboard UI and the
-  surveys card, not M2 or any backend contract.
+  survey) was resolved 2026-09-22. They block the M9 dashboard UI, not M2 or
+  any backend contract.
 - Legal counsel must confirm whether EGN and identity-card data are required for
   enforcement-agent claims. Do not add those fields to the general user profile
   before purpose, access, encryption, and retention rules are approved.
 
 ## Next up
 
-1. **M1 B8 identity refactor** — together with B13–B15 (activation by identifier + code, realm-unique single active invite code, password recovery by email/phone with configurable lifetimes): tenant-scoped accounts, tenant-local email/phone uniqueness, realm-scoped login/invite/reset without cross-brand disclosure, one-tenant-per-token JWT claims, secure multi-account session storage and tenant switching in the shared mobile app, multi-role context, separate platform identities. See [milestones/M1-identity.md](milestones/M1-identity.md).
+1. **M1 B8 identity refactor** — together with B13–B15 (activation by identifier + code, realm-unique single active invite code, password recovery by email/phone with configurable lifetimes): tenant-scoped accounts, tenant-local email/phone uniqueness, realm-scoped login/invite/reset without cross-brand disclosure, one-tenant-per-token JWT claims, one tenant per token (the shared app's multi-account portfolio and tenant switcher are M10), multi-role context, separate platform identities. See [milestones/M1-identity.md](milestones/M1-identity.md).
 2. **Worker skeleton** before M3 (fee generation is a worker job) with its own `inova_worker` role (D21).
 3. **M2 property hierarchy** — building draft/activation, floor-aware apartment uniqueness, effective-dated occupancies/pets, multiple owners, role-specific owner/tenant access, manager assignments, controlled removal, spreadsheet import. See [milestones/M2-property.md](milestones/M2-property.md).
 4. Wire mobile “My building” / resident profile to M2 APIs as they land.
@@ -145,5 +146,4 @@ Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migr
    with the compose stack, its own database and secrets, nightly off-box
    `pg_dump`, one rehearsed restore — EKS deferred), re-enable `main` deploys in `ci.yml`, move edge maintenance to production deploys,
    and remove the leftover `/opt/inova` stack and `portal.whitenova.tech` site
-   (its certificate can no longer renew without DNS). Add nightly off-box
-   `pg_dump` backups.
+   (its certificate can no longer renew without DNS).

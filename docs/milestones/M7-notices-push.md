@@ -6,7 +6,7 @@ Part of the [implementation plan](../implementation-plan.md). Milestone order an
 
 ## Goal
 
-Admin publishes categorized notices to targeted audiences; residents get pushes; notification center in app.
+Admin publishes categorized notices to targeted audiences; residents get pushes; notification center in app. **Scope added 2026-09-24 (D23, D28):** bulk messages to all or many residents, including those who have not installed the app (channel and audience definition: Still open 11), as templates with placeholders — name in every channel, amounts never in a push.
 
 ## Dependencies
 

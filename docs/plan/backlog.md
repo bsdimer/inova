@@ -9,7 +9,7 @@ Small, independently implementable, agent-sized items in build order. A planning
 - [ ] **1.** Initialize monorepo: pnpm workspaces + Turborepo, root lint/format/tsconfig, commit hooks
 - [ ] **2.** `infra/docker/docker-compose.yml`: Postgres 16, Redis, MinIO, MailHog; `.env.example`
 - [ ] **3.** Scaffold `apps/auth-service` and `apps/api` NestJS services (shared tooling package) with config service, health endpoints, OpenAPI emit, RFC 7807 error filter
-- [ ] **4.** Wire drizzle-kit migrations in `db/migrations` + CI migration check job
+- [ ] **4.** Plain SQL migrations in `db/migrations` (RLS, triggers, partitioning hand-written) + CI migration check job
 - [ ] **5.** Scaffold `apps/admin` (Vite React, router, typed API client from OpenAPI)
 - [ ] **6.** Scaffold `apps/mobile` (Expo TS, brand-config stub, responsive style helpers, light/dark themes)
 - [ ] **7.** GitHub Actions `ci.yml`: lint, typecheck, test, build, docker images → ECR
@@ -86,8 +86,8 @@ Small, independently implementable, agent-sized items in build order. A planning
 - [ ] **41d.** Admin dashboard page per [features/admin-dashboard.md](../features/admin-dashboard.md): Balance, Documents, Issues (Surveys hidden until the surveys module ships and the tenant is entitled — before the pilot, D23), Calendar, Buildings overview; light/dark from brand tokens; per-card loading/empty/error/permission states; bg/en strings; removes the `MOCK` data in `Dashboard.tsx`
 - [ ] **41e.** Render-based contrast check (Playwright screenshot per brand × theme, text layer vs real background) wired as a pre-release gate
 - [ ] **42.** Debtor report API + UI + XLSX export job
-- [ ] **43.** Terraform: VPC, EKS, RDS, Redis, S3, SES, Secrets Manager, CloudFront
-- [ ] **44.** Helm charts (api, worker) + staging/prod deploy workflows with approvals
+- [ ] **43.** _(scale-out, after the pilot — D19 runs the pilot on one VM)_ Terraform: VPC, EKS, RDS, Redis, S3, SES, Secrets Manager, CloudFront
+- [ ] **44.** _(scale-out, after the pilot — D19)_ Helm charts (api, worker) + staging/prod deploy workflows with approvals
 - [ ] **45.** kube-prometheus-stack + Loki + Sentry + PostHog wiring + Slack alerts
 - [ ] **46.** Nightly logical backup job + restore-drill runbook + runbook set (deploy, incident, webhook replay)
 
@@ -116,8 +116,14 @@ Small, independently implementable, agent-sized items in build order. A planning
 - [ ] **54.** Brand build matrix CI (EAS/fastlane) + credentials vault structure + second-brand smoke test
 - [ ] **55.** First partner's dedicated app: partner account procedure, compliance checklist, differentiation record, store submission
 - [ ] **56.** Shared-app tenant-account portfolio: add realm by invite deep link/org code, authenticate separately, securely store/remove sessions, switch tenant without cache/push/analytics leakage
+
+### Moved before the pilot (D23) — the surveys module, milestone still to be cut
+
 - [ ] **57.** Owner-proposed surveys/voting/protocols: manager approval, push-on-publish, owner-only voting, per-survey apartment/ideal-parts weighting (after co-owner ballot rule confirmation)
-- [ ] **57a.** `GET /v1/surveys/summary` + the Surveys side of the dashboard switch (open count, proposed badge, voted %, "expires in N days"); create/review button per D16
+- [ ] **57a.** `GET /v1/surveys/summary` + the Surveys side of the dashboard switch (open count, proposed badge, voted %, "expires in N days"); the manager's own survey and the proposals queue per D16
+
+### Fast-follows, continued
+
 - [ ] **58.** Privileges module + privilege pushes
 - [ ] **59.** Export catalog (XLSX/PDF) + accounting journal export (§8.4)
 - [ ] **60.** GDPR export/erasure worker flows + admin request handling

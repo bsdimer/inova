@@ -57,7 +57,7 @@ One file per phase; order, effort and dependencies are in the
 | [M6-issues.md](milestones/M6-issues.md)                                 | Not started                                                    |
 | [M7-notices-push.md](milestones/M7-notices-push.md)                     | Not started                                                    |
 | [M8-online-payments.md](milestones/M8-online-payments.md)               | Not started; blocked on B1 iCard validation                    |
-| [M9-dashboard-reports.md](milestones/M9-dashboard-reports.md)           | UI shell on mock data                                          |
+| [M9-dashboard-reports.md](milestones/M9-dashboard-reports.md)           | Shell on live APIs, empty slots until M2+                      |
 | [M10-white-label.md](milestones/M10-white-label.md)                     | Not started                                                    |
 | [M11-tasks-calendar.md](milestones/M11-tasks-calendar.md)               | Not started                                                    |
 | [M-Ops.md](milestones/M-Ops.md)                                         | Test environment deployed; rest not started                    |

@@ -99,8 +99,9 @@ reset revokes existing sessions; out-of-bounds lifetime settings fail start-up.
 - B13–B15 above: they change `activate` / `resend-code` contracts and the
   `invite_codes` schema, so they land with the B8 refactor, not after it.
 - Forward migration and auth/API refactor from global users + membership arrays
-  to tenant-scoped account realms and one-tenant-per-token claims (B8), plus a
-  secure client-side session portfolio for explicit tenant switching.
+  to tenant-scoped account realms and one-tenant-per-token claims (B8). The
+  client-side session portfolio and tenant switcher are M10 (moved
+  2026-09-21, see above).
 
 ## Remaining before M3
 
@@ -116,7 +117,7 @@ reset revokes existing sessions; out-of-bounds lifetime settings fail start-up.
 - Real SMS/Viber delivery through the worker (gateway still open: Twilio vs
   Infobip — a long-lead item, see M-Pilot). Until then `MockCodeDelivery` logs
   codes and refuses to start in production without `CODE_DELIVERY=log`.
-- Admin silent refresh; audit-trail page.
+- Admin silent refresh; audit-trail page (before the pilot — the platform rail already shows «Одитен дневник»).
 
 ## Hardening done outside the phase scope (2026-09-21)
 

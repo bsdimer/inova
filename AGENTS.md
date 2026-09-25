@@ -152,10 +152,11 @@ If port 4000 is taken: `API_PORT=4100`.
   («Входни такси», not «Такси» here and «Начисления» there). An ambiguous
   word gets refined, not reused.
 
-For larger frontend work, read and follow the canonical
-[`inova-frontend`](.cursor/skills/inova-frontend/SKILL.md) workflow. Cursor may
-invoke it directly; Claude has a thin adapter; Codex follows this link. Small
-visual fixes do not need it.
+For any change under `apps/admin` or `apps/mobile`, read and follow the
+canonical [`inova-frontend`](.cursor/skills/inova-frontend/SKILL.md) workflow;
+its description says when to skip it (a copy change, a single token, a
+one-line style fix). Cursor may invoke it directly; Claude has a thin adapter;
+Codex follows this link.
 
 ## Code style
 

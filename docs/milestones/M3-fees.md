@@ -73,4 +73,4 @@ Moved verbatim from the implementation plan §7 when it was split. Where this an
 - **Mobile:** obligations screen (current + history per apartment), IBAN + payment reference display with copy actions.
 - **Tests:** golden-file financial tests (building basis × effective-dated residents/pets × apartment → expected charges), no-proration boundary cases (mid-month change applies next period, per A-FEE), idempotent re-run of generation, timezone boundary (month end in Europe/Sofia).
 - **Acceptance:** inova's actual fee schedule reproduced to the stotinka against a hand-calculated sheet.
-- **Risks:** proration, allocation order, and logical-fund transfer rules are resolved (A-FEE/A-ALLOC/A-DEPOSIT). M4 still needs a true-overpayment disposition and the external bank-feed/file mechanism.
+- **Risks:** proration, allocation order, and logical-fund transfer rules are resolved (A-FEE/A-ALLOC/A-DEPOSIT). ~~M4 still needs a true-overpayment disposition and the external bank-feed/file mechanism~~ — both resolved 2026-09-21 (A-BANK-MATCH).

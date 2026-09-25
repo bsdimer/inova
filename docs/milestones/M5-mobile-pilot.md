@@ -1,6 +1,6 @@
 # M5 — Mobile pilot slice hardening
 
-**Status:** Not started. **Effort / sequencing:** L, parallelizable from M1 with mocks.
+**Status:** UI shells only, on `MOCK` data. **Effort / sequencing:** L, parallelizable from M1 with mocks.
 
 Part of the [implementation plan](../implementation-plan.md). Milestone order and dependencies are in its §7. Section numbers (§) are the plan's own; its index maps each § to a file.
 
@@ -14,7 +14,7 @@ M2, M3, M4 APIs (mocked earlier).
 
 ## Mobile
 
-Navigation polish, offline-tolerant caching (TanStack Query persistence), Android + iOS parity per team rules (conditional styling for widths > 375, Android back handling), accessibility pass, bg/en locales.
+Navigation polish, offline-tolerant caching (TanStack Query persistence), Android + iOS parity per team rules (`rs(wide, narrow)` per AGENTS.md, Android back handling), accessibility pass, bg/en locales.
 
 ## Tests
 

@@ -16,8 +16,10 @@ disable-model-invocation: true
 Workflow layer only. `AGENTS.md`, `docs/current.md`, and the active milestone
 file win if anything conflicts.
 
-Invoke this skill for a **new screen, a layout pass, or a multi-component
-change**. Skip it for a typo, a single token, or a one-line style fix.
+Invoke this skill for any change under `apps/admin` or `apps/mobile` — a
+screen, component, layout, hook, form, data loading, a bug fix, a refactor or
+the visual QA of the result. Skip it only for a copy change, a single token or
+a one-line style fix (the rule lives in this skill's description).
 
 ## Choose a route before coding
 
@@ -75,9 +77,8 @@ stage needs it; do not front-load the whole library.
   overwrites current state (`references/clean-code.md` → Async).
 - Forms: a bound label, announced errors, `autoComplete`
   (`references/clean-code.md` → Forms).
-- `rs(wide, narrow)` for every mobile font, padding, margin, gap, and control
-  height. It scales with screen width (375pt and 402pt are the two tuned
-  sizes). Do not hardcode those values or add another width breakpoint.
+- `rs(wide, narrow)` for every mobile size — the rule is AGENTS.md → UI
+  conventions and `references/mobile.md`.
 - Light and dark via `useTheme()` on mobile.
 
 ## After coding
@@ -91,5 +92,5 @@ stage needs it; do not front-load the whole library.
    and test plan.
 6. Update `docs/current.md` only when project state, blockers, or Next up
    changed. Add one work-log entry per change set in the checked shape
-   (`AGENTS.md` → Finish step 4); the PR description carries the detail. Move
-   the change set's Linear issue to In Review with the PR, Done after merge.
+   (`AGENTS.md` → Finish step 4); the PR description carries the detail. The
+   Linear issue moves with the PR (AGENTS.md → Finish step 6).
