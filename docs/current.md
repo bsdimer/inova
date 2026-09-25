@@ -36,7 +36,7 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
 - Admin: real login, organization switching, Табло / Служители / Роли /
   Организации on live APIs, in Bulgarian. The portal uses the V2 glass visual
   system from the Figma page **Screens**: a fixed photograph with a scrim, the
-  three glass fills (card / data / input) and the light panel surface for
+  three glass fills (card / data / input) and the panel surface (light by day, dark at night) for
   drawers, modals and menus, all generated from that file's V2 Glass and V2
   Layout variables. The light and dark themes both exist and are chosen from
   the account menu or the OS. Icons are Phosphor Light, the set the screens
@@ -97,12 +97,12 @@ Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migr
 
 ## Milestone honesty
 
-| Milestone                            | Status                                                                                                                                                    | Gaps vs original acceptance                                                                                                                                                                                                                                                                  |
-| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| M0 Foundations                       | Done for _local_ foundations; test environment now deployed                                                                                               | Container deploy to the test host exists (GHCR images, compose, nginx, Let's Encrypt). Still no Terraform/OIDC, no generated OpenAPI clients, no “one command” full stack. Those belong to M-Ops / later. Lint and format are now real gates.                                                |
-| M1 Identity                          | Original global-user backend + admin screens implemented; B8 refactor required before M2                                                                  | Tenant-scoped accounts (same email/phone allowed independently per tenant), one-tenant-per-token authorization, secure local account portfolio/tenant switching, multi-role context, separate platform identities; then Redis denylist, worker, real delivery, silent refresh, audit viewer. |
-| M2 Property                          | Not started                                                                                                                                               | —                                                                                                                                                                                                                                                                                            |
-| M5 Mobile / M9 Dashboard / M10 Brand | UI shells only; mobile surveys screens were built ahead of the plan (surveys are P1) and stay on `MOCK` data — no further work on them before the P1 wave | Mock data until M2+ APIs exist.                                                                                                                                                                                                                                                              |
+| Milestone                            | Status                                                                                                                                                                | Gaps vs original acceptance                                                                                                                                                                                                                                                                  |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| M0 Foundations                       | Done for _local_ foundations; test environment now deployed                                                                                                           | Container deploy to the test host exists (GHCR images, compose, nginx, Let's Encrypt). Still no Terraform/OIDC, no generated OpenAPI clients, no “one command” full stack. Those belong to M-Ops / later. Lint and format are now real gates.                                                |
+| M1 Identity                          | Original global-user backend + admin screens implemented; B8 refactor required before M2                                                                              | Tenant-scoped accounts (same email/phone allowed independently per tenant), one-tenant-per-token authorization, secure local account portfolio/tenant switching, multi-role context, separate platform identities; then Redis denylist, worker, real delivery, silent refresh, audit viewer. |
+| M2 Property                          | Not started                                                                                                                                                           | —                                                                                                                                                                                                                                                                                            |
+| M5 Mobile / M9 Dashboard / M10 Brand | UI shells only; mobile surveys screens were built ahead of the plan and stay on `MOCK` data — surveys come before the pilot (D23), their milestone is still to be cut | Mock data until M2+ APIs exist.                                                                                                                                                                                                                                                              |
 
 ## Temporary mocks (greppable)
 
@@ -127,10 +127,10 @@ Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migr
 - Stakeholders prefer iCard for online payments; its merchant/account model,
   APIs, webhook/refund/reconciliation support, and Bulgarian onboarding must be
   validated before M8 is locked.
-- Dashboard design decisions D13 (debtor-reminder recipients/copy), D15 (document-library categories) and D16
-  (may a manager author a survey directly — touches resolved D8, stakeholder
-  answer required) are open. They block the M9 dashboard UI and the P1 surveys
-  card, not M2 or any backend contract.
+- Dashboard design decisions D13 (debtor-reminder recipients/copy) and D15
+  (document-library categories) are open; D16 (the manager may author a
+  survey) was resolved 2026-09-22. They block the M9 dashboard UI and the
+  surveys card, not M2 or any backend contract.
 - Legal counsel must confirm whether EGN and identity-card data are required for
   enforcement-agent claims. Do not add those fields to the general user profile
   before purpose, access, encryption, and retention rules are approved.

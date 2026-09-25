@@ -83,7 +83,7 @@ Small, independently implementable, agent-sized items in build order. A planning
 - [ ] **41a.** `GET /v1/reports/dashboard/balance` and `/buildings` (period + narrowing building filter) with ledger-oracle, scope and invariant tests
 - [ ] **41b.** Debtors audience resolver + debtor-reminder preview/send (`Idempotency-Key`, audit, 24-h repeat guard)
 - [ ] **41c.** Document library: stored-document upload/list/download on the shared attachment infrastructure
-- [ ] **41d.** Admin dashboard page per [features/admin-dashboard.md](../features/admin-dashboard.md): Balance, Documents, Issues (Surveys hidden until P1), Calendar, Buildings overview; light/dark from brand tokens; per-card loading/empty/error/permission states; bg/en strings; removes the `MOCK` data in `Dashboard.tsx`
+- [ ] **41d.** Admin dashboard page per [features/admin-dashboard.md](../features/admin-dashboard.md): Balance, Documents, Issues (Surveys hidden until the surveys module ships and the tenant is entitled — before the pilot, D23), Calendar, Buildings overview; light/dark from brand tokens; per-card loading/empty/error/permission states; bg/en strings; removes the `MOCK` data in `Dashboard.tsx`
 - [ ] **41e.** Render-based contrast check (Playwright screenshot per brand × theme, text layer vs real background) wired as a pre-release gate
 - [ ] **42.** Debtor report API + UI + XLSX export job
 - [ ] **43.** Terraform: VPC, EKS, RDS, Redis, S3, SES, Secrets Manager, CloudFront

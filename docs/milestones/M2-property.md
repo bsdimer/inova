@@ -45,7 +45,9 @@ The schema contract test must pass on the new tables without being rewritten.
   approval; there is no "move" — a real move is an approved end of occupancy
   plus a new invite on the new apartment (D25, B10).
 - Reasoned resident/occupancy/apartment removal request; `super_admin`
-  approve/reject/apply with archival/end-dating and audit history.
+  approve/reject/apply with archival/end-dating and audit history. The author
+  may edit or withdraw the request while it is pending; both request lists
+  take a status filter, the queues show `pending` only (D27).
 - Building-scoped house-manager assignments independent of employer: tenant
   staff, a resident owner, or a platform-employed operator may hold the role.
 
@@ -54,8 +56,8 @@ The schema contract test must pass on the new tables without being rewritten.
 Portfolio tree, building setup/activation, apartment detail, “add resident”
 (role + effective date → invite → delivery/activation status), multiple owners,
 designated owner document recipient, verification queue, corrections,
-removal-request queue, approved end occupancy (no move — D25), manager
-assignment. The buildings list filters by град and квартал (D24).
+removal-request queue with a История toggle for decided and withdrawn
+requests (D27), approved end occupancy (no move — D25), manager assignment. The buildings list filters by град and квартал (D24).
 
 ## Mobile
 
@@ -83,6 +85,9 @@ survey proposal/voting are hidden and server-blocked for tenant/occupant roles.
 - Resident/pet effective-date boundaries.
 - Draft vs active apartment-removal rules; reason required; only super_admin
   applies approved removals; full audit coverage.
+- Withdrawal: only the author, only while pending; a decided request refuses
+  it. An edit while pending writes an audit row. The status filter on both
+  request lists returns only the requested statuses (D27).
 - Resident, tenant-staff, and platform-employed house-manager assignment cases.
 - Resident cannot see unlinked apartments (isolation + occupancy guards).
 - Tenant schema contract still green.

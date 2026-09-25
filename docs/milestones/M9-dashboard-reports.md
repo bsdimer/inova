@@ -28,7 +28,7 @@ M4 for the money. The cards also consume M2b (search), M6 (issue summary, attach
 
 ## Admin
 
-The dashboard page — Balance (hero amount, ring, paid/outstanding, "view details", "send notices" with confirmation dialog), Documents (upload, "make a report" picker), Issues/Surveys switch (Issues live; Surveys hidden until P1), Calendar (from M11), Buildings overview ("add building" tile, paid ratio per building) — in light (photo background) and dark themes from brand tokens, responsive, framer-motion, strings in `packages/i18n`. Replaces the `MOCK` stats and the recent-payments table in `apps/admin/src/pages/Dashboard.tsx`. Plus the debtor report screen, the document library list and export buttons.
+The dashboard page — Balance (hero amount, ring, paid/outstanding, "view details", "send notices" with confirmation dialog), Documents (upload, "make a report" picker), Issues/Surveys switch (Issues live; Surveys hidden until the surveys module ships and the tenant is entitled — before the pilot, D23), Calendar (from M11), Buildings overview ("add building" tile, paid ratio per building) — in light (photo background) and dark themes from brand tokens, responsive, framer-motion, strings in `packages/i18n`. Replaces the `MOCK` stats and the recent-payments table in `apps/admin/src/pages/Dashboard.tsx`. Plus the debtor report screen, the document library list and export buttons.
 
 ## Tests
 
