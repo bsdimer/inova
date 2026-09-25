@@ -37,12 +37,9 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
     16 → `8px`), while shadows carry over 1:1;
   - `backdrop-filter` goes only on first-level glass (cards, shell, panels),
     never on rows or inside a scrolling list;
-  - never use `LAYER_BLUR` on glass;
   - `will-change` only on glass that actually animates (the rail expanding),
     never across the board;
   - no blur on text, and at most one glow per card;
-  - check glass on a Windows laptop with integrated graphics in Chrome and
-    Firefox — a Mac hides the cost of `backdrop-filter`;
   - with `prefers-reduced-transparency`, panels become solid.
 - The photo sits in a `position: fixed; inset: 0; z-index: -1` layer with a
   gradient scrim. Do not use `background-attachment: fixed`, which is broken
@@ -53,8 +50,6 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   `overflow: hidden`, or the halo is cut in a straight line. A glow around a
   thin stroke (the progress arc) is a blurred copy of the stroke underneath;
   `drop-shadow` on a 1.75 px line gives almost no light.
-- The glass density is a brand parameter. Contrast is checked on a render
-  of each white-label brand, not once on the inova photo.
 
 ## Windows and navigation
 
@@ -73,9 +68,6 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   they were.
 - When a page is shorter than the window, its footer with the actions sits at
   the bottom of the window, not in the middle.
-- The tabs of one section (Жители) share one page title; each tab's
-  explanation is a strip above the table, so switching tabs does not read as
-  leaving the section.
 - Panels and windows keep the header and footer fixed; only the body
   scrolls. On 402, the main action of a view screen is pinned full width at
   the bottom.
@@ -160,8 +152,7 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   - is grouped, with at most 5 per group and a count in each group header;
   - opens from 2 characters;
   - has four states: results, loading, empty, error.
-- Import: the column mapping survives a re-upload of the file; the dry run
-  checks and writes nothing.
+- Import: the column mapping survives a re-upload of the file.
 
 ## Controls, focus and motion
 
