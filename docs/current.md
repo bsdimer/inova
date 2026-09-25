@@ -26,7 +26,7 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
 - Core API (`:4000`): JWKS JWT verify, `X-Tenant-Id` + DB membership re-check, permission guards, RLS via `SET LOCAL app.tenant_id`. Tenant profile/staff/audit, staff+roles CRUD (admin-role lock, last-admin guard), super_admin tenant provisioning, public brand config, health. **Current multi-membership JWT/context flow must be adapted to a single tenant-account realm; platform identities remain separate.**
 - Passwords: argon2id (2026-09-22; the code had used bcrypt while the plan said argon2id). A legacy bcrypt hash is verified once and upgraded on that login. `pnpm install` now needs to build one native module (`argon2`, prebuilt binaries for macOS/Linux/Alpine).
 - Hardening (2026-09-21, defects in running code — not phase work): auth-service connects as its own `inova_auth` DB role and the cross-tenant identity-scope policies are granted to it alone (migration `0003`), so core-api's `inova_app` can no longer read other tenants' memberships or invite codes by setting a session variable; the strict limit on login/activate/resend really applies (the deployed value `'true'` had parsed to `NaN` and disabled it — malformed settings now stop the service); rate limiting is per client behind the edge proxy (`TRUST_PROXY_HOPS=1`); one-time codes are logged only when `CODE_DELIVERY=log` is set on purpose, otherwise a production process refuses to start.
-- Auth gaps against the plan (B13–B15, decided 2026-09-21, not built): activation still looks a code up by hash alone across tenants and never uses `attempts`; there is no public password recovery; `resend-code` finds the user by phone globally, and answers an unknown phone faster than a pending one (it skips the code rewrite and delivery). All of this are part of the M1 refactor.
+- Auth gaps against the plan (B13–B15, decided 2026-09-21, not built): activation still looks a code up by hash alone across tenants and never uses `attempts`; there is no public password recovery; `resend-code` finds the user by phone globally, and answers an unknown phone faster than a pending one (it skips the code rewrite and delivery). All of this is part of the M1 refactor.
 - Mobile: production-ready auth against live auth-service — activate → set-password,
   login, resend-code (phone → E.164), silent refresh, logout, session gate on tabs;
   release builds default to `https://portal.whitenova.tech/auth/v1` (`EXPO_PUBLIC_AUTH_URL`
@@ -40,9 +40,10 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
   drawers, modals and menus, all generated from that file's V2 Glass and V2
   Layout variables. The light and dark themes both exist and are chosen from
   the account menu or the OS. Icons are Phosphor Light, the set the screens
-  are drawn with. Navigation is the nine items the stakeholder confirmed on
-  2026-09-22:
-  Табло · Задачи · Известия · Сгради · Жители · Финанси · Нередности ·
+  are drawn with. Navigation is the nine items of the Figma sidebar, in the
+  order settled in WHI-24 (after the 2026-09-22 list: «Финанси» moved to
+  fourth, «Нередности» renamed «Сигнали»):
+  Табло · Задачи · Известия · Финанси · Сгради · Жители · Сигнали ·
   Служители · Роли. A platform administrator gets a rail of its own instead —
   Общ преглед · Организации · Одитен дневник, with the ПЛАТФОРМА marker — and,
   once inside an organization, the banner that says the visit is audited and
@@ -50,34 +51,47 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
   search + facets, sort presets, all ten table states, and one light disc per
   row that opens the roles-and-scope drawer, which holds every row action and
   explains the blocked ones; below `md` the rows become cards with a filter
-  sheet. Табло is laid out as drawn, which until M2, M3–M4, M6 and M11 means
-  the cards are placeholders: every figure slot shows «—» with its milestone,
-  and only the month grid is real.
+  sheet. Табло is laid out as drawn and takes its data per card; until M2,
+  M3–M4, M6 and M11 ship, every figure slot shows «—» and only the month grid
+  is real. A local-only «design data» preview (`?fixture=design`, dev server
+  and the browser-test build) fills the cards with the numbers of Figma
+  859:1073 to check the layout; the deployed build carries none of it
+  (`check:no-design-data`). The shell and Табло follow the responsive ladder
+  (Figma 1074:9754): the full sidebar from 1728, a 72 rail that opens in place
+  at 1536–1727 and over the page at 1024–1535, a top bar with a drawer below
+  1024; Табло recomposes at 1024, 768 and on a phone, fits a 960–1116 tall
+  window, and from 2400 is drawn ×1.25. Menu items have their hover and
+  keyboard-focus look, the rail its tooltips.
   Contract for the full Табло: [features/admin-dashboard.md](features/admin-dashboard.md);
   it added M2b (unified search) and M11 (staff tasks/calendar) to the plan and
   extended M6 (issue priority), M7 (debtors audience, unread count) and M9.
-- Quality gates: `pnpm verify` (format, lint, typecheck, unit, integration, architecture contracts, build). `pnpm test:unit` now covers `apps/api` and `apps/auth-service` too (co-located `src/**/*.test.ts`, hermetic, excluded from the build); `apps/auth-service` has the first six — the `PasswordHasher` units that came with argon2id — and `apps/api` still has none. The testing policy is in `AGENTS.md` → Testing. Admin and mobile still have no test runner. GitHub Actions CI installs pnpm from `package.json` `packageManager` (`pnpm@10.34.5`); do not also pass `version` to `pnpm/action-setup`.
+- Quality gates: `pnpm verify` (format, lint, typecheck, unit, integration, architecture contracts, build). `pnpm test:unit` now covers `apps/api` and `apps/auth-service` too (co-located `src/**/*.test.ts`, hermetic, excluded from the build); `apps/auth-service` has the first six — the `PasswordHasher` units that came with argon2id — and `apps/api` still has none. The testing policy is in `AGENTS.md` → Testing. Admin flows run in a real browser: Playwright in `apps/admin/e2e` (`pnpm test:e2e`, CI job `e2e`, which the deploy waits for) covers sign-in with every error it names, the Служители and Организации lists, and entering and leaving an organization; each run keeps screenshots of the key screens. The admin has no component runner and mobile no runner; the sign-in form's checks live in `packages/shared` (`validateLoginForm`, `loginFailure`) and are unit-tested there. GitHub Actions CI installs pnpm from `package.json` `packageManager` (`pnpm@10.34.5`); do not also pass `version` to `pnpm/action-setup`.
   Locally the repo needs **Node >= 22** (`engines`): on Node 20.11 `verify`
   dies at `test:unit` before any project code runs, because rolldown imports
   `util.styleText` (added in Node 20.12).
 
 ## Tests (release blockers)
 
-48 integration tests against real Postgres + RLS + the non-privileged `inova_app` / `inova_auth` roles, plus 23 unit tests:
+48 integration tests against real Postgres + RLS + the non-privileged `inova_app` / `inova_auth` roles, plus 54 unit tests:
 
 | Suite                                           | Count | Job                |
 | ----------------------------------------------- | ----- | ------------------ |
 | `apps/api/test/tenant-isolation.e2e.test.ts`    | 13    | `tenant-isolation` |
 | `apps/api/test/tenant-schema.contract.test.ts`  | 7     | `tenant-isolation` |
 | `apps/api/test/staff-roles.e2e.test.ts`         | 13    | `auth` (RBAC)      |
-| `apps/auth-service/test/auth-flows.e2e.test.ts` | 9     | `auth`             |
+| `apps/auth-service/test/auth-flows.e2e.test.ts` | 10    | `auth`             |
 | `apps/auth-service/test/rate-limit.e2e.test.ts` | 3     | `auth`             |
 | `apps/auth-service/test/db-helper.e2e.test.ts`  | 2     | `auth`             |
 | `packages/shared` Money                         | 4     | `unit`             |
 | `packages/shared` RuntimeEnv, MockCodeDelivery  | 13    | `unit`             |
-| `apps/auth-service` PasswordHasher              | 6     | `unit`             |
+| `packages/shared` login form checks             | 15    | `unit`             |
+| `packages/shared` dashboard display math        | 10    | `unit`             |
+| `apps/auth-service` PasswordHasher              | 7     | `unit`             |
+| `apps/auth-service` AuthService login failures  | 5     | `unit`             |
 
-Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migrations`.
+Browser (Playwright, `apps/admin/e2e`, CI job `e2e`): 37 — sign-in 7, Табло 3, widths 8, Служители 5, Организации 3, screenshots 11.
+
+Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migrations`, `check:no-design-data`.
 
 ## Milestone honesty
 

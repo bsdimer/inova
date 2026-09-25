@@ -166,7 +166,10 @@ export function StaffPage() {
     onRetry: () => void staff.refetch(),
   });
 
+  // Until the list has arrived there is nothing to call empty: the skeleton
+  // rows stand in, not «Още няма акаунти», which used to flash on every visit.
   const emptyBody = buildEmptyBody({
+    loaded: !staff.isPending,
     denied,
     tenantName,
     members,
@@ -179,22 +182,18 @@ export function StaffPage() {
   });
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    // Page head, toolbar and table stand 16 apart (V2 frames: 72 + 50 → 138, 242 → 258).
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
         <div className="min-w-0">
           <h1 className="text-title-22 font-medium">Служители</h1>
-          <p className="mt-1 text-sm text-ink-muted">
+          <p className="text-body-14 mt-1 text-ink-muted">
             Акаунти с достъп до {tenantName}, ролите им и къде важат.
           </p>
         </div>
         {canManage && (
           <PrimaryButton onClick={() => setInviteOpen(true)}>
-            <span className="flex items-center gap-2">
-              <MailPlus size={16} />
-              <span>
-                Покани<span className="hidden sm:inline"> служител</span>
-              </span>
-            </span>
+            Покани<span className="hidden sm:inline"> служител</span>
           </PrimaryButton>
         )}
       </div>
@@ -213,7 +212,7 @@ export function StaffPage() {
         <StaffTable strip={strip}>
           {emptyBody ? (
             <BodyMessage>{emptyBody}</BodyMessage>
-          ) : staff.isLoading ? (
+          ) : staff.isPending ? (
             <SkeletonRows />
           ) : (
             visible.map((member) => <StaffRow key={member.userId} {...rowProps(member)} />)
@@ -225,7 +224,7 @@ export function StaffPage() {
         <StaffCards strip={strip}>
           {emptyBody ? (
             <div className="glass-data">{emptyBody}</div>
-          ) : staff.isLoading ? (
+          ) : staff.isPending ? (
             <div className="glass-data space-y-3 p-4">
               <div className="h-16 animate-pulse rounded-2xl bg-glass-inner" />
               <div className="h-16 animate-pulse rounded-2xl bg-glass-inner" />
@@ -280,6 +279,7 @@ const STATUS_FOR_ACTION: Record<Exclude<RowAction, 'change-role'>, StaffMember['
 
 /** The body when there are no rows to show, or null when there are. */
 function buildEmptyBody(input: {
+  loaded: boolean;
   denied: boolean;
   tenantName: string;
   members: StaffMember[];
@@ -298,6 +298,7 @@ function buildEmptyBody(input: {
       </EmptyState>
     );
   }
+  if (!input.loaded) return null;
   if (input.members.length === 0) {
     return (
       <EmptyState
