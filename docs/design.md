@@ -35,8 +35,10 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
 - Glass in CSS:
   - a Figma BACKGROUND_BLUR converts at half its radius (28 → `blur(14px)`,
     16 → `8px`), while shadows carry over 1:1;
-  - `backdrop-filter` goes only on first-level glass (cards, shell, panels),
-    never on rows or inside a scrolling list;
+  - `backdrop-filter` goes on glass that sits on the photo: cards, shell and
+    panels (14px); controls on the photo — fields, search, facets, sort,
+    secondary buttons, glass tabs, tags (8px); the active nav item (12px).
+    Never on table rows or inside a scrolling list;
   - write `-webkit-backdrop-filter` before `backdrop-filter`; the other order
     once shipped a build with no blur in Chrome;
   - `will-change` only on glass that actually animates (the rail expanding),
@@ -185,8 +187,9 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
 - Nav item hover: `--glass-inner-soft` with no edge, blur or shadow, 150 ms;
   sizes are the Figma component.
 - Rail tooltip: to the right of the item, `--panel-fill-strong`, appears
-  after 400 ms or at once on keyboard focus. The expanded sidebar has no
-  tooltips.
+  after 400 ms or at once on keyboard focus. An item with a counter shows
+  the number in its tooltip («Известия · 3»), since the rail shows only a
+  dot. The expanded sidebar has no tooltips.
 - Motion:
   - plays once on load and never replays on refetch;
   - everything is instant with `prefers-reduced-motion`.

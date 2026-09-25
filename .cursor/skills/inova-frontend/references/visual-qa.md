@@ -5,10 +5,12 @@
 - Check the other routes that share the state you touched (tenant switcher,
   session, query cache).
 - Empty, error, and loading states — not only the happy path.
-- Admin at the design widths 1728, 1280, 1024 and 402 if layout changed,
-  light and dark; no unexpected overflow. Glass once on a Windows laptop
-  with integrated graphics in Chrome and Firefox — a Mac hides the cost of
-  `backdrop-filter`.
+- Admin at the ladder widths of Figma 1074:9754 — 1728, 1536, 1280, 1180,
+  820, 402, plus 1920×980 (height) and 2560 (×1.25); table screens also at
+  1024 — if layout changed, light and dark; no unexpected overflow.
+  `apps/admin/e2e/responsive.spec.ts` covers the ladder. Glass once on a
+  Windows laptop with integrated graphics in Chrome and Firefox — a Mac
+  hides the cost of `backdrop-filter`.
 - Keyboard: Tab/Shift+Tab reaches every control, Enter/Space activates,
   Escape closes, arrows work inside menus, tabs, and grids; modals trap focus;
   focus is visible.
