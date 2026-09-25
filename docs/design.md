@@ -43,7 +43,9 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   - with `prefers-reduced-transparency`, panels become solid.
 - The photo sits in a `position: fixed; inset: 0; z-index: -1` layer with a
   gradient scrim. Do not use `background-attachment: fixed`, which is broken
-  in iOS Safari.
+  in iOS Safari. The photo itself is blurred: Figma LAYER_BLUR 6 →
+  `filter: blur(3px)`, and the layer is pushed 6 px past each edge
+  (`inset: -6px`) so the blurred border does not fade.
 - The dark theme is the token mode plus the night photo. Nothing is painted
   by hand.
 - Only the card clips its content. Wrappers of glowing buttons never use
@@ -181,10 +183,7 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   after 400 ms or at once on keyboard focus. The expanded sidebar has no
   tooltips.
 - Motion:
-  - the dashboard ring draws once;
-  - no count-up numbers;
-  - no replay on refetch;
-  - no hover scaling of glass;
+  - plays once on load and never replays on refetch;
   - everything is instant with `prefers-reduced-motion`.
 
 ## Words
