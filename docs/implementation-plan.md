@@ -121,7 +121,7 @@ flowchart TD
   M5 --> MPilot
   M5b --> MPilot
   M9 --> MPilot
-  M8 -.post-pilot fast-follow.-> P1a[P1 invoices expenses surveys privileges]
+  M8 -.post-pilot fast-follow.-> P1a[P1 invoices expenses privileges]
   MPilot --> M10[M10 White-label pipeline dedicated app L]
 ```
 
@@ -155,7 +155,7 @@ the checklist is in [AGENTS.md](../AGENTS.md) → Closing a phase.
 | M8      | Online payments via iCard                                                                               | L      | M4, B1 validation                   | P1 fast-follow                      | [M8-online-payments.md](milestones/M8-online-payments.md)               |
 | M-Bill  | Platform billing and entitlements                                                                       | M      | M2, M1                              | P1 (pre-commercial)                 | [M-Bill.md](milestones/M-Bill.md)                                       |
 | M10     | White-label build pipeline + first dedicated partner app                                                | L      | M-Pilot                             | P1                                  | [M10-white-label.md](milestones/M10-white-label.md)                     |
-| P1 wave | Invoices, expenses, surveys, privileges, campaigns, exports, …                                          | mixed  | pilot                               | P1                                  | [P1-wave.md](milestones/P1-wave.md)                                     |
+| P1 wave | Invoices, expenses, privileges, campaigns, exports, … (surveys moved before the pilot, D23)             | mixed  | pilot                               | P1                                  | [P1-wave.md](milestones/P1-wave.md)                                     |
 
 **Adding to the plan:** a new phase gets its own file in `milestones/` and one
 row here plus one node in the dependency map; a new decision goes in
