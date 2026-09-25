@@ -90,6 +90,9 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
 - A row click, or Enter on the row, opens the record. A row's main action is
   a visible button. The «…» menu holds only secondary actions, and while it
   is open the row keeps its hover state.
+- A resident's record is the «Детайли на жител» panel: a row click in «Жители»
+  opens it, and a resident hit in search opens their property page with that
+  panel already open.
 
 ## Responsive
 
