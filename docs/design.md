@@ -69,6 +69,9 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   | A work place (Апартамент, search results) or a multi-step process (import, «Нова организация») | its own page                                                       | its own page                                                        |
 
 - If the user entered data and then presses × or back, ask «Да се откажа ли?».
+  The confirmation opens over the form with its own scrim. Focus starts on
+  «Остани»; Esc and a click on the scrim mean «Остани». «Откажи» closes both
+  the confirmation and the form.
 - A secondary window keeps the screen under it in place: the list under a
   drawer is dimmed, not replaced, and after closing the user is exactly where
   they were.
@@ -114,6 +117,8 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
     on Esc, a tap outside or the brand mark again;
   - below 1024: a top bar with a drawer that closes on ×, a tap on the scrim
     or a swipe left; focus then returns to the menu button.
+- On a short window the menu list scrolls to the active item; the logo and
+  the account stay put.
 - The content column is 1136 wide and centred; cards never stretch. From 2400
   the whole layout is drawn ×1.25 (root font-size, sizes in rem).
 - Nothing is clipped and there is never a horizontal scroll: a card that
