@@ -88,9 +88,7 @@ test('1536 × 780: the rail opens in place and pushes the page to 1104 (821:1456
   expect(await box(rail)).toMatchObject({ w: 72 });
 });
 
-test('1536: the opened rail closes on Esc, a click outside and the pointer leaving', async ({
-  page,
-}) => {
+test('1536: only a click opens the rail; Esc and a click outside close it', async ({ page }) => {
   await openAt(page, 1536, 780);
   const rail = page.locator('aside');
   const emptySpace = { x: 36, y: 620 };
@@ -105,11 +103,16 @@ test('1536: the opened rail closes on Esc, a click outside and the pointer leavi
   await page.mouse.click(900, 300);
   await expect.poll(async () => (await box(rail)).w).toBe(72);
 
-  // Resting the pointer on the rail opens it; leaving closes it.
+  // Only a click opens it: resting the pointer on it does nothing, and an
+  // opened rail stays open when the pointer leaves for the page.
   await page.mouse.move(188, 620);
+  await page.waitForTimeout(700);
+  expect((await box(rail)).w).toBe(72);
+  await rail.click({ position: emptySpace });
   await expect.poll(async () => (await box(rail)).w).toBe(232);
   await page.mouse.move(900, 300);
-  await expect.poll(async () => (await box(rail)).w).toBe(72);
+  await page.waitForTimeout(700);
+  expect((await box(rail)).w).toBe(232);
 });
 
 test('1180 × 820: Баланс across, three columns, Сгради across, three events (816:11473)', async ({
