@@ -8,8 +8,6 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
 - **Design source:** Figma `GJgbXLnOXLa6wxZDaKYK7T`, page **Screens**. Only
   frames labelled ОДОБРЕНО are a contract. The pages M1 and M2 are older
   read-only contracts for behaviour.
-- **Not in code until drawn:** a frame marked ОТЛОЖЕНО is not built until an
-  ОДОБРЕНО frame for it exists.
 - **Decisions that change data, permissions or scope** live in
   [plan/decisions.md](plan/decisions.md). This file holds only the
   interface rules.
@@ -172,7 +170,8 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
 - Field errors show a red edge, an icon and a message line.
 - The status pills on the dashboard's Сигнали card are filters with
   `default` and `selected` states; the list heading and content follow the
-  selected pill. «Предложени» in Анкети works the same way.
+  selected pill. «Предложени» in Анкети is not a filter: it opens the queue
+  of residents' survey proposals.
 - Picking a day in the calendar switches the toggle to «Ден» and shows that
   day's tasks. "Today" and "selected" are independent states and can both
   apply.
