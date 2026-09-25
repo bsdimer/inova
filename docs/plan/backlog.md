@@ -111,7 +111,7 @@ Small, independently implementable, agent-sized items in build order. A planning
 ## Moved before the pilot (D23) — milestones still to be cut
 
 - [ ] **50a.** Documents section: library with overview, search and document templates; Справки menu entry to the reports (M9)
-- [ ] **50b.** Community forum: topics residents post, staff edit or remove; Still open 10 first (incl. the 1:1-messages ask)
+- [ ] **50b.** Community forum: topics residents post, staff edit or remove; Still open 10 first (who opens a topic, soft removal, per building or entrance). Private 1:1 messages are P1
 - [ ] **50c.** Tenant-named menu item in admin and app as a brand-config field (M-Pilot; what it opens — Still open 13)
 - [ ] **57.** _(surveys module, from the P1 wave)_ Owner-proposed surveys/voting/protocols: manager approval, push-on-publish, owner-only voting, per-survey apartment/ideal-parts weighting (after co-owner ballot rule confirmation)
 - [ ] **57a.** `GET /v1/surveys/summary` + the Surveys side of the dashboard switch (open count, proposed badge, voted %, "expires in N days"); the manager's own survey and the proposals queue per D16
