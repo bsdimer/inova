@@ -10,3 +10,11 @@
   reorder.
 - Handle `isPending` / `isError` / empty data at the screen edge, not inside
   every child.
+- An async effect handles its own errors and ignores a stale result (cleanup
+  flag or `AbortController`). TanStack Query already does this for admin data;
+  do not duplicate it around a query.
+- Controlled or uncontrolled is decided per input and never switched during
+  its life.
+- Forms: label bound to the input, `aria-invalid` plus `aria-describedby` and
+  `role="alert"` for errors, `autoComplete` set
+  ([clean-code.md → Forms](clean-code.md#forms)).
