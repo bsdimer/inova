@@ -132,7 +132,7 @@ test('402 × 874: one column in the phone order, the drawer closes on a swipe (8
   const tops = await Promise.all(order.map(async (h) => (await box(card(page, h))).y));
   expect(tops).toEqual([...tops].sort((a, b) => a - b));
   expect(await box(card(page, 'Баланс'))).toMatchObject({ x: 16, y: 144, w: 370 });
-  // The bubbles at 0.8 (336 × 123), scaled, not zoomed.
+  // The bubbles at 0.8 (336 × 123), laid out at that size — no zoom, no transform.
   const bubbles = card(page, 'Баланс').locator('.aspect-\\[420\\/154\\]');
   expect(await box(bubbles)).toMatchObject({ w: 336, h: 123 });
   await expect(card(page, 'Баланс').getByRole('button', { name: 'Виж детайли' })).toHaveCSS(

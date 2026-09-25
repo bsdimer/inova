@@ -177,9 +177,13 @@ function Money({
       <span className="text-display-26">{cents}</span>
     </span>
   ) : (
-    <span className="num flex items-start gap-px font-light tracking-[-0.0625rem]">
-      <span className="text-number-18">{whole}</span>
-      <span className="text-number-13">{cents}</span>
+    <span className="num flex items-start gap-px font-light tracking-[-0.0625rem] max-md:tracking-[-0.05rem]">
+      <span className="text-number-18 max-md:text-[0.875rem] max-md:leading-[1.125rem]">
+        {whole}
+      </span>
+      <span className="text-number-13 max-md:text-[0.6875rem] max-md:leading-[0.875rem]">
+        {cents}
+      </span>
     </span>
   );
 }
@@ -223,24 +227,17 @@ function BalanceCard({ balance, today }: { balance: DashboardData['balance']; to
         the card, 16 below them.
       */}
       <div className="flex flex-col items-center gap-4 md:flex-row md:justify-between md:gap-2.5">
-        {/*
-          Scaled, not re-laid-out: rescale(0.8) in the frame shrinks the text
-          with the bubbles. The negative margins give back the 84 × 30.8 the
-          transform frees, so the box takes 336 × 123.2 in the flow.
-        */}
-        <div className="max-md:-mr-[5.25rem] max-md:-mb-[1.925rem] max-md:origin-top-left max-md:scale-80">
-          <BalanceBubbles
-            left={<Stat label="Платили" minor={balance?.collected} currency={balance?.currency} />}
-            centre={
-              <CollectedRing
-                percent={balance ? collectedPercent(balance.collected, balance.charged) : null}
-              />
-            }
-            right={
-              <Stat label="Задължения" minor={balance?.outstanding} currency={balance?.currency} />
-            }
-          />
-        </div>
+        <BalanceBubbles
+          left={<Stat label="Платили" minor={balance?.collected} currency={balance?.currency} />}
+          centre={
+            <CollectedRing
+              percent={balance ? collectedPercent(balance.collected, balance.charged) : null}
+            />
+          }
+          right={
+            <Stat label="Задължения" minor={balance?.outstanding} currency={balance?.currency} />
+          }
+        />
         <div className="flex w-full flex-col gap-2.5 md:w-[12.5rem] md:min-w-0">
           <SecondaryButton disabled title="Начисленията и касата идват с M3–M4." className="w-full">
             Виж детайли
@@ -261,8 +258,13 @@ function BalanceCard({ balance, today }: { balance: DashboardData['balance']; to
 
 function Stat({ label, minor, currency }: { label: string; minor?: bigint; currency?: string }) {
   return (
-    <div className="flex flex-col items-center gap-[0.1875rem] whitespace-nowrap">
-      <p className="text-body-15-tight text-ink-soft">{label}</p>
+    // On a phone the bubbles are drawn at 0.8 and their text with them,
+    // rounded to whole pixels and never under 11 (design README → Адаптив):
+    // 15 → 12, 18 → 14, 13 → 11; the ring's 30 → 24 and 14 → 11.
+    <div className="flex flex-col items-center gap-[0.1875rem] whitespace-nowrap max-md:gap-0.5">
+      <p className="text-body-15-tight text-ink-soft max-md:text-[0.75rem] max-md:leading-[0.875rem]">
+        {label}
+      </p>
       {minor !== undefined && currency ? (
         <Money minor={minor} currency={currency} size="stat" />
       ) : (
@@ -298,7 +300,7 @@ function CollectedRing({ percent }: { percent: number | null }) {
     transform: `rotate(-90 ${c} ${c})`,
   };
   return (
-    <div className="relative h-[8.5rem] w-[8.5rem]">
+    <div className="relative h-[8.5rem] w-[8.5rem] max-md:h-[6.8rem] max-md:w-[6.8rem]">
       <svg
         aria-hidden
         viewBox={`0 0 ${RING.size} ${RING.size}`}
@@ -350,8 +352,12 @@ function CollectedRing({ percent }: { percent: number | null }) {
         )}
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
-        <span className="num text-number-30">{percent === null ? <Blank /> : `${percent}%`}</span>
-        <span className="text-body-14 text-ink-soft">събрани</span>
+        <span className="num text-number-30 max-md:text-[1.5rem] max-md:leading-[1.625rem]">
+          {percent === null ? <Blank /> : `${percent}%`}
+        </span>
+        <span className="text-body-14 text-ink-soft max-md:text-[0.6875rem] max-md:leading-4">
+          събрани
+        </span>
       </div>
     </div>
   );

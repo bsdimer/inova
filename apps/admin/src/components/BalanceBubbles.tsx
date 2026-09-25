@@ -21,7 +21,9 @@ export function BalanceBubbles({
   right: ReactNode;
 }) {
   return (
-    <div className="relative aspect-[420/154] w-[26.25rem] max-w-full shrink-0">
+    // A phone draws the block at 0.8: 336 × 123.2 (818:11656). The outline is
+    // an SVG and the slots sit at percentages, so they follow the width.
+    <div className="relative aspect-[420/154] w-[26.25rem] max-w-full shrink-0 max-md:w-[21rem]">
       <svg
         aria-hidden
         viewBox="2 4 420 154"
