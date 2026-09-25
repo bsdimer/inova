@@ -37,13 +37,17 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
     16 → `8px`), while shadows carry over 1:1;
   - `backdrop-filter` goes only on first-level glass (cards, shell, panels),
     never on rows or inside a scrolling list;
+  - write `-webkit-backdrop-filter` before `backdrop-filter`; the other order
+    once shipped a build with no blur in Chrome;
   - `will-change` only on glass that actually animates (the rail expanding),
     never across the board;
   - no blur on text, and at most one glow per card;
   - with `prefers-reduced-transparency`, panels become solid.
-- The photo sits in a `position: fixed; inset: 0; z-index: -1` layer with a
-  gradient scrim. Do not use `background-attachment: fixed`, which is broken
-  in iOS Safari. The photo itself is blurred: Figma LAYER_BLUR 6 →
+- The photo sits in a `position: fixed` layer at `z-index: 0` with the app
+  above it at `z-index: 1` — never a negative z-index, which paints the photo
+  outside the backdrop root so the glass blurs nothing. It carries a gradient
+  scrim. Do not use `background-attachment: fixed`, which is broken in iOS
+  Safari. The photo itself is blurred: Figma LAYER_BLUR 6 →
   `filter: blur(3px)`, and the layer is pushed 6 px past each edge
   (`inset: -6px`) so the blurred border does not fade.
 - The dark theme is the token mode plus the night photo. Nothing is painted
