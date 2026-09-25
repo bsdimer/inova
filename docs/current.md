@@ -91,7 +91,7 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
 | `apps/auth-service` PasswordHasher              | 7     | `unit`             |
 | `apps/auth-service` AuthService login failures  | 5     | `unit`             |
 
-Browser (Playwright, `apps/admin/e2e`, CI job `e2e`): 39 — sign-in 7, Табло 3, widths 10, Служители 5, Организации 3, screenshots 11.
+Browser (Playwright, `apps/admin/e2e`, CI job `e2e`): 40 — sign-in 7, Табло 3, widths 11, Служители 5, Организации 3, screenshots 11.
 
 Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migrations`, `check:no-design-data`.
 

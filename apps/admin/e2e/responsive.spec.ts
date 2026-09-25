@@ -66,20 +66,50 @@ test('1536 × 780: the rail opens in place and pushes the page to 1104 (821:1456
 }) => {
   await openAt(page, 1536, 780);
   const rail = page.locator('aside');
+  // The empty space under the icons, clear of everything clickable.
+  const emptySpace = { x: 36, y: 620 };
   expect(await box(rail)).toMatchObject({ x: 152, w: 72, h: 732 });
   expect(await box(page.getByRole('banner'))).toMatchObject({ x: 248, w: 1136 });
 
-  // A click on the rail's empty space pins it open.
-  await rail.click({ position: { x: 36, y: 600 } });
+  // «Курсор на рейке»: col-resize over the empty space, a pointer over an icon.
+  await expect(rail).toHaveCSS('cursor', 'col-resize');
+  await expect(rail.getByRole('link', { name: 'Сгради' })).toHaveCSS('cursor', 'pointer');
+
+  // A click on the empty space opens it to 232 and pushes the page.
+  await rail.click({ position: emptySpace });
   expect(await box(rail)).toMatchObject({ x: 152, w: 232 });
   expect(await box(page.getByRole('banner'))).toMatchObject({ x: 408, w: 1104 });
   expect(await box(card(page, 'Баланс'))).toMatchObject({ w: 664 });
   expect(await box(card(page, 'Предстоящи'))).toMatchObject({ w: 420 });
   expect(await box(card(page, 'Спешни сега'))).toMatchObject({ w: 356 });
 
-  await page.getByRole('button', { name: 'Свий менюто' }).click();
-  await page.mouse.move(900, 400);
-  expect(await box(rail)).toMatchObject({ x: 152, w: 72 });
+  // …and a second click there folds it back.
+  await rail.click({ position: emptySpace });
+  expect(await box(rail)).toMatchObject({ w: 72 });
+});
+
+test('1536: the opened rail closes on Esc, a click outside and the pointer leaving', async ({
+  page,
+}) => {
+  await openAt(page, 1536, 780);
+  const rail = page.locator('aside');
+  const emptySpace = { x: 36, y: 620 };
+
+  await rail.click({ position: emptySpace });
+  await expect.poll(async () => (await box(rail)).w).toBe(232);
+  await page.keyboard.press('Escape');
+  await expect.poll(async () => (await box(rail)).w).toBe(72);
+
+  await rail.click({ position: emptySpace });
+  await expect.poll(async () => (await box(rail)).w).toBe(232);
+  await page.mouse.click(900, 300);
+  await expect.poll(async () => (await box(rail)).w).toBe(72);
+
+  // Resting the pointer on the rail opens it; leaving closes it.
+  await page.mouse.move(188, 620);
+  await expect.poll(async () => (await box(rail)).w).toBe(232);
+  await page.mouse.move(900, 300);
+  await expect.poll(async () => (await box(rail)).w).toBe(72);
 });
 
 test('1180 × 820: Баланс across, three columns, Сгради across, three events (816:11473)', async ({
