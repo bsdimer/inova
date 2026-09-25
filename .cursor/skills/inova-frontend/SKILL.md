@@ -1,10 +1,13 @@
 ---
 name: inova-frontend
 description: >-
-  inova admin (React/Vite) and mobile (Expo) frontend workflow. Use when
-  building or restyling screens, components, hooks, or visual QA — not for
-  one-line copy or color-token tweaks. Does not override AGENTS.md, milestone
-  scope, or architecture.
+  Use before writing or changing code under apps/admin (React 19, Vite,
+  Tailwind, TanStack) or apps/mobile (Expo, Reanimated): a new or restyled
+  screen, component, layout, hook, form, data loading, a bug fix, a refactor,
+  or the visual QA of the result. Gives the route to state before editing
+  (small / feature / bug / refactor), the one reference to load, and the checks
+  to run. Skip only for a copy change, a single token, or a one-line style fix.
+  Does not override AGENTS.md, milestone scope, or architecture.
 disable-model-invocation: true
 ---
 
@@ -29,6 +32,10 @@ State the task type and route before editing:
 - **Domain/high-risk feature:** the feature route plus TDD and
   integration/contract tests for the behavior.
 - **Bug:** `Root-cause debug → Regression test → Fix → Verify`.
+- **Refactor (no behaviour change):** `Contract → Checks → Small steps → Verify`.
+  Write the contract down and run the checks before touching code; keep a bug
+  fix or a requirement change in a separate step. See
+  [references/clean-code.md → Safe refactoring](references/clean-code.md#safe-refactoring).
 
 Clarify only when requirements or design decisions are unclear. Use `grill-me`
 or `grilling` when available; otherwise ask focused questions directly. For a
@@ -49,7 +56,7 @@ plan; it does not need to be a long document.
    - Admin: [references/admin.md](references/admin.md)
    - Mobile: [references/mobile.md](references/mobile.md)
    - Shared React: [references/react.md](references/react.md)
-   - Component logic, hooks, forms, data handling, or refactoring:
+   - Component logic, hooks, forms, async and data handling, or refactoring:
      [references/clean-code.md](references/clean-code.md)
    - Tests: [references/testing.md](references/testing.md)
    - Visual QA: [references/visual-qa.md](references/visual-qa.md)
@@ -64,6 +71,10 @@ stage needs it; do not front-load the whole library.
 - Server state through TanStack Query (admin) or the existing API client
   (mobile). Do not invent a second cache.
 - Accessible names on controls; Android back + `elevation` on mobile.
+- Every promise chain has an owner of its rejection, and a stale response never
+  overwrites current state (`references/clean-code.md` → Async).
+- Forms: a bound label, announced errors, `autoComplete`
+  (`references/clean-code.md` → Forms).
 - `rs(wide, narrow)` for every mobile font, padding, margin, gap, and control
   height. It scales with screen width (375pt and 402pt are the two tuned
   sizes). Do not hardcode those values or add another width breakpoint.
