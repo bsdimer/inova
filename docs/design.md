@@ -111,8 +111,9 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
 - The content column is 1136 wide and centred; cards never stretch. From 2400
   the whole layout is drawn ×1.25 (root font-size, sizes in rem).
 - Nothing is clipped and there is never a horizontal scroll: a card that
-  would drop below its minimum width reflows instead (Balance needs 692, so
-  on tablet it goes full width).
+  would drop below its minimum width reflows instead (Balance keeps bubbles
+  and buttons in a row down to 664 — buttons 184, gap 10, as in `821:1456` —
+  and goes full width on tablet).
 - Height: cards keep their height, the page scrolls and the photo stays
   fixed. Vertical page padding is 24 when the content does not fit and up to
   64 when it does. Between 960 and 1116 the dashboard compresses (3 upcoming
