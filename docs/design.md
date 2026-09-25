@@ -48,6 +48,9 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   (`inset: -6px`) so the blurred border does not fade.
 - The dark theme is the token mode plus the night photo. Nothing is painted
   by hand.
+- The theme choice is «Светла», «Тъмна» or «Динамична»; «Динамична» follows
+  the time of day, not the device setting. When exactly it switches is
+  decided when it is built.
 - Only the card clips its content. Wrappers of glowing buttons never use
   `overflow: hidden`, or the halo is cut in a straight line. A glow around a
   thin stroke (the progress arc) is a blurred copy of the stroke underneath,
