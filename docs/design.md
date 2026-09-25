@@ -37,8 +37,7 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
     panels (14px); controls on the photo — fields, search, facets, sort,
     secondary buttons, glass tabs, tags (8px); the active nav item (12px).
     Never on table rows or inside a scrolling list;
-  - write `-webkit-backdrop-filter` before `backdrop-filter`; the other order
-    once shipped a build with no blur in Chrome;
+  - write `-webkit-backdrop-filter` before `backdrop-filter`;
   - `will-change` only on glass that actually animates (the rail expanding),
     never across the board;
   - no blur on text, and at most one glow per card;
@@ -54,19 +53,19 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   by hand.
 - Only the card clips its content. Wrappers of glowing buttons never use
   `overflow: hidden`, or the halo is cut in a straight line. A glow around a
-  thin stroke (the progress arc) is a blurred copy of the stroke underneath;
-  `drop-shadow` on a 1.75 px line gives almost no light.
+  thin stroke (the progress arc) is a blurred copy of the stroke underneath,
+  not `drop-shadow`.
 
 ## Windows and navigation
 
 - Pick the window type by what it is for:
 
-  | What opens                                                                                     | Desktop                                                            | 402                                                                 |
-  | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------- |
-  | A short visit to view something (history, record view)                                         | light right panel, ×                                               | full screen, slides in from the right, «‹ <where from>» (`V2/Back`) |
-  | A form (add, edit, assign)                                                                     | light right panel, ×                                               | full screen, × top right                                            |
-  | Too wide for a panel (e.g. «Пробно начисляване»)                                               | centred window, about 16:9 and 1280×720, over the dimmed screen, × | as the view row above                                               |
-  | A work place (Апартамент, search results) or a multi-step process (import, «Нова организация») | its own page                                                       | its own page                                                        |
+  | What opens                                                                                     | Desktop                                                                           | 402                                                                 |
+  | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+  | A short visit to view something (history, record view)                                         | right panel, ×                                                                    | full screen, slides in from the right, «‹ <where from>» (`V2/Back`) |
+  | A form (add, edit, assign)                                                                     | right panel, ×                                                                    | full screen, × top right                                            |
+  | Too wide for a panel (e.g. «Пробно начисляване»)                                               | centred window, about 16:9 and smaller than the screen, over the dimmed screen, × | as the view row above                                               |
+  | A work place (Апартамент, search results) or a multi-step process (import, «Нова организация») | its own page                                                                      | its own page                                                        |
 
 - If the user entered data and then presses × or back, ask «Да се откажа ли?».
   The confirmation opens over the form with its own scrim. Focus starts on
@@ -109,10 +108,10 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
 - The shell follows the ladder in Figma `1074:9754`:
   - from 1728: the full sidebar (232);
   - 1536–1727: a 72 rail that expands in place and pushes the content; it
-    opens on hover after a delay, on a click on its empty space or on the
-    brand mark (a second click on the empty space folds it), on touch only
-    on tap, and closes when the pointer leaves, on Esc or on a click outside;
-    over its empty part the cursor is `col-resize`, over the icons a pointer;
+    opens on a click on its empty space or on the brand mark, never on
+    hover; a second click on the empty space, a click on the wordmark, Esc or
+    a click outside folds it, and moving the pointer away does not; over its
+    empty part the cursor is `col-resize`, over the icons a pointer;
   - 1024–1535: the rail expands over the page, modal, with a scrim, closing
     on Esc, a tap outside or the brand mark again;
   - below 1024: a top bar with a drawer that closes on ×, a tap on the scrim
@@ -123,8 +122,7 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   the whole layout is drawn ×1.25 (root font-size, sizes in rem).
 - Nothing is clipped and there is never a horizontal scroll: a card that
   would drop below its minimum width reflows instead (Balance keeps bubbles
-  and buttons in a row down to 664 — buttons 184, gap 10, as in `821:1456` —
-  and goes full width on tablet).
+  and buttons in a row down to 664 and goes full width on tablet).
 - Height: cards keep their height, the page scrolls and the photo stays
   fixed. Vertical page padding is 24 when the content does not fit and up to
   64 when it does. From 1037 the dashboard fits as drawn; between 960 and
@@ -143,7 +141,7 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
 
 ## Tables
 
-- A row is 64 high plus a 1 px divider, with no zebra striping. Hover uses
+- Rows have a 1 px divider and no zebra striping. Hover uses
   `glass/inner-soft`. The row identifier is styled as a link but stays white
   on glass: underline on hover plus the pointer cursor. The whole row is one
   open target, and opening a row is not selecting it.
@@ -209,7 +207,9 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   - «Входни такси», «Фиксирани / Временни разходи»;
   - «Такса» is used only for такса Домоуправление;
   - «Сигнали», never «Нередности»;
-  - the roles are Собственик and Наемател, never «Жител»;
+  - «жител» is any person living in or owning a property (menu «Жители»,
+    «Добави жител»); their role on a property is Собственик, Наемател or
+    Обитател;
   - «Оттегли» is withdrawing one's own request, as opposed to a rejection.
 - A count label names what is counted: «4 реда с грешки», not «4 грешки».
 - Plan codes (B9, D16) never appear inside UI sentences; a milestone marker
