@@ -122,8 +122,9 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   and goes full width on tablet).
 - Height: cards keep their height, the page scrolls and the photo stays
   fixed. Vertical page padding is 24 when the content does not fit and up to
-  64 when it does. Between 960 and 1116 the dashboard compresses (3 upcoming
-  events instead of 4, tighter gaps in Сигнали); below 960 it scrolls.
+  64 when it does. From 1037 the dashboard fits as drawn; between 960 and
+  1036 it compresses (3 upcoming events instead of 4, tighter gaps in
+  Сигнали); below 960 it scrolls.
 - Tables become cards on 402. On 768 they become a list, and the facets fold
   into «Филтри (n)».
 - On 402:
