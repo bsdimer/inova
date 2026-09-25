@@ -91,8 +91,9 @@ test('Табло at 1536 with the rail opened in place', async ({ page }) => {
   await openSignedIn(page, ORG_ADMIN, '/?fixture=design');
   await expect(page.getByText('37 609', { exact: false })).toBeVisible();
   await settled(page);
-  await page.locator('aside').click({ position: { x: 36, y: 600 } });
-  await page.mouse.move(900, 400);
+  // Opened by a click on its empty space; the pointer stays on it, since
+  // leaving closes it.
+  await page.locator('aside').click({ position: { x: 36, y: 620 } });
   await page.waitForTimeout(300);
   await page.screenshot(shot('tablo-1536-rail-open'));
 });

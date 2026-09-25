@@ -22,7 +22,15 @@ import {
   Wallet,
   X,
 } from '../components/icons';
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AppBackground } from '../components/AppBackground';
 import { InovaWordmark } from '../components/Logo';
@@ -81,25 +89,46 @@ export function AppShell() {
   const [overlay, setOverlay] = useState(false);
   useEffect(() => setOverlay(false), [pathname, mode]);
 
-  // The rail opened in place (1536–1727): by hovering it, or pinned by a click.
-  const [pinned, setPinned] = useState(false);
-  const [hovered, setHovered] = useState(false);
-  useEffect(() => {
-    setPinned(false);
-    setHovered(false);
-  }, [mode]);
-  const pushed = mode === 'push' && (pinned || hovered);
-  // «При задържане на мишката» (821:1900): the pointer has to rest on the rail
-  // before it opens, so crossing it on the way to the page does not shove the
-  // page right and back.
+  // The rail opened in place (1536–1727), as the design README has it
+  // (821:1456 and «Курсор на рейке»): it opens after the pointer rests on it
+  // or on a click on its empty space or its brand, and closes when the
+  // pointer leaves, on Esc, on a click outside, or on a second click on its
+  // empty space. A touch opens it only by a tap.
+  const [railOpen, setRailOpen] = useState(false);
+  const pushRail = useRef<HTMLElement>(null);
   const dwell = useRef<number | undefined>(undefined);
-  const enterRail = () => {
-    window.clearTimeout(dwell.current);
-    dwell.current = window.setTimeout(() => setHovered(true), 300);
-  };
-  const leaveRail = () => {
-    window.clearTimeout(dwell.current);
-    setHovered(false);
+  useEffect(() => setRailOpen(false), [mode]);
+  useEffect(() => {
+    if (!railOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setRailOpen(false);
+    const onDown = (e: PointerEvent) => {
+      if (!pushRail.current?.contains(e.target as Node)) setRailOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('pointerdown', onDown);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('pointerdown', onDown);
+    };
+  }, [railOpen]);
+  const pushed = mode === 'push' && railOpen;
+  const railHandlers = {
+    onPointerEnter: (e: ReactPointerEvent) => {
+      if (e.pointerType !== 'mouse') return;
+      window.clearTimeout(dwell.current);
+      dwell.current = window.setTimeout(() => setRailOpen(true), 300);
+    },
+    onPointerLeave: (e: ReactPointerEvent) => {
+      if (e.pointerType !== 'mouse') return;
+      window.clearTimeout(dwell.current);
+      setRailOpen(false);
+    },
+    // Anything that is not an item or a button is the rail's empty space.
+    onClick: (e: MouseEvent) => {
+      if ((e.target as Element).closest('a, button')) return;
+      window.clearTimeout(dwell.current);
+      setRailOpen((open) => !open);
+    },
   };
 
   const menuButton = useRef<HTMLButtonElement>(null);
@@ -132,13 +161,11 @@ export function AppShell() {
         )}
 
         {mode === 'push' && (
+          // Over its empty space the cursor is col-resize, the sign that the
+          // rail widens; over the icons and items it stays a pointer.
           <aside
-            onMouseEnter={enterRail}
-            onMouseLeave={leaveRail}
-            onClick={(e) => {
-              // The rail's empty space toggles it; the items only navigate.
-              if (e.target === e.currentTarget) setPinned((v) => !v);
-            }}
+            ref={pushRail}
+            {...railHandlers}
             className={`${stickyBox} z-20 cursor-col-resize ${
               pushed ? 'w-58 p-[1.3125rem]' : 'w-[4.5rem] items-center py-[0.8125rem]'
             }`}
@@ -146,17 +173,12 @@ export function AppShell() {
             {pushed ? (
               <SidebarBody
                 {...shared}
-                brand={
-                  <Brand
-                    label={pinned ? 'Свий менюто' : 'Задръж менюто отворено'}
-                    onClick={() => setPinned((v) => !v)}
-                  />
-                }
+                brand={<Brand label="Свий менюто" onClick={() => setRailOpen(false)} />}
               />
             ) : (
               <RailBody
                 {...shared}
-                onBrand={() => setPinned(true)}
+                onBrand={() => setRailOpen(true)}
                 expanded={false}
                 brandLabel="Отвори менюто"
               />
