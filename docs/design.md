@@ -24,9 +24,6 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   - The panel follows the theme: light by day, dark at night.
   - Inside a panel, use only `panel/text*` and `panel/status-*`.
   - Navigation stays glass.
-- Drawers and windows use `panel/fill`. Menus and popovers use
-  `panel/fill-strong`. The scrim under them is its own full-screen
-  `glass/scrim` layer.
 - Status colour goes only in dots, icons and borders. Text on glass stays
   white, including error text. A dot's glow has the dot's colour, and muted
   dots have no glow.
@@ -87,21 +84,9 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
 - Platform scope has no global search: the header search is hidden and the
   filter search finds organisations by name and key. The organisation key
   never appears inside a tenant.
-- Breadcrumbs are one component:
-  - the current page is the last item;
-  - on 402 the middle levels collapse to «…»;
-  - panels and windows have no breadcrumbs.
-- Approval queues show only what is waiting for a decision; decided and
-  withdrawn items sit behind «История», filtered by outcome. The rule itself
-  is D27 in [plan/decisions.md](plan/decisions.md).
 - A row click, or Enter on the row, opens the record. A row's main action is
   a visible button. The «…» menu holds only secondary actions, and while it
   is open the row keeps its hover state.
-- Inside an organisation entered from the platform, a strip on every screen
-  says where the user is, that the visit is audited, and how to leave — the
-  audited `platform_access` rule is in [plan/security.md](plan/security.md).
-  On 402 the strip is one line under the top bar: where the user is, plus
-  «Върни се».
 
 ## Responsive
 
@@ -129,37 +114,27 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   1036 it compresses (3 upcoming events instead of 4, tighter gaps in
   Сигнали); below 960 it scrolls. At 1024–1279 «Предстоящи» always shows
   three events — that is the composition (`816:11473`), not the height.
-- Tables become cards on 402. On 768 they become a list, and the facets fold
-  into «Филтри (n)».
-- On 402:
-  - two-button footers split 50/50;
-  - single buttons are full width;
-  - touch targets are at least 44×44.
+- On 402 touch targets are at least 44×44.
 - The phone filter sheet stages changes and does not apply them live:
   - the main button previews the result («Покажи 7 служители»);
   - «Изчисти» and close are separate actions.
 
 ## Tables
 
-- Rows have a 1 px divider and no zebra striping. Hover uses
-  `glass/inner-soft`. The row identifier is styled as a link but stays white
-  on glass: underline on hover plus the pointer cursor. The whole row is one
-  open target, and opening a row is not selecting it.
+- The row identifier is styled as a link but stays white on glass: underline
+  on hover plus the pointer cursor. The whole row is one open target, and
+  opening a row is not selecting it.
 - Names and prose truncate to one line with an ellipsis, and the full text
   appears in a tooltip. Numbers, dates and IDs never truncate. Exceptions:
   the reason cell in requests wraps to at most two lines with an ellipsis
   and the full text is in the review panel; in the import error table and
   the search dropdown long names wrap.
-- Numbers are right-aligned with `font-variant-numeric: tabular-nums`. In
-  money, the stotinki are raised and smaller; the sizes are the Figma text
-  styles. A hero sum is centred on its integer part: the stotinki are placed
-  so they do not shift the centre.
+- Numbers are right-aligned with `font-variant-numeric: tabular-nums`. A hero
+  sum is centred on its integer part: the stotinki are placed so they do not
+  shift the centre.
 - Every data view has these states: loading (skeleton), empty, no results
   (names the active filters and gives a way out), error with retry, no
   rights, read-only.
-- Status sits in a strip between the header and the rows: refresh, success,
-  error, read-only, busy.
-- A row with a problem gets a non-colour signal, a warning icon.
 - The search dropdown:
   - is grouped, with at most 5 per group and a count in each group header;
   - opens from 2 characters;
@@ -172,7 +147,6 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   not hidden, with the reason stated next to it. Options the user cannot pick
   are shown, locked, with the reason. The opacities are tokens. An action or
   card the user has no permission for is hidden, not disabled (D14).
-- Field errors show a red edge, an icon and a message line.
 - The status pills on the dashboard's Сигнали card are filters with
   `default` and `selected` states; the list heading and content follow the
   selected pill. «Предложени» in Анкети is not a filter: it opens the queue
@@ -180,7 +154,6 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
 - Picking a day in the calendar switches the toggle to «Ден» and shows that
   day's tasks. "Today" and "selected" are independent states and can both
   apply.
-- Danger menu items use `panel/status-urgent`; disabled items are dimmed.
 - Focus:
   - one ring from the tokens `--focus-edge` and `--focus-glow`, no separate
     `outline`; it has two variants — white on glass, dark on light `panel/*`
