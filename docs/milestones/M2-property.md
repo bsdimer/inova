@@ -56,7 +56,7 @@ The schema contract test must pass on the new tables without being rewritten.
 Portfolio tree, building setup/activation, apartment detail, “add resident”
 (role + effective date → invite → delivery/activation status), multiple owners,
 designated owner document recipient, verification queue, corrections,
-removal-request queue with История for decided and withdrawn requests (D27), approved end occupancy (no move — D25), manager assignment. The buildings list filters by град and квартал (D24).
+removal-request queue with История for decided and withdrawn requests (D27), approved end occupancy (no move — D25), manager assignment. The buildings list filters by град and квартал (D24). The «Детайли на жител» panel (WHI-63) fills in stages: contacts, properties, pets and history here; «Подадени сигнали» after M6; the photo from Общност after the forum module (initials until then, as drawn).
 
 ## Mobile
 

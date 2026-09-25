@@ -84,6 +84,9 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   search result opens a normal page. The search dropdown has no scrim (it
   already sits on a panel with a shadow); its bottom row with keyboard hints
   is always visible.
+- A menu item whose module is not built yet (Документи, Справки, Анкети,
+  Общност, the tenant-named item) is not shown — no empty pages behind the
+  rail.
 - Platform scope has no global search: the header search is hidden and the
   filter search finds organisations by name and key. The organisation key
   never appears inside a tenant.
