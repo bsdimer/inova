@@ -45,3 +45,4 @@ coverage/
 *.log
 .idea/
 tmp/
+.claude/settings.json
