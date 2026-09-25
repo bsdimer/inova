@@ -1,9 +1,12 @@
 ---
 name: inova-frontend
 description: >-
-  inova frontend workflow for larger admin and mobile screen, component,
-  layout, hook, or visual-QA changes. Skip for copy, token, and one-line style
-  fixes.
+  Use before writing or changing code under apps/admin (React 19, Vite,
+  Tailwind, TanStack) or apps/mobile (Expo, Reanimated): a new or restyled
+  screen, component, layout, hook, form, data loading, a bug fix, a refactor,
+  or the visual QA of the result. Gives the route to state before editing
+  (small / feature / bug / refactor), the one reference to load, and the checks
+  to run. Skip only for a copy change, a single token, or a one-line style fix.
 ---
 
 # inova frontend
