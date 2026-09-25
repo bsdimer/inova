@@ -12,10 +12,9 @@ Staff can be invited and log in to a tenant realm; residents activate
 manager-created tenant-local accounts with an invite code (B7/B8). The same
 email/phone may identify independent accounts in two tenants without either
 white-label app disclosing the other. Platform identities remain separate; RLS
-is proven at SQL and API layers. A person may authenticate independent accounts
-in several tenants and switch the active tenant in the shared mobile app
-without creating a cross-tenant authorization token or exposing the other
-accounts to any tenant.
+is proven at SQL and API layers. A person may hold independent accounts in
+several tenants; no auth response reveals the other accounts, and no token
+spans tenants. (Switching among them in the shared mobile app is M10.)
 
 ## Tables (`0001_identity_tenancy.sql`)
 
@@ -153,12 +152,12 @@ Moved verbatim from the implementation plan §7 when it was split. Where this an
 
 **Effort / sequencing:** L
 
-- **Goal:** staff can be invited to a tenant and log in to the admin shell; residents activate manager-created tenant-realm accounts with an invite code (B7/B8); the same email/phone can hold independent accounts in different tenants without cross-brand disclosure; the shared mobile app can securely retain and switch those tenant contexts; multi-role accounts are presented correctly; RLS is proven.
+- **Goal:** staff can be invited to a tenant and log in to the admin shell; residents activate manager-created tenant-realm accounts with an invite code (B7/B8); the same email/phone can hold independent accounts in different tenants without cross-brand disclosure; the shared mobile app retains and switches those tenant contexts (→ M10, moved 2026-09-21); multi-role accounts are presented correctly; RLS is proven.
 - **Dependencies:** M0.
 - **DB:** `tenants, brands, tenant_accounts/users, platform_users, staff_memberships, roles, permissions, refresh_tokens, audit_records`; tenant account `tenant_id`-leading keys/RLS; unique `(tenant_id, normalized_email)` and `(tenant_id, normalized_phone)` indexes; seed script (2 tenants with duplicate contact values for isolation tests).
 - **Backend:** **auth-service** as its own deployable: realm-scoped login/refresh rotation/logout, **invite-code activation** (manager pre-creates the resident account; one-time code hashed at rest, expiring, rate-limited, unique inside the realm; delivery via SMS/Viber through the worker — MailHog/console fallback locally), JWT issuance with one `tenant_id` + kind + multiple applicable role claims or a separate `platform_role` token, JWKS endpoint, revocation denylist; enumeration-safe login/reset/invite responses that never expose another realm. Each refresh-token family is tenant-account-bound; no endpoint returns an unscoped cross-tenant account list. **core-api**: JWKS verification, tenant context equality check + DB re-check for sensitive ops, permission guards, **super_admin platform guard + tenant provisioning endpoints**, audit-record writer, invitation flow, tenant entitlement flags.
 - **Admin:** realm-scoped login, staff & roles management screens; explicit tenant-context entry for platform operators; **super_admin console shell: tenant provisioning/initialization wizard** (billing config screens follow in M-Bill).
-- **Mobile:** invite-code activation + login screens; secure local portfolio of authenticated tenant accounts; explicit add/switch/remove-tenant-context flow; tenant-namespaced API cache, offline queue, analytics identity, deep links, and push routing; multi-role view selector that never changes authorization.
+- **Mobile:** invite-code activation + login screens; secure local portfolio of authenticated tenant accounts and the add/switch/remove-tenant-context flow (→ M10); tenant-namespaced API cache, offline queue, analytics identity, deep links, and push routing; multi-role view selector that never changes authorization.
 - **Tests:** auth unit tests; same email and same phone registered independently in two tenants; login/reset/invite enumeration does not leak the other realm; token tenant cannot be changed with `X-Tenant-Id`; switching clears/changes all active cache and push context; role-view selection cannot elevate permissions; single-context and all-local-context logout/revocation behavior; **tenant-isolation suite v1** (cross-tenant 403s) — permanent CI gate; RLS policy tests at SQL level.
 - **Acceptance:** demo: two tenants, staff of A cannot read B by any endpoint; audit rows written for role changes.
 - **Risks:** getting RLS + connection pooling right (use transaction-scoped `SET LOCAL app.tenant_id`); decide session pooling mode early.

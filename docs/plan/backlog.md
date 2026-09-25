@@ -26,14 +26,14 @@ Small, independently implementable, agent-sized items in build order. A planning
 - [ ] **13.** Audit-record writer (transactional) + coverage on role/permission changes _(writer done + used by provisioning; role-change coverage lands with the staff screens)_
 - [x] **14.** Seed script: two demo tenants + tenant-isolation test suite (CI blocker)
 - [ ] **15.** Admin: login _(done)_, explicit authenticated tenant-context switcher, staff invitations, role management screens
-- [ ] **16.** Mobile: invite-code activation + login screens _(done)_; secure multi-account session portfolio, tenant switcher, multi-role view selector, and tenant-namespaced caches/push/analytics _(pending)_ _(the multi-account portfolio and tenant switcher moved to item 56 / M10 on 2026-09-21; tenant-namespaced storage keys stay here)_
+- [ ] **16.** Mobile: invite-code activation + login screens _(done)_; multi-role view selector (the multi-account portfolio and tenant switcher are item 56, M10), and tenant-namespaced caches/push/analytics _(pending)_ _(the multi-account portfolio and tenant switcher moved to item 56 / M10 on 2026-09-21; tenant-namespaced storage keys stay here)_
 
 ## Property
 
 - [ ] **16a.** Worker skeleton before M3: BullMQ consumer deployable, `inova_worker` DB role without BYPASSRLS, per-tenant job iteration with `SET LOCAL app.tenant_id` (D21), health check, deploy wiring
 - [ ] **16b.** Redis revocation denylist with the D20 failure mode (fail open for ordinary requests, closed for sensitive ones, logged and alerting)
-- [ ] **17.** Migration: buildings, entrances, apartments (unique building + entrance + floor + number), effective-dated occupancies/pets, occupancy_requests, building_manager_assignments, removal_requests
-- [ ] **18.** Property draft/activation CRUD + multiple owners + owner/tenant guards + occupancy request/verify/reject + manager assignments + super_admin removal approval
+- [ ] **17.** Migration: buildings (with `city` and `district` — D24), entrances, apartments (unique building + entrance + floor + number; `rooms` and property type apartment/garage/shop/storage — D26), effective-dated occupancies/pets, occupancy_requests, building_manager_assignments, removal_requests
+- [ ] **18.** Property draft/activation CRUD + multiple owners + owner/tenant guards + occupancy request/verify/reject + manager assignments + super_admin removal approval; apartment correction as a plain audited edit, no move (D25); removal request withdrawn or edited while pending, both request lists with a status filter (D27)
 - [ ] **19.** XLSX/CSV bulk import endpoint with dry-run + row-level error report
 - [ ] **19a.** Importer currency step (A-EUR): one-time BGN → EUR conversion at 1.95583, half-up per amount, reconciliation report with source, result and total rounding difference
 - [ ] **20.** Admin: portfolio tree, apartment detail, verification queue
@@ -43,7 +43,7 @@ Small, independently implementable, agent-sized items in build order. A planning
 ## Billing
 
 - [ ] **22.** Migration: fee_rules (versioned), charges, charge_lines, document_counters
-- [ ] **23.** Building assessment basis config + fee-rule CRUD/versioning + effective-dated population inputs + dry-run preview API
+- [ ] **23.** Building assessment basis config (incl. `per_room`) + fee-rule CRUD/versioning — fixed and temporary rules with scope by chosen properties, entrance, building or property type (D26) + effective-dated population inputs + dry-run preview API
 - [ ] **24.** Fee-generation cron job (idempotent, tenant TZ) + golden-file test suite
 - [ ] **25.** One-time/temporary charge endpoints
 - [ ] **26.** Obligations views (per apartment, per building) + mobile obligations screen + IBAN/reference copy UI
@@ -69,6 +69,7 @@ Small, independently implementable, agent-sized items in build order. A planning
 - [ ] **38.** PushProvider abstraction (FCM+APNs) + fan-out worker with retries + token pruning
 - [ ] **39.** Notice publish + audience resolution (`AudienceResolver`, incl. the `debtors` type) + admin composer; mobile notices feed + notification center
 - [ ] **39a.** `GET /v1/me/notifications/unread-count` + admin nav badge and top-bar bell
+- [ ] **39b.** Bulk messages (D23, D28): audience all/many incl. residents without the app, SMS/Viber provider behind the push abstraction, templates with placeholders, per-recipient preview, no amounts in push
 - [ ] **40.** Event-driven pushes: payment recorded, issue status change, occupancy verified
 
 ## Tasks & calendar
@@ -76,6 +77,7 @@ Small, independently implementable, agent-sized items in build order. A planning
 - [ ] **40a.** Migration: tasks (tenant-leading PK, RLS, `(tenant_id, scheduled_on)` index) + schema contract + isolation coverage
 - [ ] **40b.** `tasks` module: CRUD, day/range lists, month calendar counts, complete/reopen/cancel, `tasks.read` / `tasks.manage`, building-scope visibility, tenant-timezone day boundaries
 - [ ] **40c.** Admin: Tasks section (list + form) and the Calendar card (Month with dots + Upcoming, Day with checkbox; day pick switches view)
+- [ ] **40d.** Contractor visit calendar visible to residents (D23; who enters a visit and what residents see — Still open 12)
 
 ## Reporting & ops
 
@@ -106,6 +108,14 @@ Small, independently implementable, agent-sized items in build order. A planning
 - [ ] **49.** Store submissions of shared app (TestFlight external + Play closed track → production)
 - [ ] **50.** Execute pilot launch checklist (§10); baseline success metrics in PostHog
 
+## Moved before the pilot (D23) — milestones still to be cut
+
+- [ ] **50a.** Documents section: library with overview, search and document templates; Справки menu entry to the reports (M9)
+- [ ] **50b.** Community forum: topics residents post, staff edit or remove; Still open 10 first (incl. the 1:1-messages ask)
+- [ ] **50c.** Tenant-named menu item in admin and app as a brand-config field (M-Pilot; what it opens — Still open 13)
+- [ ] **57.** _(surveys module, from the P1 wave)_ Owner-proposed surveys/voting/protocols: manager approval, push-on-publish, owner-only voting, per-survey apartment/ideal-parts weighting (after co-owner ballot rule confirmation)
+- [ ] **57a.** `GET /v1/surveys/summary` + the Surveys side of the dashboard switch (open count, proposed badge, voted %, "expires in N days"); the manager's own survey and the proposals queue per D16
+
 ## Fast-follows (post-pilot, independently schedulable)
 
 - [ ] **51.** iCard online payments (preferred, after B1 validation): tenant onboarding/configuration, provider-neutral payment intents, signature-authenticated webhook/callback consumer with server-side tenant resolution + dedupe, auto-allocation, refunds if supported, reconciliation job + exceptions UI
@@ -116,13 +126,6 @@ Small, independently implementable, agent-sized items in build order. A planning
 - [ ] **54.** Brand build matrix CI (EAS/fastlane) + credentials vault structure + second-brand smoke test
 - [ ] **55.** First partner's dedicated app: partner account procedure, compliance checklist, differentiation record, store submission
 - [ ] **56.** Shared-app tenant-account portfolio: add realm by invite deep link/org code, authenticate separately, securely store/remove sessions, switch tenant without cache/push/analytics leakage
-
-### Moved before the pilot (D23) — the surveys module, milestone still to be cut
-
-- [ ] **57.** Owner-proposed surveys/voting/protocols: manager approval, push-on-publish, owner-only voting, per-survey apartment/ideal-parts weighting (after co-owner ballot rule confirmation)
-- [ ] **57a.** `GET /v1/surveys/summary` + the Surveys side of the dashboard switch (open count, proposed badge, voted %, "expires in N days"); the manager's own survey and the proposals queue per D16
-
-### Fast-follows, continued
 
 - [ ] **58.** Privileges module + privilege pushes
 - [ ] **59.** Export catalog (XLSX/PDF) + accounting journal export (§8.4)

@@ -90,7 +90,7 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   - on 402 the middle levels collapse to «…»;
   - panels and windows have no breadcrumbs.
 - Approval queues show only what is waiting for a decision; decided and
-  withdrawn items sit behind «История», one tab per outcome. The rule itself
+  withdrawn items sit behind «История», filtered by outcome. The rule itself
   is D27 in [plan/decisions.md](plan/decisions.md).
 - A row click, or Enter on the row, opens the record. A row's main action is
   a visible button. The «…» menu holds only secondary actions, and while it
@@ -164,9 +164,10 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
 
 ## Controls, focus and motion
 
-- An action the user cannot take is dimmed, not hidden, with the reason
-  stated next to it. Options the user cannot pick are shown, locked, with the
-  reason. The opacities are tokens.
+- An action the user may take but not now (state, missing data) is dimmed,
+  not hidden, with the reason stated next to it. Options the user cannot pick
+  are shown, locked, with the reason. The opacities are tokens. An action or
+  card the user has no permission for is hidden, not disabled (D14).
 - Field errors show a red edge, an icon and a message line.
 - The status pills on the dashboard's Сигнали card are filters with
   `default` and `selected` states; the list heading and content follow the
