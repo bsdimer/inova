@@ -22,7 +22,7 @@ Issue CRUD, status transitions with history — a transition takes an optional `
 
 ## Admin
 
-Issue queue with filters (building, status, **priority**, category, date), detail with photo gallery, status timeline and a priority control. **Category is also a visibility boundary (D22):** the Cleaning Contractor and Technician roles see only issues of their category; the house manager sees everything, including urgent and uncategorised ones, and is the one who sets or changes a category — recategorising is what routes an issue to a contractor. The contractor's dashboard opens an issue of its category in a panel with «Смени статус» (Планиран / В процес / Разрешен) and an optional note to the reporter (WHI-27 frames `2019:36105`, `2019:36253`).
+Issue queue with filters (building, status, **priority**, category, date), detail with photo gallery, status timeline and a priority control. **Category is also a visibility boundary (D22):** the Cleaning Contractor and Technician roles see only issues of their category; the house manager sees everything, including urgent and uncategorised ones, and is the one who sets or changes a category — recategorising is what routes an issue to a contractor. The contractor's dashboard opens an issue of its category in a panel with «Смени статус» (Планиран / В процес / Решен) and an optional note to the reporter (WHI-27 frames `2019:36105`, `2019:36253`).
 
 ## Mobile
 
