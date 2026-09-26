@@ -84,6 +84,9 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   search result opens a normal page. The search dropdown has no scrim (it
   already sits on a panel with a shadow); its bottom row with keyboard hints
   is always visible.
+- A menu item whose module is not built yet (Документи, Справки, Анкети,
+  Общност, the tenant-named item) is not shown — no empty pages behind the
+  rail.
 - Platform scope has no global search: the header search is hidden and the
   filter search finds organisations by name and key. The organisation key
   never appears inside a tenant.
@@ -184,7 +187,9 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
 - One concept, one name (see AGENTS.md):
   - «имот» is any property, and «Ап. 4» is a specific one;
   - «Входни такси», «Фиксирани / Временни разходи»;
-  - «Такса» is used only for такса Домоуправление;
+  - a charge rule is a «разход» (Фиксиран / Временен); no rule is named
+    «такса …» except «такса Домоуправление». What a resident is charged or
+    owes is «Входни такси» / «входна такса»;
   - «Сигнали», never «Нередности»;
   - «жител» is any person living in or owning a property (menu «Жители»,
     «Добави жител»); their role on a property is Собственик, Наемател or
