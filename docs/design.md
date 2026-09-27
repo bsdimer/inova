@@ -37,7 +37,7 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   - write `-webkit-backdrop-filter` before `backdrop-filter`;
   - `will-change` only on glass that actually animates (the rail expanding),
     never across the board;
-  - no blur on text, and at most one glow per card;
+  - no blur on text;
   - with `prefers-reduced-transparency`, panels become solid.
 - The photo sits in a `position: fixed` layer at `z-index: 0` with the app
   above it at `z-index: 1` — never a negative z-index, which paints the photo
@@ -84,6 +84,9 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   search result opens a normal page. The search dropdown has no scrim (it
   already sits on a panel with a shadow); its bottom row with keyboard hints
   is always visible.
+- A menu item whose module is not built yet (Документи, Справки, Анкети,
+  Общност, the tenant-named item) is not shown — no empty pages behind the
+  rail.
 - Platform scope has no global search: the header search is hidden and the
   filter search finds organisations by name and key. The organisation key
   never appears inside a tenant.
@@ -184,7 +187,9 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
 - One concept, one name (see AGENTS.md):
   - «имот» is any property, and «Ап. 4» is a specific one;
   - «Входни такси», «Фиксирани / Временни разходи»;
-  - «Такса» is used only for такса Домоуправление;
+  - a charge rule is a «разход» (Фиксиран / Временен); no rule is named
+    «такса …» except «такса Домоуправление». What a resident is charged or
+    owes is «Входни такси» / «входна такса»;
   - «Сигнали», never «Нередности»;
   - «жител» is any person living in or owning a property (menu «Жители»,
     «Добави жител»); their role on a property is Собственик, Наемател or
