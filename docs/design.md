@@ -16,7 +16,8 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
 
 - There are three glass fills:
   - `glass/card` for cards and the shell;
-  - `glass/data` for tables and lists;
+  - `glass/data` for tables and lists. Exception: the Сигнали / Анкети list on
+    the manager's Табло keeps its rows on `glass/inner`, as approved;
   - `glass/input` for fields, search and sort.
     A control that sits on the photo is a recess, darker than what is behind it.
 - Everything layered over the page uses `panel/*`: drawer, window, menu,
