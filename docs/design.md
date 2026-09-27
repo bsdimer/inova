@@ -16,7 +16,8 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
 
 - There are three glass fills:
   - `glass/card` for cards and the shell;
-  - `glass/data` for tables and lists;
+  - `glass/data` for tables and lists. Exception: the Сигнали / Анкети list on
+    the manager's Табло keeps its rows on `glass/inner`, as approved;
   - `glass/input` for fields, search and sort.
     A control that sits on the photo is a recess, darker than what is behind it.
 - Everything layered over the page uses `panel/*`: drawer, window, menu,
@@ -60,12 +61,12 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
 
 - Pick the window type by what it is for:
 
-  | What opens                                                                                     | Desktop                                                                           | 402                                                                 |
-  | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-  | A short visit to view something (history, record view)                                         | right panel, ×                                                                    | full screen, slides in from the right, «‹ <where from>» (`V2/Back`) |
-  | A form (add, edit, assign)                                                                     | right panel, ×                                                                    | full screen, × top right                                            |
-  | Too wide for a panel (e.g. «Пробно начисляване»)                                               | centred window, about 16:9 and smaller than the screen, over the dimmed screen, × | as the view row above                                               |
-  | A work place (Апартамент, search results) or a multi-step process (import, «Нова организация») | its own page                                                                      | its own page                                                        |
+  | What opens                                                                 | Desktop                                                                           | 402                                                                 |
+  | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+  | A short visit to view something (history, record view)                     | right panel, ×                                                                    | full screen, slides in from the right, «‹ <where from>» (`V2/Back`) |
+  | A form (add, edit, assign)                                                 | right panel, ×                                                                    | full screen, × top right                                            |
+  | Too wide for a panel (e.g. «Пробно начисляване»)                           | centred window, about 16:9 and smaller than the screen, over the dimmed screen, × | as the view row above                                               |
+  | A work place (Апартамент, search results) or a multi-step process (import) | its own page                                                                      | its own page                                                        |
 
 - If the user entered data and then presses × or back, ask «Да се откажа ли?».
   The confirmation opens over the form with its own scrim. Focus starts on
