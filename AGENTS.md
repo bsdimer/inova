@@ -45,7 +45,7 @@ platform's own "inova" brand.
 1. Read this file.
 2. Read [docs/current.md](docs/current.md) — the only living status document.
 3. Start with **one** relevant extra file: a milestone under `docs/milestones/`,
-   a plan topic under `docs/plan/`, an ADR under `docs/decisions/`, the linked feature brief under
+   a plan topic under `docs/plan/`, a decision card under `docs/plan/decisions/`, the linked feature brief under
    `docs/features/`, or the frontend skill (see below). Load a linked reference
    later only when the task stage needs it; never the whole plan. Index:
    [docs/README.md](docs/README.md).
