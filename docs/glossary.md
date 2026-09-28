@@ -12,6 +12,11 @@ session supplies a word when the stakeholder settles it; the planner commits
 it, and whoever introduces the entity adds the identifier, through the
 plan's PR. No script checks this file — a reviewer reads it.
 
+An entry records the decided word, not the build: most words belong to
+screens not built yet. Where a running screen still shows another word, the
+entry says so — «decided, not built» — and names the screen, so a reader
+does not take the entry for the current UI.
+
 ## Property
 
 - **Имот** — any property a tenant manages (`apartment` row, `property_type`);
@@ -30,7 +35,9 @@ plan's PR. No script checks this file — a reviewer reads it.
   resident is charged or owes («входна такса»; `charge`). Avoid: «Такси»
   alone, «такси» in a sentence, «Начисления» as a screen or section name
   («начисленията» as a plain noun in a sentence is fine). Source: D26,
-  WHI-41 (24.09).
+  WHI-41 (24.09). Decided, not built: the role descriptions in the admin's
+  «Роли» still start «Такси, плащания…», and the app's sign-in subtitle says
+  «такси».
 - **Фиксирани разходи / Временни разходи** — the building's costs, recurring
   or for a period: the charge rules in «Входни такси» (`fee_rule.kind`),
   and, from P1, the kind a supplier's invoice carries (the same two values,
@@ -96,6 +103,8 @@ plan's PR. No script checks this file — a reviewer reads it.
 - **Изтрий достъпа** — the action that ends a staff member's access for
   good; the status after it is «Изтрит» (`staff_membership.status` =
   `revoked`). Avoid: «Отмени достъпа», «Отменен». Source: WHI-47 (25.09).
+  Decided, not built: the admin's staff panel still offers «Отмени достъпа»
+  and shows «Отменен» until the staff task lands.
 - **Период на действие** — how long an assignment holds (house manager,
   document recipient). Avoid: «В сила от» as the heading of an assignment's period; the column
   «В сила от» in the fee rules (the date a rule version applies from)
@@ -118,4 +127,6 @@ plan's PR. No script checks this file — a reviewer reads it.
   the button is «Изпрати връзка». Avoid: «линк». Source: WHI-20 (23.09).
 - **Тема** — the theme setting: «Светла», «Тъмна», «Динамична» (follows the
   time of day). Avoid: «Изглед», «Както в системата». Source: WHI-47
-  (25.09).
+  (25.09), `docs/design.md` → theme. Decided, not built: the admin still
+  offers «Изглед» with «Както в системата» (following the system setting)
+  until the theme task lands.
