@@ -40,6 +40,7 @@ jobs:
       - run: pnpm check:routes
       - run: pnpm check:agent-harness
       - run: pnpm check:worklog
+      - run: pnpm check:decisions
       # Every PR names its Linear issue on the first line (AGENTS.md → Tracking
       # in Linear). "Closes" is the word Linear reads to link the PR to the
       # issue and move it on open and merge; the PR template starts with it.
