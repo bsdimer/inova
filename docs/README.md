@@ -16,7 +16,7 @@ One source of truth per kind of information. New sessions read
 | Words                        | [glossary.md](glossary.md)                            | Naming anything a user sees, or an entity or column for it                   |
 | Admin design rules           | [design.md](design.md)                                | Building or checking an admin screen: windows, tables, glass in CSS          |
 | Feature scope + acceptance   | [features/](features/)                                | Medium or large feature work                                                 |
-| ADRs                         | [decisions/](decisions/)                              | When an ADR exists for the topic                                             |
+| Decision cards               | [plan/decisions/](plan/decisions/)                    | The rule, its source and where it lands, D29 onward                          |
 
 [implementation-status.md](implementation-status.md) is a pointer to `current.md`
 (kept so old links still resolve). Progress is **not** tracked as checkboxes
