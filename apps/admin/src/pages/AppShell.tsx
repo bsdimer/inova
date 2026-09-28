@@ -303,11 +303,12 @@ function GroupRule({ rail = false }: { rail?: boolean }) {
   );
 }
 
-function NavList({ nav, pathname }: { nav: NavGroups; pathname: string }) {
-  const unread = useUnreadCount();
-  // On a short window the list scrolls while the brand and the account stay
-  // put; each navigation brings the open item into the list's view, keeping
-  // the list's padding so the item stays clear of the rule above the account.
+/**
+ * On a short window a menu list scrolls while the brand and the account stay
+ * put; each navigation brings the open item into the list's view, keeping the
+ * list's padding so the item stays clear of the rule above the account.
+ */
+function useActiveInView(pathname: string) {
   const list = useRef<HTMLElement>(null);
   useLayoutEffect(() => {
     const box = list.current;
@@ -319,6 +320,69 @@ function NavList({ nav, pathname }: { nav: NavGroups; pathname: string }) {
     if (top < box.scrollTop) box.scrollTop = top;
     else if (bottom > box.scrollTop + box.clientHeight) box.scrollTop = bottom - box.clientHeight;
   }, [pathname]);
+  return list;
+}
+
+/**
+ * The rail's tooltips. Each stays in its item's markup but opens as a popover,
+ * in the browser's top layer, so the scrolling rail cannot cut it off. It is
+ * placed 8 to the right of the item when it opens — after 400 ms of hover, at
+ * once on keyboard focus — and closes when either ends, when the rail
+ * scrolls under the pointer, when the window resizes or on navigation, since
+ * it would then no longer stand beside its item.
+ */
+function createRailTips() {
+  let timer = 0;
+  let open: HTMLElement | null = null;
+  const hide = () => {
+    window.clearTimeout(timer);
+    if (open?.matches(':popover-open')) open.hidePopover();
+    open = null;
+  };
+  const show = (item: HTMLElement, delay: number) => {
+    hide();
+    const tip = item.querySelector<HTMLElement>('.rail-tip');
+    if (!tip) return;
+    timer = window.setTimeout(() => {
+      const box = item.getBoundingClientRect();
+      const gap = parseFloat(getComputedStyle(document.documentElement).fontSize) / 2;
+      tip.style.left = `${box.right + gap}px`;
+      tip.style.top = `${box.top + box.height / 2}px`;
+      tip.showPopover();
+      open = tip;
+    }, delay);
+  };
+  // A scroll moves the items under a tooltip. The item in keyboard focus
+  // (which the browser may just have scrolled into view) keeps its tooltip
+  // beside it; any other tooltip closes.
+  const follow = (list: HTMLElement) => {
+    const focused = document.activeElement;
+    if (
+      focused instanceof HTMLElement &&
+      list.contains(focused) &&
+      focused.matches(':focus-visible')
+    )
+      show(focused, 0);
+    else hide();
+  };
+  return { show, hide, follow };
+}
+
+function useRailTips(pathname: string) {
+  const [tips] = useState(createRailTips);
+  useEffect(() => {
+    window.addEventListener('resize', tips.hide);
+    return () => {
+      window.removeEventListener('resize', tips.hide);
+      tips.hide();
+    };
+  }, [tips, pathname]);
+  return tips;
+}
+
+function NavList({ nav, pathname }: { nav: NavGroups; pathname: string }) {
+  const unread = useUnreadCount();
+  const list = useActiveInView(pathname);
   return (
     // The list scrolls inside the sidebar's padding, so the focus ring
     // (3 px out) and its glow are not cut at the list's edges.
@@ -459,6 +523,8 @@ function RailBody({
   brandLabel,
 }: Shared & { onBrand: () => void; expanded: boolean; brandLabel: string }) {
   const unread = useUnreadCount();
+  const list = useActiveInView(pathname);
+  const tips = useRailTips(pathname);
   return (
     <>
       <div className="pt-1 pb-3">
@@ -476,7 +542,13 @@ function RailBody({
           i
         </button>
       </div>
-      <nav aria-label="Основно меню" className="flex flex-col gap-1">
+      {/* Scrolls like the sidebar's list; px-3 leaves room for the focus ring. */}
+      <nav
+        ref={list}
+        aria-label="Основно меню"
+        onScroll={(e) => tips.follow(e.currentTarget)}
+        className="nav-scroll -my-1 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3 py-1"
+      >
         {nav.map((group, g) => [
           g > 0 && <GroupRule key={`rule-${g}`} rail />,
           <ul key={`group-${g}`} role="list" className="flex flex-col gap-1">
@@ -489,6 +561,14 @@ function RailBody({
                     to={to}
                     data-active={active || undefined}
                     aria-label={badge ? `${label}, ${badge} непрочетени` : label}
+                    onPointerEnter={(e) =>
+                      e.pointerType !== 'touch' && tips.show(e.currentTarget, 400)
+                    }
+                    onPointerLeave={tips.hide}
+                    onFocus={(e) =>
+                      e.currentTarget.matches(':focus-visible') && tips.show(e.currentTarget, 0)
+                    }
+                    onBlur={tips.hide}
                     className={`nav-item relative flex h-12 w-12 cursor-pointer items-center justify-center text-ink ${
                       active
                         ? 'nav-active rounded-[1rem] [--nav-radius:1rem]'
@@ -507,7 +587,11 @@ function RailBody({
                         }}
                       />
                     ) : null}
-                    <span aria-hidden className="rail-tip text-body-13 font-medium">
+                    <span
+                      aria-hidden
+                      popover="manual"
+                      className="rail-tip text-body-13 font-medium"
+                    >
                       {badge ? `${label} · ${badge}` : label}
                     </span>
                   </Link>
@@ -517,7 +601,6 @@ function RailBody({
           </ul>,
         ])}
       </nav>
-      <div className="flex-1" />
       <hr className="w-8 border-glass-divider" />
       <div className="px-1 pt-1">
         <Avatar name={session?.user.fullName ?? '—'} size={40} className="glass-blur" />

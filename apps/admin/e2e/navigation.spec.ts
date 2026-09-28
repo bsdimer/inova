@@ -129,3 +129,88 @@ test('with reduced motion hover shows only the plate', async ({ page }) => {
   await expect(tasks).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
   expect(await growth(page, 'Задачи')).toBe('none');
 });
+
+// A 13″ laptop leaves about 600 px of window at rail widths (review on #41).
+for (const width of [1280, 1536]) {
+  test(`${width} × 600: the rail scrolls, Роли is reachable, the tooltip is not cut`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 600 });
+    await openSignedIn(page, ORG_ADMIN, '/roles');
+    const rail = page.locator('aside').first();
+    const nav = rail.getByRole('navigation', { name: 'Основно меню' });
+    const roles = nav.getByRole('link', { name: 'Роли' });
+    const account = rail.locator(':scope > :last-child');
+
+    // Роли and the account stand wholly inside the rail's glass and the window.
+    const railBox = (await rail.boundingBox())!;
+    for (const part of [roles, account]) {
+      await expect(part).toBeInViewport({ ratio: 1 });
+      const b = (await part.boundingBox())!;
+      expect(b.y + b.height).toBeLessThanOrEqual(railBox.y + railBox.height);
+    }
+    await roles.click({ trial: true });
+
+    // Every item keeps the 44 px target.
+    for (const h of await nav
+      .getByRole('link')
+      .evaluateAll((links) => links.map((l) => l.getBoundingClientRect().height))) {
+      expect(h).toBeGreaterThanOrEqual(44);
+    }
+
+    // The last item's tooltip shows on hover, beside the item, and nothing cuts it.
+    await roles.hover();
+    const tip = roles.locator('.rail-tip');
+    await expect(tip).toBeVisible();
+    await expect(tip).toBeInViewport({ ratio: 1 });
+    const t = (await tip.boundingBox())!;
+    // 8 to the right of the item, as drawn in V2/Tooltip · panel (1784:39369).
+    const r = (await roles.boundingBox())!;
+    expect(t.x - (r.x + r.width)).toBeCloseTo(8, 0);
+    // Nothing paints over it: the topmost element at its centre is the tooltip
+    // (pointer-events are switched on for the probe, the tooltip ignores them).
+    const onTop = await tip.evaluate((el) => {
+      const b = el.getBoundingClientRect();
+      (el as HTMLElement).style.pointerEvents = 'auto';
+      const hit = document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2);
+      (el as HTMLElement).style.pointerEvents = '';
+      return hit === el;
+    });
+    expect(onTop).toBe(true);
+  });
+}
+
+test('rail tooltips: on keyboard focus at once, following focus as the rail scrolls', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 600 });
+  await openSignedIn(page, ORG_ADMIN, '/roles');
+  const nav = page.locator('aside').first().getByRole('navigation', { name: 'Основно меню' });
+  await nav.getByRole('link', { name: 'Роли' }).focus();
+  // Walking up scrolls the rail under the focus; the focused item keeps its tooltip.
+  for (const name of ['Служители', 'Сигнали', 'Жители', 'Сгради', 'Финанси', 'Известия']) {
+    await page.keyboard.press('Shift+Tab');
+    const item = nav.getByRole('link', { name: new RegExp(`^${name}`) });
+    await expect(item).toBeFocused();
+    await expect(item.locator('.rail-tip')).toBeVisible();
+    await expect(item.locator('.rail-tip')).toBeInViewport({ ratio: 1 });
+  }
+});
+
+test('rail tooltips: gone when the pointer leaves or the rail scrolls under it', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 600 });
+  await openSignedIn(page, ORG_ADMIN, '/');
+  const nav = page.locator('aside').first().getByRole('navigation', { name: 'Основно меню' });
+  const tasks = nav.getByRole('link', { name: 'Задачи' });
+  await tasks.hover();
+  await expect(tasks.locator('.rail-tip')).toBeVisible();
+  await page.mouse.move(700, 300);
+  await expect(tasks.locator('.rail-tip')).toBeHidden();
+
+  await tasks.hover();
+  await expect(tasks.locator('.rail-tip')).toBeVisible();
+  await nav.evaluate((el) => el.scrollBy(0, 40));
+  await expect(tasks.locator('.rail-tip')).toBeHidden();
+});

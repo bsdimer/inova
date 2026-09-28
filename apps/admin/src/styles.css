@@ -517,11 +517,14 @@ body {
   /*
    * V2/Tooltip · panel (1784:39369), beside a rail icon: 8 to its right, after
    * 400 ms of hover, at once on keyboard focus, gone the moment either ends.
+   * A popover in the top layer, placed by the rail (createRailTips); the UA's
+   * centring of a popover is undone here.
    */
   .rail-tip {
-    position: absolute;
-    top: 50%;
-    left: calc(100% + 0.5rem);
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    border: 0;
     translate: 0 -50%;
     padding: 0.375rem 0.625rem;
     border-radius: var(--radius-row);
@@ -530,18 +533,6 @@ body {
     box-shadow: 0 0.75rem 1rem rgb(0 0 0 / 0.28);
     white-space: nowrap;
     pointer-events: none;
-    opacity: 0;
-    transition: opacity 0s;
-  }
-
-  .nav-item:hover .rail-tip {
-    opacity: 1;
-    transition-delay: 400ms;
-  }
-
-  .nav-item:focus-visible .rail-tip {
-    opacity: 1;
-    transition-delay: 0s;
   }
 
   /* The drawer and the menu opened over the page stand on a shadow of their own. */
