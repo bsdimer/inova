@@ -14,7 +14,7 @@ milestone files and `design.md`; the card only says where they are.
 
 ```markdown
 ---
-id: D30
+id: Dnn
 title: Short title
 status: decided # proposed | decided | deferred | superseded
 decided: 2026-09-28 (stakeholder)
@@ -23,7 +23,7 @@ pr: '#nn'
 affects: [D22, D29] # earlier decisions this one narrows, extends or replaces
 ---
 
-# D30 — Short title
+# Dnn — Short title
 
 **Rule.** One to three sentences, in the words the stakeholder used.
 
