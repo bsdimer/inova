@@ -1,0 +1,25 @@
+[
+  {
+    "text": "Почистваща фирма",
+    "rule": "avoid-word",
+    "why": "a role name (D22); «фирма» is avoided only as the general word — glossary → Доставчик"
+  },
+  {
+    "text": "Сгради 1728 · почистваща фирма",
+    "rule": "series",
+    "why": "the contractor cabinet has a dark theme only on the building page — design plan of 28.09",
+    "detail": "no dark twin"
+  },
+  {
+    "text": "Табло 1728 · почистваща фирма",
+    "rule": "series",
+    "why": "the contractor cabinet has a dark theme only on the building page (design plan of 28.09); the dashboard and issue panels are light",
+    "detail": "no dark twin"
+  },
+  {
+    "text": "Фактури 1728",
+    "rule": "series",
+    "detail": "no dark twin",
+    "why": "the contractor cabinet has a dark theme only on the building page (design plan of 28.09)"
+  }
+]
