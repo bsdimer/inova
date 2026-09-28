@@ -13,8 +13,9 @@ affects: [D23, D24]
 **Rule.** On the building page the «Общност» tile is replaced by «Календар»:
 the calendar of that building only — its staff tasks and the contractor visits
 (M11), the same views as the shell calendar filtered by `building_id`.
-«Общност» stays a menu item (D23) and gets a building filter there; nothing
-else about the forum changes.
+«Общност» stays a menu item (D23); a building filter there is the
+stakeholder's suggestion («може да е с филтър»), not decided. Nothing else
+about the forum changes.
 
 **Why.** «Функцията ѝ е по-маловажна от графика на сградата в този екран» —
 the manager opens the building to see what happens in it this week.
