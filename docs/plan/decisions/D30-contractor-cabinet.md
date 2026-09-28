@@ -3,7 +3,7 @@ id: D30
 title: The contractor's cabinet — its buildings, agreed services, notes and invoices
 status: proposed
 decided: proposed 2026-09-28 (delivery owner, under the team lead's mandate); waits for the stakeholder's confirmation of the drawn screens and the team lead's word on before/after the pilot
-source: WHI-27 — the stakeholder's ask of 2026-09-27 09:06; the model described to her on 2026-09-28 06:43
+source: WHI-27 — the stakeholder's ask of 2026-09-27 09:06; the model described to her on 2026-09-28 06:43 and approved 07:25 («Супер!», plus the manager's contact); frames «Сгради» `2129:46730`, «Сграда» `2129:47116`, 402 `2129:47702`
 pr: '#34'
 affects: [D22, D29, D24]
 ---
@@ -13,7 +13,7 @@ affects: [D22, D29, D24]
 **Rule.** A contractor account sees, besides its category's issues (D22) and
 its firm's visits (D29), the **buildings entrusted to its firm** — «Сгради»
 in its menu under «Сигнали» and on its dashboard: name and address, entrances,
-floors, garages or parking spots yes/no, elevator yes/no. A firm's buildings
+floors, elevator yes/no (garages and parking spots are counted from the property types, D26), and the **house manager of that building** — name, phone, email from its `building_manager_assignment`, read-only, because one firm may serve buildings of different managers. A firm's buildings
 are its `contractor_assignment` rows (firm × building), which the house
 manager creates when entrusting a building; the assignment carries the
 **agreed services** as text («понеделник — основно почистване; прозорци всеки

@@ -23,8 +23,8 @@ currently implemented global-user model to tenant-scoped account realms.
 PK/indexes, RLS. Apartment rows keep UUID technical ids and enforce the unique
 business key `(tenant_id, building_id, entrance_id, floor, apartment_number)`.
 A building has `city` and `district` as separate columns (D24), and — D30,
-proposed — `floors`, `has_elevator` and `has_parking` (garages or parking
-spots), the facts a contractor needs on site. An apartment
+proposed — `floors` and `has_elevator`, the facts a contractor needs on site
+(garages and parking spots are counted from the property types, D26). An apartment
 has `rooms` (integer) and a property type of `apartment`, `garage`, `shop`,
 `storage` or `parking_spot` (D26).
 The schema contract test must pass on the new tables without being rewritten.
@@ -71,8 +71,8 @@ survey proposal/voting are hidden and server-blocked for tenant/occupant roles.
 ## Required tests
 
 - Import edge cases (bad rows, dry-run vs commit); `city`, `district`,
-  `rooms`, the property type and — D30 — `floors`, `has_elevator`,
-  `has_parking` are mapped and validated.
+  `rooms`, the property type and — D30 — `floors` and `has_elevator` are
+  mapped and validated.
 - Apartment correction writes an audit row and needs no approval; ending an
   occupancy still does (D25).
 - Apartment natural-key uniqueness includes floor.
@@ -118,7 +118,7 @@ Not part of M2 acceptance, but unblocked by it (scope in
 ## Risks
 
 Obtain sample spreadsheet files before locking column mappings; the D30
-building facts (floors, elevator, parking) are three more columns to map.
+building facts (floors, elevator) are two more columns to map.
 
 Legal counsel must confirm whether EGN and identity-card details are necessary
 for claims submitted to a public/private enforcement agent. Until confirmed,
