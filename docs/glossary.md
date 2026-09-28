@@ -31,8 +31,8 @@ file — a reviewer reads it.
   D26, WHI-41 (23.09).
 - **Такса Домоуправление** — the one rule that keeps the word «такса».
   Source: D26, WHI-41 (23.09).
-- **Плащания** — the name for payments to outside firms and contractors
-  when such a section appears; none in the mockups yet (the expense ledger
+- **Плащания** — the name for payments to доставчици when such a section
+  appears; none in the mockups yet (the expense ledger
   is P1). Source: D26 (stakeholder, 24.09).
 
 ## Residents
@@ -44,12 +44,13 @@ file — a reviewer reads it.
   (`occupancy.role` = `owner` / `tenant` / `occupant`). Source: M2, WHI-43.
 - **Оттегли** — the house manager withdraws their own pending removal
   request (`removal_request` → `withdrawn`), as opposed to a rejection by
-  the platform («Отхвърли», `rejected`). Source: D27.
+  the platform (`rejected`; the history filter shows «Отказани»). Avoid:
+  «Отмяна» for a withdrawal. Source: D27, WHI-43 (24.09).
 
 ## Issues
 
 - **Сигнал** — a resident's report of a problem (`issue`). Avoid:
-  «Нередност». Source: D18, design rules (24.09).
+  «Нередност». Source: WHI-24 (22.09).
 - **Решен** — the issue status `resolved`; the counter and the filter are
   «Решени». Avoid: «Разрешен», «Разрешени». Source: WHI-27 (26.09 16:06),
   D22 addition.
@@ -63,8 +64,8 @@ file — a reviewer reads it.
   (`tasks.kind = contractor_visit`). Avoid: «събитие», «задача» for a visit.
   Source: D29, WHI-27.
 - **Доставчик** — anyone the tenant contracts for building work, a firm or
-  a private person (`contractor`); the house manager's side of visits,
-  assignments and invoices names them so («Нов доставчик», field
-  «Доставчик», «посещения на доставчици»). The role names stay «Почистваща
+  a private person (`contractor`); the UI names them so everywhere («Кой
+  доставчик», field «Доставчик», «посещения на доставчици», «възложени на
+  доставчика»). The role names stay «Почистваща
   фирма» and «Техник» (D22). Avoid: «фирма», «изпълнител», «подизпълнител»
   as the general word. Source: WHI-27 (28.09 09:13).
