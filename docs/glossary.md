@@ -40,6 +40,13 @@ file — a reviewer reads it.
 - **Жител** — any person living in or owning a property (menu «Жители»,
   «Добави жител»; an `occupancy` on a `user`). Source:
   WHI-43 (24.09), design rules.
+- **Живущи** — the people who actually live in a property (occupancies of
+  owners who live there, tenants and occupants); used where the count of
+  people matters: the column «Живущи», the basis «По живущи», «Няма записани
+  живущи». Everyone who has a property in the building is a «жител»:
+  visits, notices and the manager's contact reach «жителите». Avoid:
+  «живущи» for the audience of a visit or a notice. Source: WHI-43
+  (28.09), D29.
 - **Собственик / Наемател / Обитател** — a resident's role on one property
   (`occupancy.role` = `owner` / `tenant` / `occupant`). Source: M2, WHI-43.
 - **Оттегли** — the house manager withdraws their own pending removal
