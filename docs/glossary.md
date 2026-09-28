@@ -27,26 +27,29 @@ file — a reviewer reads it.
   alone, «Начисления». Source: D26, WHI-41 (24.09).
 - **Фиксирани разходи / Временни разходи** — the charge rules: monthly ones
   and ones with a period from–to (`fee_rule`). A rule is a «разход»; no
-  rule is named «такса …». Avoid: «такса» for a rule, «Правила». Source:
+  rule is named «такса …». Avoid: «такса» for a rule. Source:
   D26, WHI-41 (23.09).
 - **Такса Домоуправление** — the one rule that keeps the word «такса».
   Source: D26, WHI-41 (23.09).
+- **Плащания** — the name for payments to outside firms and contractors
+  when such a section appears; none in the mockups yet (the expense ledger
+  is P1). Source: D26 (stakeholder, 24.09).
 
 ## Residents
 
 - **Жител** — any person living in or owning a property (menu «Жители»,
-  «Добави жител»; an `occupancy` on a `user`). Avoid: «резидент». Source:
+  «Добави жител»; an `occupancy` on a `user`). Source:
   WHI-43 (24.09), design rules.
 - **Собственик / Наемател / Обитател** — a resident's role on one property
   (`occupancy.role` = `owner` / `tenant` / `occupant`). Source: M2, WHI-43.
-- **Оттегли** — a resident withdraws their own pending request
-  (`removal_request` → `withdrawn`), as opposed to a rejection («Отхвърли»,
-  `rejected`). Source: D27.
+- **Оттегли** — the house manager withdraws their own pending removal
+  request (`removal_request` → `withdrawn`), as opposed to a rejection by
+  the platform («Отхвърли», `rejected`). Source: D27.
 
 ## Issues
 
 - **Сигнал** — a resident's report of a problem (`issue`). Avoid:
-  «Нередност», «проблем» as the noun. Source: D18, design rules (24.09).
+  «Нередност». Source: D18, design rules (24.09).
 - **Решен** — the issue status `resolved`; the counter and the filter are
   «Решени». Avoid: «Разрешен», «Разрешени». Source: WHI-27 (26.09 16:06),
   D22 addition.
@@ -60,5 +63,6 @@ file — a reviewer reads it.
   (`tasks.kind = contractor_visit`). Avoid: «събитие», «задача» for a visit.
   Source: D29, WHI-27.
 - The general word for a contractor in the UI («фирма» / «изпълнител» /
-  «подизпълнител») is not settled yet; until it is, screens keep the role
-  names «Почистваща фирма» and «Техник» (D22).
+  «подизпълнител») is not settled yet — asked in WHI-27 on 28.09. Until
+  then the screens use «фирма»; the role names are «Почистваща фирма» and
+  «Техник» (D22).
