@@ -54,3 +54,13 @@ test('«Влез» enters an organization as an audited visit, and the way back 
     'Одитен дневник',
   ]);
 });
+
+test('the card edge ends the table: no divider under the last row', async ({ page }) => {
+  const border = (row: ReturnType<typeof rows>) =>
+    row
+      .locator('td')
+      .first()
+      .evaluate((cell) => getComputedStyle(cell).borderBottomWidth);
+  expect(await border(rows(page).first())).not.toBe('0px');
+  expect(await border(rows(page).last())).toBe('0px');
+});
