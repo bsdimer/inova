@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowUpDown, Check, ChevronDown, Search, X } from './icons';
+import { ArrowsDownUp, Check, CaretDown, MagnifyingGlass, X } from './icons';
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { rem } from '../lib/rem';
@@ -209,7 +209,7 @@ export function SearchField({
 }) {
   return (
     <label className={`glass-field flex h-12 min-w-56 items-center gap-2.5 px-4 ${className}`}>
-      <Search size="1.25rem" className="shrink-0 text-ink-muted" />
+      <MagnifyingGlass size="1.25rem" className="shrink-0 text-ink-muted" />
       <input
         type="search"
         value={value}
@@ -246,9 +246,9 @@ export function SortSelect<T extends string>({
           onClick={() => setOpen((v) => !v)}
           className="glass-control text-body-14 flex h-11 items-center gap-2 rounded-full px-3.5 font-medium text-ink"
         >
-          <ArrowUpDown size="1rem" className="shrink-0" />
+          <ArrowsDownUp size="1rem" className="shrink-0" />
           <span className="truncate">{options[value]}</span>
-          <ChevronDown size="1rem" className="shrink-0" />
+          <CaretDown size="1rem" className="shrink-0" />
         </button>
       }
     >
@@ -419,7 +419,7 @@ export function Facet({
           }`}
         >
           {label}
-          <ChevronDown size="1rem" className="shrink-0" />
+          <CaretDown size="1rem" className="shrink-0" />
         </button>
       }
     >

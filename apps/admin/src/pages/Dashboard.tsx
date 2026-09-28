@@ -5,15 +5,15 @@ import { collectedPercent, counted, moneyParts, paidLine, signalAge } from '@ino
 import { BalanceBubbles } from '../components/BalanceBubbles';
 import {
   ArrowRight,
-  Building2,
-  CalendarDays,
-  ChevronLeft,
-  ChevronRight,
-  CircleCheck,
+  Buildings,
+  CalendarBlank,
+  CaretLeft,
+  CaretRight,
+  CheckCircle,
   Clock,
   FileMagnifyingGlass,
   Plus,
-  TriangleAlert,
+  Warning,
   UploadSimple,
 } from '../components/icons';
 import { SecondaryButton } from '../components/ui';
@@ -434,9 +434,9 @@ function GlowDisc({ children }: { children: ReactNode }) {
 /** V2/Tag (846:218), unselected: the status lives in the icon's colour, never the text's. */
 const SIGNAL_TAGS = [
   { key: 'pending', label: 'Чакащи', icon: Clock, tone: 'text-status-pending' },
-  { key: 'planned', label: 'Планирани', icon: CalendarDays, tone: 'text-status-planned' },
-  { key: 'urgent', label: 'Спешни', icon: TriangleAlert, tone: 'text-status-urgent' },
-  { key: 'resolved', label: 'Решени', icon: CircleCheck, tone: 'text-status-resolved' },
+  { key: 'planned', label: 'Планирани', icon: CalendarBlank, tone: 'text-status-planned' },
+  { key: 'urgent', label: 'Спешни', icon: Warning, tone: 'text-status-urgent' },
+  { key: 'resolved', label: 'Решени', icon: CheckCircle, tone: 'text-status-resolved' },
 ] as const;
 
 function SignalsCard({ signals, today }: { signals: DashboardData['signals']; today: Date }) {
@@ -582,7 +582,7 @@ function CalendarCard({ calendar, today }: { calendar: DashboardData['calendar']
           aria-label="Предишен месец"
           className="flex h-8 w-8 items-center justify-center rounded-full text-ink"
         >
-          <ChevronLeft size="1.125rem" />
+          <CaretLeft size="1.125rem" />
         </button>
         <p className="text-body-14 flex-1 text-center font-semibold">
           {title.charAt(0).toUpperCase() + title.slice(1)} <span className="num">{shown.year}</span>
@@ -593,7 +593,7 @@ function CalendarCard({ calendar, today }: { calendar: DashboardData['calendar']
           aria-label="Следващ месец"
           className="flex h-8 w-8 items-center justify-center rounded-full text-ink"
         >
-          <ChevronRight size="1.125rem" />
+          <CaretRight size="1.125rem" />
         </button>
       </div>
 
@@ -730,7 +730,7 @@ function BuildingsCard({ buildings }: { buildings: DashboardData['buildings'] })
                   boxShadow: 'inset 0 0 0 0.0625rem var(--glass-inner-strong)',
                 }}
               >
-                <Building2 size="1.875rem" />
+                <Buildings size="1.875rem" />
               </span>
             }
             name={building.name}

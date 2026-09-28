@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Lock, Pencil, Plus, Trash2 } from '../components/icons';
+import { Lock, PencilSimple, Plus, Trash } from '../components/icons';
 import { useState, type FormEvent } from 'react';
 import {
   Chip,
@@ -148,7 +148,7 @@ export function RolesPage() {
                   <>
                     <GhostButton onClick={() => setEditorRole(role)}>
                       <span className="flex items-center gap-1.5">
-                        <Pencil size="0.8125rem" /> Редактирай
+                        <PencilSimple size="0.8125rem" /> Редактирай
                       </span>
                     </GhostButton>
                     {!role.isSystem && (
@@ -158,7 +158,7 @@ export function RolesPage() {
                         onClick={() => remove.mutate(role.key)}
                       >
                         <span className="flex items-center gap-1.5">
-                          <Trash2 size="0.8125rem" /> Изтрий
+                          <Trash size="0.8125rem" /> Изтрий
                         </span>
                       </GhostButton>
                     )}
