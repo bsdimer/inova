@@ -119,6 +119,7 @@ until they are next changed.
 | D29 | [Contractor visits on the calendar](decisions/D29-contractor-visits.md) (WHI-27)                                                        | Decided; M11         |
 | D30 | [The contractor's cabinet — its buildings, agreed services and notes; its invoices in P1](decisions/D30-contractor-cabinet.md) (WHI-27) | Decided; M2, M9, M11 |
 | D31 | [The building page shows a «Календар» tile instead of «Общност»](decisions/D31-building-calendar-tile.md) (WHI-37)                      | Decided; M2, M11     |
+| D32 | [Repeating calendar entries before the pilot — weekly or monthly until a date](decisions/D32-calendar-recurrence.md) (WHI-27)           | Decided; M11         |
 
 ## Remaining decisions requiring stakeholder confirmation
 
