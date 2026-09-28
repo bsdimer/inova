@@ -28,7 +28,9 @@ plan's PR. No script checks this file — a reviewer reads it.
 - **Входни такси** — the building's fee screen and tile, its third section
   «Входни такси · <месец>» (the month's charges per property), and what a
   resident is charged or owes («входна такса»; `charge`). Avoid: «Такси»
-  alone, «Начисления». Source: D26, WHI-41 (24.09).
+  alone, «такси» in a sentence, «Начисления» as a screen or section name
+  («начисленията» as a plain noun in a sentence is fine). Source: D26,
+  WHI-41 (24.09).
 - **Фиксирани разходи / Временни разходи** — the charge rules: monthly ones
   and ones with a period from–to (`fee_rule`). A rule is a «разход»; no
   rule is named «такса …». Avoid: «такса» for a rule, «Правила»,
@@ -81,8 +83,9 @@ plan's PR. No script checks this file — a reviewer reads it.
   good; the status after it is «Изтрит» (`staff_membership.status` =
   `revoked`). Avoid: «Отмени достъпа», «Отменен». Source: WHI-47 (25.09).
 - **Период на действие** — how long an assignment holds (house manager,
-  document recipient). Avoid: «В сила от» as the heading. Source: WHI-37,
-  WHI-38 (23.09).
+  document recipient). Avoid: «В сила от» as the heading of an assignment's period; the column
+  «В сила от» in the fee rules (the date a rule version applies from)
+  stays. Source: WHI-37, WHI-38 (23.09).
 - **Посещение** — a contractor's («доставчик») visit on the calendar
   (`tasks.kind = contractor_visit`). Avoid: «събитие», «задача» for a visit —
   in the calendar «Събитие» and «Задача» are kinds of their own. Source:
