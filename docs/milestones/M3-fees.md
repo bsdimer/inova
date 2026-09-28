@@ -39,7 +39,8 @@ Building assessment setup; the building screen **Входни такси** with 
 sections — **Фиксирани разходи** (rule list, with the rule-change history at
 its foot), **Временни разходи** (rule list) and **Входни такси · <месец>** (the
 month's charges per property) — and a dry-run preview (D26). On the phone
-each section is one glass card. «Такса» names only такса Домоуправление.
+each section is one glass card. A charge rule is a «разход»; only «такса
+Домоуправление» is named «такса». What a resident is charged is «Входни такси».
 **Плащания** is the name for payments to outside firms and contractors when
 such a section appears — none is drawn today, expenses stay P1. Mobile: obligations +
 IBAN / payment reference with copy.

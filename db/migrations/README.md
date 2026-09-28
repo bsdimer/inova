@@ -1,7 +1,7 @@
 # Database migrations
 
-Plain SQL migrations managed by drizzle-kit (wired in milestone M1 together with the first
-schema: tenants, users, memberships, roles).
+Plain SQL migrations applied by `db/migrate.mjs` (`pnpm db:migrate`: filename order, checksums,
+advisory locks; no drizzle-kit). The first schema — tenants, users, memberships, roles — landed in M1.
 
 Conventions (from docs/plan/system-design.md §4.4/§4.7 and docs/plan/data-model.md §5.5):
 
