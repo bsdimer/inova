@@ -95,11 +95,11 @@ plan's PR. No script checks this file — a reviewer reads it.
   D17, D29.
 - **Доставчик** — anyone the tenant contracts for building work, a firm or
   a private person (`contractor`); the UI names them so everywhere («Кой
-  доставчик», field «Доставчик», «посещения на доставчици», «възложени на
-  доставчика»). The role names stay «Почистваща фирма» and «Техник» (D22;
-  the Bulgarian names in the WHI-27 description, 22.09). Avoid: «фирма»,
-  «изпълнител», «подизпълнител» as the general word. Source: WHI-27
-  (28.09 09:13).
+  доставчик», field «Доставчик», «посещения на доставчици», «Посещение на
+  доставчик» in the «Добави» menu). The role names stay «Почистваща фирма»
+  and «Техник» (D22; the Bulgarian names in the WHI-27 description, 22.09).
+  Avoid: «фирма», «изпълнител», «подизпълнител» as the general word. Source:
+  WHI-27 (28.09 09:13).
 
 ## Account and settings
 
