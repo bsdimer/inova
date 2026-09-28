@@ -468,15 +468,50 @@ body {
 
   /*
    * V2/Nav item and V2/Rail item, State=hover (846:284, 1784:39362): a soft
-   * plate, glass/inner-soft with no edge, blur or light, fading in over 150 ms.
-   * The active item keeps its own look.
+   * plate, glass/inner-soft with no edge, blur or light. The active item keeps
+   * its own look.
    */
-  .nav-item {
-    transition: background-color 150ms ease;
-  }
-
   .nav-item:not([data-active]):is(:hover, :focus-visible) {
     background-color: var(--glass-inner-soft);
+  }
+
+  /*
+   * Hover motion (design.md, Controls, focus and motion): the plate fades in
+   * over 280 ms, the icon and label grow to 106 % and the label turns primary.
+   * transform, not font-size, so the list never reflows under the pointer.
+   * The spring plays on the way in only; leaving eases out, so a quick pass
+   * down the list does not wobble. Other items and the active one stay still.
+   */
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .nav-item {
+      transition:
+        background-color 280ms ease-out,
+        color 280ms ease-out;
+    }
+
+    .nav-grow {
+      transform-origin: left center;
+      transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .nav-grow-center {
+      transform-origin: center;
+    }
+
+    .nav-item:not([data-active]):hover {
+      color: var(--color-ink);
+    }
+
+    .nav-item:not([data-active]):hover .nav-grow {
+      transform: scale(1.06);
+      transition: transform 280ms cubic-bezier(0.34, 1.4, 0.64, 1);
+    }
+  }
+
+  /* The sidebar's list scrolls on a short window without a gutter of its own. */
+  .nav-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--glass-divider) transparent;
   }
 
   /*

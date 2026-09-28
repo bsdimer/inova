@@ -24,6 +24,7 @@ import {
 } from '../components/icons';
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type MouseEvent,
@@ -49,38 +50,49 @@ import {
 } from '../lib/tenant';
 
 /**
- * Order as drawn in V2/Sidebar (859:1466), settled after 22.09 in WHI-24:
- * «Финанси» moved up to fourth, and «Нередности» became «Сигнали» everywhere.
- * Sections that do not exist yet lead to the placeholder rather than hiding.
+ * The four groups of V2/Sidebar (859:1466) and V2/Rail (850:305), in the
+ * order of D23. Items whose module is not built yet are not shown (design.md,
+ * Windows and navigation), so each keeps its place here only as a note:
+ * Документи and Справки after Финанси; Анкети, Общност and the item the
+ * organization names after Сигнали. The lines between the groups stay.
+ * Built sections without a screen yet still lead to the placeholder.
  */
-const NAV = [
-  { to: '/', label: 'Табло', icon: SquaresFour },
-  { to: '/tasks', label: 'Задачи', icon: CheckCircle },
-  { to: '/notices', label: 'Известия', icon: Bell },
-  { to: '/finance', label: 'Финанси', icon: Wallet },
-  { to: '/buildings', label: 'Сгради', icon: Buildings },
-  { to: '/residents', label: 'Жители', icon: Users },
-  { to: '/issues', label: 'Сигнали', icon: WarningCircle },
-  { to: '/staff', label: 'Служители', icon: UserGear },
-  { to: '/roles', label: 'Роли', icon: ShieldCheck },
-] as const;
+const NAV: NavGroups = [
+  [
+    { to: '/', label: 'Табло', icon: SquaresFour },
+    { to: '/tasks', label: 'Задачи', icon: CheckCircle },
+    { to: '/notices', label: 'Известия', icon: Bell },
+  ],
+  [{ to: '/finance', label: 'Финанси', icon: Wallet }],
+  [
+    { to: '/buildings', label: 'Сгради', icon: Buildings },
+    { to: '/residents', label: 'Жители', icon: Users },
+    { to: '/issues', label: 'Сигнали', icon: WarningCircle },
+  ],
+  [
+    { to: '/staff', label: 'Служители', icon: UserGear },
+    { to: '/roles', label: 'Роли', icon: ShieldCheck },
+  ],
+];
 
 /**
  * The platform scope has a rail of its own — it is not the tenant rail with an
  * extra item. «Общ преглед» and «Одитен дневник» have no screens before P1, so
  * both lead to the placeholder.
  */
-const PLATFORM_NAV = [
-  { to: '/platform', label: 'Общ преглед', icon: Globe },
-  { to: '/tenants', label: 'Организации', icon: Buildings },
-  { to: '/audit', label: 'Одитен дневник', icon: Shield },
-] as const;
+const PLATFORM_NAV: NavGroups = [
+  [
+    { to: '/platform', label: 'Общ преглед', icon: Globe },
+    { to: '/tenants', label: 'Организации', icon: Buildings },
+    { to: '/audit', label: 'Одитен дневник', icon: Shield },
+  ],
+];
 
 export function AppShell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const session = getSession();
   const platform = usePlatformScope();
-  const nav = platform ? [...PLATFORM_NAV] : [...NAV];
+  const nav = platform ? PLATFORM_NAV : NAV;
   const mode = useNavMode();
 
   // The menu over the page — the modal sidebar or the drawer. A tap on an item
@@ -272,52 +284,93 @@ function PlatformVisitNote({ session }: { session: Session }) {
   );
 }
 
-type NavItems = readonly { to: string; label: string; icon: typeof Bell }[];
+type NavGroups = readonly (readonly { to: string; label: string; icon: typeof Bell }[])[];
 type Session = ReturnType<typeof getSession>;
-type Shared = { nav: NavItems; pathname: string; session: Session; platform: boolean };
+type Shared = { nav: NavGroups; pathname: string; session: Session; platform: boolean };
 
 const isActive = (to: string, pathname: string) =>
   to === '/' ? pathname === '/' : pathname.startsWith(to);
 
-function NavList({ nav, pathname }: { nav: NavItems; pathname: string }) {
-  const unread = useUnreadCount();
+/**
+ * The line between two groups: 3 + 1 + 3 in the sidebar, 4 + 1 + 4 and 32
+ * wide in the rail, on top of the gap between items.
+ */
+function GroupRule({ rail = false }: { rail?: boolean }) {
   return (
-    <nav className="flex flex-col gap-1">
-      {nav.map(({ to, label, icon: Icon }) => {
-        const active = isActive(to, pathname);
-        return (
-          <Link
-            key={to}
-            to={to}
-            data-active={active || undefined}
-            // The active item's 1 px edge is a real border in Figma, so it stands
-            // 46 tall where the others are 44 (11 + 22 + 11). The others are
-            // rounded 14, the active one 16.
-            className={`nav-item relative flex items-center gap-3 px-3.5 text-body-14 ${
-              active
-                ? 'rounded-[var(--radius-nav)] py-3 font-semibold text-ink [--nav-radius:1rem]'
-                : 'rounded-[var(--radius-signal)] py-[0.6875rem] font-medium text-ink-soft'
-            }`}
-          >
-            {active && (
-              // V2/NavItem Active=true: glass/inner with the full edge and a soft top light.
-              <motion.span
-                layoutId="nav-pill"
-                className="nav-active absolute inset-0 rounded-[var(--radius-nav)]"
-                transition={{ type: 'spring', damping: 30, stiffness: 340 }}
-              />
-            )}
-            <Icon size="1.375rem" className="relative shrink-0" />
-            <span className="relative flex-1 truncate">{label}</span>
-            {to === '/notices' && unread ? (
-              // V2/Badge (846:244): the unread count on Известия.
-              <span className="num text-label-12 relative rounded-full bg-[var(--badge-fill)] px-[0.4375rem] py-0.5 font-semibold text-[color:var(--badge-text)]">
-                {unread}
-              </span>
-            ) : null}
-          </Link>
-        );
-      })}
+    <hr
+      className={`shrink-0 border-glass-divider ${rail ? 'my-1 w-8 self-center' : 'my-[0.1875rem]'}`}
+    />
+  );
+}
+
+/**
+ * On a short window the list scrolls and the brand and the account stay put;
+ * the open section is brought into the list's view on every navigation.
+ */
+function useActiveInView(pathname: string) {
+  const list = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const box = list.current;
+    const item = box?.querySelector<HTMLElement>('[data-active]');
+    if (!box || !item) return;
+    // The list's own padding keeps the item clear of the rule above the account.
+    const pad = parseFloat(getComputedStyle(box).paddingTop);
+    const top = item.offsetTop - box.offsetTop - pad;
+    const bottom = item.offsetTop - box.offsetTop + item.offsetHeight + pad;
+    if (top < box.scrollTop) box.scrollTop = top;
+    else if (bottom > box.scrollTop + box.clientHeight) box.scrollTop = bottom - box.clientHeight;
+  }, [pathname]);
+  return list;
+}
+
+function NavList({ nav, pathname }: { nav: NavGroups; pathname: string }) {
+  const unread = useUnreadCount();
+  const list = useActiveInView(pathname);
+  return (
+    // The list scrolls inside the sidebar's padding, so the focus ring
+    // (3 px out) and its glow are not cut at the list's edges.
+    <nav
+      ref={list}
+      className="nav-scroll -mx-3 -my-1 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-1"
+    >
+      {nav.map((group, g) => [
+        g > 0 && <GroupRule key={`rule-${g}`} />,
+        ...group.map(({ to, label, icon: Icon }) => {
+          const active = isActive(to, pathname);
+          return (
+            <Link
+              key={to}
+              to={to}
+              data-active={active || undefined}
+              // The active item's 1 px edge is a real border in Figma, so it stands
+              // 46 tall where the others are 44 (11 + 22 + 11). The others are
+              // rounded 14, the active one 16.
+              className={`nav-item relative flex items-center gap-3 px-3.5 text-body-14 ${
+                active
+                  ? 'rounded-[var(--radius-nav)] py-3 font-semibold text-ink [--nav-radius:1rem]'
+                  : 'rounded-[var(--radius-signal)] py-[0.6875rem] font-medium text-ink-soft'
+              }`}
+            >
+              {active && (
+                // V2/NavItem Active=true: glass/inner with the full edge and a soft top light.
+                <motion.span
+                  layoutId="nav-pill"
+                  className="nav-active absolute inset-0 rounded-[var(--radius-nav)]"
+                  transition={{ type: 'spring', damping: 30, stiffness: 340 }}
+                />
+              )}
+              <Icon size="1.375rem" className="nav-grow relative shrink-0" />
+              <span className="nav-grow relative flex-1 truncate">{label}</span>
+              {to === '/notices' && unread ? (
+                // V2/Badge (846:244): the unread count on Известия.
+                <span className="num text-label-12 relative rounded-full bg-[var(--badge-fill)] px-[0.4375rem] py-0.5 font-semibold text-[color:var(--badge-text)]">
+                  {unread}
+                </span>
+              ) : null}
+            </Link>
+          );
+        }),
+      ])}
     </nav>
   );
 }
@@ -388,7 +441,6 @@ function SidebarBody({ nav, pathname, session, platform, brand }: Shared & { bra
       {brand}
       {platform && <PlatformBadge />}
       <NavList nav={nav} pathname={pathname} />
-      <div className="flex-1" />
       <SidebarFooter session={session} />
     </>
   );
@@ -426,37 +478,40 @@ function RailBody({
         </button>
       </div>
       <nav className="flex flex-col gap-1">
-        {nav.map(({ to, label, icon: Icon }) => {
-          const active = isActive(to, pathname);
-          const badge = to === '/notices' && unread ? unread : 0;
-          return (
-            <Link
-              key={to}
-              to={to}
-              data-active={active || undefined}
-              aria-label={badge ? `${label}, ${badge} непрочетени` : label}
-              className={`nav-item relative flex h-12 w-12 cursor-pointer items-center justify-center text-ink ${
-                active ? 'nav-active rounded-[1rem] [--nav-radius:1rem]' : 'rounded-[0.875rem]'
-              }`}
-            >
-              <Icon size="1.375rem" />
-              {badge ? (
-                // In the rail the count becomes a lit dot on the bell (Rail item «Точка»).
-                <span
-                  aria-hidden
-                  className="absolute top-[0.5625rem] left-[1.875rem] h-2 w-2 rounded-full"
-                  style={{
-                    background: 'var(--light-source)',
-                    boxShadow: '0 0 0.375rem 0.0625rem var(--glow-dot-near)',
-                  }}
-                />
-              ) : null}
-              <span aria-hidden className="rail-tip text-body-13 font-medium">
-                {badge ? `${label} · ${badge}` : label}
-              </span>
-            </Link>
-          );
-        })}
+        {nav.map((group, g) => [
+          g > 0 && <GroupRule key={`rule-${g}`} rail />,
+          ...group.map(({ to, label, icon: Icon }) => {
+            const active = isActive(to, pathname);
+            const badge = to === '/notices' && unread ? unread : 0;
+            return (
+              <Link
+                key={to}
+                to={to}
+                data-active={active || undefined}
+                aria-label={badge ? `${label}, ${badge} непрочетени` : label}
+                className={`nav-item relative flex h-12 w-12 cursor-pointer items-center justify-center text-ink ${
+                  active ? 'nav-active rounded-[1rem] [--nav-radius:1rem]' : 'rounded-[0.875rem]'
+                }`}
+              >
+                <Icon size="1.375rem" className="nav-grow nav-grow-center" />
+                {badge ? (
+                  // In the rail the count becomes a lit dot on the bell (Rail item «Точка»).
+                  <span
+                    aria-hidden
+                    className="absolute top-[0.5625rem] left-[1.875rem] h-2 w-2 rounded-full"
+                    style={{
+                      background: 'var(--light-source)',
+                      boxShadow: '0 0 0.375rem 0.0625rem var(--glow-dot-near)',
+                    }}
+                  />
+                ) : null}
+                <span aria-hidden className="rail-tip text-body-13 font-medium">
+                  {badge ? `${label} · ${badge}` : label}
+                </span>
+              </Link>
+            );
+          }),
+        ])}
       </nav>
       <div className="flex-1" />
       <hr className="w-8 border-glass-divider" />
