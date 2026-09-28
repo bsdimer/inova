@@ -31,10 +31,13 @@ plan's PR. No script checks this file — a reviewer reads it.
   alone, «такси» in a sentence, «Начисления» as a screen or section name
   («начисленията» as a plain noun in a sentence is fine). Source: D26,
   WHI-41 (24.09).
-- **Фиксирани разходи / Временни разходи** — the charge rules: monthly ones
-  and ones with a period from–to (`fee_rule`). A rule is a «разход»; no
+- **Фиксирани разходи / Временни разходи** — the building's costs, recurring
+  or for a period: the charge rules in «Входни такси» (`fee_rule.kind`),
+  and the kind a supplier's invoice carries (the same two values) so it can
+  later be matched to the rule it pays for (P1). A rule is a «разход»; no
   rule is named «такса …». Avoid: «такса» for a rule, «Правила»,
-  «еднократна такса». Source: D26, WHI-41 (23.09 16:35).
+  «еднократна такса». Source: D26, WHI-41 (23.09 16:35), WHI-27
+  (28.09 11:09).
 - **Такса Домоуправление** — the one rule that keeps the word «такса».
   Source: D26, WHI-41 (23.09).
 - **Редактирай / История на промените** — changing a charge rule; the
