@@ -98,12 +98,16 @@ for (const name of cardFiles) {
 // Rule 2: every D-id from CARD_FROM on that the docs mention has a card.
 const idRe = /\bD(\d+)\b/g;
 for (const file of walkMarkdown(docsDir)) {
-  if (file.startsWith(cardsDir + path.sep)) continue;
+  // Cards are scanned too, so a card cannot cite a decision without a card;
+  // only the card's own id is skipped.
+  const ownId = file.startsWith(cardsDir + path.sep)
+    ? /^(D\d+)-/.exec(path.basename(file))?.[1]
+    : null;
   const text = readFileSync(file, 'utf8');
   const missing = new Set();
   for (const m of text.matchAll(idRe)) {
-    const n = Number(m[1]);
-    if (n >= CARD_FROM && !cards.has(`D${n}`)) missing.add(`D${n}`);
+    const id = `D${m[1]}`;
+    if (Number(m[1]) >= CARD_FROM && id !== ownId && !cards.has(id)) missing.add(id);
   }
   for (const id of missing)
     fail(file, `mentions ${id} but docs/plan/decisions/ has no card for it`);
