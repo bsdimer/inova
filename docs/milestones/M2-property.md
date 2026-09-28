@@ -22,8 +22,8 @@ currently implemented global-user model to tenant-scoped account realms.
 (+ soft-delete/effective-date columns). All tenant-owned: `tenant_id` leading
 PK/indexes, RLS. Apartment rows keep UUID technical ids and enforce the unique
 business key `(tenant_id, building_id, entrance_id, floor, apartment_number)`.
-A building has `city` and `district` as separate columns (D24), and — D30,
-proposed — `floors` and `has_elevator`, the facts a contractor needs on site
+A building has `city` and `district` as separate columns (D24), and — D30 —
+`floors` and `has_elevator`, the facts a contractor needs on site
 (garages and parking spots are counted from the property types, D26). An apartment
 has `rooms` (integer) and a property type of `apartment`, `garage`, `shop`,
 `storage` or `parking_spot` (D26).

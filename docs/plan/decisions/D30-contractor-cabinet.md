@@ -1,55 +1,63 @@
 ---
 id: D30
-title: The contractor's cabinet — its buildings, agreed services, notes and invoices
+title: The contractor's cabinet — its buildings, agreed services and notes; its invoices in P1
 status: decided
-decided: 2026-09-28 (stakeholder, screens confirmed 12:15; before the pilot — the team lead's answer of 2026-09-24 on the contractor calendar, extended to the cabinet by the delivery owner 2026-09-28)
-source: WHI-27 — the stakeholder's ask of 2026-09-27 09:06; the model described to her on 2026-09-28 06:43 and approved 07:25 («Супер!», plus the manager's contact); invoices 2026-09-28 11:02 and 11:09; screens confirmed 12:15 («Супер!», the month required); what the invoice is for 12:30 (three fixed values, the note optional); the kind follows from the purpose 13:02; frames «Сгради» `2129:46730`, «Сграда» `2129:47116`, 402 `2129:47702`, «Фактури» `2170:48256`, row menu `2194:47983`, «Редактирай фактура» `2194:48039`, 402 `2196:38960`, «Изтрий фактура» `2194:48017`
+decided: 2026-09-28 — buildings, agreed services and notes decided for the pilot (stakeholder, screens confirmed 12:15; before the pilot per the team lead's answer of 2026-09-24); the «Фактури» part deferred to the P1 expenses wave (team lead, WHI-27 and PR #34 review, 2026-09-28 14:06)
+source: WHI-27 — the stakeholder's ask of 2026-09-27 09:06; the model described to her on 2026-09-28 06:43 and approved 07:25 («Супер!», plus the manager's contact); invoices 2026-09-28 11:02, 11:09, 12:15, 12:30, 13:02; the team lead's split 14:06; frames «Сгради» `2129:46730`, «Сграда» `2129:47116`, 402 `2129:47702`; P1 frames «Фактури» `2170:48256`, row menu `2194:47983`, «Редактирай фактура» `2194:48039`, 402 `2196:38960`, «Изтрий фактура» `2194:48017`
 pr: '#34'
 affects: [D22, D29, D24]
 ---
 
-# D30 — The contractor's cabinet: its buildings, agreed services, notes and invoices
+# D30 — The contractor's cabinet: its buildings, agreed services and notes; its invoices in P1
 
-**Rule.** A contractor account sees, besides its category's issues (D22) and
-its firm's visits (D29), the **buildings entrusted to its firm** — «Сгради»
-in its menu under «Сигнали» and on its dashboard: name and address, entrances,
-floors, elevator yes/no (garages and parking spots are counted from the property types, D26), and the **house manager of that building** — name, phone, email from its `building_manager_assignment`, read-only, because one firm may serve buildings of different managers. A firm's buildings
-are its `contractor_assignment` rows (firm × building), which the house
-manager creates when entrusting a building; the assignment carries the
-**agreed services** as text («понеделник — основно почистване; прозорци всеки
-сезон»), entered by the manager, pinned on top for the firm and not editable
-by it. Under the services the firm writes its own **notes** per building
-(`contractor_note`, «другия път — вземи крушка за партера»); the manager sees
-them. **«Фактури»:** the firm uploads an invoice and picks the
-building and the month it is for (required, the current month by default); it lands in the manager's «Документи» as a `supplier_invoice`
-(M9) with the firm on it; it says what it is for, «За какво е», one of three
-fixed values — «Поддръжка», «Консуматив», «Допълнителна услуга»
-(`invoice_purpose`: `maintenance` / `consumables` / `extra_service`), required;
-a note is optional («по подаден сигнал»). The firm does not pick the kind:
-it follows from the purpose — «Поддръжка» is «Фиксиран разход» (`fixed`),
-«Консуматив» and «Допълнителна услуга» are «Временен разход» (`temporary`) —
-the same pair as the charge rules (`fee_rule.kind`), one concept: the
-building's costs. The manager gets the invoices in two sections of
-«Документи», «Фиксирани» and «Временни разходи» («домоуправителя ги получава в
-двете различни секции»), and P1 can link the expense to the rule it pays for. The contractor edits
-or deletes its own invoice (file, building, period, purpose, note) until an
-expense references it — «преди деня на плащане»; deleting archives the
-document (`active → archived`), never removes the row, and every edit or
-archive writes an audit record. Until P1 there are no expenses, so editing
-stays open. Payment to the firm comes later with «Плащания» (expenses, P1). No visits are generated from the agreed services — recurrence
-stays out of v1 (M11).
+**Rule (decided, pilot).** A contractor account sees, besides its category's
+issues (D22) and its firm's visits (D29), the **buildings entrusted to its
+firm** — «Сгради» in its menu under «Сигнали» and on its dashboard: name and
+address, entrances, floors, elevator yes/no (garages and parking spots are
+counted from the property types, D26), and the **house manager of that
+building** — name, phone, email from its `building_manager_assignment`,
+read-only, because one firm may serve buildings of different managers. A
+firm's buildings are its `contractor_assignment` rows (firm × building), which
+the house manager creates when entrusting a building; the assignment carries
+the **agreed services** as text («понеделник — основно почистване; прозорци
+всеки сезон»), entered by the manager, pinned on top for the firm and not
+editable by it. Under the services the firm writes its own **notes** per
+building (`contractor_note`, «другия път — вземи крушка за партера»); the
+manager sees them. No visits are generated from the agreed services —
+recurrence stays out of v1 (M11).
+
+**For the pilot, invoices** go the ordinary way: the firm sends its invoice to
+the house manager, who uploads it into «Документи» as a `supplier_invoice`
+with a note (M9). A contractor account has no «Фактури» and no
+`documents.upload`.
+
+## Deferred to P1 — the firm's own «Фактури»
+
+Waits for the expenses wave (scope A13, «Разходи»), built once together with
+contractor payments. Drawn and kept, frames marked «P1»: the firm uploads an
+invoice for a building and a month (required, the current month by default);
+it says what it is for, «За какво е» — «Поддръжка», «Консуматив»,
+«Допълнителна услуга» (`invoice_purpose`: `maintenance` / `consumables` /
+`extra_service`), required; a note is optional; the kind follows from the
+purpose — «Поддръжка» `fixed`, the other two `temporary`, the same pair as
+`fee_rule.kind` — and the manager gets them in two sections, «Фиксирани» and
+«Временни разходи». The firm edits or archives its own invoice until an
+expense references it, every change audited. **Why deferred:** purpose → kind,
+«editable until an expense references it» and a contractor's write access to
+the tenant's document library are the front half of the expenses module; built
+before the pilot they would give external accounts write access with nothing
+behind it (team lead, 14:06).
 
 **Why.** «В идеалният вариант фирмата автономно си организира посещения и
 сигнали и работи активно с админ панела» (25.09); the building facts and the
-agreed services are what a cleaning firm needs on site, the invoice with a
-note («такса техн. поддръжка + касов бон за крушка») is how it gets paid.
+agreed services are what a cleaning firm needs on site.
 
 ## Lands in
 
-- `docs/plan/data-model.md` → `building` fields, `contractor_assignment`, `contractor_note`, `stored_document` (purpose and period required, kind derived, note optional, edit until referenced)
+- `docs/plan/data-model.md` → `building` fields, `contractor_assignment`, `contractor_note`; `stored_document` contractor fields marked P1
 - `docs/milestones/M2-property.md` → building fields and the import columns
-- `docs/milestones/M11-tasks-calendar.md` → the contractor's cabinet: «Сгради», services, notes
-- `docs/milestones/M9-dashboard-reports.md` → the firm's invoice upload
-- `docs/plan/security.md` → what a contractor role sees and `documents.upload` narrowed to its firm
-- `docs/plan/api.md` → `staff` (assignments), `files` (the firm's upload)
+- `docs/milestones/M11-tasks-calendar.md` → the cabinet's «Сгради»; Tables and Tests for `contractor_assignment` and `contractor_note`; «Фактури» out of v1
+- `docs/milestones/M9-dashboard-reports.md` → the manager uploads a supplier's invoice; the firm's own upload is P1
+- `docs/plan/security.md` → what a contractor role sees; no `documents.upload` until P1
+- `docs/plan/api.md` → `staff` (assignments), `files` (the firm's upload, P1)
 - `docs/plan/decisions.md` → D22 row: what a contractor sees
