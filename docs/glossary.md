@@ -1,0 +1,132 @@
+# Glossary — one concept, one name
+
+The words a user sees, in the admin and in the app, and the identifiers the
+code uses for the same thing. The rule is in AGENTS.md → UI conventions: the
+same word in Figma, code, docs and the UI; an ambiguous word gets refined,
+not reused. Bulgarian is the UI language; the identifier in brackets is the
+entity, column or value in `docs/plan/data-model.md` and the code.
+
+Entry shape: **Term** — meaning (`identifier`). Avoid: the words not to use.
+Source: the decision or the Linear comment that settled it. The design
+session supplies a word when the stakeholder settles it; the planner commits
+it, and whoever introduces the entity adds the identifier, through the
+plan's PR. No script checks this file — a reviewer reads it.
+
+An entry records the decided word, not the build: most words belong to
+screens not built yet. Where a running screen still shows another word, the
+entry says so — «decided, not built» — and names the screen, so a reader
+does not take the entry for the current UI.
+
+## Property
+
+- **Имот** — any property a tenant manages (`apartment` row, `property_type`);
+  the kinds («вид имот») are апартамент, гараж, магазин, склад, паркомясто. A
+  specific one is «Ап. 4». Avoid: «апартамент» as the generic word. Source:
+  D26, D27, WHI-43 (24.09), WHI-41 (23.09), WHI-63 (25.09).
+- **Сграда / вход** — building and entrance (`building`, `entrance`); a
+  building has «град» and «квартал» as separate fields. Source: D24.
+- **Отвори детайли** — the row-menu item that opens a record's panel, the
+  same in «Служители», «Жители» and «Апартамент». Source: WHI-63 (25.09).
+
+## Fees
+
+- **Входни такси** — the building's fee screen and tile, its third section
+  «Входни такси · <месец>» (the month's charges per property), and what a
+  resident is charged or owes («входна такса»; `charge`). Avoid: «Такси»
+  alone, «такси» in a sentence, «Начисления» as a screen or section name
+  («начисленията» as a plain noun in a sentence is fine). Source: D26,
+  WHI-41 (24.09). Decided, not built: the role descriptions in the admin's
+  «Роли» still start «Такси, плащания…», and the app's sign-in subtitle says
+  «такси».
+- **Фиксирани разходи / Временни разходи** — the building's costs, recurring
+  or for a period: the charge rules in «Входни такси» (`fee_rule.kind`),
+  and, from P1, the kind a supplier's invoice carries (the same two values,
+  derived from «За какво е») so it can
+  later be matched to the rule it pays for (P1). A rule is a «разход»; no
+  rule is named «такса …». Avoid: «такса» for a rule, «Правила»,
+  «еднократна такса». Source: D26, WHI-41 (23.09 16:35), WHI-27
+  (28.09 11:09, 13:02).
+- **За какво е** — what a supplier's invoice pays for, one of three fixed
+  values: «Поддръжка», «Консуматив», «Допълнителна услуга»
+  (`invoice_purpose`: `maintenance` / `consumables` / `extra_service`). The
+  field is «За какво е», not «Вид» or «Категория»: «Вид разход» is fixed /
+  temporary, «категория» is an issue's category. The kind follows from the
+  choice: «Поддръжка» is a «Фиксиран разход», «Консуматив» and «Допълнителна
+  услуга» a «Временен разход»; the firm does not pick it. A free note stays
+  optional beside it. Avoid: «вид услуга», «категория» for this field.
+  Source: WHI-27 (28.09 12:30, 13:02); the firm's own invoice upload comes
+  with the P1 expenses wave (team lead, 28.09 14:06).
+- **Такса Домоуправление** — the one rule that keeps the word «такса».
+  Source: D26, WHI-41 (23.09).
+- **Редактирай / История на промените** — changing a charge rule; the
+  system keeps versions, the UI never says «версия». Avoid: «нова версия».
+  Source: WHI-41 (23.09 14:53).
+- **Цент** — the minor unit of money on screen (EUR). Avoid: «стотинка».
+  Source: WHI-41 (23.09 14:53), A-EUR.
+- **Плащания** — the name for payments to доставчици when such a section
+  appears; none in the mockups yet (the expense ledger is P1). Source: D26,
+  WHI-41 (23.09 18:34).
+
+## Residents
+
+- **Жител** — any person living in or owning a property (menu «Жители»,
+  «Добави жител»; an `occupancy` on a `user`). Source: WHI-43 (28.09 09:31).
+- **Живущи** — the people who actually live in a property (occupancies of
+  owners who live there, tenants and occupants); used where the count of
+  people matters: the column «Живущи», the basis «По живущи», «Няма записани
+  живущи». Everyone who has a property in the building is a «жител»:
+  visits, notices and the manager's contact reach «жителите». Avoid:
+  «живущи» for the audience of a visit or a notice. Source: WHI-43
+  (28.09 09:31), D29.
+- **Собственик / Наемател / Обитател** — a resident's role on one property
+  (`occupancy.role` = `owner` / `tenant` / `occupant`). Source: WHI-43
+  (28.09 09:31), M2.
+- **Оттегли** — the house manager withdraws their own pending removal
+  request (`removal_request` → `withdrawn`), as opposed to a rejection by
+  the platform (`rejected`; the history filter shows «Отказани»). Avoid:
+  «Отмяна» for a withdrawal. Source: D27, WHI-43 (24.09).
+- **История** — the decided requests of «Заявки за връзка» and «Заявки за
+  премахване», filtered «Одобрени / Отказани / Оттеглени»; the queues show
+  only pending ones. Avoid: «активни / неактивни». Source: WHI-43 (24.09),
+  D27.
+
+## Issues
+
+- **Сигнал** — a resident's report of a problem (`issue`). Avoid:
+  «Нередност». Source: WHI-24 (22.09).
+- **Решен** — the issue status `resolved`, beside «Планиран» (`planned`) and
+  «В процес» (`in_progress`); the counter and the filter are «Решени».
+  Avoid: «Разрешен», «Разрешени». Source: WHI-27 (26.09 16:06), M6.
+
+## Staff and contractors
+
+- **Изтрий достъпа** — the action that ends a staff member's access for
+  good; the status after it is «Изтрит» (`staff_membership.status` =
+  `revoked`). Avoid: «Отмени достъпа», «Отменен». Source: WHI-47 (25.09).
+  Decided, not built: the admin's staff panel still offers «Отмени достъпа»
+  and shows «Отменен» until the staff task lands.
+- **Период на действие** — how long an assignment holds (house manager,
+  document recipient). Avoid: «В сила от» as the heading of an assignment's period; the column
+  «В сила от» in the fee rules (the date a rule version applies from)
+  stays. Source: WHI-37, WHI-38 (23.09).
+- **Посещение** — a contractor's («доставчик») visit on the calendar
+  (`tasks.kind = contractor_visit`). Avoid: «събитие», «задача» for a visit —
+  in the calendar «Събитие» and «Задача» are kinds of their own. Source:
+  D17, D29.
+- **Доставчик** — anyone the tenant contracts for building work, a firm or
+  a private person (`contractor`); the UI names them so everywhere («Кой
+  доставчик», field «Доставчик», «посещения на доставчици», «Посещение на
+  доставчик» in the «Добави» menu). The role names stay «Почистваща фирма»
+  and «Техник» (D22; the Bulgarian names in the WHI-27 description, 22.09).
+  Avoid: «фирма», «изпълнител», «подизпълнител» as the general word. Source:
+  WHI-27 (28.09 09:13).
+
+## Account and settings
+
+- **Връзка** — a link sent by e-mail or SMS (password recovery, invitation);
+  the button is «Изпрати връзка». Avoid: «линк». Source: WHI-20 (23.09).
+- **Тема** — the theme setting: «Светла», «Тъмна», «Динамична» (follows the
+  time of day). Avoid: «Изглед», «Както в системата». Source: WHI-47
+  (25.09), `docs/design.md` → theme. Decided, not built: the admin still
+  offers «Изглед» with «Както в системата» (following the system setting)
+  until the theme task lands.

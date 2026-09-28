@@ -140,7 +140,7 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   and the full text is in the review panel; in the import error table and
   the search dropdown long names wrap.
 - Numbers are right-aligned with `font-variant-numeric: tabular-nums`. A hero
-  sum is centred on its integer part: the stotinki are placed so they do not
+  sum is centred on its integer part: the cents are placed so they do not
   shift the centre.
 - Every data view has these states: loading (skeleton), empty, no results
   (names the active filters and gives a way out), error with retry, no
@@ -188,17 +188,8 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
 
 - The UI uses the formal «Вие» form in sentences. Short imperatives on
   buttons are fine.
-- One concept, one name (see AGENTS.md):
-  - «имот» is any property, and «Ап. 4» is a specific one;
-  - «Входни такси», «Фиксирани / Временни разходи»;
-  - a charge rule is a «разход» (Фиксиран / Временен); no rule is named
-    «такса …» except «такса Домоуправление». What a resident is charged or
-    owes is «Входни такси» / «входна такса»;
-  - «Сигнали», never «Нередности»;
-  - «жител» is any person living in or owning a property (menu «Жители»,
-    «Добави жител»); their role on a property is Собственик, Наемател or
-    Обитател;
-  - «Оттегли» is withdrawing one's own request, as opposed to a rejection.
+- One concept, one name (see AGENTS.md): the words are in
+  [glossary.md](glossary.md), with the words to avoid and the source of each.
 - A count label names what is counted: «4 реда с грешки», not «4 грешки».
 - Plan codes (B9, D16) never appear inside UI sentences; a milestone marker
   («M3») may only be a separate badge on a deferred element.
