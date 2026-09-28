@@ -4,7 +4,6 @@ import {
   Clock,
   LoaderCircle,
   MoreHorizontal,
-  TriangleAlert,
 } from '../../components/icons';
 import type { ReactNode } from 'react';
 import { Avatar, Chip, SolidIconButton, StatusDot } from '../../components/ui';
@@ -177,6 +176,3 @@ export function StaffCard(props: RowProps) {
     </div>
   );
 }
-
-/** Kept next to the row so the strip and the drawer use one warning icon. */
-export const RowWarningIcon = TriangleAlert;

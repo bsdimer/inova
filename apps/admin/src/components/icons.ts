@@ -25,19 +25,16 @@ export {
   CircleNotch as LoaderCircle,
   Clock,
   DotsThree as MoreHorizontal,
-  Envelope as Mail,
   // V2/Field draws the e-mail glyph as the plain envelope.
   EnvelopeSimple,
   // Phosphor has no envelope-with-plus; the invite action uses a plain one.
   EnvelopeSimple as MailPlus,
   Eye,
   EyeSlash as EyeOff,
-  FileArrowUp as FileUp,
   FileMagnifyingGlass,
   Globe,
   Hammer,
   Info,
-  List as Menu,
   Lock,
   MagnifyingGlass as Search,
   Monitor,
@@ -64,5 +61,3 @@ export {
   WarningCircle as CircleAlert,
   X,
 } from '@phosphor-icons/react';
-
-export type { Icon } from '@phosphor-icons/react';

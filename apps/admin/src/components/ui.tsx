@@ -126,37 +126,8 @@ export function GhostButton({
   );
 }
 
-export function IconButton({
-  children,
-  onClick,
-  disabled = false,
-  label,
-  active = false,
-}: {
-  children: ReactNode;
-  onClick?: () => void;
-  disabled?: boolean;
-  label: string;
-  active?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-label={label}
-      title={label}
-      className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors disabled:opacity-40 ${
-        active ? 'glass-control-active' : 'glass-control text-ink-muted hover:text-ink'
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
 /**
- * The light counterpart of `IconButton`: a solid white disc with a dark glyph.
+ * A solid white disc with a dark glyph, the light counterpart of a glass control.
  * The mock-ups use exactly one per row — the action that opens the drawer —
  * so it stays the loudest thing in the table without being a filled CTA.
  */
@@ -794,10 +765,6 @@ export function Field({
     </label>
   );
 }
-
-/** Field on glass: a recess in the photograph, never a light chip on top. */
-export const inputClass =
-  'glass-control w-full rounded-xl px-3.5 py-2.5 text-sm font-medium text-ink outline-none placeholder:text-ink-faint';
 
 /** Field inside a light panel, where the same recess would be invisible. */
 export const panelInputClass =

@@ -225,9 +225,6 @@ export function protectionReason(input: {
   return null;
 }
 
-export const INVITED_NOTE =
-  'Поканените активират акаунта си с код. Дотогава поканата може само да бъде отменена.';
-
 /**
  * Dates render as in the mock-up: 16.09.26. Built by hand because the bg-BG
  * locale appends " г." to a formatted date, which does not fit a 72px column.

@@ -23,7 +23,7 @@ function readChoice(): ThemeChoice {
   return 'system';
 }
 
-export function resolveTheme(choice: ThemeChoice): 'light' | 'dark' {
+function resolveTheme(choice: ThemeChoice): 'light' | 'dark' {
   if (choice !== 'system') return choice;
   return media?.matches ? 'dark' : 'light';
 }
