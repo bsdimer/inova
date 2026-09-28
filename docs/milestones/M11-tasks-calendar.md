@@ -10,7 +10,7 @@ Managers plan and tick off their work — inspections, meetings, reports to owne
 
 ## Dependencies
 
-M2 (buildings/entrances to attach to), M1 (staff accounts, permissions). Contractor visits also need the `contractor` record and `staff_membership.contractor_id` (staff module; land here if not earlier — D29). The contractor's own dashboard in the admin (Figma `1999:17`, 402 `2005:36`) needs both M6 (issues by category) and this milestone; until then it has nothing to show. The «Изпрати известие до живущите» box on the visit form needs M7 (D29 addition); without M7 the box is hidden.
+M2 (buildings/entrances to attach to), M1 (staff accounts, permissions). Contractor visits also need the `contractor` record and `staff_membership.contractor_id` (staff module; land here if not earlier — D29). The contractor's own dashboard in the admin (Figma `1999:17`, 402 `2005:36`) needs both M6 (issues by category) and this milestone; until then it has nothing to show. **D30 (proposed)** adds to that cabinet «Сгради» — the buildings entrusted to the firm (`contractor_assignment`) with their facts, the agreed services pinned on top (entered by the manager on the assignment, read-only for the firm) and the firm's notes under them (`contractor_note`, visible to the manager); it needs the M2 building fields. The «Изпрати известие до живущите» box on the visit form needs M7 (D29 addition); without M7 the box is hidden.
 
 ## Tables
 
@@ -18,13 +18,13 @@ M2 (buildings/entrances to attach to), M1 (staff accounts, permissions). Contrac
 
 ## Backend
 
-New `tasks` module. `GET /v1/tasks?date=|from=&to=&status=&limit=`, `GET /v1/tasks/calendar?month=` (per-day `total` / `done` for the dots), `POST`, `PATCH`, `POST /v1/tasks/:id/complete`, `/reopen`, `/cancel`. Permissions `tasks.read` / `tasks.manage`. Building-scoped staff see tasks of their buildings; a task without a building is visible to tenant-wide staff, its creator and its assignee. Day boundaries computed in the tenant timezone.
+New `tasks` module. `GET /v1/tasks?date=|from=&to=&status=&building_id=&limit=`, `GET /v1/tasks/calendar?month=&building_id=` (per-day `total` / `done` for the dots), `POST`, `PATCH`, `POST /v1/tasks/:id/complete`, `/reopen`, `/cancel`. Permissions `tasks.read` / `tasks.manage`. Building-scoped staff see tasks of their buildings; a task without a building is visible to tenant-wide staff, its creator and its assignee. Day boundaries computed in the tenant timezone.
 
 Contractor visits (D29): `POST` / `PATCH` / `DELETE /v1/visits` under `visits.manage` — a contractor role (D22) only for its own firm, staff with `tasks.manage` for any firm in their buildings; a visit needs a building and a scope (entrances or whole building). `GET /v1/me/visits?from=&to=` for residents: the visits whose scope covers an entrance they occupy, plus every whole-building visit of their building. Creating or changing a visit enqueues nothing by itself — no push, no notice; `POST /v1/visits` takes an optional `notify: true` (D29 addition, WHI-27) that needs `notifications.send` (403 otherwise) and sends an ordinary M7 notice to the visit's scope through the worker.
 
 ## Admin
 
-Tasks section (list + create/edit form), reached from a **"Задачи" item in the shell navigation, placed directly after "Табло" and before "Известия"** (stakeholder, 2026-09-22), and the dashboard Calendar card: Month (Monday-first, dots, today, selected) with "Upcoming"; Day (summary "N tasks · M done", checkbox, time, place, deadline-only items); picking a day in Month opens Day. The dashboard checkbox writes, optimistically. Contractor visits appear in Month and Day as their own kind, without a checkbox; «Ново посещение» takes firm, building, scope, date, time from–to and description, and — for a role with `notifications.send` — the «Изпрати известие до живущите» box (WHI-27 frames `1939:44464`).
+Tasks section (list + create/edit form), reached from a **"Задачи" item in the shell navigation, placed directly after "Табло" and before "Известия"** (stakeholder, 2026-09-22), and the dashboard Calendar card: Month (Monday-first, dots, today, selected) with "Upcoming"; Day (summary "N tasks · M done", checkbox, time, place, deadline-only items); picking a day in Month opens Day. The dashboard checkbox writes, optimistically. The building page's «Календар» tile (D31) opens the same Month and Day views filtered to that building — its tasks and contractor visits. Contractor visits appear in Month and Day as their own kind, without a checkbox; «Ново посещение» takes firm, building, scope, date, time from–to and description, and — for a role with `notifications.send` — the «Изпрати известие до живущите» box (WHI-27 frames `1939:44464`).
 
 ## Mobile
 

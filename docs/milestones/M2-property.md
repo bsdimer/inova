@@ -22,7 +22,9 @@ currently implemented global-user model to tenant-scoped account realms.
 (+ soft-delete/effective-date columns). All tenant-owned: `tenant_id` leading
 PK/indexes, RLS. Apartment rows keep UUID technical ids and enforce the unique
 business key `(tenant_id, building_id, entrance_id, floor, apartment_number)`.
-A building has `city` and `district` as separate columns (D24). An apartment
+A building has `city` and `district` as separate columns (D24), and — D30,
+proposed — `floors`, `has_elevator` and `has_parking` (garages or parking
+spots), the facts a contractor needs on site. An apartment
 has `rooms` (integer) and a property type of `apartment`, `garage`, `shop`,
 `storage` or `parking_spot` (D26).
 The schema contract test must pass on the new tables without being rewritten.
@@ -56,7 +58,7 @@ The schema contract test must pass on the new tables without being rewritten.
 Portfolio tree, building setup/activation, apartment detail, “add resident”
 (role + effective date → invite → delivery/activation status), multiple owners,
 designated owner document recipient, verification queue, corrections,
-removal-request queue with История for decided and withdrawn requests (D27), approved end occupancy (no move — D25), manager assignment. The buildings list filters by град and квартал (D24). The «Детайли на жител» panel (WHI-63) fills in stages: contacts, properties, pets and history here; «Подадени сигнали» after M6; the photo from Общност after the forum module (initials until then, as drawn).
+removal-request queue with История for decided and withdrawn requests (D27), approved end occupancy (no move — D25), manager assignment. The building page's tiles are Финанси, Входни такси, Документи, Справки, Известия, Сигнали, Анкети and **Календар** — the calendar of this building only, tasks and contractor visits (D31); Общност is reached from the menu, not from a tile. The buildings list filters by град and квартал (D24). The «Детайли на жител» panel (WHI-63) fills in stages: contacts, properties, pets and history here; «Подадени сигнали» after M6; the photo from Общност after the forum module (initials until then, as drawn).
 
 ## Mobile
 
@@ -69,7 +71,8 @@ survey proposal/voting are hidden and server-blocked for tenant/occupant roles.
 ## Required tests
 
 - Import edge cases (bad rows, dry-run vs commit); `city`, `district`,
-  `rooms` and the property type are mapped and validated.
+  `rooms`, the property type and — D30 — `floors`, `has_elevator`,
+  `has_parking` are mapped and validated.
 - Apartment correction writes an audit row and needs no approval; ending an
   occupancy still does (D25).
 - Apartment natural-key uniqueness includes floor.
@@ -114,7 +117,8 @@ Not part of M2 acceptance, but unblocked by it (scope in
 
 ## Risks
 
-Obtain sample spreadsheet files before locking column mappings.
+Obtain sample spreadsheet files before locking column mappings; the D30
+building facts (floors, elevator, parking) are three more columns to map.
 
 Legal counsel must confirm whether EGN and identity-card details are necessary
 for claims submitted to a public/private enforcement agent. Until confirmed,
