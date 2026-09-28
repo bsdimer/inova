@@ -140,7 +140,7 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   and the full text is in the review panel; in the import error table and
   the search dropdown long names wrap.
 - Numbers are right-aligned with `font-variant-numeric: tabular-nums`. A hero
-  sum is centred on its integer part: the stotinki are placed so they do not
+  sum is centred on its integer part: the cents are placed so they do not
   shift the centre.
 - Every data view has these states: loading (skeleton), empty, no results
   (names the active filters and gives a way out), error with retry, no
