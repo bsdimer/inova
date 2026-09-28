@@ -324,45 +324,51 @@ function NavList({ nav, pathname }: { nav: NavGroups; pathname: string }) {
     // (3 px out) and its glow are not cut at the list's edges.
     <nav
       ref={list}
+      aria-label="Основно меню"
       className="nav-scroll -mx-3 -my-1 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-1"
     >
       {nav.map((group, g) => [
         g > 0 && <GroupRule key={`rule-${g}`} />,
-        ...group.map(({ to, label, icon: Icon }) => {
-          const active = isActive(to, pathname);
-          return (
-            <Link
-              key={to}
-              to={to}
-              data-active={active || undefined}
-              // The active item's 1 px edge is a real border in Figma, so it stands
-              // 46 tall where the others are 44 (11 + 22 + 11). The others are
-              // rounded 14, the active one 16.
-              className={`nav-item relative flex items-center gap-3 px-3.5 text-body-14 ${
-                active
-                  ? 'rounded-[var(--radius-nav)] py-3 font-semibold text-ink [--nav-radius:1rem]'
-                  : 'rounded-[var(--radius-signal)] py-[0.6875rem] font-medium text-ink-soft'
-              }`}
-            >
-              {active && (
-                // V2/NavItem Active=true: glass/inner with the full edge and a soft top light.
-                <motion.span
-                  layoutId="nav-pill"
-                  className="nav-active absolute inset-0 rounded-[var(--radius-nav)]"
-                  transition={{ type: 'spring', damping: 30, stiffness: 340 }}
-                />
-              )}
-              <Icon size="1.375rem" className="nav-grow relative shrink-0" />
-              <span className="nav-grow relative flex-1 truncate">{label}</span>
-              {to === '/notices' && unread ? (
-                // V2/Badge (846:244): the unread count on Известия.
-                <span className="num text-label-12 relative rounded-full bg-[var(--badge-fill)] px-[0.4375rem] py-0.5 font-semibold text-[color:var(--badge-text)]">
-                  {unread}
-                </span>
-              ) : null}
-            </Link>
-          );
-        }),
+        // One list per group, so a screen reader hears the grouping and the
+        // count; role="list" because Safari drops it from an unstyled <ul>.
+        <ul key={`group-${g}`} role="list" className="flex flex-col gap-0.5">
+          {group.map(({ to, label, icon: Icon }) => {
+            const active = isActive(to, pathname);
+            return (
+              <li key={to}>
+                <Link
+                  to={to}
+                  data-active={active || undefined}
+                  // The active item's 1 px edge is a real border in Figma, so it stands
+                  // 46 tall where the others are 44 (11 + 22 + 11). The others are
+                  // rounded 14, the active one 16.
+                  className={`nav-item relative flex items-center gap-3 px-3.5 text-body-14 ${
+                    active
+                      ? 'rounded-[var(--radius-nav)] py-3 font-semibold text-ink [--nav-radius:1rem]'
+                      : 'rounded-[var(--radius-signal)] py-[0.6875rem] font-medium text-ink-soft'
+                  }`}
+                >
+                  {active && (
+                    // V2/NavItem Active=true: glass/inner with the full edge and a soft top light.
+                    <motion.span
+                      layoutId="nav-pill"
+                      className="nav-active absolute inset-0 rounded-[var(--radius-nav)]"
+                      transition={{ type: 'spring', damping: 30, stiffness: 340 }}
+                    />
+                  )}
+                  <Icon size="1.375rem" className="nav-grow relative shrink-0" />
+                  <span className="nav-grow relative flex-1 truncate">{label}</span>
+                  {to === '/notices' && unread ? (
+                    // V2/Badge (846:244): the unread count on Известия.
+                    <span className="num text-label-12 relative rounded-full bg-[var(--badge-fill)] px-[0.4375rem] py-0.5 font-semibold text-[color:var(--badge-text)]">
+                      {unread}
+                    </span>
+                  ) : null}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>,
       ])}
     </nav>
   );
@@ -470,40 +476,45 @@ function RailBody({
           i
         </button>
       </div>
-      <nav className="flex flex-col gap-1">
+      <nav aria-label="Основно меню" className="flex flex-col gap-1">
         {nav.map((group, g) => [
           g > 0 && <GroupRule key={`rule-${g}`} rail />,
-          ...group.map(({ to, label, icon: Icon }) => {
-            const active = isActive(to, pathname);
-            const badge = to === '/notices' && unread ? unread : 0;
-            return (
-              <Link
-                key={to}
-                to={to}
-                data-active={active || undefined}
-                aria-label={badge ? `${label}, ${badge} непрочетени` : label}
-                className={`nav-item relative flex h-12 w-12 cursor-pointer items-center justify-center text-ink ${
-                  active ? 'nav-active rounded-[1rem] [--nav-radius:1rem]' : 'rounded-[0.875rem]'
-                }`}
-              >
-                <Icon size="1.375rem" className="nav-grow nav-grow-center" />
-                {badge ? (
-                  // In the rail the count becomes a lit dot on the bell (Rail item «Точка»).
-                  <span
-                    aria-hidden
-                    className="absolute top-[0.5625rem] left-[1.875rem] h-2 w-2 rounded-full"
-                    style={{
-                      background: 'var(--light-source)',
-                      boxShadow: '0 0 0.375rem 0.0625rem var(--glow-dot-near)',
-                    }}
-                  />
-                ) : null}
-                <span aria-hidden className="rail-tip text-body-13 font-medium">
-                  {badge ? `${label} · ${badge}` : label}
-                </span>
-              </Link>
-            );
-          }),
+          <ul key={`group-${g}`} role="list" className="flex flex-col gap-1">
+            {group.map(({ to, label, icon: Icon }) => {
+              const active = isActive(to, pathname);
+              const badge = to === '/notices' && unread ? unread : 0;
+              return (
+                <li key={to}>
+                  <Link
+                    to={to}
+                    data-active={active || undefined}
+                    aria-label={badge ? `${label}, ${badge} непрочетени` : label}
+                    className={`nav-item relative flex h-12 w-12 cursor-pointer items-center justify-center text-ink ${
+                      active
+                        ? 'nav-active rounded-[1rem] [--nav-radius:1rem]'
+                        : 'rounded-[0.875rem]'
+                    }`}
+                  >
+                    <Icon size="1.375rem" className="nav-grow nav-grow-center" />
+                    {badge ? (
+                      // In the rail the count becomes a lit dot on the bell (Rail item «Точка»).
+                      <span
+                        aria-hidden
+                        className="absolute top-[0.5625rem] left-[1.875rem] h-2 w-2 rounded-full"
+                        style={{
+                          background: 'var(--light-source)',
+                          boxShadow: '0 0 0.375rem 0.0625rem var(--glow-dot-near)',
+                        }}
+                      />
+                    ) : null}
+                    <span aria-hidden className="rail-tip text-body-13 font-medium">
+                      {badge ? `${label} · ${badge}` : label}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>,
         ])}
       </nav>
       <div className="flex-1" />

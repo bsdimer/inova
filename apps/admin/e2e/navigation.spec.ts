@@ -7,14 +7,18 @@ import { ORG_ADMIN, openSignedIn } from './session';
  * short window; hover grows the one item under the pointer.
  */
 
-/** The menu's children in order: an item's name, or «—» for a group line. */
+/** The menu's groups in order, each as its items' names, with «—» for a line. */
 const menuSequence = (page: Page) =>
   page
     .locator('aside nav')
     .first()
     .evaluate((nav) =>
       [...nav.children].map((child) =>
-        child.tagName === 'HR' ? '—' : (child.textContent ?? '').replace(/\d+$/, '').trim(),
+        child.tagName === 'HR'
+          ? '—'
+          : [...child.querySelectorAll('a')].map((a) =>
+              (a.textContent ?? '').replace(/\d+$/, '').trim(),
+            ),
       ),
     );
 
@@ -30,18 +34,13 @@ test('the sidebar shows four groups with a line between them and no unbuilt modu
 }) => {
   await openSignedIn(page, ORG_ADMIN, '/');
   expect(await menuSequence(page)).toEqual([
-    'Табло',
-    'Задачи',
-    'Известия',
+    ['Табло', 'Задачи', 'Известия'],
     '—',
-    'Финанси',
+    ['Финанси'],
     '—',
-    'Сгради',
-    'Жители',
-    'Сигнали',
+    ['Сгради', 'Жители', 'Сигнали'],
     '—',
-    'Служители',
-    'Роли',
+    ['Служители', 'Роли'],
   ]);
   for (const hidden of ['Документи', 'Справки', 'Анкети', 'Общност']) {
     await expect(page.getByRole('link', { name: hidden })).toHaveCount(0);
@@ -52,14 +51,32 @@ test('the sidebar shows four groups with a line between them and no unbuilt modu
     .locator('aside nav')
     .first()
     .evaluate((nav) => {
-      const box = (i: number) => nav.children.item(i)!.getBoundingClientRect();
+      const link = (name: string) =>
+        [...nav.querySelectorAll('a')]
+          .find((a) => a.textContent?.startsWith(name))!
+          .getBoundingClientRect();
       return {
-        betweenItems: box(2).top - box(1).bottom,
-        rule: box(3).height,
-        acrossRule: box(4).top - box(2).bottom,
+        betweenItems: link('Известия').top - link('Задачи').bottom,
+        rule: nav.querySelector('hr')!.getBoundingClientRect().height,
+        acrossRule: link('Финанси').top - link('Известия').bottom,
       };
     });
   expect(gaps).toEqual({ betweenItems: 2, rule: 1, acrossRule: 11 });
+});
+
+test('a screen reader hears a named menu of four lists and the open section', async ({ page }) => {
+  await openSignedIn(page, ORG_ADMIN, '/staff');
+  const menu = page.getByRole('navigation', { name: 'Основно меню' });
+  const lists = menu.getByRole('list');
+  await expect(lists).toHaveCount(4);
+  const counts = await lists.evaluateAll((all) =>
+    all.map((list) => list.querySelectorAll(':scope > li').length),
+  );
+  expect(counts).toEqual([3, 1, 3, 2]);
+  await expect(menu.getByRole('link', { name: 'Служители' })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
 });
 
 test('the rail draws the same group lines, 32 wide', async ({ page }) => {
