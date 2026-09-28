@@ -21,7 +21,7 @@
     "check:agent-harness": "node scripts/check-agent-harness.mjs",
     "check:worklog": "node scripts/check-worklog.mjs",
     "check:no-design-data": "node scripts/check-no-design-data.mjs",
-    "check:admin": "pnpm --filter @inova/admin lint && pnpm --filter @inova/admin typecheck && pnpm --filter @inova/admin build",
+    "check:admin": "pnpm --filter @inova/shared build && pnpm --filter @inova/admin lint && pnpm --filter @inova/admin typecheck && pnpm --filter @inova/admin build",
     "verify": "node scripts/verify.mjs",
     "doctor": "node scripts/doctor.mjs",
     "db:migrate": "node db/migrate.mjs",
