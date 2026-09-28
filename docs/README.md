@@ -13,9 +13,26 @@ One source of truth per kind of information. New sessions read
 | Milestone / phase scope      | [milestones/](milestones/)                            | Working on that milestone                                                    |
 | Session history              | [work-log/](work-log/)                                | Index of change sets; the PR holds the detail                                |
 | Stakeholder view of the work | Linear, project `inova` (workspace `white-label-app`) | Plain-language task per change set; rule in `AGENTS.md` → Tracking in Linear |
+| Words                        | [glossary.md](glossary.md)                            | Naming anything a user sees, or an entity or column for it                   |
 | Admin design rules           | [design.md](design.md)                                | Building or checking an admin screen: windows, tables, glass in CSS          |
 | Feature scope + acceptance   | [features/](features/)                                | Medium or large feature work                                                 |
-| ADRs                         | [decisions/](decisions/)                              | When an ADR exists for the topic                                             |
+| Decision cards               | [plan/decisions/](plan/decisions/)                    | The rule, its source and where it lands, D29 onward                          |
+
+## Who writes what
+
+One owner per part of the repository. A session that needs a change outside
+its own part sends the text to the owner and does not edit the file itself —
+the way a code PR must not touch `design.md`. Every PR still needs a green CI
+and, for plan and harness changes, the team lead's approve.
+
+| Owner               | Writes                                                                                                                                        | Reads                                                   | Hands over                                                                                                                    |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Planner session     | `docs/plan/*` incl. decision cards, `docs/milestones/*`, `docs/features/*`, `docs/current.md`, `AGENTS.md`, `scripts/check-*.mjs`, `.github/` | Linear, `docs/design.md`, `docs/glossary.md`            | A decision card with **Lands in**; one branch per day of decisions; questions to the team lead in the PR                      |
+| Design session      | `docs/design.md`; the content of `docs/glossary.md`                                                                                           | Figma, Linear Design issues, `docs/plan/*`              | Rules the frames do not show, as text for the planner to commit; glossary entries (term, meaning, Avoid, source) the same way |
+| Admin code session  | `apps/admin/*`, `apps/admin/e2e/*`                                                                                                            | `docs/design.md`, `docs/glossary.md`, milestones, cards | A contract PR in `packages/shared` when an endpoint is missing; a Linear issue to the backend; never `docs/design.md`         |
+| Mobile developer    | `apps/mobile/*`                                                                                                                               | milestones, cards, `docs/glossary.md`, `brands/`        | The same contract-first rule as the admin                                                                                     |
+| Backend (team lead) | `apps/api/*`, `apps/auth-service/*`, `apps/worker/*`, `db/*`, `infra/*`                                                                       | `docs/plan/*`, cards, `docs/architecture.md`            | Approves plan and harness PRs; answers before/after-pilot questions in the PR or the Linear issue                             |
+| Everyone            | `packages/shared` only through contract PRs that both sides review; `docs/work-log/` — the author of the PR writes the entry                  | —                                                       | —                                                                                                                             |
 
 [implementation-status.md](implementation-status.md) is a pointer to `current.md`
 (kept so old links still resolve). Progress is **not** tracked as checkboxes

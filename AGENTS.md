@@ -45,7 +45,7 @@ platform's own "inova" brand.
 1. Read this file.
 2. Read [docs/current.md](docs/current.md) — the only living status document.
 3. Start with **one** relevant extra file: a milestone under `docs/milestones/`,
-   a plan topic under `docs/plan/`, an ADR under `docs/decisions/`, the linked feature brief under
+   a plan topic under `docs/plan/`, a decision card under `docs/plan/decisions/`, the linked feature brief under
    `docs/features/`, or the frontend skill (see below). Load a linked reference
    later only when the task stage needs it; never the whole plan. Index:
    [docs/README.md](docs/README.md).
@@ -228,6 +228,10 @@ except tests" is not a status.
    a pass.
 5. No mock of this phase is left: `TODO(M<n>)` / `MOCK` markers for the phase
    are gone or explicitly re-assigned to a later phase.
+6. **The plan describes the phase as it was built.** A read-only audit of
+   the phase's plan files against the code (tables, routes, permission keys,
+   tests, markers) runs before the phase is declared done; only what would
+   mislead a coder today is fixed, the rest is dropped, not parked.
 
 Then, in the same change: set **Status** in the phase file to Done with the
 date, update the "Milestone honesty" and "Tests" tables in `docs/current.md`,
