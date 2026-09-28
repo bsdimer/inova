@@ -3,7 +3,7 @@ id: D30
 title: The contractor's cabinet — its buildings, agreed services, notes and invoices
 status: decided
 decided: 2026-09-28 (stakeholder, screens confirmed 12:15; before the pilot — the team lead's answer of 2026-09-24 on the contractor calendar, extended to the cabinet by the delivery owner 2026-09-28)
-source: WHI-27 — the stakeholder's ask of 2026-09-27 09:06; the model described to her on 2026-09-28 06:43 and approved 07:25 («Супер!», plus the manager's contact); invoices 2026-09-28 11:02 and 11:09; screens confirmed 12:15 («Супер!», the month required); what the invoice is for 12:30 (three fixed values, the note optional); frames «Сгради» `2129:46730`, «Сграда» `2129:47116`, 402 `2129:47702`, «Фактури» `2170:48256`, row menu `2194:47983`, «Редактирай фактура» `2194:48039`, 402 `2196:38960`, «Изтрий фактура» `2194:48017`
+source: WHI-27 — the stakeholder's ask of 2026-09-27 09:06; the model described to her on 2026-09-28 06:43 and approved 07:25 («Супер!», plus the manager's contact); invoices 2026-09-28 11:02 and 11:09; screens confirmed 12:15 («Супер!», the month required); what the invoice is for 12:30 (three fixed values, the note optional); the kind follows from the purpose 13:02; frames «Сгради» `2129:46730`, «Сграда» `2129:47116`, 402 `2129:47702`, «Фактури» `2170:48256`, row menu `2194:47983`, «Редактирай фактура» `2194:48039`, 402 `2196:38960`, «Изтрий фактура» `2194:48017`
 pr: '#34'
 affects: [D22, D29, D24]
 ---
@@ -25,11 +25,14 @@ building and the month it is for (required, the current month by default); it la
 (M9) with the firm on it; it says what it is for, «За какво е», one of three
 fixed values — «Поддръжка», «Консуматив», «Допълнителна услуга»
 (`invoice_purpose`: `maintenance` / `consumables` / `extra_service`), required;
-a note is optional («по подаден сигнал»); and the invoice carries a kind, «Фиксирани» or
-«Временни разходи» — the same pair as the charge rules (`fee_rule.kind`), one
-concept: the building's costs — so the manager gets them sorted and P1 can
-link the expense to the rule it pays for. The contractor edits
-or deletes its own invoice (file, building, period, purpose, kind, note) until an
+a note is optional («по подаден сигнал»). The firm does not pick the kind:
+it follows from the purpose — «Поддръжка» is «Фиксиран разход» (`fixed`),
+«Консуматив» and «Допълнителна услуга» are «Временен разход» (`temporary`) —
+the same pair as the charge rules (`fee_rule.kind`), one concept: the
+building's costs. The manager gets the invoices in two sections of
+«Документи», «Фиксирани» and «Временни разходи» («домоуправителя ги получава в
+двете различни секции»), and P1 can link the expense to the rule it pays for. The contractor edits
+or deletes its own invoice (file, building, period, purpose, note) until an
 expense references it — «преди деня на плащане»; deleting archives the
 document (`active → archived`), never removes the row, and every edit or
 archive writes an audit record. Until P1 there are no expenses, so editing
@@ -43,7 +46,7 @@ note («такса техн. поддръжка + касов бон за кру�
 
 ## Lands in
 
-- `docs/plan/data-model.md` → `building` fields, `contractor_assignment`, `contractor_note`, `stored_document` (purpose, kind and period required, note optional, edit until referenced)
+- `docs/plan/data-model.md` → `building` fields, `contractor_assignment`, `contractor_note`, `stored_document` (purpose and period required, kind derived, note optional, edit until referenced)
 - `docs/milestones/M2-property.md` → building fields and the import columns
 - `docs/milestones/M11-tasks-calendar.md` → the contractor's cabinet: «Сгради», services, notes
 - `docs/milestones/M9-dashboard-reports.md` → the firm's invoice upload
