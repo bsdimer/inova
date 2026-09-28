@@ -38,6 +38,13 @@ plan's PR. No script checks this file — a reviewer reads it.
   rule is named «такса …». Avoid: «такса» for a rule, «Правила»,
   «еднократна такса». Source: D26, WHI-41 (23.09 16:35), WHI-27
   (28.09 11:09).
+- **За какво е** — what a supplier's invoice pays for, one of three fixed
+  values: «Поддръжка», «Консуматив», «Допълнителна услуга»
+  (`invoice_purpose`: `maintenance` / `consumables` / `extra_service`). The
+  field is «За какво е», not «Вид» or «Категория»: «Вид разход» is fixed /
+  temporary, «категория» is an issue's category. A free note stays optional
+  beside it. Avoid: «вид услуга», «категория» for this field. Source: WHI-27
+  (28.09 12:30).
 - **Такса Домоуправление** — the one rule that keeps the word «такса».
   Source: D26, WHI-41 (23.09).
 - **Редактирай / История на промените** — changing a charge rule; the
