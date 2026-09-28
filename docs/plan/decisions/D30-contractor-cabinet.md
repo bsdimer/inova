@@ -18,7 +18,7 @@ counted from the property types, D26), and the **house manager of that
 building** — name, phone, email from its `building_manager_assignment`,
 read-only, because one firm may serve buildings of different managers. A
 firm's buildings are its `contractor_assignment` rows (firm × building), which
-the house manager creates when entrusting a building — to any contractor; one without an account (a gardener, a mat-washing firm) has no cabinet but still gets assignments and visits (inferred from the stakeholder's WHI-27 28.09 14:21; to confirm with her); the assignment carries
+the house manager creates when entrusting a building — to any contractor; one without an account (a gardener, a mat-washing firm) has no cabinet but still gets assignments and visits (stakeholder, WHI-27 28.09 14:21 and 15:14: «Ако доставчикът има профил — сам качва и отбелязва. Ако няма — поема се от домоуправителя»); the assignment carries
 the **agreed services** as text («понеделник — основно почистване; прозорци
 всеки сезон»), entered by the manager, pinned on top for the firm and not
 editable by it. Under the services the firm writes its own **notes** per
