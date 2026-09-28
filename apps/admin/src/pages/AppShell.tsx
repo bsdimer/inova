@@ -303,29 +303,22 @@ function GroupRule({ rail = false }: { rail?: boolean }) {
   );
 }
 
-/**
- * On a short window the list scrolls and the brand and the account stay put;
- * the open section is brought into the list's view on every navigation.
- */
-function useActiveInView(pathname: string) {
+function NavList({ nav, pathname }: { nav: NavGroups; pathname: string }) {
+  const unread = useUnreadCount();
+  // On a short window the list scrolls while the brand and the account stay
+  // put; each navigation brings the open item into the list's view, keeping
+  // the list's padding so the item stays clear of the rule above the account.
   const list = useRef<HTMLElement>(null);
   useLayoutEffect(() => {
     const box = list.current;
     const item = box?.querySelector<HTMLElement>('[data-active]');
     if (!box || !item) return;
-    // The list's own padding keeps the item clear of the rule above the account.
     const pad = parseFloat(getComputedStyle(box).paddingTop);
     const top = item.offsetTop - box.offsetTop - pad;
     const bottom = item.offsetTop - box.offsetTop + item.offsetHeight + pad;
     if (top < box.scrollTop) box.scrollTop = top;
     else if (bottom > box.scrollTop + box.clientHeight) box.scrollTop = bottom - box.clientHeight;
   }, [pathname]);
-  return list;
-}
-
-function NavList({ nav, pathname }: { nav: NavGroups; pathname: string }) {
-  const unread = useUnreadCount();
-  const list = useActiveInView(pathname);
   return (
     // The list scrolls inside the sidebar's padding, so the focus ring
     // (3 px out) and its glow are not cut at the list's edges.
