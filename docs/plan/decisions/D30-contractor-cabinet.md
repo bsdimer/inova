@@ -3,7 +3,7 @@ id: D30
 title: The contractor's cabinet — its buildings, agreed services, notes and invoices
 status: proposed
 decided: proposed 2026-09-28 (delivery owner, under the team lead's mandate); waits for the stakeholder's confirmation of the drawn screens and the team lead's word on before/after the pilot
-source: WHI-27 — the stakeholder's ask of 2026-09-27 09:06; the model described to her on 2026-09-28 06:43 and approved 07:25 («Супер!», plus the manager's contact); frames «Сгради» `2129:46730`, «Сграда» `2129:47116`, 402 `2129:47702`
+source: WHI-27 — the stakeholder's ask of 2026-09-27 09:06; the model described to her on 2026-09-28 06:43 and approved 07:25 («Супер!», plus the manager's contact); invoices 2026-09-28 11:02 and 11:09; frames «Сгради» `2129:46730`, «Сграда» `2129:47116`, 402 `2129:47702`
 pr: '#34'
 affects: [D22, D29, D24]
 ---
@@ -22,8 +22,14 @@ by it. Under the services the firm writes its own **notes** per building
 (`contractor_note`, «другия път — вземи крушка за партера»); the manager sees
 them. **«Фактури»:** the firm uploads an invoice with a note and picks the
 building; it lands in the manager's «Документи» as a `supplier_invoice`
-(M9) with the firm on it. Payment to the firm comes later with «Плащания»
-(expenses, P1). No visits are generated from the agreed services — recurrence
+(M9) with the firm on it; the note is required (one word is enough —
+«поддръжка», «разход») and the invoice carries a kind, «Фиксирани» or
+«Временни разходи», so the manager gets them sorted. The contractor edits
+or deletes its own invoice (file, building, period, kind, note) until an
+expense references it — «преди деня на плащане»; deleting archives the
+document (`active → archived`), never removes the row, and every edit or
+archive writes an audit record. Until P1 there are no expenses, so editing
+stays open. Payment to the firm comes later with «Плащания» (expenses, P1). No visits are generated from the agreed services — recurrence
 stays out of v1 (M11).
 
 **Why.** «В идеалният вариант фирмата автономно си организира посещения и
@@ -33,7 +39,7 @@ note («такса техн. поддръжка + касов бон за кру�
 
 ## Lands in
 
-- `docs/plan/data-model.md` → `building` fields, `contractor_assignment`, `contractor_note`, `stored_document`
+- `docs/plan/data-model.md` → `building` fields, `contractor_assignment`, `contractor_note`, `stored_document` (kind, required note, edit until referenced)
 - `docs/milestones/M2-property.md` → building fields and the import columns
 - `docs/milestones/M11-tasks-calendar.md` → the contractor's cabinet: «Сгради», services, notes
 - `docs/milestones/M9-dashboard-reports.md` → the firm's invoice upload
