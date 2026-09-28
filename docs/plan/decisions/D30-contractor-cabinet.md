@@ -33,7 +33,7 @@ with a note (M9). A contractor account has no «Фактури» and no
 
 ## Deferred to P1 — the firm's own «Фактури»
 
-Waits for the expenses wave (scope A13, «Разходи»), built once together with
+Waits for the expenses wave (scope A13, «Разходи»; `docs/milestones/P1-wave.md`), built once together with
 contractor payments. Drawn and kept, frames marked «P1»: the firm uploads an
 invoice for a building and a month (required, the current month by default);
 it says what it is for, «За какво е» — «Поддръжка», «Консуматив»,
@@ -61,3 +61,4 @@ agreed services are what a cleaning firm needs on site.
 - `docs/plan/security.md` → what a contractor role sees; no `documents.upload` until P1
 - `docs/plan/api.md` → `staff` (assignments), `files` (the firm's upload, P1)
 - `docs/plan/decisions.md` → D22 row: what a contractor sees
+- `docs/milestones/P1-wave.md` → the expenses row: the firm's own invoice upload
