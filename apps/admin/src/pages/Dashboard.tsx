@@ -441,11 +441,13 @@ const SIGNAL_TAGS = [
 
 function SignalsCard({ signals, today }: { signals: DashboardData['signals']; today: Date }) {
   return (
-    // 601 tall as composed, whatever the list holds; a short window closes the gaps.
+    // 601 tall as composed, whatever the list holds, where cards stand side by
+    // side; on a phone they stack and end with their content. A short window
+    // closes the gaps.
     <Card
       milestone="M6"
       delay={0.1}
-      className="min-h-[37.5625rem] gap-[1.5625rem] tight:min-h-0 tight:gap-4"
+      className="gap-[1.5625rem] md:min-h-[37.5625rem] tight:min-h-0 tight:gap-4"
     >
       <header className="flex h-8 items-center justify-between">
         <Toggle options={['Сигнали', 'Анкети']} selected="Сигнали" />
@@ -564,11 +566,12 @@ function CalendarCard({ calendar, today }: { calendar: DashboardData['calendar']
 
   return (
     // The card's height is the composition's, not its list's (tablo spec §8):
-    // 687 with four events, 621 with three; a short window lets it shrink.
+    // 687 with four events, 621 with three; a short window lets it shrink. On
+    // a phone the cards stack and this one ends with its content.
     <Card
       milestone="M11"
       delay={0.15}
-      className="min-h-[42.9375rem] flex-1 gap-1.5 lg:max-xl:min-h-[38.8125rem] tight:min-h-0"
+      className="gap-1.5 md:min-h-[42.9375rem] md:flex-1 lg:max-xl:min-h-[38.8125rem] tight:min-h-0"
     >
       <header className="flex h-8 items-center gap-2">
         <h2 className="text-title-16 flex-1 font-medium text-ink-soft">Календар</h2>
