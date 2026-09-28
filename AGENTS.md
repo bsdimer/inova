@@ -228,6 +228,10 @@ except tests" is not a status.
    a pass.
 5. No mock of this phase is left: `TODO(M<n>)` / `MOCK` markers for the phase
    are gone or explicitly re-assigned to a later phase.
+6. **The plan describes the phase as it was built.** A read-only audit of
+   the phase's plan files against the code (tables, routes, permission keys,
+   tests, markers) runs before the phase is declared done; only what would
+   mislead a coder today is fixed, the rest is dropped, not parked.
 
 Then, in the same change: set **Status** in the phase file to Done with the
 date, update the "Milestone honesty" and "Tests" tables in `docs/current.md`,
