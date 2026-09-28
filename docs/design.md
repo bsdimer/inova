@@ -171,8 +171,11 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   - it shows only on `:focus-visible` and is never removed;
   - fields use their own focus state and get no second ring;
   - keyboard focus on a nav item shows the hover plate plus the ring.
-- Nav item hover: `--glass-inner-soft` with no edge, blur or shadow, 150 ms;
-  sizes are the Figma component.
+- Nav item hover: the plate `--glass-inner-soft` (no edge, blur or shadow)
+  fades in over 280 ms and the item's icon and label grow to 106 % from the
+  left edge (rail: the icon from its centre); the label turns primary. Other
+  items and the active one do not change. Hover devices only; with
+  `prefers-reduced-motion`, only the plate, at once.
 - Rail tooltip: to the right of the item, `--panel-fill-strong`, appears
   after 400 ms or at once on keyboard focus. An item with a counter shows
   the number in its tooltip («Известия · 3»), since the rail shows only a
