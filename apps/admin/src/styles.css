@@ -403,8 +403,9 @@ body {
 
   /*
    * A table card (V2/Table): 20 / 12 / 16 of padding inside a 1 px edge, so
-   * the header starts 13 down and 21 in, as the frames measure it. Header and
-   * rows each end on their own divider.
+   * the header starts 13 down and 21 in, as the frames measure it. The header
+   * and every row but the last end on their own divider; the card's edge ends
+   * the table.
    */
   .table-card {
     padding: 0.8125rem 1.3125rem 1.0625rem;
@@ -422,6 +423,10 @@ body {
 
   .table-card :is(th, td) {
     border-bottom: 0.0625rem solid var(--glass-divider);
+  }
+
+  .table-card tbody tr:last-child td {
+    border-bottom: 0;
   }
 
   /*
