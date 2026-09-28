@@ -16,14 +16,14 @@ affects: [D22, D17, D23]
 count as the whole building), date, time from–to, description; no status,
 no assignee, no done checkbox. The contractor's own role (D22) creates and
 edits the visits of its firm, scoped through `staff_membership.contractor_id`
-to the tenant's `contractor` record; the house manager, or any staff with
+to the tenant's `contractor` record; a contractor needs no account at all — the manager creates contractor profiles, and for one without an account (a gardener, a mat-washing firm) the manager enters its visits (stakeholder, WHI-27 28.09 14:21 and 15:14); the house manager, or any staff with
 `tasks.manage` in the building, enters visits for any firm (`visits.manage`).
 Residents of the scoped entrances see the visit, a whole-building visit is
 seen by every resident of the building.
 
 **Notifications (added 2026-09-26).** Nothing is pushed automatically, on
 create or the day before. The visit form has an optional «Изпрати известие
-до живущите» box, shown only to a role holding `notifications.send`; ticking
+до жителите» box, shown only to a role holding `notifications.send`; ticking
 it sends an ordinary notice (M7) to the visit's scope. Contractor starter
 roles do not hold the key; an admin may add it to a role.
 
