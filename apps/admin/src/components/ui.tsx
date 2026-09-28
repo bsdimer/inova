@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowUpDown, Check, ChevronDown, Search, X } from './icons';
+import { ArrowsDownUp, Check, CaretDown, MagnifyingGlass, X } from './icons';
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { rem } from '../lib/rem';
@@ -126,37 +126,8 @@ export function GhostButton({
   );
 }
 
-export function IconButton({
-  children,
-  onClick,
-  disabled = false,
-  label,
-  active = false,
-}: {
-  children: ReactNode;
-  onClick?: () => void;
-  disabled?: boolean;
-  label: string;
-  active?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-label={label}
-      title={label}
-      className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors disabled:opacity-40 ${
-        active ? 'glass-control-active' : 'glass-control text-ink-muted hover:text-ink'
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
 /**
- * The light counterpart of `IconButton`: a solid white disc with a dark glyph.
+ * A solid white disc with a dark glyph, the light counterpart of a glass control.
  * The mock-ups use exactly one per row — the action that opens the drawer —
  * so it stays the loudest thing in the table without being a filled CTA.
  */
@@ -238,7 +209,7 @@ export function SearchField({
 }) {
   return (
     <label className={`glass-field flex h-12 min-w-56 items-center gap-2.5 px-4 ${className}`}>
-      <Search size="1.25rem" className="shrink-0 text-ink-muted" />
+      <MagnifyingGlass size="1.25rem" className="shrink-0 text-ink-muted" />
       <input
         type="search"
         value={value}
@@ -275,9 +246,9 @@ export function SortSelect<T extends string>({
           onClick={() => setOpen((v) => !v)}
           className="glass-control text-body-14 flex h-11 items-center gap-2 rounded-full px-3.5 font-medium text-ink"
         >
-          <ArrowUpDown size="1rem" className="shrink-0" />
+          <ArrowsDownUp size="1rem" className="shrink-0" />
           <span className="truncate">{options[value]}</span>
-          <ChevronDown size="1rem" className="shrink-0" />
+          <CaretDown size="1rem" className="shrink-0" />
         </button>
       }
     >
@@ -448,7 +419,7 @@ export function Facet({
           }`}
         >
           {label}
-          <ChevronDown size="1rem" className="shrink-0" />
+          <CaretDown size="1rem" className="shrink-0" />
         </button>
       }
     >
@@ -794,10 +765,6 @@ export function Field({
     </label>
   );
 }
-
-/** Field on glass: a recess in the photograph, never a light chip on top. */
-export const inputClass =
-  'glass-control w-full rounded-xl px-3.5 py-2.5 text-sm font-medium text-ink outline-none placeholder:text-ink-faint';
 
 /** Field inside a light panel, where the same recess would be invisible. */
 export const panelInputClass =

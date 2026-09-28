@@ -1,11 +1,4 @@
-import {
-  CircleAlert,
-  CircleCheck,
-  Clock,
-  LoaderCircle,
-  MoreHorizontal,
-  TriangleAlert,
-} from '../../components/icons';
+import { WarningCircle, CheckCircle, Clock, CircleNotch, DotsThree } from '../../components/icons';
 import type { ReactNode } from 'react';
 import { Avatar, Chip, SolidIconButton, StatusDot } from '../../components/ui';
 import type { StaffMember } from '../../lib/api';
@@ -21,9 +14,9 @@ import {
 } from './model';
 
 const INVITE_ICON: Record<InviteState, ReactNode> = {
-  activated: <CircleCheck size="1rem" />,
+  activated: <CheckCircle size="1rem" />,
   'code-sent': <Clock size="1rem" />,
-  none: <CircleAlert size="1rem" />,
+  none: <WarningCircle size="1rem" />,
 };
 
 /** Invite outcome: an icon carries the tone, the words carry the meaning. */
@@ -67,7 +60,7 @@ function RowAction({ member, busy, onAction }: RowProps) {
   if (busy) {
     return (
       <span className="flex h-8 w-8 items-center justify-center text-ink-muted">
-        <LoaderCircle size="1rem" className="animate-spin" />
+        <CircleNotch size="1rem" className="animate-spin" />
       </span>
     );
   }
@@ -76,7 +69,7 @@ function RowAction({ member, busy, onAction }: RowProps) {
       label={`Роли и обхват — ${member.fullName}`}
       onClick={() => onAction('change-role')}
     >
-      <MoreHorizontal size="1rem" />
+      <DotsThree size="1rem" />
     </SolidIconButton>
   );
 }
@@ -177,6 +170,3 @@ export function StaffCard(props: RowProps) {
     </div>
   );
 }
-
-/** Kept next to the row so the strip and the drawer use one warning icon. */
-export const RowWarningIcon = TriangleAlert;

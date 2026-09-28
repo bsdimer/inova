@@ -8,7 +8,7 @@ import { loginFailure, type LoginFailure } from '@inova/shared';
 const AUTH_URL = import.meta.env.VITE_AUTH_URL ?? 'http://localhost:4001/v1';
 const STORAGE_KEY = 'inova.session';
 
-export interface Membership {
+interface Membership {
   t: string;
   r: string;
   tenantKey: string;

@@ -2,22 +2,22 @@ import { Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-route
 import { AnimatePresence, animate, motion, useMotionValue } from 'framer-motion';
 import {
   Bell,
-  Building2,
+  Buildings,
   Check,
-  ChevronDown,
-  CircleAlert,
-  CircleCheck,
+  CaretDown,
+  WarningCircle,
+  CheckCircle,
   Globe,
-  LayoutGrid,
+  SquaresFour,
   Lock,
-  LogOut,
+  SignOut,
   Monitor,
   Moon,
-  Search,
+  MagnifyingGlass,
   Shield,
   ShieldCheck,
   Sun,
-  UserCog,
+  UserGear,
   Users,
   Wallet,
   X,
@@ -54,14 +54,14 @@ import {
  * Sections that do not exist yet lead to the placeholder rather than hiding.
  */
 const NAV = [
-  { to: '/', label: 'Табло', icon: LayoutGrid },
-  { to: '/tasks', label: 'Задачи', icon: CircleCheck },
+  { to: '/', label: 'Табло', icon: SquaresFour },
+  { to: '/tasks', label: 'Задачи', icon: CheckCircle },
   { to: '/notices', label: 'Известия', icon: Bell },
   { to: '/finance', label: 'Финанси', icon: Wallet },
-  { to: '/buildings', label: 'Сгради', icon: Building2 },
+  { to: '/buildings', label: 'Сгради', icon: Buildings },
   { to: '/residents', label: 'Жители', icon: Users },
-  { to: '/issues', label: 'Сигнали', icon: CircleAlert },
-  { to: '/staff', label: 'Служители', icon: UserCog },
+  { to: '/issues', label: 'Сигнали', icon: WarningCircle },
+  { to: '/staff', label: 'Служители', icon: UserGear },
   { to: '/roles', label: 'Роли', icon: ShieldCheck },
 ] as const;
 
@@ -72,7 +72,7 @@ const NAV = [
  */
 const PLATFORM_NAV = [
   { to: '/platform', label: 'Общ преглед', icon: Globe },
-  { to: '/tenants', label: 'Организации', icon: Building2 },
+  { to: '/tenants', label: 'Организации', icon: Buildings },
   { to: '/audit', label: 'Одитен дневник', icon: Shield },
 ] as const;
 
@@ -614,7 +614,7 @@ function Drawer({
 function GlobalSearch({ className = '' }: { className?: string }) {
   return (
     <label className={`glass-field flex h-12 min-w-0 items-center gap-2.5 px-4 ${className}`}>
-      <Search size="1.25rem" className="shrink-0 text-ink-muted" />
+      <MagnifyingGlass size="1.25rem" className="shrink-0 text-ink-muted" />
       <input
         type="search"
         disabled
@@ -780,7 +780,7 @@ function AccountMenu({ session, compact = false }: { session: Session; compact?:
                   {roleLabel(session, platform)}
                 </span>
               </span>
-              <ChevronDown size="1.125rem" className="shrink-0" />
+              <CaretDown size="1.125rem" className="shrink-0" />
             </>
           )}
         </button>
@@ -795,7 +795,7 @@ function AccountMenu({ session, compact = false }: { session: Session; compact?:
             {options.map((option) => (
               <MenuItem
                 key={option.id}
-                icon={<Building2 size="0.9375rem" />}
+                icon={<Buildings size="0.9375rem" />}
                 onClick={() => {
                   setSelectedTenantId(option.id);
                   setOpen(false);
@@ -836,7 +836,7 @@ function AccountMenu({ session, compact = false }: { session: Session; compact?:
         ))}
 
         <hr className="my-1.5 border-panel-divider" />
-        <MenuItem icon={<LogOut size="0.9375rem" />} onClick={signOut}>
+        <MenuItem icon={<SignOut size="0.9375rem" />} onClick={signOut}>
           Изход
         </MenuItem>
       </div>

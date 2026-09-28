@@ -43,7 +43,7 @@ const COLUMNS = [
   { label: '', width: '4.75%', className: '', col: '', bar: 'ml-auto w-8' },
 ] as const;
 
-export const COLUMN_COUNT = COLUMNS.length;
+const COLUMN_COUNT = COLUMNS.length;
 
 /**
  * The staff list card. The toolbar and the header stay put in every state;

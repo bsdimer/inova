@@ -1,13 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  CircleAlert,
-  CircleCheck,
+  WarningCircle,
+  CheckCircle,
   Eye,
-  LoaderCircle,
+  CircleNotch,
   Lock,
-  MailPlus,
-  RefreshCw,
-  Search,
+  EnvelopeSimple,
+  ArrowsClockwise,
+  MagnifyingGlass,
   Users,
 } from '../components/icons';
 import { useMemo, useState, type ReactNode } from 'react';
@@ -308,7 +308,7 @@ function buildEmptyBody(input: {
           input.canManage && (
             <PrimaryButton onClick={input.onInvite}>
               <span className="flex items-center gap-2">
-                <MailPlus size="1rem" /> Покани първия служител
+                <EnvelopeSimple size="1rem" /> Покани първия служител
               </span>
             </PrimaryButton>
           )
@@ -326,7 +326,7 @@ function buildEmptyBody(input: {
     if (input.filters.search.trim()) parts.push(`Търсенето е „${input.filters.search.trim()}“`);
     return (
       <EmptyState
-        icon={<Search size="1.375rem" />}
+        icon={<MagnifyingGlass size="1.375rem" />}
         title="Няма служители по тези филтри"
         action={<GhostButton onClick={input.onReset}>Изчисти филтрите</GhostButton>}
       >
@@ -359,7 +359,7 @@ function pickStrip(input: {
     return (
       <TableStrip
         tone="danger"
-        icon={<CircleAlert size="0.875rem" />}
+        icon={<WarningCircle size="0.875rem" />}
         action={<GhostButton onClick={input.onRetry}>Опитай пак</GhostButton>}
       >
         Списъкът не можа да се зареди: {input.error.message}
@@ -368,7 +368,7 @@ function pickStrip(input: {
   }
   if (input.pending) {
     return (
-      <TableStrip tone="busy" icon={<LoaderCircle size="0.875rem" />}>
+      <TableStrip tone="busy" icon={<CircleNotch size="0.875rem" />}>
         {ACTION_PROGRESS[input.pending.action]} {input.pending.member.fullName} — редът остава на
         мястото си, докато сървърът потвърди.
       </TableStrip>
@@ -380,9 +380,9 @@ function pickStrip(input: {
         tone={input.notice.tone}
         icon={
           input.notice.tone === 'success' ? (
-            <CircleCheck size="0.875rem" />
+            <CheckCircle size="0.875rem" />
           ) : (
-            <CircleAlert size="0.875rem" />
+            <WarningCircle size="0.875rem" />
           )
         }
         onDismiss={input.onDismiss}
@@ -393,7 +393,7 @@ function pickStrip(input: {
   }
   if (input.refreshing) {
     return (
-      <TableStrip tone="info" icon={<RefreshCw size="0.8125rem" />}>
+      <TableStrip tone="info" icon={<ArrowsClockwise size="0.8125rem" />}>
         Обновява се — показва се последно зареденият списък
       </TableStrip>
     );

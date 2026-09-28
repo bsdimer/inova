@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Check, Sparkles } from '../components/icons';
+import { ArrowLeft, ArrowRight, Check, Sparkle } from '../components/icons';
 import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import {
@@ -525,7 +525,7 @@ function ProvisionWizard({
                   <ArrowLeft size="0.875rem" /> Назад
                 </PanelButton>
                 <PanelButton disabled={provision.isPending} onClick={() => provision.mutate()}>
-                  <Sparkles size="0.9375rem" />
+                  <Sparkle size="0.9375rem" />
                   {provision.isPending ? 'Създава…' : 'Създай организация'}
                 </PanelButton>
               </div>

@@ -3,14 +3,7 @@ import { motion } from 'framer-motion';
 import { useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { validateLoginForm, type LoginFieldError } from '@inova/shared';
 import { AppBackground } from '../components/AppBackground';
-import {
-  EnvelopeSimple,
-  Eye,
-  EyeOff,
-  LoaderCircle,
-  Lock,
-  TriangleAlert,
-} from '../components/icons';
+import { EnvelopeSimple, Eye, EyeSlash, CircleNotch, Lock, Warning } from '../components/icons';
 import { InovaWordmark } from '../components/Logo';
 import { LoginError, login } from '../lib/auth';
 
@@ -163,7 +156,7 @@ export function LoginPage() {
                     aria-label={reveal ? 'Скрий паролата' : 'Покажи паролата'}
                     className="shrink-0 rounded-full text-ink-muted transition-colors hover:text-ink"
                   >
-                    {reveal ? <EyeOff size="1.25rem" /> : <Eye size="1.25rem" />}
+                    {reveal ? <EyeSlash size="1.25rem" /> : <Eye size="1.25rem" />}
                   </button>
                 </Field>
               </div>
@@ -185,7 +178,7 @@ export function LoginPage() {
               */}
               {recovery && (
                 <p className="mt-3.5 flex gap-1.5 pl-0.5 text-body-13-tight text-ink">
-                  <TriangleAlert size="0.875rem" className="mt-px shrink-0 text-status-pending" />
+                  <Warning size="0.875rem" className="mt-px shrink-0 text-status-pending" />
                   Възстановяването на парола още не е налично. Свържете се с администратора на
                   организацията, който може да изпрати нов код за активиране.
                 </p>
@@ -196,7 +189,7 @@ export function LoginPage() {
                 disabled={loading}
                 className="cta text-body-14 mt-[1.375rem] flex h-11 w-full items-center justify-center gap-2 px-7 font-semibold transition-opacity disabled:opacity-60"
               >
-                {loading ? <LoaderCircle size="1.125rem" className="animate-spin" /> : 'Влез'}
+                {loading ? <CircleNotch size="1.125rem" className="animate-spin" /> : 'Влез'}
               </button>
             </form>
           </motion.div>
@@ -240,7 +233,7 @@ function Field({
       </span>
       {message && (
         <span role="alert" className="flex gap-1.5 pt-0.5 pl-0.5 text-body-13-tight text-ink">
-          <TriangleAlert size="0.875rem" className="mt-px shrink-0 text-status-urgent" />
+          <Warning size="0.875rem" className="mt-px shrink-0 text-status-urgent" />
           {message}
         </span>
       )}

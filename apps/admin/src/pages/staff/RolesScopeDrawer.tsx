@@ -1,4 +1,11 @@
-import { Info, LoaderCircle, RotateCcw, ShieldOff, UserX, X } from '../../components/icons';
+import {
+  Info,
+  CircleNotch,
+  ArrowCounterClockwise,
+  ShieldSlash,
+  UserMinus,
+  X,
+} from '../../components/icons';
 import { useEffect, useState } from 'react';
 import { Avatar, Drawer, StatusDot } from '../../components/ui';
 import type { Role, StaffMember } from '../../lib/api';
@@ -121,7 +128,7 @@ export function RolesScopeDrawer({
             disabled={!dirty || saving}
             className="flex items-center gap-2 rounded-full bg-panel-ink px-5 py-2 text-sm font-semibold text-panel-ink-inverse disabled:opacity-40"
           >
-            {saving && <LoaderCircle size="0.875rem" className="animate-spin" />}
+            {saving && <CircleNotch size="0.875rem" className="animate-spin" />}
             Запази
           </button>
         </div>
@@ -206,14 +213,14 @@ export function RolesScopeDrawer({
             <div className="mt-3 flex flex-wrap gap-2">
               {member.status === 'suspended' ? (
                 <AccountAction
-                  icon={<RotateCcw size="0.9375rem" />}
+                  icon={<ArrowCounterClockwise size="0.9375rem" />}
                   onClick={() => onAccountAction('reactivate')}
                 >
                   Възстанови достъпа
                 </AccountAction>
               ) : (
                 <AccountAction
-                  icon={<ShieldOff size="0.9375rem" />}
+                  icon={<ShieldSlash size="0.9375rem" />}
                   onClick={() => onAccountAction('suspend')}
                   disabled={member.status === 'invited'}
                   hint={
@@ -226,7 +233,7 @@ export function RolesScopeDrawer({
                 </AccountAction>
               )}
               <AccountAction
-                icon={<UserX size="0.9375rem" />}
+                icon={<UserMinus size="0.9375rem" />}
                 onClick={() => onAccountAction('revoke')}
                 danger
               >
