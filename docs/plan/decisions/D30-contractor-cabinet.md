@@ -24,7 +24,9 @@ them. **«Фактури»:** the firm uploads an invoice with a note and picks 
 building; it lands in the manager's «Документи» as a `supplier_invoice`
 (M9) with the firm on it; the note is required (one word is enough —
 «поддръжка», «разход») and the invoice carries a kind, «Фиксирани» or
-«Временни разходи», so the manager gets them sorted. The contractor edits
+«Временни разходи» — the same pair as the charge rules (`fee_rule.kind`), one
+concept: the building's costs — so the manager gets them sorted and P1 can
+link the expense to the rule it pays for. The contractor edits
 or deletes its own invoice (file, building, period, kind, note) until an
 expense references it — «преди деня на плащане»; deleting archives the
 document (`active → archived`), never removes the row, and every edit or
