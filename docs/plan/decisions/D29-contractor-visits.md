@@ -23,7 +23,7 @@ seen by every resident of the building.
 
 **Notifications (added 2026-09-26).** Nothing is pushed automatically, on
 create or the day before. The visit form has an optional «Изпрати известие
-до живущите» box, shown only to a role holding `notifications.send`; ticking
+до жителите» box, shown only to a role holding `notifications.send`; ticking
 it sends an ordinary notice (M7) to the visit's scope. Contractor starter
 roles do not hold the key; an admin may add it to a role.
 
