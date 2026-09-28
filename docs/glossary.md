@@ -33,8 +33,8 @@ plan's PR. No script checks this file — a reviewer reads it.
   WHI-41 (24.09).
 - **Фиксирани разходи / Временни разходи** — the building's costs, recurring
   or for a period: the charge rules in «Входни такси» (`fee_rule.kind`),
-  and the kind a supplier's invoice carries (the same two values, derived
-  from «За какво е») so it can
+  and, from P1, the kind a supplier's invoice carries (the same two values,
+  derived from «За какво е») so it can
   later be matched to the rule it pays for (P1). A rule is a «разход»; no
   rule is named «такса …». Avoid: «такса» for a rule, «Правила»,
   «еднократна такса». Source: D26, WHI-41 (23.09 16:35), WHI-27
@@ -47,7 +47,8 @@ plan's PR. No script checks this file — a reviewer reads it.
   choice: «Поддръжка» is a «Фиксиран разход», «Консуматив» and «Допълнителна
   услуга» a «Временен разход»; the firm does not pick it. A free note stays
   optional beside it. Avoid: «вид услуга», «категория» for this field.
-  Source: WHI-27 (28.09 12:30, 13:02).
+  Source: WHI-27 (28.09 12:30, 13:02); the firm's own invoice upload comes
+  with the P1 expenses wave (team lead, 28.09 14:06).
 - **Такса Домоуправление** — the one rule that keeps the word «такса».
   Source: D26, WHI-41 (23.09).
 - **Редактирай / История на промените** — changing a charge rule; the
