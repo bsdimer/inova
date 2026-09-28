@@ -59,10 +59,12 @@ file — a reviewer reads it.
 - **Изтрий достъпа** — the action that ends a staff member's access for
   good; the status after it is «Изтрит» (`staff_membership.status` =
   `revoked`). Avoid: «Отмени достъпа», «Отменен». Source: WHI-47 (25.09).
-- **Посещение** — a contractor firm's visit on the calendar
+- **Посещение** — a contractor's («доставчик») visit on the calendar
   (`tasks.kind = contractor_visit`). Avoid: «събитие», «задача» for a visit.
   Source: D29, WHI-27.
-- The general word for a contractor in the UI («фирма» / «изпълнител» /
-  «подизпълнител») is not settled yet — asked in WHI-27 on 28.09. Until
-  then the screens use «фирма»; the role names are «Почистваща фирма» and
-  «Техник» (D22).
+- **Доставчик** — anyone the tenant contracts for building work, a firm or
+  a private person (`contractor`); the house manager's side of visits,
+  assignments and invoices names them so («Нов доставчик», field
+  «Доставчик», «посещения на доставчици»). The role names stay «Почистваща
+  фирма» and «Техник» (D22). Avoid: «фирма», «изпълнител», «подизпълнител»
+  as the general word. Source: WHI-27 (28.09 09:13).
