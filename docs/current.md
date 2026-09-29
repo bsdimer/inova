@@ -1,6 +1,6 @@
 # Current status
 
-**Last updated:** 2026-09-24
+**Last updated:** 2026-09-29
 **Current milestone:** M1 tenant-account realm refactor, then M2 Property hierarchy
 **Focus:** apply the B8 tenant-scoped account decision, including multi-role mobile views, before M2 locks identity references (the shared app's tenant switcher is M10, moved 2026-09-21); then build property hierarchy so mobile can drop mock building/apartment data.
 
@@ -64,7 +64,12 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
   drawn ×1.25 — every size is in rem and the root font size is 20px there.
   Page margins follow the window height: 24 when the page does not fit, up
   to 64 when it does, centred in between. Menu items have their hover and
-  keyboard-focus look, the rail its tooltips.
+  keyboard-focus look, the rail its tooltips. Since 28.09: the menu stands
+  in four groups (#41); the account menu names who you are, your role and
+  what it lets you do, and returns the keyboard to its button on close (#44,
+  #48); «Роли» names every right in Bulgarian words as drawn (#49); no plan
+  codes reach the screen (#45); Табло fits a phone (#43); the route tree and
+  its guards live in `apps/admin/src/router.tsx` (#47).
   Contract for the full Табло: [features/admin-dashboard.md](features/admin-dashboard.md);
   it added M2b (unified search) and M11 (staff tasks/calendar) to the plan and
   extended M6 (issue priority), M7 (debtors audience, unread count) and M9.
@@ -92,9 +97,9 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
 | `apps/auth-service` PasswordHasher              | 7     | `unit`             |
 | `apps/auth-service` AuthService login failures  | 5     | `unit`             |
 
-Browser (Playwright, `apps/admin/e2e`, CI job `e2e`): 40 — sign-in 7, Табло 3, widths 11, Служители 5, Организации 3, screenshots 11.
+Browser (Playwright, `apps/admin/e2e`, CI job `e2e`): 142 — routing guards 28, account menu 20, screenshots 19, words 14, responsive 11, navigation 10, Роли 12 (states 4, page 8), narrow 7, sign-in 7, Табло 5, Служители 5, Организации 4.
 
-Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migrations`, `check:no-design-data`, `check:agent-harness`, `check:worklog`.
+Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migrations`, `check:no-design-data`, `check:agent-harness`, `check:worklog`, `check:decisions`.
 
 ## Milestone honesty
 
@@ -128,10 +133,10 @@ Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migr
 - Stakeholders prefer iCard for online payments; its merchant/account model,
   APIs, webhook/refund/reconciliation support, and Bulgarian onboarding must be
   validated before M8 is locked.
-- Dashboard design decisions D13 (debtor-reminder recipients/copy) and D15
-  (document-library categories) are open; D16 (the manager may author a
-  survey) was resolved 2026-09-22. They block the M9 dashboard UI, not M2 or
-  any backend contract.
+- Dashboard design decision D13 (debtor-reminder recipients and copy) is
+  open; D15 (document-library categories) was settled 2026-09-28 and D16
+  (the manager may author a survey) 2026-09-22. D13 blocks the M9 dashboard
+  UI, not M2 or any backend contract.
 - Legal counsel must confirm whether EGN and identity-card data are required for
   enforcement-agent claims. Do not add those fields to the general user profile
   before purpose, access, encryption, and retention rules are approved.
