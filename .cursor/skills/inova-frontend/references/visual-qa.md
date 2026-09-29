@@ -14,8 +14,16 @@
 - Keyboard: Tab/Shift+Tab reaches every control, Enter/Space activates,
   Escape closes, arrows work inside menus, tabs, and grids; modals trap focus;
   focus is visible.
-- Contrast on the rendered result: text ≥ 4.5:1, large text and UI elements
-  ≥ 3:1. On glass, measure on the text band.
+- Contrast on the rendered result: text ≥ 4.5:1, large text and UI
+  elements ≥ 3:1, in light and dark. On glass, measure a narrow band along
+  the text line (its `Range` box), the background taken with the text made
+  transparent; the worst case is the p95 of the band's background (p99 for
+  12 px) against the text colour blended over it — never the worst single
+  pixel. Optional for a new screen: measure its secondary texts this way.
+  A text below 4.5 is reported to the design session with element,
+  background and number; tokens are generated from Figma and are not edited
+  by hand. The PR description carries a «Контраст: …» line with the method
+  and the results.
 - Reduced motion honored where the change animates.
 - Mobile: light and dark; iOS and Android back. If a simulator is not
   available, say what you could not verify.
