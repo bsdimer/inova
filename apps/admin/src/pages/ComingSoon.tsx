@@ -1,7 +1,12 @@
 import { motion } from 'framer-motion';
 import { Hammer } from '../components/icons';
 
-export function ComingSoonPage({ title, milestone }: { title: string; milestone: string }) {
+/**
+ * A section of the menu that is not built yet. It says so in plain words: the
+ * milestone that brings it is a plan code and stays in main.tsx (design.md →
+ * Words).
+ */
+export function ComingSoonPage({ title }: { title: string }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -19,9 +24,7 @@ export function ComingSoonPage({ title, milestone }: { title: string; milestone:
         <Hammer size="1.625rem" />
       </span>
       <h1 className="text-title-22 font-medium">{title}</h1>
-      <p className="max-w-sm text-sm text-ink-muted">
-        Разделът идва с етап {milestone} от плана за изпълнение.
-      </p>
+      <p className="max-w-sm text-sm text-ink-muted">Разделът още не е наличен.</p>
     </motion.div>
   );
 }

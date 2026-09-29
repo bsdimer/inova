@@ -86,7 +86,7 @@ export function StaffToolbar(props: ToolbarProps) {
             selected={[]}
             onChange={() => undefined}
             disabled
-            disabledHint="Обхватът по сгради идва с йерархията на имотите (M2)."
+            disabledHint="Обхватът по сгради идва с йерархията на имотите."
           />
           <Facet
             label="Покана"
