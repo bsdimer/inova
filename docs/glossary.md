@@ -146,8 +146,11 @@ does not take the entry for the current UI.
 
 - **Връзка** — a link sent by e-mail or SMS (password recovery, invitation);
   the button is «Изпрати връзка». Avoid: «линк». Source: WHI-20 (23.09).
-- **Тема** — the theme setting: «Светла», «Тъмна», «Динамична» (follows the
-  time of day). Avoid: «Изглед», «Както в системата». Source: WHI-47
-  (25.09), `docs/design.md` → theme. Decided, not built: the admin still
+- **Тема** — the theme setting, in this order: «Динамична» (the default:
+  light by day, dark in the evening, by the time of day, never the device
+  setting), «Светла» (always light), «Тъмна» (always dark); each with its
+  caption — «светла денем, тъмна вечер» / «винаги светла» / «винаги тъмна».
+  Avoid: «Изглед», «Както в системата». Source: WHI-47 (25.09), WHI-86
+  (29.09 12:37), `docs/design.md` → theme. Decided, not built: the admin still
   offers «Изглед» with «Както в системата» (following the system setting)
   until the theme task lands.
