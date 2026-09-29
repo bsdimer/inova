@@ -17,6 +17,8 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('no code of a right or a role is on the page', async ({ page }) => {
+  // The catalogue comes by its own request; read the page once it is there.
+  await expect(page.getByRole('region', { name: 'Каталог на правата' })).toBeVisible();
   const text = await page.locator('main').innerText();
   expect(text).not.toMatch(/\b[a-z]+\.[a-z]+(\.[a-z]+)?\b/);
   expect(text).not.toMatch(/\b(admin|manager|resident)\b/);
@@ -52,12 +54,13 @@ test('the catalogue groups the rights by area, in words', async ({ page }) => {
   const catalogue = page.getByRole('region', { name: 'Каталог на правата' });
   const groups = catalogue.getByRole('list');
   await expect(groups.first()).toBeVisible();
-  const read = await catalogue.evaluate((el) =>
-    [...el.querySelectorAll('ul')].map((ul) => [
-      ul.getAttribute('aria-label'),
-      ...[...ul.querySelectorAll('li')].map((li) => li.textContent),
-    ]),
-  );
+  const read = [];
+  for (const group of await groups.all()) {
+    read.push([
+      await group.getAttribute('aria-label'),
+      ...(await group.getByRole('listitem').allTextContents()),
+    ]);
+  }
   expect(read).toEqual([
     ['Служители', 'Преглед на служителите', 'Покани и управление на служители'],
     [

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Lock, PencilSimple, Trash } from '../components/icons';
-import { useState, type FormEvent } from 'react';
+import { useState, useSyncExternalStore, type FormEvent } from 'react';
 import {
   Chip,
   ErrorNote,
@@ -10,10 +10,10 @@ import {
   Modal,
   PrimaryButton,
   SecondaryButton,
+  SkeletonBar,
   panelInputClass,
 } from '../components/ui';
 import { api, ApiError, type Permission, type Role } from '../lib/api';
-import { useNavMode } from '../lib/navMode';
 import { useSelectedTenantId } from '../lib/tenant';
 import { AccessNote } from './Staff';
 import { groupPermissions, permissionLabel, sortPermissions } from './roles/permissions';
@@ -31,6 +31,21 @@ const ROLE_DESCRIPTIONS: Record<string, string> = {
   technician:
     'Вижда само сигналите с етикет «Поддръжка» в сградите, които са му възложени. Нищо друго.',
 };
+
+const wideQuery = '(min-width: 64rem)';
+
+/** lg and up: the page's own two-column breakpoint, not the menu's. */
+function useWide(): boolean {
+  return useSyncExternalStore(
+    (fn) => {
+      const list = window.matchMedia(wideQuery);
+      list.addEventListener('change', fn);
+      return () => list.removeEventListener('change', fn);
+    },
+    () => window.matchMedia(wideQuery).matches,
+    () => true,
+  );
+}
 
 function memberLabel(count: number): string {
   if (count === 0) return 'още никой';
@@ -64,13 +79,13 @@ export function RolesPage() {
     onError: (e) => setPageError(e instanceof ApiError ? e.message : 'Нещо се обърка.'),
   });
 
-  const twoColumns = useNavMode() !== 'drawer';
+  const twoColumns = useWide();
   const roleCards = (roles.data ?? []).map((role, i) => (
     <RoleCard
       key={role.key}
       role={role}
       index={i}
-      catalog={permissions.data ?? []}
+      catalogue={permissions.data ?? []}
       onEdit={() => setEditorRole(role)}
       onDelete={() => remove.mutate(role.key)}
       deleting={remove.isPending}
@@ -102,7 +117,19 @@ export function RolesPage() {
         lg one column in that order — a flat list, so reading and Tab follow
         what is on screen.
       */}
-      {twoColumns ? (
+      {roles.isError ? (
+        <ErrorNote message="Ролите не се заредиха." />
+      ) : roles.isPending ? (
+        <div aria-hidden className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+          {[0, 1].map((i) => (
+            <div key={i} className="glass-data flex flex-col gap-3 rounded-3xl px-6 py-4">
+              <SkeletonBar className="h-5 w-2/5" />
+              <SkeletonBar className="h-4 w-4/5" />
+              <SkeletonBar className="h-6 w-3/5" />
+            </div>
+          ))}
+        </div>
+      ) : twoColumns ? (
         <div className="grid grid-cols-2 items-start gap-5">
           {[0, 1].map((column) => (
             <div key={column} className="flex flex-col gap-5">
@@ -114,13 +141,19 @@ export function RolesPage() {
         <div className="flex flex-col gap-5">{roleCards}</div>
       )}
 
-      <PermissionCatalogue catalog={permissions.data ?? []} />
+      {/* After the roles: a catalogue that answers first does not jump down. */}
+      {roles.isSuccess &&
+        (permissions.isError ? (
+          <ErrorNote message="Каталогът на правата не се зареди." />
+        ) : (
+          <PermissionCatalogue catalogue={permissions.data ?? []} />
+        ))}
 
       <RoleEditor
         role={editorRole}
         onClose={() => setEditorRole(null)}
         tenantId={tenantId}
-        catalog={permissions.data ?? []}
+        catalogue={permissions.data}
       />
     </div>
   );
@@ -139,20 +172,20 @@ function RightChip({ children }: { children: string }) {
 function RoleCard({
   role,
   index,
-  catalog,
+  catalogue,
   onEdit,
   onDelete,
   deleting,
 }: {
   role: Role;
   index: number;
-  catalog: Permission[];
+  catalogue: Permission[];
   onEdit: () => void;
   onDelete: () => void;
   deleting: boolean;
 }) {
   const locked = role.key === 'admin';
-  const description = (key: string) => catalog.find((p) => p.key === key)?.description;
+  const descriptionOf = (key: string) => catalogue.find((p) => p.key === key)?.description;
   return (
     <motion.article
       initial={{ opacity: 0, y: 14 }}
@@ -173,17 +206,18 @@ function RoleCard({
         <p className="text-body-13-tight text-ink-soft">{ROLE_DESCRIPTIONS[role.key]}</p>
       )}
 
-      <ul aria-label="Права" className="flex flex-wrap gap-2">
-        {locked ? (
-          <RightChip>всички права</RightChip>
-        ) : (
-          sortPermissions(role.permissions).map((key) => (
-            <RightChip key={key}>{permissionLabel(key, description(key))}</RightChip>
-          ))
-        )}
-      </ul>
-      {!locked && role.permissions.length === 0 && (
+      {!locked && role.permissions.length === 0 ? (
         <p className="text-label-12 text-ink-soft">Без права</p>
+      ) : (
+        <ul aria-label="Права" className="flex flex-wrap gap-2">
+          {locked ? (
+            <RightChip>всички права</RightChip>
+          ) : (
+            sortPermissions(role.permissions).map((key) => (
+              <RightChip key={key}>{permissionLabel(key, descriptionOf(key))}</RightChip>
+            ))
+          )}
+        </ul>
       )}
 
       <hr className="border-[var(--glass-edge-soft)]" />
@@ -215,8 +249,8 @@ function RoleCard({
 }
 
 /** Каталог на правата (1093:154): every right the platform knows, by area. */
-function PermissionCatalogue({ catalog }: { catalog: Permission[] }) {
-  if (catalog.length === 0) return null;
+function PermissionCatalogue({ catalogue }: { catalogue: Permission[] }) {
+  if (catalogue.length === 0) return null;
   return (
     <section
       aria-labelledby="catalogue-title"
@@ -226,7 +260,7 @@ function PermissionCatalogue({ catalog }: { catalog: Permission[] }) {
         Каталог на правата
       </h2>
       <div className="flex flex-wrap gap-x-5 gap-y-2.5">
-        {groupPermissions(catalog).map(({ title, items }) => (
+        {groupPermissions(catalogue).map(({ title, items }) => (
           <div key={title} className="flex flex-wrap items-center gap-2">
             <span aria-hidden className="text-overline-12 font-semibold text-ink-soft uppercase">
               {title}
@@ -253,12 +287,13 @@ function RoleEditor({
   role,
   onClose,
   tenantId,
-  catalog,
+  catalogue,
 }: {
   role: Role | 'new' | null;
   onClose: () => void;
   tenantId: string | null;
-  catalog: Permission[];
+  /** Undefined until it loads, or when it failed: nothing to choose from yet. */
+  catalogue: Permission[] | undefined;
 }) {
   const queryClient = useQueryClient();
   const isNew = role === 'new';
@@ -320,6 +355,11 @@ function RoleEditor({
       wide
     >
       <form onSubmit={submit} className="space-y-4">
+        {/*
+          A system role is always shown by its Bulgarian name (ROLE_NAMES); its
+          stored name is English and renaming it would change nothing anyone
+          sees, so only a new or custom role has a key and a name to edit.
+        */}
         {!systemRole && (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {isNew && (
@@ -334,30 +374,23 @@ function RoleEditor({
                 />
               </Field>
             )}
-            {/*
-            A system role is always shown by its Bulgarian name (ROLE_NAMES);
-            its stored name is English and renaming it would change nothing
-            anyone sees, so only a new or custom role has a name to edit.
-          */}
-            {!systemRole && (
-              <Field label="Име">
-                <input
-                  className={panelInputClass}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Счетоводител"
-                  required
-                  minLength={2}
-                />
-              </Field>
-            )}
+            <Field label="Име">
+              <input
+                className={panelInputClass}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Счетоводител"
+                required
+                minLength={2}
+              />
+            </Field>
           </div>
         )}
 
         <div>
           <p className="mb-2 text-sm font-semibold">Права</p>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {groupPermissions(catalog)
+            {groupPermissions(catalogue ?? [])
               .flatMap((group) => group.items)
               .map((permission) => (
                 <label
@@ -403,7 +436,7 @@ function RoleEditor({
           </button>
           <button
             type="submit"
-            disabled={save.isPending}
+            disabled={save.isPending || !catalogue}
             className="rounded-full bg-panel-ink px-5 py-2 text-sm font-semibold text-panel-ink-inverse disabled:opacity-40"
           >
             {save.isPending ? 'Запазва…' : isNew ? 'Създай роля' : 'Запази промените'}

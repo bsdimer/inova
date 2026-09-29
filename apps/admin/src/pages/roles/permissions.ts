@@ -63,13 +63,13 @@ export function permissionLabel(key: string, description?: string): string {
 
 /** The catalogue in areas, each right in its area's drawn order. */
 export function groupPermissions<T extends { key: string }>(
-  catalog: T[],
+  catalogue: T[],
 ): { title: string; items: T[] }[] {
   const order = Object.keys(LABELS);
   const rank = (key: string) => (order.includes(key) ? order.indexOf(key) : order.length);
   const other: T[] = [];
   const groups = GROUPS.map(({ title }) => ({ title, items: [] as T[] }));
-  for (const permission of catalog) {
+  for (const permission of catalogue) {
     const prefix = permission.key.split('.')[0]!;
     const index = GROUPS.findIndex((group) => group.prefixes.includes(prefix));
     (index === -1 ? other : groups[index]!.items).push(permission);
