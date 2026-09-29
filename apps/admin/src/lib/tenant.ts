@@ -5,7 +5,7 @@
  */
 import { useQuery } from '@tanstack/react-query';
 import { useSyncExternalStore } from 'react';
-import { api, type TenantSummary } from './api';
+import { api, type TenantContext, type TenantSummary } from './api';
 import { getSession } from './auth';
 
 const STORAGE_KEY = 'inova.tenantId';
@@ -68,4 +68,26 @@ export function useTenantOptions(): { options: TenantOption[]; isLoading: boolea
     })),
     isLoading: false,
   };
+}
+
+/**
+ * A super_admin is in the platform scope until they enter an organization, and
+ * back in it the moment they leave — «Върни се в платформата» clears the
+ * selection. Everyone else is always in a tenant.
+ */
+export function usePlatformScope(): boolean {
+  const session = getSession();
+  const tenantId = useSelectedTenantId();
+  return session?.user.platformRole === 'super_admin' && !tenantId;
+}
+
+/** The selected organisation, the caller's role in it and what that role may do. */
+export function useTenantContext() {
+  const tenantId = useSelectedTenantId();
+  return useQuery({
+    queryKey: ['tenant', tenantId],
+    queryFn: () => api<TenantContext>('/tenant', { tenantId: tenantId! }),
+    enabled: Boolean(tenantId),
+    staleTime: 60_000,
+  });
 }

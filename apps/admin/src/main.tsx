@@ -119,12 +119,11 @@ const platformOverviewRoute = createRoute({
 const auditRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/audit',
+  // Both scopes: the platform sees every organisation, an organisation's
+  // administrator their own, entered from the account menu (WHI-82).
+  // TODO(M1): the placeholder checks nothing; the WHI-82 screen must answer a
+  // missing audit.read itself, as Служители and Роли do. No data is here yet.
   component: () => <ComingSoonPage title="Одитен дневник" milestone="P1" />,
-  beforeLoad: () => {
-    if (getSession()?.user.platformRole !== 'super_admin') {
-      throw redirect({ to: '/' });
-    }
-  },
 });
 
 const tenantsRoute = createRoute({

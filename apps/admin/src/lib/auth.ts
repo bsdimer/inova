@@ -21,6 +21,8 @@ export interface Session {
   user: {
     id: string;
     email: string | null;
+    /** E.164; sessions stored before the field was read may lack it. */
+    phone?: string | null;
     fullName: string;
     platformRole: 'super_admin' | null;
   };
