@@ -79,12 +79,15 @@ export function SecondaryButton({
   disabled = false,
   title,
   className = '',
+  size = 'md',
 }: {
   children: ReactNode;
   onClick?: () => void;
   disabled?: boolean;
   title?: string;
   className?: string;
+  /** `sm`: the 32 px card action (V2/Button Size=S, e.g. «Редактирай» on a role). */
+  size?: 'md' | 'sm';
 }) {
   return (
     <button
@@ -92,7 +95,9 @@ export function SecondaryButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`glass-blur text-body-14 h-11 rounded-full px-7 font-semibold text-ink transition-opacity disabled:opacity-45 ${className}`}
+      className={`glass-blur rounded-full text-ink transition-opacity disabled:opacity-45 ${
+        size === 'sm' ? 'h-8 px-3 text-body-13 font-medium' : 'text-body-14 h-11 px-7 font-semibold'
+      } ${className}`}
       style={{
         background: 'var(--glass-inner)',
         boxShadow: 'inset 0 0 0 0.0625rem var(--glass-edge)',
