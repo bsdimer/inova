@@ -117,7 +117,7 @@ reset revokes existing sessions; out-of-bounds lifetime settings fail start-up.
   Infobip — a long-lead item, see M-Pilot). Until then `MockCodeDelivery` logs
   codes and refuses to start in production without `CODE_DELIVERY=log`.
 - Admin silent refresh; audit-trail page (before the pilot — the platform rail already shows «Одитен дневник»).
-- The audit record on a platform user's entry into a tenant (§6.2, `platform_access`): the guard admits `super_admin` and writes nothing yet; what it changes inside the tenant is audited as an ordinary actor.
+- The audit record on a platform user's entry into a tenant (§6.2, `platform_access`): the guard admits `super_admin` and writes nothing yet; what it changes inside the tenant is audited as an ordinary actor. Lands with the B8 refactor (team lead, 28.09), not as a separate fix.
 
 ## Hardening done outside the phase scope (2026-09-21)
 
