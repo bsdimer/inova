@@ -263,8 +263,10 @@ function PlatformVisitNote({ session }: { session: Session }) {
   return (
     <div className="glass flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-3.5">
       <Lock size="1.0625rem" className="shrink-0 text-ink-muted" />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold">Платформа → {name}</p>
+      {/* Grows from a readable width: below it the button wraps under the text
+          instead of squeezing the text into one word per line. */}
+      <div className="min-w-0 flex-[1_1_15rem]">
+        <p className="text-sm font-semibold break-words">Платформа → {name}</p>
         <p className="text-xs text-ink-muted">
           Влязохте в организацията от платформен обхват. Всяко действие тук се записва в одитния ѝ
           дневник.
@@ -472,7 +474,7 @@ function PlatformBadge() {
       >
         Платформа
       </span>
-      <p className="mt-1.5 text-xs text-ink-faint">всички организации</p>
+      <p className="mt-1.5 text-xs text-ink-soft">всички организации</p>
     </div>
   );
 }

@@ -65,15 +65,15 @@ export function DashboardPage() {
 
 /**
  * A dashboard card: glass, 24 of padding inside a 1 px edge (25 to the
- * content, as the frames measure it). `milestone` is what fills it.
+ * content, as the frames measure it). Which milestone fills a card is noted
+ * at its call site, never in the UI: plan codes stay out of the words
+ * (design.md → Words).
  */
 function Card({
-  milestone,
   children,
   delay = 0,
   className = '',
 }: {
-  milestone: string;
   children: ReactNode;
   delay?: number;
   className?: string;
@@ -83,7 +83,6 @@ function Card({
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay }}
-      title={`Данните идват с ${milestone}.`}
       className={`glass flex flex-col p-[1.5625rem] ${className}`}
     >
       {children}
@@ -135,10 +134,12 @@ function Toggle({ options, selected }: { options: readonly string[]; selected: s
 }
 
 /** V2/Label/12 Semibold · overline, as the list headings draw it. */
+/**
+ * A section label inside a card: text/primary, so the 12 px caps keep AA over
+ * the bright part of the photo in both themes (muted measured 3.69 / 3.94).
+ */
 function Overline({ children }: { children: ReactNode }) {
-  return (
-    <p className="text-overline-12 pb-0.5 font-semibold text-ink-muted uppercase">{children}</p>
-  );
+  return <p className="text-overline-12 pb-0.5 font-semibold text-ink uppercase">{children}</p>;
 }
 
 const MONTHS = [
@@ -191,11 +192,9 @@ function Money({
 function BalanceCard({ balance, today }: { balance: DashboardData['balance']; today: Date }) {
   const month = MONTHS[today.getMonth()];
   return (
-    // On a phone the card is 16 in at the sides and 20 at top and bottom (818:11656).
-    <Card
-      milestone="M3–M4"
-      className="gap-2.5 px-[1.0625rem] py-[1.3125rem] md:col-span-2 md:p-[1.5625rem] lg:col-span-3"
-    >
+    // Data with M3–M4. On a phone the card is 16 in at the sides and 20 at top
+    // and bottom (818:11656).
+    <Card className="gap-2.5 px-[1.0625rem] py-[1.3125rem] md:col-span-2 md:p-[1.5625rem] lg:col-span-3">
       <header className="flex items-center gap-3">
         <h2 className="text-title-16 flex-1 font-medium text-ink-soft">Баланс</h2>
         <p className="num text-body-13-tight whitespace-nowrap text-ink-muted">
@@ -239,13 +238,17 @@ function BalanceCard({ balance, today }: { balance: DashboardData['balance']; to
           }
         />
         <div className="flex w-full flex-col gap-2.5 md:w-[12.5rem] md:min-w-0">
-          <SecondaryButton disabled title="Начисленията и касата идват с M3–M4." className="w-full">
+          <SecondaryButton
+            disabled
+            title="Начисленията и касата още не са налични."
+            className="w-full"
+          >
             Виж детайли
           </SecondaryButton>
           <button
             type="button"
             disabled
-            title="Известията за задължения идват с M7."
+            title="Известията за задължения още не са налични."
             className="cta text-body-14 h-11 w-full px-7 font-semibold disabled:opacity-45"
           >
             Изпрати известия
@@ -262,7 +265,8 @@ function Stat({ label, minor, currency }: { label: string; minor?: bigint; curre
     // rounded to whole pixels and never under 11 (design README → Адаптив):
     // 15 → 12, 18 → 14, 13 → 11; the ring's 30 → 24 and 14 → 11.
     <div className="flex flex-col items-center gap-[0.1875rem] whitespace-nowrap max-md:gap-0.5">
-      <p className="text-body-15-tight text-ink-soft max-md:text-[0.75rem] max-md:leading-[0.875rem]">
+      {/* text/primary over the bubble's shade (WHI-83). */}
+      <p className="text-body-15-tight text-ink max-md:text-[0.75rem] max-md:leading-[0.875rem]">
         {label}
       </p>
       {minor !== undefined && currency ? (
@@ -365,9 +369,9 @@ function CollectedRing({ percent }: { percent: number | null }) {
 
 function DocumentsCard() {
   return (
-    // Last on a phone, under Сигнали on a tablet, first in the row from 1024.
+    // Data with M4. Last on a phone, under Сигнали on a tablet, first in the
+    // row from 1024.
     <Card
-      milestone="M4"
       delay={0.05}
       className="order-last items-center justify-center gap-5 md:flex-1 lg:order-none"
     >
@@ -376,7 +380,7 @@ function DocumentsCard() {
         title="Качи документ"
         body="Фактури за плащане, документи за сгради и други."
         action="Избери файл"
-        why="Хранилището на документи идва с M4."
+        why="Хранилището на документи още не е налично."
       />
       <hr className="w-full border-glass-divider" />
       <DocumentBlock
@@ -384,7 +388,7 @@ function DocumentsCard() {
         title="Всичко важно в една справка"
         body="Преглед на данни, експорт в PDF и печат."
         action="Направи справка"
-        why="Справките идват с M4."
+        why="Справките още не са налични."
       />
     </Card>
   );
@@ -441,12 +445,10 @@ const SIGNAL_TAGS = [
 
 function SignalsCard({ signals, today }: { signals: DashboardData['signals']; today: Date }) {
   return (
-    // 601 tall as composed, whatever the list holds; a short window closes the gaps.
-    <Card
-      milestone="M6"
-      delay={0.1}
-      className="min-h-[37.5625rem] gap-[1.5625rem] tight:min-h-0 tight:gap-4"
-    >
+    // Data with M6. 601 tall as composed, whatever the list holds, where cards stand side by
+    // side; on a phone they stack and end with their content. A short window
+    // closes the gaps.
+    <Card delay={0.1} className="gap-[1.5625rem] md:min-h-[37.5625rem] tight:min-h-0 tight:gap-4">
       <header className="flex h-8 items-center justify-between">
         <Toggle options={['Сигнали', 'Анкети']} selected="Сигнали" />
         <SectionArrow to="/issues" label="Към сигналите" />
@@ -465,23 +467,28 @@ function SignalsCard({ signals, today }: { signals: DashboardData['signals']; to
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-x-3 gap-y-[0.6875rem]">
-        {SIGNAL_TAGS.map(({ key, label, icon: Icon, tone }) => (
-          <span
-            key={key}
-            className="glass-blur flex h-11 min-w-0 items-center gap-1.5 rounded-full p-3"
-            style={{
-              background: 'var(--glass-inner-strong)',
-              boxShadow: 'inset 0 0 0 0.0625rem var(--glass-edge-soft)',
-            }}
-          >
-            <Icon size="1.25rem" className={`shrink-0 ${tone}`} />
-            <span className="text-body-14 truncate font-medium">{label}</span>
-            <span className="num text-number-16 ml-auto font-medium">
-              {signals ? signals.counters[key] : <Blank />}
+      {/* Two per row where the longest name fits: a tag needs 147, two need
+          2 × 147 + 12 = 19.125rem, as the 1728, 1180 and 402 cards have. On a
+          narrower card (1024, 375) one per row: a filter's name is never cut. */}
+      <div className="@container">
+        <div className="grid grid-cols-1 gap-x-3 gap-y-[0.6875rem] @[19.125rem]:grid-cols-2">
+          {SIGNAL_TAGS.map(({ key, label, icon: Icon, tone }) => (
+            <span
+              key={key}
+              className="glass-blur flex h-11 min-w-0 items-center gap-1.5 rounded-full p-3"
+              style={{
+                background: 'var(--glass-inner-strong)',
+                boxShadow: 'inset 0 0 0 0.0625rem var(--glass-edge-soft)',
+              }}
+            >
+              <Icon size="1.25rem" className={`shrink-0 ${tone}`} />
+              <span className="text-body-14 font-medium whitespace-nowrap">{label}</span>
+              <span className="num text-number-16 ml-auto font-medium">
+                {signals ? signals.counters[key] : <Blank />}
+              </span>
             </span>
-          </span>
-        ))}
+          ))}
+        </div>
       </div>
 
       <div className="flex flex-col gap-2 pt-8 tight:pt-[1.125rem]">
@@ -513,7 +520,7 @@ function SignalsCard({ signals, today }: { signals: DashboardData['signals']; to
           ))
         ) : (
           <p className="text-body-14 text-ink-muted">
-            Спешните сигнали на жителите се появяват тук с M6.
+            Спешните сигнали на жителите ще се появяват тук.
           </p>
         )}
       </div>
@@ -563,12 +570,12 @@ function CalendarCard({ calendar, today }: { calendar: DashboardData['calendar']
   const title = MONTHS[shown.month] ?? '';
 
   return (
-    // The card's height is the composition's, not its list's (tablo spec §8):
-    // 687 with four events, 621 with three; a short window lets it shrink.
+    // Data with M11. The card's height is the composition's, not its list's (tablo spec §8):
+    // 687 with four events, 621 with three; a short window lets it shrink. On
+    // a phone the cards stack and this one ends with its content.
     <Card
-      milestone="M11"
       delay={0.15}
-      className="min-h-[42.9375rem] flex-1 gap-1.5 lg:max-xl:min-h-[38.8125rem] tight:min-h-0"
+      className="gap-1.5 md:min-h-[42.9375rem] md:flex-1 lg:max-xl:min-h-[38.8125rem] tight:min-h-0"
     >
       <header className="flex h-8 items-center gap-2">
         <h2 className="text-title-16 flex-1 font-medium text-ink-soft">Календар</h2>
@@ -672,7 +679,7 @@ function CalendarCard({ calendar, today }: { calendar: DashboardData['calendar']
           ))
         ) : (
           <p className="text-body-14 text-ink-muted">
-            Общи събрания, отчети и задачи на екипа се появяват тук с M11.
+            Общи събрания, отчети и задачи на екипа ще се появяват тук.
           </p>
         )}
       </div>
@@ -683,7 +690,7 @@ function CalendarCard({ calendar, today }: { calendar: DashboardData['calendar']
 function BuildingsCard({ buildings }: { buildings: DashboardData['buildings'] }) {
   return (
     // The frame's card is 214 tall: its tiles run 8 into the bottom padding.
-    <Card milestone="M2" delay={0.2} className="gap-4 pb-[1.0625rem] lg:col-span-3">
+    <Card delay={0.2} className="gap-4 pb-[1.0625rem] lg:col-span-3">
       <header className="flex items-center gap-2.5">
         <div className="min-w-0 flex-1">
           <h2 className="text-title-16 font-medium text-ink-soft">Преглед на сгради</h2>
