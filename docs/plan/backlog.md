@@ -26,6 +26,7 @@ Small, independently implementable, agent-sized items in build order. A planning
 - [ ] **13.** Audit-record writer (transactional) + coverage on role/permission changes _(writer done + used by provisioning; role-change coverage lands with the staff screens)_
 - [x] **14.** Seed script: two demo tenants + tenant-isolation test suite (CI blocker)
 - [ ] **15.** Admin: login _(done)_, explicit authenticated tenant-context switcher, staff invitations, role management screens
+- [ ] **15a.** core-api: `GET /v1/tenant` returns the caller's role **name** beside its key (`roleName`, from the tenant's roles) — the account menu names the role in words, and a custom role without `roles.read` (a «Касиер») must not see its key; integration test: a role without `roles.read` gets its own name. Contract change in `packages/shared` (`TenantContext`); the admin then drops its `GET /v1/tenant/roles` lookup. Found by the review of #44 (WHI-84), 29.09; not blocking — seeded roles are named in the admin
 - [ ] **16.** Mobile: invite-code activation + login screens _(done)_; multi-role view selector (the multi-account portfolio and tenant switcher are item 56, M10), and tenant-namespaced caches/push/analytics _(pending)_ _(the multi-account portfolio and tenant switcher moved to item 56 / M10 on 2026-09-21; tenant-namespaced storage keys stay here)_
 
 ## Property
