@@ -60,7 +60,11 @@ const THEMES: { value: ThemeChoice; label: string }[] = [
   { value: 'system', label: 'Динамична' },
 ];
 
-/** The role in words: the seeded names, a custom role's own name, never a key. */
+/**
+ * The role in words: the seeded names, a custom role's own name. A custom
+ * role read without roles.read still shows its key: /tenant carries the key
+ * only (see the PR's Remains).
+ */
 export function useRoleName(session: Session | null): string {
   const tenantId = useSelectedTenantId();
   const context = useTenantContext();
@@ -373,18 +377,24 @@ function Sheet({
   children: ReactNode;
 }) {
   const closeButton = useRef<HTMLButtonElement>(null);
+  // Read through a ref: the menu hands a new onClose on every render, and a
+  // re-render (choosing an organisation, a refetch) must not move the focus.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
 
   useEffect(() => {
     if (!open) return;
     closeButton.current?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onCloseRef.current();
     document.addEventListener('keydown', onKey);
     const anchor = returnFocus.current;
     return () => {
       document.removeEventListener('keydown', onKey);
       anchor?.focus();
     };
-  }, [open, onClose, returnFocus]);
+  }, [open, returnFocus]);
 
   return createPortal(
     <AnimatePresence>

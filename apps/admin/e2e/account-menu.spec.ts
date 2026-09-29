@@ -155,4 +155,30 @@ test.describe('402', () => {
     await menu.getByRole('button', { name: 'Затвори' }).click();
     await expect(menu).toBeHidden();
   });
+
+  test('choosing an organisation keeps the focus on the choice', async ({ page }) => {
+    await openSignedIn(page, ORG_ADMIN, '/');
+    // A second membership, so the sheet offers a choice; switching re-renders
+    // the whole menu, which is what used to throw the focus back to ×.
+    await page.evaluate(() => {
+      const session = JSON.parse(localStorage.getItem('inova.session')!);
+      session.memberships.push({
+        t: '00000000-0000-4000-8000-000000000001',
+        r: 'admin',
+        tenantKey: 'second',
+        tenantName: 'Втора организация',
+      });
+      localStorage.setItem('inova.session', JSON.stringify(session));
+    });
+    await page.reload();
+    const menu = await openMenu(page);
+    const second = menu
+      .getByRole('radiogroup', { name: 'Организация' })
+      .getByRole('radio', { name: 'Втора организация' });
+    await second.focus();
+    await page.keyboard.press('Enter');
+    await expect(second).toBeChecked();
+    await page.waitForTimeout(300);
+    await expect(second).toBeFocused();
+  });
 });
