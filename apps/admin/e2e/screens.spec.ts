@@ -134,3 +134,28 @@ test('Роли и обхват', async ({ page }) => {
   await settled(page);
   await page.screenshot(shot('roli-i-obhvat'));
 });
+
+for (const theme of ['light', 'dark'] as const) {
+  test(`Роли, ${theme}`, async ({ page }) => {
+    await page.setViewportSize({ width: 1728, height: 1117 });
+    await openSignedIn(page, ORG_ADMIN, '/roles');
+    await page.evaluate((t) => localStorage.setItem('inova.theme', t), theme);
+    await page.reload();
+    await expect(page.locator('main article')).toHaveCount(3);
+    await settled(page);
+    await page.screenshot({ ...shot(`roli-${theme}`), fullPage: true });
+  });
+}
+
+test('Роли — the role editor', async ({ page }) => {
+  await page.setViewportSize({ width: 1728, height: 1117 });
+  await openSignedIn(page, ORG_ADMIN, '/roles');
+  await page
+    .locator('main article')
+    .filter({ hasText: 'Домоуправител' })
+    .getByRole('button', { name: 'Редактирай' })
+    .click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await settled(page);
+  await page.screenshot(shot('roli-redaktor'));
+});
