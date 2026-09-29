@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -124,6 +125,10 @@ export function AccountMenu({
   const organisation = platform ? null : (context.data?.tenant.name ?? null);
   const close = () => setOpen(false);
   const dialogRef = useRef<HTMLDivElement>(null);
+  // The avatar on screen when the menu closes — read then, not when it
+  // opened: crossing 768 re-mounts the button, and the one from the opening
+  // is gone by the time the focus comes back.
+  const focusAnchor = useCallback(() => anchorRef.current?.focus(), []);
 
   // The popover is not modal, but the keyboard still starts inside it and
   // comes back to the avatar when it closes — unless the user clicked away
@@ -135,11 +140,9 @@ export function AccountMenu({
     return () => {
       cancelAnimationFrame(frame);
       const active = document.activeElement;
-      if (!active || active === document.body || dialog?.contains(active)) {
-        anchorRef.current?.focus();
-      }
+      if (!active || active === document.body || dialog?.contains(active)) focusAnchor();
     };
-  }, [open, narrow]);
+  }, [open, narrow, focusAnchor]);
 
   const anchor = (
     <button
