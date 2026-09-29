@@ -50,10 +50,12 @@ does not take the entry for the current UI.
   values: «Поддръжка», «Консуматив», «Допълнителна услуга»
   (`invoice_purpose`: `maintenance` / `consumables` / `extra_service`). The
   field is «За какво е», not «Вид» or «Категория»: «Вид разход» is fixed /
-  temporary, «категория» is an issue's category. The kind follows from the
+  temporary, and «категория» stays the word wherever things are sorted by
+  kind — an issue's category, a listing's category in «Маркетплейс» (WHI-29,
+  P1). The kind follows from the
   choice: «Поддръжка» is a «Фиксиран разход», «Консуматив» and «Допълнителна
   услуга» a «Временен разход»; the firm does not pick it. A free note stays
-  optional beside it. Avoid: «вид услуга», «категория» for this field.
+  optional beside it. Avoid: «вид услуга», «категория» for this one field only.
   Source: WHI-27 (28.09 12:30, 13:02); the firm's own invoice upload comes
   with the P1 expenses wave (team lead, 28.09 14:06).
 - **Такса Домоуправление** — the one rule that keeps the word «такса».
