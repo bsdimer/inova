@@ -55,10 +55,10 @@ const GROUPS: { title: string; prefixes: string[] }[] = [
 
 /**
  * A right's name. A key the platform adds before this list knows it shows
- * its server description rather than the code.
+ * its server description, or its code when that is empty — never a blank.
  */
 export function permissionLabel(key: string, description?: string): string {
-  return LABELS[key] ?? description ?? key;
+  return LABELS[key] || description || key;
 }
 
 /** The catalogue in areas, each right in its area's drawn order. */

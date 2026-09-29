@@ -13,6 +13,7 @@ import {
   panelInputClass,
 } from '../components/ui';
 import { api, ApiError, type Permission, type Role } from '../lib/api';
+import { useNavMode } from '../lib/navMode';
 import { useSelectedTenantId } from '../lib/tenant';
 import { AccessNote } from './Staff';
 import { groupPermissions, permissionLabel, sortPermissions } from './roles/permissions';
@@ -63,6 +64,19 @@ export function RolesPage() {
     onError: (e) => setPageError(e instanceof ApiError ? e.message : 'Нещо се обърка.'),
   });
 
+  const twoColumns = useNavMode() !== 'drawer';
+  const roleCards = (roles.data ?? []).map((role, i) => (
+    <RoleCard
+      key={role.key}
+      role={role}
+      index={i}
+      catalog={permissions.data ?? []}
+      onEdit={() => setEditorRole(role)}
+      onDelete={() => remove.mutate(role.key)}
+      deleting={remove.isPending}
+    />
+  ));
+
   if (roles.error instanceof ApiError && roles.error.status === 403) {
     return <AccessNote page="Роли" />;
   }
@@ -84,28 +98,21 @@ export function RolesPage() {
 
       {/*
         Two columns that fill independently, as drawn: each card is as tall as
-        its rights. Roles alternate between them in the API's order.
+        its rights, roles alternating between them in the API's order. Below
+        lg one column in that order — a flat list, so reading and Tab follow
+        what is on screen.
       */}
-      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
-        {[0, 1].map((column) => (
-          <div key={column} className="contents lg:flex lg:flex-col lg:gap-5">
-            {roles.data
-              ?.map((role, i) => ({ role, i }))
-              .filter(({ i }) => i % 2 === column)
-              .map(({ role, i }) => (
-                <RoleCard
-                  key={role.key}
-                  role={role}
-                  index={i}
-                  catalog={permissions.data ?? []}
-                  onEdit={() => setEditorRole(role)}
-                  onDelete={() => remove.mutate(role.key)}
-                  deleting={remove.isPending}
-                />
-              ))}
-          </div>
-        ))}
-      </div>
+      {twoColumns ? (
+        <div className="grid grid-cols-2 items-start gap-5">
+          {[0, 1].map((column) => (
+            <div key={column} className="flex flex-col gap-5">
+              {roleCards.filter((_, i) => i % 2 === column)}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-5">{roleCards}</div>
+      )}
 
       <PermissionCatalogue catalog={permissions.data ?? []} />
 

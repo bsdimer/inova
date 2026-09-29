@@ -107,3 +107,33 @@ test('a system role is edited under its Bulgarian name, never the stored English
   await expect(dialog.getByText(/House manager/)).toHaveCount(0);
   await expect(dialog.getByLabel('Име')).toHaveCount(0);
 });
+
+test('below 1024 the roles stand in one column in the order they come', async ({ page }) => {
+  await page.setViewportSize({ width: 402, height: 874 });
+  await expect(page.locator('main article h2')).toHaveText([
+    'Администратор',
+    'Домоуправител',
+    'Жител',
+  ]);
+  const xs = await page
+    .locator('main article')
+    .evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().x)));
+  expect(new Set(xs).size).toBe(1);
+});
+
+test('a right the list does not know, with an empty description, shows its code', async ({
+  page,
+}) => {
+  await page.route('**/v1/tenant/permissions', async (route) => {
+    const response = await route.fetch();
+    const body = await response.json();
+    await route.fulfill({ response, json: [...body, { key: 'future.thing', description: '' }] });
+  });
+  await page.reload();
+  const catalogue = page.getByRole('region', { name: 'Каталог на правата' });
+  await expect(catalogue.getByRole('listitem').filter({ hasText: 'future.thing' })).toBeVisible();
+  const empty = await catalogue
+    .getByRole('listitem')
+    .evaluateAll((items) => items.filter((li) => !li.textContent?.trim()).length);
+  expect(empty).toBe(0);
+});
