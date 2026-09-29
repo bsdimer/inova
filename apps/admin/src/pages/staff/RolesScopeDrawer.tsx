@@ -143,8 +143,7 @@ export function RolesScopeDrawer({
             would let the drawer show a second role the server silently drops.
           */}
           <p className="mt-0.5 text-xs text-panel-ink-muted">
-            Акаунтът има една роля. Няколко роли на един акаунт идват с преработката на регистрите
-            (B8).
+            Акаунтът има една роля. Няколко роли на един акаунт ще са възможни по-късно.
           </p>
           <div className="mt-3 space-y-1.5">
             {roles.map((role) => {
@@ -192,7 +191,7 @@ export function RolesScopeDrawer({
           <div className="mt-3 rounded-2xl bg-panel-row px-3.5 py-3 opacity-60">
             <p className="text-sm font-medium text-panel-ink">Всички сгради в организацията</p>
             <p className="text-xs text-panel-ink-muted">
-              Избор на отделни сгради идва с йерархията на имотите (M2).
+              Избор на отделни сгради идва с йерархията на имотите.
             </p>
           </div>
         </section>

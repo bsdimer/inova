@@ -60,37 +60,43 @@ const dashboardRoute = createRoute({
 const tasksRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/tasks',
-  component: () => <ComingSoonPage title="Задачи" milestone="M11" />,
+  // The section arrives with M11; the placeholder does not name it.
+  component: () => <ComingSoonPage title="Задачи" />,
 });
 
 const buildingsRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/buildings',
-  component: () => <ComingSoonPage title="Сгради" milestone="M2" />,
+  // The section arrives with M2; the placeholder does not name it.
+  component: () => <ComingSoonPage title="Сгради" />,
 });
 
 const residentsRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/residents',
-  component: () => <ComingSoonPage title="Жители" milestone="M2" />,
+  // The section arrives with M2; the placeholder does not name it.
+  component: () => <ComingSoonPage title="Жители" />,
 });
 
 const financeRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/finance',
-  component: () => <ComingSoonPage title="Финанси" milestone="M3–M4" />,
+  // The section arrives with M3–M4; the placeholder does not name it.
+  component: () => <ComingSoonPage title="Финанси" />,
 });
 
 const issuesRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/issues',
-  component: () => <ComingSoonPage title="Сигнали" milestone="M6" />,
+  // The section arrives with M6; the placeholder does not name it.
+  component: () => <ComingSoonPage title="Сигнали" />,
 });
 
 const noticesRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/notices',
-  component: () => <ComingSoonPage title="Известия" milestone="M7" />,
+  // The section arrives with M7; the placeholder does not name it.
+  component: () => <ComingSoonPage title="Известия" />,
 });
 
 const staffRoute = createRoute({
@@ -108,7 +114,8 @@ const rolesRoute = createRoute({
 const platformOverviewRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/platform',
-  component: () => <ComingSoonPage title="Общ преглед" milestone="P1" />,
+  // The section arrives with P1; the placeholder does not name it.
+  component: () => <ComingSoonPage title="Общ преглед" />,
   beforeLoad: () => {
     if (getSession()?.user.platformRole !== 'super_admin') {
       throw redirect({ to: '/' });
@@ -123,7 +130,8 @@ const auditRoute = createRoute({
   // administrator their own, entered from the account menu (WHI-82).
   // TODO(M1): the placeholder checks nothing; the WHI-82 screen must answer a
   // missing audit.read itself, as Служители and Роли do. No data is here yet.
-  component: () => <ComingSoonPage title="Одитен дневник" milestone="P1" />,
+  // The section arrives with P1; the placeholder does not name it.
+  component: () => <ComingSoonPage title="Одитен дневник" />,
 });
 
 const tenantsRoute = createRoute({

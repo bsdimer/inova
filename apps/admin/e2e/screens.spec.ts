@@ -116,3 +116,21 @@ for (const { name, width, height, theme } of [
     await page.screenshot(shot(`akaunt-${name}`));
   });
 }
+
+test('A section that is not built yet', async ({ page }) => {
+  await openSignedIn(page, ORG_ADMIN, '/buildings');
+  await expect(page.getByText('Разделът още не е наличен.')).toBeVisible();
+  await settled(page);
+  await page.screenshot(shot('razdel-predstoi'));
+});
+
+test('Роли и обхват', async ({ page }) => {
+  await openSignedIn(page, ORG_ADMIN, '/staff');
+  await page
+    .getByRole('button', { name: /^Роли и обхват — / })
+    .first()
+    .click();
+  await expect(page.getByText('Всички сгради в организацията')).toBeVisible();
+  await settled(page);
+  await page.screenshot(shot('roli-i-obhvat'));
+});
