@@ -49,9 +49,13 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   (`inset: -6px`) so the blurred border does not fade.
 - The dark theme is the token mode plus the night photo. Nothing is painted
   by hand.
-- The theme choice is «Светла», «Тъмна» or «Динамична»; «Динамична» follows
-  the time of day, not the device setting. When exactly it switches is
-  decided when it is built.
+- The theme choice is «Динамична», «Светла», «Тъмна», in that order, each
+  with a caption: «светла денем, тъмна вечер» / «винаги светла» / «винаги
+  тъмна». «Динамична» is the default for everyone who has not chosen; it is
+  light by day and dark in the evening by the time of day, never the device
+  setting (stakeholder, WHI-86 29.09 12:37). When exactly it switches
+  (sunrise and sunset for Sofia, or fixed hours) is the team lead's call in
+  WHI-86.
 - Only the card clips its content. Wrappers of glowing buttons never use
   `overflow: hidden`, or the halo is cut in a straight line. A glow around a
   thin stroke (the progress arc) is a blurred copy of the stroke underneath,
