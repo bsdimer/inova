@@ -97,3 +97,22 @@ test('Табло at 1536 with the rail opened in place', async ({ page }) => {
   await page.waitForTimeout(300);
   await page.screenshot(shot('tablo-1536-rail-open'));
 });
+
+/** The account menu (2354:286 on desktop, the sheet 1763:28546 at 402). */
+for (const { name, width, height, theme } of [
+  { name: '1728-light', width: 1728, height: 1117, theme: 'light' },
+  { name: '1728-dark', width: 1728, height: 1117, theme: 'dark' },
+  { name: '402', width: 402, height: 874, theme: 'light' },
+] as const) {
+  test(`Меню на акаунта, ${name}`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await openSignedIn(page, ORG_ADMIN, '/staff');
+    await page.evaluate((t) => localStorage.setItem('inova.theme', t), theme);
+    await page.reload();
+    await settled(page);
+    await page.getByRole('button', { name: /, акаунт$/ }).click();
+    await expect(page.getByRole('dialog', { name: 'Акаунт' })).toBeVisible();
+    await page.waitForTimeout(600); // the sheet's spring
+    await page.screenshot(shot(`akaunt-${name}`));
+  });
+}

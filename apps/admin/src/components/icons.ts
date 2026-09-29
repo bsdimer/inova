@@ -54,4 +54,5 @@ export {
   Warning,
   WarningCircle,
   X,
+  XCircle,
 } from '@phosphor-icons/react';

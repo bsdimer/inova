@@ -3,20 +3,14 @@ import { AnimatePresence, animate, motion, useMotionValue } from 'framer-motion'
 import {
   Bell,
   Buildings,
-  Check,
-  CaretDown,
   WarningCircle,
   CheckCircle,
   Globe,
   SquaresFour,
   Lock,
-  SignOut,
-  Monitor,
-  Moon,
   MagnifyingGlass,
   Shield,
   ShieldCheck,
-  Sun,
   UserGear,
   Users,
   Wallet,
@@ -31,23 +25,16 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { AppBackground } from '../components/AppBackground';
 import { InovaWordmark } from '../components/Logo';
-import { Avatar, MenuItem, Popover } from '../components/ui';
-import { api, type TenantContext } from '../lib/api';
-import { clearSession, getSession } from '../lib/auth';
+import { Avatar } from '../components/ui';
+import { getSession } from '../lib/auth';
 import { designFixtureOn } from '../lib/designFixture';
 import { type NavMode, useNavMode } from '../lib/navMode';
 import { useUnreadCount } from '../lib/notices';
 import { rem } from '../lib/rem';
-import { setTheme, useThemeChoice, type ThemeChoice } from '../lib/theme';
-import {
-  clearSelectedTenantId,
-  setSelectedTenantId,
-  useSelectedTenantId,
-  useTenantOptions,
-} from '../lib/tenant';
+import { clearSelectedTenantId, usePlatformScope, useTenantContext } from '../lib/tenant';
+import { AccountMenu, useRoleName } from './shell/AccountMenu';
 
 /**
  * The four groups of V2/Sidebar (859:1466) and V2/Rail (850:305), in the
@@ -231,17 +218,6 @@ export function AppShell() {
 }
 
 /**
- * A super_admin is in the platform scope until they enter an organization, and
- * back in it the moment they leave — «Върни се в платформата» clears the
- * selection. Everyone else is always in a tenant.
- */
-function usePlatformScope(): boolean {
-  const session = getSession();
-  const tenantId = useSelectedTenantId();
-  return session?.user.platformRole === 'super_admin' && !tenantId;
-}
-
-/**
  * A platform administrator inside a tenant is a visitor, and core-api writes
  * every write they make to that tenant's audit trail
  * (`AuditService.record`, actorType 'platform'). The banner says so, and
@@ -249,13 +225,7 @@ function usePlatformScope(): boolean {
  */
 function PlatformVisitNote({ session }: { session: Session }) {
   const navigate = useNavigate();
-  const tenantId = useSelectedTenantId();
-  const context = useQuery({
-    queryKey: ['tenant', tenantId],
-    queryFn: () => api<TenantContext>('/tenant', { tenantId: tenantId! }),
-    enabled: Boolean(tenantId),
-    staleTime: 60_000,
-  });
+  const context = useTenantContext();
 
   if (session?.user.platformRole !== 'super_admin') return null;
 
@@ -442,7 +412,7 @@ function NavList({ nav, pathname }: { nav: NavGroups; pathname: string }) {
 
 /** The sidebar's foot: a 100 px rule, then who is signed in. */
 function SidebarFooter({ session }: { session: Session }) {
-  const platform = usePlatformScope();
+  const role = useRoleName(session);
   const name = session?.user.fullName ?? '—';
   return (
     <>
@@ -452,9 +422,7 @@ function SidebarFooter({ session }: { session: Session }) {
         <span className="flex min-w-0 flex-col gap-0.5">
           <span className="truncate text-body-14 font-semibold">{name}</span>
           {/* The sidebar names the role alone; the top bar adds the organization. */}
-          <span className="truncate text-body-13-tight text-ink-muted">
-            {roleLabel(session, platform).split(' · ')[0]}
-          </span>
+          <span className="truncate text-body-13-tight text-ink-muted">{role}</span>
         </span>
       </div>
     </>
@@ -866,125 +834,6 @@ function NoticesBell() {
         </>
       ) : null}
     </Link>
-  );
-}
-
-function roleLabel(session: Session, platform: boolean): string {
-  if (session?.user.platformRole === 'super_admin') {
-    return platform ? 'super_admin · платформа' : 'super_admin · в организация';
-  }
-  const membership = session?.memberships[0];
-  if (!membership) return '—';
-  return `${ROLE_NAMES[membership.r] ?? membership.r} · ${membership.tenantKey}`;
-}
-
-/** Display names for the seeded role keys; custom roles fall back to the key. */
-const ROLE_NAMES: Record<string, string> = {
-  admin: 'Администратор',
-  manager: 'Домоуправител',
-  accountant: 'Счетоводител',
-  resident: 'Жител',
-};
-
-function AccountMenu({ session, compact = false }: { session: Session; compact?: boolean }) {
-  const [open, setOpen] = useState(false);
-  const themeChoice = useThemeChoice();
-  const platform = usePlatformScope();
-  const selectedTenantId = useSelectedTenantId();
-  const { options } = useTenantOptions();
-  const name = session?.user.fullName ?? '—';
-
-  const signOut = () => {
-    clearSession();
-    clearSelectedTenantId();
-    window.location.assign('/login');
-  };
-
-  return (
-    <Popover
-      open={open}
-      onClose={() => setOpen(false)}
-      align="right"
-      anchor={
-        <button
-          type="button"
-          aria-haspopup="menu"
-          aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
-          aria-label={compact ? `${name}, профил` : undefined}
-          className={`flex items-center gap-3 rounded-full text-left text-ink ${compact ? '' : 'py-1 pr-1'}`}
-        >
-          <Avatar name={name} size={36} className="glass-blur" />
-          {/* On a tablet and a phone the bar keeps the avatar alone. */}
-          {!compact && (
-            <>
-              <span className="flex min-w-0 flex-col">
-                <span className="truncate text-body-14 font-semibold">{name}</span>
-                <span className="truncate text-body-13-tight text-ink-muted">
-                  {roleLabel(session, platform)}
-                </span>
-              </span>
-              <CaretDown size="1.125rem" className="shrink-0" />
-            </>
-          )}
-        </button>
-      }
-    >
-      <div role="menu" className="w-64">
-        {options.length > 1 && (
-          <>
-            <p className="px-3 pt-1.5 pb-1 text-xs font-semibold tracking-wider text-panel-ink-faint uppercase">
-              Организация
-            </p>
-            {options.map((option) => (
-              <MenuItem
-                key={option.id}
-                icon={<Buildings size="0.9375rem" />}
-                onClick={() => {
-                  setSelectedTenantId(option.id);
-                  setOpen(false);
-                }}
-                trailing={
-                  option.id === selectedTenantId ? (
-                    <Check size="0.875rem" className="opacity-70" />
-                  ) : undefined
-                }
-              >
-                {option.name}
-              </MenuItem>
-            ))}
-            <hr className="my-1.5 border-panel-divider" />
-          </>
-        )}
-
-        <p className="px-3 pt-1.5 pb-1 text-xs font-semibold tracking-wider text-panel-ink-faint uppercase">
-          Изглед
-        </p>
-        {(
-          [
-            { value: 'light', label: 'Светъл', icon: Sun },
-            { value: 'dark', label: 'Тъмен', icon: Moon },
-            { value: 'system', label: 'Както в системата', icon: Monitor },
-          ] as { value: ThemeChoice; label: string; icon: typeof Sun }[]
-        ).map(({ value, label, icon: Icon }) => (
-          <MenuItem
-            key={value}
-            icon={<Icon size="0.9375rem" />}
-            onClick={() => setTheme(value)}
-            trailing={
-              value === themeChoice ? <Check size="0.875rem" className="opacity-70" /> : undefined
-            }
-          >
-            {label}
-          </MenuItem>
-        ))}
-
-        <hr className="my-1.5 border-panel-divider" />
-        <MenuItem icon={<SignOut size="0.9375rem" />} onClick={signOut}>
-          Изход
-        </MenuItem>
-      </div>
-    </Popover>
   );
 }
 

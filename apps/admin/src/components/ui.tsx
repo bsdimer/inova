@@ -9,10 +9,13 @@ export function Avatar({
   name,
   size = 36,
   className = '',
+  onPanel = false,
 }: {
   name: string;
   size?: number;
   className?: string;
+  /** On the panel surface (menus, sheets) rather than on glass. */
+  onPanel?: boolean;
 }) {
   const initials = name
     .trim()
@@ -30,8 +33,9 @@ export function Avatar({
         // V2/Avatar: 40 carries Body/14, 36 and below Label/12.
         fontSize: rem(size >= 40 ? 14 : size * (1 / 3)),
         lineHeight: size >= 40 ? '1.25rem' : '1rem',
-        background: 'var(--glass-avatar)',
-        boxShadow: 'inset 0 0 0 0.0625rem var(--glass-avatar-edge)',
+        background: onPanel ? 'var(--panel-row-strong)' : 'var(--glass-avatar)',
+        boxShadow: `inset 0 0 0 0.0625rem ${onPanel ? 'var(--panel-border)' : 'var(--glass-avatar-edge)'}`,
+        color: onPanel ? 'var(--panel-text)' : undefined,
       }}
     >
       {initials}
@@ -297,6 +301,9 @@ export function Popover({
   const anchorRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState<{ top: number; left?: number; right?: number } | null>(null);
+  // A tall menu on a short window scrolls inside itself instead of running
+  // off the bottom edge.
+  const maxHeight = box ? `calc(100dvh - ${box.top + 8}px)` : undefined;
 
   useEffect(() => {
     if (!open) return;
@@ -360,9 +367,10 @@ export function Popover({
                 top: box?.top ?? 0,
                 left: box?.left,
                 right: box?.right,
+                maxHeight,
                 visibility: box ? 'visible' : 'hidden',
               }}
-              className="panel-strong fixed z-50 rounded-2xl p-1.5"
+              className="panel-strong fixed z-50 overflow-y-auto overscroll-contain rounded-2xl p-1.5"
             >
               {children}
             </motion.div>
