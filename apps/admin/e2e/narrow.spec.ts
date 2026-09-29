@@ -43,7 +43,14 @@ test('375: the platform-visit banner keeps its title and puts the way back below
   const back = page.getByRole('button', { name: 'Върни се в платформата' });
   await expect(back).toBeVisible();
   const title = page.getByText(/^Платформа → /);
-  expect(await title.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+  // A long organisation name, so the check does not hang on the font the
+  // machine happens to have: the title wraps, it is never cut.
+  expect(
+    await title.evaluate((el) => {
+      el.textContent = 'Платформа → Управление на имоти „Южен парк Витоша“ ЕООД';
+      return el.scrollWidth <= el.clientWidth && el.getBoundingClientRect().height > 30;
+    }),
+  ).toBe(true);
   const text = page.getByText(/^Влязохте в организацията/);
   const [t, b] = [(await text.boundingBox())!, (await back.boundingBox())!];
   expect(b.y).toBeGreaterThanOrEqual(t.y + t.height);

@@ -266,7 +266,7 @@ function PlatformVisitNote({ session }: { session: Session }) {
       {/* Grows from a readable width: below it the button wraps under the text
           instead of squeezing the text into one word per line. */}
       <div className="min-w-0 flex-[1_1_15rem]">
-        <p className="truncate text-sm font-semibold">Платформа → {name}</p>
+        <p className="text-sm font-semibold break-words">Платформа → {name}</p>
         <p className="text-xs text-ink-muted">
           Влязохте в организацията от платформен обхват. Всяко действие тук се записва в одитния ѝ
           дневник.
