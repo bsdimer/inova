@@ -344,3 +344,25 @@ test.describe('402, a modal sheet', () => {
     await expect(account).toBeFocused();
   });
 });
+
+/**
+ * Crossing 768 with the menu open turns the sheet into the popover or back,
+ * and re-mounts the avatar button. Closing must still hand the keyboard to
+ * the avatar that is on screen, not to the one that was replaced.
+ */
+for (const [from, to] of [
+  [402, 800],
+  [800, 402],
+] as const) {
+  test(`opened at ${from}, closed at ${to}: the focus returns to the avatar`, async ({ page }) => {
+    await page.setViewportSize({ width: from, height: 874 });
+    await openSignedIn(page, ORG_ADMIN, '/');
+    const menu = await openMenu(page);
+    await page.setViewportSize({ width: to, height: 874 });
+    await expect(menu).toBeVisible();
+    await expect.poll(() => menu.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+    await page.keyboard.press('Escape');
+    await expect(menu).toBeHidden();
+    await expect(page.getByRole('button', { name: /, акаунт$/ })).toBeFocused();
+  });
+}
