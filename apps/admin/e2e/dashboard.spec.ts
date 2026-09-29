@@ -17,7 +17,7 @@ test('without data every card shows dashes and no invented number', async ({ pag
   await expect(balance).not.toContainText('%');
   await expect(balance).not.toContainText('€');
   await expect(card(page, 'Спешни сега')).toContainText(
-    'Спешните сигнали на жителите се появяват тук с M6.',
+    'Спешните сигнали на жителите ще се появяват тук.',
   );
   await expect(card(page, 'Предстоящи')).toContainText('Общи събрания, отчети и задачи');
   await expect(card(page, 'Преглед на сгради')).not.toContainText('платили');
@@ -65,4 +65,42 @@ test('the glass blurs in the built portal, in Chrome too', async ({ page }) => {
     'backdrop-filter',
     'blur(8px)',
   );
+});
+
+test('no plan code reaches the words on the page or its tooltips', async ({ page }) => {
+  // design.md → Words: plan codes (M6, B9, D16) never appear in UI sentences.
+  await openSignedIn(page, ORG_ADMIN, '/?fixture=off');
+  await expect(card(page, 'Баланс')).toBeVisible();
+  const words = await page
+    .locator('main')
+    .evaluate((main) => [
+      (main as HTMLElement).innerText,
+      ...[...main.querySelectorAll('[title]')].map((el) => el.getAttribute('title') ?? ''),
+    ]);
+  for (const text of words) expect(text).not.toMatch(/\b(M\d+b?|P1|[BD]\d+)\b/);
+});
+
+test('the Баланс bubbles darken under their text and the labels are text/primary', async ({
+  page,
+}) => {
+  // WHI-83: V2/Balance · Bubbles (849:252) — a Ø112 shade in each bubble,
+  // centred on its content, so the labels keep AA over the bright photo.
+  await openSignedIn(page, ORG_ADMIN, '/?fixture=design');
+  const balance = card(page, 'Баланс');
+  for (const label of ['Платили', 'Задължения']) {
+    await expect(balance.getByText(label, { exact: true })).toHaveCSS(
+      'color',
+      'rgb(255, 255, 255)',
+    );
+  }
+  const shades = await balance
+    .locator('svg circle[data-shade]')
+    .evaluateAll((circles) =>
+      circles.map((c) => [c.getAttribute('cx'), c.getAttribute('cy'), c.getAttribute('r')]),
+    );
+  expect(shades).toEqual([
+    ['65', '81', '56'],
+    ['212', '81', '56'],
+    ['359.5', '81', '56'],
+  ]);
 });
