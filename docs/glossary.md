@@ -127,9 +127,14 @@ does not take the entry for the current UI.
 - **Прекрати** — the action that ends a contractor's assignment to a building
   (`contractor_assignment.effective_to` set to that day); from then on the
   firm no longer sees the building in its «Сгради». The confirmation reads
-  «Да се прекрати ли възлагането?» with «Остани» / «Прекрати». Avoid:
-  «Изтрий», «Премахни», «Отмени» for an assignment — nothing is deleted.
+  «Да се прекрати ли възлагането?» with «Отмени» / «Прекрати». Avoid:
+  «Изтрий», «Премахни», «Отмени» as the action — nothing is deleted.
   Source: D30, WHI-27 (28.09 14:46, approved 15:14).
+- **Отмени** — the secondary button of a delete or end confirmation («Да се
+  изтрие ли…?», «Да се прекрати ли…?»): closes the dialog, nothing changes;
+  the text says «се изтрива», not «изчезва». Avoid: «Остани» there —
+  «Остани» belongs to «Да се откажа ли?», which keeps the user in the form
+  (`docs/design.md` → forms). Source: WHI-79 (29.09 10:15).
 
 ## Account and settings
 
