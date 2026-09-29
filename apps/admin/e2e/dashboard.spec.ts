@@ -79,3 +79,28 @@ test('no plan code reaches the words on the page or its tooltips', async ({ page
     ]);
   for (const text of words) expect(text).not.toMatch(/\b(M\d+b?|P1|[BD]\d+)\b/);
 });
+
+test('the Баланс bubbles darken under their text and the labels are text/primary', async ({
+  page,
+}) => {
+  // WHI-83: V2/Balance · Bubbles (849:252) — a Ø112 shade in each bubble,
+  // centred on its content, so the labels keep AA over the bright photo.
+  await openSignedIn(page, ORG_ADMIN, '/?fixture=design');
+  const balance = card(page, 'Баланс');
+  for (const label of ['Платили', 'Задължения']) {
+    await expect(balance.getByText(label, { exact: true })).toHaveCSS(
+      'color',
+      'rgb(255, 255, 255)',
+    );
+  }
+  const shades = await balance
+    .locator('svg circle[data-shade]')
+    .evaluateAll((circles) =>
+      circles.map((c) => [c.getAttribute('cx'), c.getAttribute('cy'), c.getAttribute('r')]),
+    );
+  expect(shades).toEqual([
+    ['65', '81', '56'],
+    ['212', '81', '56'],
+    ['359.5', '81', '56'],
+  ]);
+});

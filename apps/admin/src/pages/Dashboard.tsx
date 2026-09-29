@@ -265,7 +265,8 @@ function Stat({ label, minor, currency }: { label: string; minor?: bigint; curre
     // rounded to whole pixels and never under 11 (design README → Адаптив):
     // 15 → 12, 18 → 14, 13 → 11; the ring's 30 → 24 and 14 → 11.
     <div className="flex flex-col items-center gap-[0.1875rem] whitespace-nowrap max-md:gap-0.5">
-      <p className="text-body-15-tight text-ink-soft max-md:text-[0.75rem] max-md:leading-[0.875rem]">
+      {/* text/primary over the bubble's shade (WHI-83). */}
+      <p className="text-body-15-tight text-ink max-md:text-[0.75rem] max-md:leading-[0.875rem]">
         {label}
       </p>
       {minor !== undefined && currency ? (

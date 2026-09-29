@@ -65,6 +65,12 @@ export function BalanceBubbles({
               <feMergeNode in="light" />
             </feMerge>
           </filter>
+          {/* WHI-83: the shade under each bubble's text, the same in both themes. */}
+          <radialGradient id="bubbles-shade">
+            <stop offset="0" stopOpacity="0.38" />
+            <stop offset="0.72" stopOpacity="0.323" />
+            <stop offset="1" stopOpacity="0" />
+          </radialGradient>
           <radialGradient id="bubbles-hole">
             <stop offset="0" stopOpacity="0.3" />
             <stop offset="0.7" stopOpacity="0.18" />
@@ -104,6 +110,14 @@ export function BalanceBubbles({
           strokeWidth="1.5"
           fill="none"
         />
+        {/*
+          Over the glass, a Ø112 shade centred on each bubble's content (849:252:
+          the paid and owed stats, the ring), so their white text keeps AA over
+          the bright part of the photo.
+        */}
+        {[65, 212, 359.5].map((cx) => (
+          <circle key={cx} data-shade cx={cx} cy={81} r={56} fill="url(#bubbles-shade)" />
+        ))}
         {/* The well under the ring, and the rim light around the middle bubble. */}
         <circle cx={212} cy={81} r={56.48} fill="url(#bubbles-hole)" />
         <g transform="translate(137 6)">
