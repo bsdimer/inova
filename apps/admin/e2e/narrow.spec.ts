@@ -30,7 +30,8 @@ test('820: the two-column composition keeps the drawn heights', async ({ page })
   await page.setViewportSize({ width: 820, height: 1180 });
   await openSignedIn(page, ORG_ADMIN, '/');
   const signals = (await card(page, 'Спешни сега').boundingBox())!;
-  expect(signals.height).toBeGreaterThanOrEqual(601);
+  // Whole pixels: 37.5625rem lands on 600.99997 in some layouts.
+  expect(Math.round(signals.height)).toBeGreaterThanOrEqual(601);
 });
 
 test('375: the platform-visit banner keeps its title and puts the way back below', async ({
