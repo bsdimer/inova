@@ -182,3 +182,165 @@ test.describe('402', () => {
     await expect(second).toBeFocused();
   });
 });
+
+/** A second membership in the stored session, so there is a choice to make. */
+const SECOND = '00000000-0000-4000-8000-000000000002';
+async function addSecondOrganisation(page: Page) {
+  await page.evaluate((id) => {
+    const session = JSON.parse(localStorage.getItem('inova.session')!);
+    session.memberships.push({ t: id, r: 'manager', tenantKey: 'second', tenantName: 'Втора' });
+    localStorage.setItem('inova.session', JSON.stringify(session));
+  }, SECOND);
+  await page.reload();
+}
+
+test.describe('desktop, keyboard and data', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('opening moves the focus into the menu, Esc brings it back to the avatar', async ({
+    page,
+  }) => {
+    await openSignedIn(page, ORG_ADMIN, '/');
+    const account = page.getByRole('button', { name: /, акаунт$/ });
+    await account.focus();
+    await page.keyboard.press('Enter');
+    const menu = page.getByRole('dialog', { name: 'Акаунт' });
+    await expect(menu.getByRole('heading', { name: 'Акаунт' })).toBeAttached();
+    await expect.poll(() => menu.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+    await page.keyboard.press('Escape');
+    await expect(menu).toBeHidden();
+    await expect(account).toBeFocused();
+  });
+
+  test('the arrows move the theme choice, the selected row is rounded', async ({ page }) => {
+    await openSignedIn(page, ORG_ADMIN, '/');
+    const menu = await openMenu(page);
+    const light = menu.getByRole('radio', { name: 'Светла' });
+    const dark = menu.getByRole('radio', { name: 'Тъмна' });
+    await expect(light).toHaveAttribute('tabindex', '0');
+    await expect(dark).toHaveAttribute('tabindex', '-1');
+    // The menu takes the focus a frame after it opens; move on from there.
+    await expect.poll(() => menu.evaluate((el) => el === document.activeElement)).toBe(true);
+    await light.focus();
+    await page.keyboard.press('ArrowDown');
+    await expect(dark).toBeChecked();
+    await expect(dark).toBeFocused();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    expect(await dark.evaluate((el) => getComputedStyle(el).borderTopLeftRadius)).toBe('12px');
+  });
+
+  test('when the organisation cannot be read, the menu does not claim «няма достъп»', async ({
+    page,
+  }) => {
+    await page.route('**/v1/tenant', (route) => route.fulfill({ status: 500, json: {} }));
+    await openSignedIn(page, ORG_ADMIN, '/');
+    const menu = await openMenu(page);
+    // A skeleton while the query retries (three times, with backoff), then the error.
+    await expect(menu.getByText('Достъпът не можа да се зареди.')).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(menu.getByText('Служители, роли и настройки на организацията')).toHaveCount(0);
+    await expect(menu.getByText(/няма достъп/)).toHaveCount(0);
+  });
+
+  test('choosing another organisation switches the requests, the role and the caption', async ({
+    page,
+  }) => {
+    const asked: (string | null)[] = [];
+    await page.route('**/v1/tenant', async (route) => {
+      const id = route.request().headers()['x-tenant-id'] ?? null;
+      asked.push(id);
+      if (id !== SECOND) return route.fallback();
+      await route.fulfill({
+        json: {
+          tenant: { id: SECOND, key: 'second', name: 'Втора', status: 'active' },
+          role: 'manager',
+          permissions: ['tenant.read', 'staff.read'],
+        },
+      });
+    });
+    await openSignedIn(page, ORG_ADMIN, '/');
+    await addSecondOrganisation(page);
+    const menu = await openMenu(page);
+    await menu.getByRole('radio', { name: 'Втора' }).click();
+
+    await expect(page.getByRole('button', { name: /, акаунт$/ })).toContainText(
+      'Домоуправител · Втора',
+    );
+    await expect(menu.getByRole('list', { name: 'Вашите роли' })).toHaveText('Домоуправител');
+    expect(asked).toContain(SECOND);
+    expect(await page.evaluate(() => localStorage.getItem('inova.tenantId'))).toBe(SECOND);
+  });
+
+  test('a custom role is named from the organisation roles, fetched only with roles.read', async ({
+    page,
+  }) => {
+    let rolesAsked = 0;
+    await page.route('**/v1/tenant', async (route) => {
+      const response = await route.fetch();
+      const body = await response.json();
+      await route.fulfill({ response, json: { ...body, role: 'cashier' } });
+    });
+    await page.route('**/v1/tenant/roles', async (route) => {
+      rolesAsked += 1;
+      await route.fulfill({
+        json: [{ key: 'cashier', name: 'Касиер', isSystem: false, permissions: [], members: 1 }],
+      });
+    });
+    await openSignedIn(page, ORG_ADMIN, '/');
+    const menu = await openMenu(page);
+    await expect(menu.getByRole('list', { name: 'Вашите роли' })).toHaveText('Касиер');
+    expect(rolesAsked).toBeGreaterThan(0);
+  });
+
+  test('a platform administrator inside an organisation sees it, with its audit trail', async ({
+    page,
+  }) => {
+    await openSignedIn(page, PLATFORM_ADMIN, '/tenants');
+    await page.getByRole('button', { name: /Влез/ }).first().click();
+    await expect(page.getByRole('button', { name: 'Върни се в платформата' })).toBeVisible();
+    const menu = await openMenu(page);
+    await expect(menu.getByRole('heading', { name: 'Организация' })).toBeVisible();
+    await expect(menu.getByRole('link', { name: 'Одитен дневник' })).toBeVisible();
+    await expect(menu.getByRole('list', { name: 'Вашите роли' })).toHaveText(
+      'Администратор на платформата',
+    );
+    await expect(page.getByText(/super_admin/)).toHaveCount(0);
+  });
+});
+
+test.describe('402, a modal sheet', () => {
+  test.use({ viewport: { width: 402, height: 874 } });
+
+  test('focus stays in the sheet, the page under it does not scroll', async ({ page }) => {
+    await openSignedIn(page, ORG_ADMIN, '/');
+    const menu = await openMenu(page);
+    const close = menu.getByRole('button', { name: 'Затвори' });
+    await expect(close).toBeFocused();
+
+    // Tab past «Изход» comes back into the sheet, never onto the page.
+    for (let i = 0; i < 20; i += 1) {
+      await page.keyboard.press('Tab');
+      expect(await menu.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+    }
+
+    await page.mouse.move(200, 60);
+    await page.mouse.wheel(0, 600);
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  });
+
+  test('Esc and the scrim close the sheet, the focus goes back to the avatar', async ({ page }) => {
+    await openSignedIn(page, ORG_ADMIN, '/');
+    const account = page.getByRole('button', { name: /, акаунт$/ });
+    let menu = await openMenu(page);
+    await page.keyboard.press('Escape');
+    await expect(menu).toBeHidden();
+    await expect(account).toBeFocused();
+
+    menu = await openMenu(page);
+    await page.mouse.click(200, 20);
+    await expect(menu).toBeHidden();
+    await expect(account).toBeFocused();
+  });
+});

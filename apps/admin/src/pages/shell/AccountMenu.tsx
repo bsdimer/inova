@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type KeyboardEvent,
   type ReactNode,
   type RefObject,
 } from 'react';
@@ -18,7 +19,7 @@ import {
   X,
   XCircle,
 } from '../../components/icons';
-import { Avatar, Popover } from '../../components/ui';
+import { Avatar, Popover, SkeletonBar } from '../../components/ui';
 import { api, type Role } from '../../lib/api';
 import { clearSession, type Session } from '../../lib/auth';
 import { setTheme, useThemeChoice, type ThemeChoice } from '../../lib/theme';
@@ -122,6 +123,23 @@ export function AccountMenu({
   const name = session?.user.fullName ?? '—';
   const organisation = platform ? null : (context.data?.tenant.name ?? null);
   const close = () => setOpen(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  // The popover is not modal, but the keyboard still starts inside it and
+  // comes back to the avatar when it closes — unless the user clicked away
+  // to something else, which keeps the focus.
+  useEffect(() => {
+    if (!open || narrow) return;
+    const frame = requestAnimationFrame(() => dialogRef.current?.focus());
+    const dialog = dialogRef.current;
+    return () => {
+      cancelAnimationFrame(frame);
+      const active = document.activeElement;
+      if (!active || active === document.body || dialog?.contains(active)) {
+        anchorRef.current?.focus();
+      }
+    };
+  }, [open, narrow]);
 
   const anchor = (
     <button
@@ -166,10 +184,15 @@ export function AccountMenu({
     <Popover open={open} onClose={close} align="right" anchor={anchor}>
       {/* 386 wide with the popover's own 6 px padding, 12 from the edge in all. */}
       <div
+        ref={dialogRef}
         role="dialog"
-        aria-label="Акаунт"
-        className="flex w-[23.375rem] max-w-[calc(100vw-2.75rem)] flex-col gap-4 px-1.5 pt-2.5 pb-1.5"
+        aria-labelledby="account-menu-title"
+        tabIndex={-1}
+        className="flex w-[23.375rem] max-w-[calc(100vw-2.75rem)] flex-col gap-4 px-1.5 pt-2.5 pb-1.5 focus-visible:shadow-none"
       >
+        <h2 id="account-menu-title" className="sr-only">
+          Акаунт
+        </h2>
         {body}
         <hr className="border-panel-divider" />
         <SignOutButton className="w-40 self-center" />
@@ -202,6 +225,9 @@ function AccountBody({
   // administrator enters one from «Организации».
   const switchable = !superAdmin && options.length > 1;
 
+  // Until /tenant answers, and when it fails, the permissions are unknown —
+  // not empty: the menu must not tell anyone they have no access.
+  const unknown = !platform && !context.data;
   const access = [
     ...(platform
       ? []
@@ -225,17 +251,12 @@ function AccountBody({
       {!platform && (
         <Group title="Организация">
           {switchable ? (
-            <div role="radiogroup" aria-label="Организация" className="flex flex-col gap-1.5">
-              {options.map((option) => (
-                <RadioRow
-                  key={option.id}
-                  checked={option.id === selectedTenantId}
-                  onSelect={() => setSelectedTenantId(option.id)}
-                >
-                  {option.name}
-                </RadioRow>
-              ))}
-            </div>
+            <RadioGroup
+              label="Организация"
+              options={options.map((option) => ({ value: option.id, label: option.name }))}
+              value={selectedTenantId}
+              onChange={setSelectedTenantId}
+            />
           ) : (
             <p className="text-body-15-tight text-panel-ink">{context.data?.tenant.name ?? '—'}</p>
           )}
@@ -269,33 +290,40 @@ function AccountBody({
       <hr className="border-panel-divider" />
 
       <Group title="Вашият достъп">
-        <ul aria-label="Вашият достъп" className="flex flex-col gap-1.5">
-          {access.map(({ label, granted }) => (
-            <li
-              key={label}
-              className={`flex items-center gap-2.5 py-1 text-body-15-tight text-panel-ink ${granted ? '' : 'opacity-50'}`}
-            >
-              {granted ? (
-                <CheckCircle size="1.125rem" className="shrink-0" />
-              ) : (
-                <XCircle size="1.125rem" className="shrink-0" />
-              )}
-              <span className="flex-1">{granted ? label : `${label} — няма достъп`}</span>
-            </li>
-          ))}
-        </ul>
+        {unknown ? (
+          context.isError ? (
+            <p className="py-1 text-body-15-tight text-panel-ink-muted">
+              Достъпът не можа да се зареди.
+            </p>
+          ) : (
+            <div aria-hidden className="flex flex-col gap-3 py-1">
+              <SkeletonBar className="h-4 w-4/5" />
+              <SkeletonBar className="h-4 w-3/5" />
+            </div>
+          )
+        ) : (
+          <ul aria-label="Вашият достъп" className="flex flex-col gap-1.5">
+            {access.map(({ label, granted }) => (
+              <li
+                key={label}
+                className={`flex items-center gap-2.5 py-1 text-body-15-tight text-panel-ink ${granted ? '' : 'opacity-50'}`}
+              >
+                {granted ? (
+                  <CheckCircle size="1.125rem" className="shrink-0" />
+                ) : (
+                  <XCircle size="1.125rem" className="shrink-0" />
+                )}
+                <span className="flex-1">{granted ? label : `${label} — няма достъп`}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </Group>
 
       <hr className="border-panel-divider" />
 
       <Group title="Тема">
-        <div role="radiogroup" aria-label="Тема" className="flex flex-col gap-1.5">
-          {THEMES.map(({ value, label }) => (
-            <RadioRow key={value} checked={value === themeChoice} onSelect={() => setTheme(value)}>
-              {label}
-            </RadioRow>
-          ))}
-        </div>
+        <RadioGroup label="Тема" options={THEMES} value={themeChoice} onChange={setTheme} />
       </Group>
     </>
   );
@@ -310,36 +338,80 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-/** V2/Popover row · panel: an 18 px radio, the selected row on panel/row. */
-function RadioRow({
-  checked,
-  onSelect,
-  children,
+/**
+ * V2/Popover row · panel as a radio group: an 18 px radio, the selected row
+ * on panel/row. One tab stop; the arrows move the choice (WAI-ARIA radio
+ * group), Home and End go to the ends.
+ */
+function RadioGroup<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
 }: {
-  checked: boolean;
-  onSelect: () => void;
-  children: ReactNode;
+  label: string;
+  options: { value: T; label: string }[];
+  value: T | null;
+  onChange: (value: T) => void;
 }) {
+  const rows = useRef<(HTMLButtonElement | null)[]>([]);
+  const current = Math.max(
+    0,
+    options.findIndex((option) => option.value === value),
+  );
+
+  const move = (index: number) => {
+    const next = (index + options.length) % options.length;
+    onChange(options[next]!.value);
+    rows.current[next]?.focus();
+  };
+
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    const step = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key];
+    if (step) move(current + step);
+    else if (e.key === 'Home') move(0);
+    else if (e.key === 'End') move(options.length - 1);
+    else return;
+    e.preventDefault();
+  };
+
   return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={checked}
-      onClick={onSelect}
-      className={`flex w-full items-center gap-2.5 rounded-row px-2.5 py-2 text-left text-body-14 font-medium text-panel-ink transition-colors ${
-        checked ? 'bg-panel-row' : 'hover:bg-panel-row'
-      }`}
+    <div
+      role="radiogroup"
+      aria-label={label}
+      onKeyDown={onKeyDown}
+      className="flex flex-col gap-1.5"
     >
-      <span
-        aria-hidden
-        className={`flex size-[1.125rem] shrink-0 items-center justify-center rounded-full ${
-          checked ? 'bg-panel-ink' : 'border border-panel-border bg-panel-control'
-        }`}
-      >
-        {checked && <span className="size-1.5 rounded-full bg-panel-ink-inverse" />}
-      </span>
-      <span className="flex-1">{children}</span>
-    </button>
+      {options.map((option, index) => {
+        const checked = option.value === value;
+        return (
+          <button
+            key={option.value}
+            ref={(el) => {
+              rows.current[index] = el;
+            }}
+            type="button"
+            role="radio"
+            aria-checked={checked}
+            tabIndex={index === current ? 0 : -1}
+            onClick={() => onChange(option.value)}
+            className={`flex w-full items-center gap-2.5 rounded-[var(--radius-row)] px-2.5 py-2 text-left text-body-14 font-medium text-panel-ink transition-colors ${
+              checked ? 'bg-panel-row' : 'hover:bg-panel-row'
+            }`}
+          >
+            <span
+              aria-hidden
+              className={`flex size-[1.125rem] shrink-0 items-center justify-center rounded-full ${
+                checked ? 'bg-panel-ink' : 'border border-panel-border bg-panel-control'
+              }`}
+            >
+              {checked && <span className="size-1.5 rounded-full bg-panel-ink-inverse" />}
+            </span>
+            <span className="flex-1">{option.label}</span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -384,14 +456,44 @@ function Sheet({
     onCloseRef.current = onClose;
   });
 
+  const sheet = useRef<HTMLDivElement>(null);
+
+  // Modal for real: the app behind is inert and does not scroll, and Tab
+  // runs round the sheet instead of leaving it.
   useEffect(() => {
     if (!open) return;
+    const app = document.getElementById('root');
+    const html = document.documentElement;
+    const overflow = html.style.overflow;
+    app?.setAttribute('inert', '');
+    html.style.overflow = 'hidden';
     closeButton.current?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onCloseRef.current();
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') onCloseRef.current();
+      if (e.key !== 'Tab' || !sheet.current) return;
+      const stops = [
+        ...sheet.current.querySelectorAll<HTMLElement>('button, a[href], [tabindex="0"]'),
+      ].filter((el) => !el.hasAttribute('disabled') && el.tabIndex >= 0);
+      const first = stops[0];
+      const last = stops[stops.length - 1];
+      if (!first || !last) return;
+      if (!sheet.current.contains(document.activeElement)) {
+        e.preventDefault();
+        first.focus();
+      } else if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
     document.addEventListener('keydown', onKey);
     const anchor = returnFocus.current;
     return () => {
       document.removeEventListener('keydown', onKey);
+      app?.removeAttribute('inert');
+      html.style.overflow = overflow;
       anchor?.focus();
     };
   }, [open, returnFocus]);
@@ -408,6 +510,7 @@ function Sheet({
             className="absolute inset-0 bg-glass-scrim"
           />
           <motion.div
+            ref={sheet}
             role="dialog"
             aria-modal="true"
             aria-label="Акаунт"
