@@ -120,6 +120,12 @@ does not take the entry for the current UI.
   and «Техник» (D22; the Bulgarian names in the WHI-27 description, 22.09).
   Avoid: «фирма», «изпълнител», «подизпълнител» as the general word. Source:
   WHI-27 (28.09 09:13).
+- **Дейност** — what a contractor does, in a few words («Почистване»,
+  «Поддръжка», «Озеленяване»; `contractor.activity`, free text): the field
+  under «Фирма или име» in «Нов доставчик», the second line of the building's
+  contractor list and the picker («Чисто ООД · Почистване»). Not a role and
+  not an issue category — a contractor without an account has neither.
+  Source: WHI-27 (29.09 12:20).
 - **Възложи на доставчик** — the house manager entrusts a building to a
   contractor and enters the agreed services (creates a `contractor_assignment`);
   the button and the form title on the building's «Доставчици» tile. Source:
