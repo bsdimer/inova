@@ -20,6 +20,26 @@ import { RolesPage } from './pages/Roles';
 import { StaffPage } from './pages/Staff';
 import { TenantsPage } from './pages/Tenants';
 
+const isPlatformAdmin = () => getSession()?.user.platformRole === 'super_admin';
+
+/** Every page but /login: no session, no portal. */
+function requireSession() {
+  if (!getSession()) throw redirect({ to: '/login' });
+}
+
+/** The platform's own pages; organisation staff go back to Табло. */
+function requirePlatformAdmin() {
+  if (!isPlatformAdmin()) throw redirect({ to: '/' });
+}
+
+/**
+ * Табло needs an organisation: every query on it is tenant-scoped, so a
+ * platform administrator who has not entered one goes to «Организации».
+ */
+function requireOrganisation() {
+  if (isPlatformAdmin() && !getSelectedTenantId()) throw redirect({ to: '/tenants' });
+}
+
 const rootRoute = createRootRoute({
   component: Outlet,
 });
@@ -34,25 +54,14 @@ const shellRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: 'shell',
   component: AppShell,
-  beforeLoad: () => {
-    if (!getSession()) {
-      throw redirect({ to: '/login' });
-    }
-  },
+  beforeLoad: requireSession,
 });
 
 const dashboardRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/',
   component: DashboardPage,
-  // A platform administrator who has not entered an organization has no
-  // dashboard to show: every query on it is tenant-scoped.
-  beforeLoad: () => {
-    const session = getSession();
-    if (session?.user.platformRole === 'super_admin' && !getSelectedTenantId()) {
-      throw redirect({ to: '/tenants' });
-    }
-  },
+  beforeLoad: requireOrganisation,
 });
 
 const tasksRoute = createRoute({
@@ -114,11 +123,7 @@ const platformOverviewRoute = createRoute({
   path: '/platform',
   // The section arrives with P1; the placeholder does not name it.
   component: () => <ComingSoonPage title="Общ преглед" />,
-  beforeLoad: () => {
-    if (getSession()?.user.platformRole !== 'super_admin') {
-      throw redirect({ to: '/' });
-    }
-  },
+  beforeLoad: requirePlatformAdmin,
 });
 
 const auditRoute = createRoute({
@@ -136,11 +141,7 @@ const tenantsRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/tenants',
   component: TenantsPage,
-  beforeLoad: () => {
-    if (getSession()?.user.platformRole !== 'super_admin') {
-      throw redirect({ to: '/' });
-    }
-  },
+  beforeLoad: requirePlatformAdmin,
 });
 
 const routeTree = rootRoute.addChildren([
