@@ -120,6 +120,16 @@ does not take the entry for the current UI.
   and «Техник» (D22; the Bulgarian names in the WHI-27 description, 22.09).
   Avoid: «фирма», «изпълнител», «подизпълнител» as the general word. Source:
   WHI-27 (28.09 09:13).
+- **Възложи на доставчик** — the house manager entrusts a building to a
+  contractor and enters the agreed services (creates a `contractor_assignment`);
+  the button and the form title on the building's «Доставчици» tile. Source:
+  D30, WHI-27 (28.09 14:46, approved 15:14).
+- **Прекрати** — the action that ends a contractor's assignment to a building
+  (`contractor_assignment.effective_to` set to that day); from then on the
+  firm no longer sees the building in its «Сгради». The confirmation reads
+  «Да се прекрати ли възлагането?» with «Остани» / «Прекрати». Avoid:
+  «Изтрий», «Премахни», «Отмени» for an assignment — nothing is deleted.
+  Source: D30, WHI-27 (28.09 14:46, approved 15:14).
 
 ## Account and settings
 
