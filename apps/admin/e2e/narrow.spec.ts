@@ -49,3 +49,30 @@ test('375: the platform-visit banner keeps its title and puts the way back below
   // Normal lines: the text runs about as wide as the banner, not one word per line.
   expect(t.width).toBeGreaterThan(250);
 });
+
+// The Сигнали tags are filters; a filter's name is never cut. Two columns
+// where they fit (1180, 402), one column on a narrower card (1024, 375).
+for (const [width, columns] of [
+  [375, 1],
+  [402, 2],
+  [1024, 1],
+  [1280, 2],
+] as const) {
+  test(`${width}: the Сигнали tags keep their names, ${columns} per row`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await openSignedIn(page, ORG_ADMIN, '/');
+    const tags = card(page, 'Спешни сега').locator('.glass-blur');
+    await expect(tags).toHaveCount(4);
+    const boxes = await tags.evaluateAll((all) =>
+      all.map((tag) => {
+        const label = tag.querySelector('span.text-body-14')!;
+        return {
+          cut: label.scrollWidth > label.clientWidth,
+          top: Math.round(tag.getBoundingClientRect().top),
+        };
+      }),
+    );
+    expect(boxes.filter((b) => b.cut)).toEqual([]);
+    expect(new Set(boxes.map((b) => b.top)).size).toBe(4 / columns);
+  });
+}

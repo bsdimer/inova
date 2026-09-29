@@ -17,7 +17,7 @@ test('without data every card shows dashes and no invented number', async ({ pag
   await expect(balance).not.toContainText('%');
   await expect(balance).not.toContainText('€');
   await expect(card(page, 'Спешни сега')).toContainText(
-    'Спешните сигнали на жителите се появяват тук с M6.',
+    'Спешните сигнали на жителите ще се появяват тук.',
   );
   await expect(card(page, 'Предстоящи')).toContainText('Общи събрания, отчети и задачи');
   await expect(card(page, 'Преглед на сгради')).not.toContainText('платили');
@@ -65,4 +65,17 @@ test('the glass blurs in the built portal, in Chrome too', async ({ page }) => {
     'backdrop-filter',
     'blur(8px)',
   );
+});
+
+test('no plan code reaches the words on the page or its tooltips', async ({ page }) => {
+  // design.md → Words: plan codes (M6, B9, D16) never appear in UI sentences.
+  await openSignedIn(page, ORG_ADMIN, '/?fixture=off');
+  await expect(card(page, 'Баланс')).toBeVisible();
+  const words = await page
+    .locator('main')
+    .evaluate((main) => [
+      (main as HTMLElement).innerText,
+      ...[...main.querySelectorAll('[title]')].map((el) => el.getAttribute('title') ?? ''),
+    ]);
+  for (const text of words) expect(text).not.toMatch(/\b(M\d+b?|P1|[BD]\d+)\b/);
 });
