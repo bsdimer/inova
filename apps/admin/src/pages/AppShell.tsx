@@ -474,7 +474,7 @@ function PlatformBadge() {
       >
         Платформа
       </span>
-      <p className="mt-1.5 text-xs text-ink-faint">всички организации</p>
+      <p className="mt-1.5 text-xs text-ink-soft">всички организации</p>
     </div>
   );
 }

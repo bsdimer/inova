@@ -134,10 +134,9 @@ function Toggle({ options, selected }: { options: readonly string[]; selected: s
 }
 
 /** V2/Label/12 Semibold · overline, as the list headings draw it. */
-function Overline({ children }: { children: ReactNode }) {
-  return (
-    <p className="text-overline-12 pb-0.5 font-semibold text-ink-muted uppercase">{children}</p>
-  );
+/** A section label inside a card; text/muted unless the frame lifts it for contrast. */
+function Overline({ children, tone = 'text-ink-muted' }: { children: ReactNode; tone?: string }) {
+  return <p className={`text-overline-12 pb-0.5 font-semibold uppercase ${tone}`}>{children}</p>;
 }
 
 const MONTHS = [
@@ -489,7 +488,8 @@ function SignalsCard({ signals, today }: { signals: DashboardData['signals']; to
       </div>
 
       <div className="flex flex-col gap-2 pt-8 tight:pt-[1.125rem]">
-        <Overline>Спешни сега</Overline>
+        {/* text/secondary: over the bright part of the photo text/muted measured 3.69. */}
+        <Overline tone="text-ink-soft">Спешни сега</Overline>
         {signals ? (
           signals.urgent.map((signal) => (
             // V2/Signal (846:358): the colour is the dot's, the text stays white.
