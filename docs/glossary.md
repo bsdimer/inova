@@ -105,6 +105,17 @@ does not take the entry for the current UI.
   `revoked`). Avoid: «Отмени достъпа», «Отменен». Source: WHI-47 (25.09).
   Decided, not built: the admin's staff panel still offers «Отмени достъпа»
   and shows «Отменен» until the staff task lands.
+- **Права** — the permission keys of the catalog, named for the «Роли»
+  screen in words and grouped; the key itself shows only in the role editor,
+  small under the name (WHI-40). The seven in place since M1: `tenant.read`
+  «Преглед на организацията» and `tenant.manage` «Настройки на
+  организацията» (group «Настройки»), `staff.read` «Преглед на служителите»
+  and `staff.manage` «Покани и управление на служители» («Служители»),
+  `roles.read` «Преглед на ролите» and `roles.manage` «Роли и права»
+  («Настройки»), `audit.read` «Одитен дневник» («Одит»). Later keys take
+  their names from the same frame (`1091:10390`, groups Имоти / Жители /
+  Финанси / Сигнали / Комуникация / Анкети / Задачи / Документи / Отчети)
+  when their phase lands. Source: WHI-91 (29.09 13:34), WHI-40.
 - **Период на действие** — how long an assignment holds (house manager,
   document recipient). Avoid: «В сила от» as the heading of an assignment's period; the column
   «В сила от» in the fee rules (the date a rule version applies from)
