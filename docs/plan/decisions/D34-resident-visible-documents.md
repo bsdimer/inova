@@ -4,7 +4,7 @@ title: A building's document can be marked visible to its residents — before t
 status: decided
 decided: 2026-09-30 (team lead, before the pilot)
 source: WHI-79 — the stakeholder's ask of 2026-09-28 16:01 («тикче дали да се вижда в приложението от Жителите»); the question to the team lead 2026-09-29 06:44; his answer 2026-09-30 01:15
-pr: '#50'
+pr: '#51'
 affects: [D15, D23]
 ---
 

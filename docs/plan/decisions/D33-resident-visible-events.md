@@ -4,7 +4,7 @@ title: Calendar events reach residents the way contractor visits do — before t
 status: decided
 decided: 2026-09-30 (team lead, before the pilot)
 source: WHI-27 — the stakeholder's ask of 2026-09-28 15:22 («„Събития“ се виждат и от живущите с опция за известия»); the question to the team lead 2026-09-29 06:44; his answer 2026-09-30 01:14
-pr: '#50'
+pr: '#51'
 affects: [D29, D17, D23]
 ---
 

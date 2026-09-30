@@ -4,7 +4,7 @@ title: The tenant-named menu item opens a listings module («Обяви») — a
 status: decided
 decided: 2026-09-30 (team lead; the content chosen by the stakeholder 2026-09-29 14:55)
 source: WHI-29 — the stakeholder's answers of 2026-09-29 13:28 and 14:55; the question to the team lead 15:15; his answer 2026-09-30 01:14
-pr: '#50'
+pr: '#51'
 affects: [D23]
 ---
 
