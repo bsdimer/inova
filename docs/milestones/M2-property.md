@@ -58,7 +58,7 @@ The schema contract test must pass on the new tables without being rewritten.
 Portfolio tree, building setup/activation, apartment detail, “add resident”
 (role + effective date → invite → delivery/activation status), multiple owners,
 designated owner document recipient, verification queue, corrections,
-removal-request queue with История for decided and withdrawn requests (D27), approved end occupancy (no move — D25), manager assignment. The building page's tiles are Финанси, Входни такси, Документи, Справки, Известия, Сигнали, Анкети and **Календар** — the calendar of this building only, tasks and contractor visits (D31); Общност is reached from the menu, not from a tile. The buildings list filters by град and квартал (D24). The «Детайли на жител» panel (WHI-63) fills in stages: contacts, properties, pets and history here; «Подадени сигнали» after M6; the photo from Общност after the forum module (initials until then, as drawn).
+removal-request queue with История for decided and withdrawn requests (D27), approved end occupancy (no move — D25), manager assignment. The building page's tiles are Финанси, Входни такси, Документи, Справки, Известия, Сигнали, Анкети, **Календар** — the calendar of this building only, tasks and contractor visits (D31) — and **Доставчици** — the contractors entrusted with this building with their agreed services, and the «Възложи на доставчик» form (D30; stakeholder WHI-27 28.09 14:21); Общност is reached from the menu, not from a tile. The buildings list filters by град and квартал (D24). The «Детайли на жител» panel (WHI-63) fills in stages: contacts, properties, pets and history here; «Подадени сигнали» after M6; the photo from Общност after the forum module (initials until then, as drawn).
 
 ## Mobile
 

@@ -116,8 +116,8 @@ reset revokes existing sessions; out-of-bounds lifetime settings fail start-up.
 - Real SMS/Viber delivery through the worker (gateway still open: Twilio vs
   Infobip — a long-lead item, see M-Pilot). Until then `MockCodeDelivery` logs
   codes and refuses to start in production without `CODE_DELIVERY=log`.
-- Admin silent refresh; audit-trail page (before the pilot — the platform rail already shows «Одитен дневник»).
-- The audit record on a platform user's entry into a tenant (§6.2, `platform_access`): the guard admits `super_admin` and writes nothing yet; what it changes inside the tenant is audited as an ordinary actor.
+- Admin silent refresh; audit-trail page (before the pilot — the platform rail already shows «Одитен дневник»). One screen for both scopes: the platform administrator sees every organisation with an organisation filter (Figma «V2 · Одитен дневник» `2343:54613`); an organisation account with `audit.read` (the seeded Administrator role) sees its own trail through `GET /v1/tenant/audit`, reached from the organisation's settings, not a tenth rail item — the nine-item menu stands (WHI-24).
+- The audit record on a platform user's entry into a tenant (§6.2, `platform_access`): the guard admits `super_admin` and writes nothing yet; what it changes inside the tenant is audited as an ordinary actor. Lands with the B8 refactor (team lead, 28.09), not as a separate fix.
 
 ## Hardening done outside the phase scope (2026-09-21)
 

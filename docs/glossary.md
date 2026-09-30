@@ -50,10 +50,12 @@ does not take the entry for the current UI.
   values: «Поддръжка», «Консуматив», «Допълнителна услуга»
   (`invoice_purpose`: `maintenance` / `consumables` / `extra_service`). The
   field is «За какво е», not «Вид» or «Категория»: «Вид разход» is fixed /
-  temporary, «категория» is an issue's category. The kind follows from the
+  temporary, and «категория» stays the word wherever things are sorted by
+  kind — an issue's category, a listing's category in «Маркетплейс» (WHI-29,
+  P1). The kind follows from the
   choice: «Поддръжка» is a «Фиксиран разход», «Консуматив» and «Допълнителна
   услуга» a «Временен разход»; the firm does not pick it. A free note stays
-  optional beside it. Avoid: «вид услуга», «категория» for this field.
+  optional beside it. Avoid: «вид услуга», «категория» for this one field only.
   Source: WHI-27 (28.09 12:30, 13:02); the firm's own invoice upload comes
   with the P1 expenses wave (team lead, 28.09 14:06).
 - **Такса Домоуправление** — the one rule that keeps the word «такса».
@@ -105,6 +107,17 @@ does not take the entry for the current UI.
   `revoked`). Avoid: «Отмени достъпа», «Отменен». Source: WHI-47 (25.09).
   Decided, not built: the admin's staff panel still offers «Отмени достъпа»
   and shows «Отменен» until the staff task lands.
+- **Права** — the permission keys of the catalog, named for the «Роли»
+  screen in words and grouped; the key itself shows only in the role editor,
+  small under the name (WHI-40). The seven in place since M1: `tenant.read`
+  «Преглед на организацията» and `tenant.manage` «Настройки на
+  организацията» (group «Настройки»), `staff.read` «Преглед на служителите»
+  and `staff.manage` «Покани и управление на служители» («Служители»),
+  `roles.read` «Преглед на ролите» and `roles.manage` «Роли и права»
+  («Настройки»), `audit.read` «Одитен дневник» («Одит»). Later keys take
+  their names from the same frame (`1091:10390`, groups Имоти / Жители /
+  Финанси / Сигнали / Комуникация / Анкети / Задачи / Документи / Отчети)
+  when their phase lands. Source: WHI-91 (29.09 13:34), WHI-40.
 - **Период на действие** — how long an assignment holds (house manager,
   document recipient). Avoid: «В сила от» as the heading of an assignment's period; the column
   «В сила от» in the fee rules (the date a rule version applies from)
@@ -120,13 +133,37 @@ does not take the entry for the current UI.
   and «Техник» (D22; the Bulgarian names in the WHI-27 description, 22.09).
   Avoid: «фирма», «изпълнител», «подизпълнител» as the general word. Source:
   WHI-27 (28.09 09:13).
+- **Дейност** — what a contractor does, in a few words («Почистване»,
+  «Поддръжка», «Озеленяване»; `contractor.activity`, free text): the field
+  under «Фирма или име» in «Нов доставчик», the second line of the building's
+  contractor list and the picker («Чисто ООД · Почистване»). Not a role and
+  not an issue category — a contractor without an account has neither.
+  Source: WHI-27 (29.09 12:20).
+- **Възложи на доставчик** — the house manager entrusts a building to a
+  contractor and enters the agreed services (creates a `contractor_assignment`);
+  the button and the form title on the building's «Доставчици» tile. Source:
+  D30, WHI-27 (28.09 14:46, approved 15:14).
+- **Прекрати** — the action that ends a contractor's assignment to a building
+  (`contractor_assignment.effective_to` set to that day); from then on the
+  firm no longer sees the building in its «Сгради». The confirmation reads
+  «Да се прекрати ли възлагането?» with «Отмени» / «Прекрати». Avoid:
+  «Изтрий», «Премахни», «Отмени» as the action — nothing is deleted.
+  Source: D30, WHI-27 (28.09 14:46, approved 15:14).
+- **Отмени** — the secondary button of a delete or end confirmation («Да се
+  изтрие ли…?», «Да се прекрати ли…?»): closes the dialog, nothing changes;
+  the text says «се изтрива», not «изчезва». Avoid: «Остани» there —
+  «Остани» belongs to «Да се откажа ли?», which keeps the user in the form
+  (`docs/design.md` → forms). Source: WHI-79 (29.09 10:15).
 
 ## Account and settings
 
 - **Връзка** — a link sent by e-mail or SMS (password recovery, invitation);
   the button is «Изпрати връзка». Avoid: «линк». Source: WHI-20 (23.09).
-- **Тема** — the theme setting: «Светла», «Тъмна», «Динамична» (follows the
-  time of day). Avoid: «Изглед», «Както в системата». Source: WHI-47
-  (25.09), `docs/design.md` → theme. Decided, not built: the admin still
+- **Тема** — the theme setting, in this order: «Динамична» (the default:
+  light by day, dark in the evening, by the time of day, never the device
+  setting), «Светла» (always light), «Тъмна» (always dark); each with its
+  caption — «светла денем, тъмна вечер» / «винаги светла» / «винаги тъмна».
+  Avoid: «Изглед», «Както в системата». Source: WHI-47 (25.09), WHI-86
+  (29.09 12:37), `docs/design.md` → theme. Decided, not built: the admin still
   offers «Изглед» with «Както в системата» (following the system setting)
   until the theme task lands.

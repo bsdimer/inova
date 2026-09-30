@@ -14,7 +14,8 @@ affects: [D17, D29]
 every month until a date**. The series creates ordinary, separate entries in
 the calendar. One entry, or the series **from this date on**, can be edited
 or deleted; earlier entries stay as they were. No exceptions, no other
-repeat rules. Entries are created ahead only for a bounded horizon (the
+repeat rules. A repeating visit's «Изпрати известие» box sends one notice at save for
+the whole series, naming the schedule; nothing per entry (D29). Entries are created ahead only for a bounded horizon (the
 team lead's example: up to 12 months; the value is a setting), and the rest
 when their turn comes. Before the pilot.
 
