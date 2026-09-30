@@ -1,21 +1,23 @@
 ---
 id: D35
-title: The tenant-named menu item opens a listings module («Обяви») — after the pilot, with Privileges
+title: The tenant-named menu item opens the «Каталог» module of listings («Обяви») — after the pilot, with Privileges
 status: decided
 decided: 2026-09-30 (team lead; the content chosen by the stakeholder 2026-09-29 14:55)
-source: WHI-29 — the stakeholder's answers of 2026-09-29 13:28 and 14:55; the question to the team lead 15:15; his answer 2026-09-30 01:14; the scope and «Добави» — the stakeholder 2026-09-30 06:29
+source: WHI-29 — the stakeholder's answers of 2026-09-29 13:28 and 14:55; the question to the team lead 15:15; his answer 2026-09-30 01:14; the scope and «Добави» — the stakeholder 2026-09-30 06:29; the name «Каталог», the district default and the reminder — 2026-09-30 07:08
 pr: '#51'
 affects: [D23]
 ---
 
-# D35 — The tenant-named menu item opens a listings module, after the pilot
+# D35 — The tenant-named menu item opens the «Каталог» module, after the pilot
 
-**Rule.** The menu item the tenant names (D23, 4) opens **listings**
-(«Обяви»): cards with a photo and the key facts, search and a filter by
+**Rule.** The menu item the tenant names (D23, 4) opens the module
+**«Каталог»** (`catalog` — its system name and its default menu name,
+whatever the tenant calls the item; stakeholder 30.09 07:08) of **listings**
+(«Обяви», `listing`): cards with a photo and the key facts, search and a filter by
 category; a listing opens with photos, ticked bullet points and one main
 button, mostly «Обади се»; the house manager adds, edits and withdraws
 listings (active / withdrawn); residents see the active ones, the admin also
-the withdrawn; a rating comes later. Each listing has a **scope** («Кой я вижда»): all the tenant's buildings (default), chosen buildings, or a city and its districts (D24 fields); a resident sees the listings whose scope covers their building. Open: whether a building added to that district later sees the listing by itself — asked 30.09 in WHI-29. One item in the pilot's design; every
+the withdrawn; a rating comes later. Each listing has a **scope** («Кой я вижда»): all the tenant's buildings (default), chosen buildings, or a city and its districts (D24 fields); a resident sees the listings whose scope covers their building; a building added to that district or city later sees them by itself («по подразбиране да показва всичко видимо за квартала / града», stakeholder 30.09 07:08). **Proposed (design, not yet answered):** when a building is created, the module shows a notice above the list — the new building sees the district's and the city's listings, not those for chosen buildings — with «Прегледай»; the stakeholder suggested a reminder and left the form open. One item in the pilot's design; every
 item after the first is paid (a billing entitlement). **This is a module,
 not a brand-config field, and it is built after the pilot, in the P1 wave
 together with Privileges.** Until then the item is not shown in the menu
