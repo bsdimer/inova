@@ -38,8 +38,9 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
   system from the Figma page **Screens**: a fixed photograph with a scrim, the
   three glass fills (card / data / input) and the panel surface (light by day, dark at night) for
   drawers, modals and menus, all generated from that file's V2 Glass and V2
-  Layout variables. The light and dark themes both exist and are chosen from
-  the account menu or the OS. Icons are Phosphor Light, the set the screens
+  Layout variables. The light and dark themes both exist; the account menu
+  offers «Динамична» (the default: light by day, dark in the evening by the
+  sun in the browser's time zone), «Светла» and «Тъмна». Icons are Phosphor Light, the set the screens
   are drawn with. Navigation is the nine items of the Figma sidebar, in the
   order settled in WHI-24 (after the 2026-09-22 list: «Финанси» moved to
   fourth, «Нередности» renamed «Сигнали»):

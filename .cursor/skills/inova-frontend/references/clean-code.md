@@ -136,8 +136,8 @@ catch an unhandled rejection.
   third-party widgets) and for values whose change must not render.
 - User text renders through JSX; the rare necessary HTML is sanitised before
   `dangerouslySetInnerHTML`.
-- File naming, `index.ts`, arrow function vs `function` are project
-  conventions, not React rules: follow what the target app already does.
+- File naming and `index.ts` are project conventions, not React rules: follow
+  what the target app already does. Function style is fixed below.
 - Reuse the existing router, API client, TanStack Query cache, session, tenant,
   form, and UI primitives. Do not create parallel state systems.
 
@@ -198,6 +198,10 @@ scenario; an abstraction added "for later" is not the goal.
   testability improves.
 - Braces follow Prettier and ESLint; a one-line guard clause is allowed, a body
   of several statements is always a block.
+- Components and top-level functions are `function` declarations
+  (`export function Name()`); arrow functions are for callbacks, handlers and
+  short local helpers inside a function (`const close = () => setOpen(false)`).
+  Existing code is not rewritten for style; no lint rule enforces it.
 - ESLint, TypeScript, Prettier, architecture contracts, and `pnpm verify` are
   executable authority for rules they already enforce.
 
