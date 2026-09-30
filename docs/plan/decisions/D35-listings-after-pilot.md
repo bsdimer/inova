@@ -15,7 +15,7 @@ affects: [D23]
 category; a listing opens with photos, ticked bullet points and one main
 button, mostly «Обади се»; the house manager adds, edits and withdraws
 listings (active / withdrawn); residents see the active ones, the admin also
-the withdrawn; a rating comes later. Each listing has a **scope** («Кой я вижда»): all the tenant's buildings (default), chosen buildings, or a city and its districts (D24 fields — a building added there later sees it too); a resident sees the listings whose scope covers their building. One item in the pilot's design; every
+the withdrawn; a rating comes later. Each listing has a **scope** («Кой я вижда»): all the tenant's buildings (default), chosen buildings, or a city and its districts (D24 fields); a resident sees the listings whose scope covers their building. Open: whether a building added to that district later sees the listing by itself — asked 30.09 in WHI-29. One item in the pilot's design; every
 item after the first is paid (a billing entitlement). **This is a module,
 not a brand-config field, and it is built after the pilot, in the P1 wave
 together with Privileges.** Until then the item is not shown in the menu
