@@ -72,10 +72,14 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   | Too wide for a panel (e.g. «Пробно начисляване»)                           | centred window, about 16:9 and smaller than the screen, over the dimmed screen, × | as the view row above                                               |
   | A work place (Апартамент, search results) or a multi-step process (import) | its own page                                                                      | its own page                                                        |
 
-- If the user entered data and then presses × or back, ask «Да се откажа ли?».
-  The confirmation opens over the form with its own scrim. Focus starts on
-  «Остани»; Esc and a click on the scrim mean «Остани». «Откажи» closes both
-  the confirmation and the form.
+- × or back on a panel or form with unsaved changes asks «Да се запазят ли
+  промените?» — «Промените още не са запазени.» — with «Не запазвай» /
+  «Запази». The confirmation opens over the form with its own scrim; Esc, a
+  click on the scrim or the confirmation's × return to the form. «Не
+  запазвай» closes both without saving. «Запази» saves and closes; if the
+  form has a validation error, the confirmation closes and the form shows the
+  error. Without changes × closes at once. On 402 the buttons stack: Запази,
+  Не запазвай. Figma: 1728 node `1925:2`, 402 node `1925:86`.
 - A secondary window keeps the screen under it in place: the list under a
   drawer is dimmed, not replaced, and after closing the user is exactly where
   they were.
