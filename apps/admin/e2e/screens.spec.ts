@@ -135,6 +135,43 @@ test('Роли и обхват', async ({ page }) => {
   await page.screenshot(shot('roli-i-obhvat'));
 });
 
+/** The panel's states (1607:36771) and the question over it (1925:2, 1925:86). */
+for (const { name, width, height } of [
+  { name: '1728', width: 1728, height: 1117 },
+  { name: '1024-600', width: 1024, height: 600 },
+  { name: '402', width: 402, height: 874 },
+] as const) {
+  test(`Роли и обхват — промени и «Да се откажа ли?» at ${name}`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await openSignedIn(page, ORG_ADMIN, '/staff');
+    await page.getByRole('button', { name: 'Роли и обхват — Елена Петрова' }).click();
+    await page.getByRole('radio', { name: /^Администратор/ }).click();
+    await expect(page.getByText('Какво се променя при запис')).toBeVisible();
+    await settled(page);
+    await page.screenshot(shot(`roli-i-obhvat-promeni-${name}`));
+
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('alertdialog', { name: 'Да се откажа ли?' })).toBeVisible();
+    await page.waitForTimeout(400);
+    await page.screenshot(shot(`da-se-otkazha-li-${name}`));
+  });
+}
+
+test('Роли и обхват — запазено', async ({ page }) => {
+  await page.route('**/v1/tenant/staff/*', (route) =>
+    route.request().method() === 'PATCH'
+      ? route.fulfill({ status: 200, json: { ok: true } })
+      : route.fallback(),
+  );
+  await openSignedIn(page, ORG_ADMIN, '/staff');
+  await page.getByRole('button', { name: 'Роли и обхват — Елена Петрова' }).click();
+  await page.getByRole('radio', { name: /^Администратор/ }).click();
+  await page.getByRole('button', { name: 'Запази промените' }).click();
+  await expect(page.getByText(/^Запазено\./)).toBeVisible();
+  await settled(page);
+  await page.screenshot(shot('roli-i-obhvat-zapazeno'));
+});
+
 for (const theme of ['light', 'dark'] as const) {
   test(`Роли, ${theme}`, async ({ page }) => {
     await page.setViewportSize({ width: 1728, height: 1117 });

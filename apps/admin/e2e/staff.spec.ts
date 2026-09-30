@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page, type Route } from '@playwright/test';
 import { ORG_ADMIN, openSignedIn } from './session';
 
 /**
@@ -19,10 +19,28 @@ test('while the list loads it shows skeleton rows, never «no staff yet»', asyn
   await openSignedIn(page, ORG_ADMIN, '/staff');
 
   await expect(page.locator('main table tbody tr .animate-pulse').first()).toBeVisible();
-  await expect(page.getByText('Още няма акаунти на служители')).toHaveCount(0);
+  await expect(page.getByText('Още няма служители')).toHaveCount(0);
 
   release();
   await expect(rows(page)).toHaveCount(2);
+});
+
+test('a role that only reads sees the read-only strip, as drawn', async ({ page }) => {
+  await page.route('**/v1/tenant', async (route) => {
+    const response = await route.fetch();
+    const context = await response.json();
+    await route.fulfill({
+      response,
+      json: { ...context, permissions: ['tenant.read', 'staff.read', 'roles.read'] },
+    });
+  });
+  await openSignedIn(page, ORG_ADMIN, '/staff');
+  // The strip is a row of the table too, above the two members.
+  await expect(rows(page)).toHaveCount(3);
+  await expect(page.locator('main table').getByRole('status')).toHaveText(
+    'Само за четене — ролята ви може да вижда акаунти, но не и да кани, спира или сменя роли.',
+  );
+  await expect(page.getByRole('button', { name: /^Покани/ })).toHaveCount(0);
 });
 
 test.describe('with the list loaded', () => {
@@ -68,6 +86,19 @@ test.describe('with the list loaded', () => {
     await expect(page.getByText('Статус: Поканен')).toHaveCount(0);
   });
 
+  test('filters that match nobody are named in a sentence, as drawn', async ({ page }) => {
+    await page.getByRole('button', { name: 'Статус' }).click();
+    await page.getByRole('option', { name: 'Спрян' }).click();
+    await page.keyboard.press('Escape');
+
+    await expect(
+      page.getByRole('heading', { name: 'Няма служители по тези филтри' }),
+    ).toBeVisible();
+    await expect(page.locator('main table')).toContainText(
+      'Филтриране по статус е „Спрян“. Разширете опциите във филтрите или ги изчистете, за да видите другите 2 акаунта.',
+    );
+  });
+
   test('search narrows the list by name', async ({ page }) => {
     await page.getByPlaceholder('Търси по име, имейл или телефон').fill('Мария');
     await expect(rows(page)).toHaveCount(1);
@@ -80,5 +111,175 @@ test.describe('with the list loaded', () => {
 
     await expect(rows(page).nth(0)).toContainText('Елена Петрова');
     await expect(rows(page).nth(1)).toContainText('Мария Иванова');
+  });
+
+  test('«Покани служител» is a dialog with a name, the focus inside and Esc to leave', async ({
+    page,
+  }) => {
+    const open = page.getByRole('button', { name: 'Покани служител' });
+    await open.click();
+    const dialog = page.getByRole('dialog', { name: 'Покани служител' });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByPlaceholder('Никол Петрова')).toBeFocused();
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).toHaveCount(0);
+    await expect(open).toBeFocused();
+  });
+});
+
+/**
+ * The «Роли и обхват» panel (1607:36771, five states approved 25.09) on
+ * Елена Петрова, the seed's invited manager. The save itself is answered
+ * here, in the browser: the route's own rules are covered by the core-api
+ * integration tests, and the seed is not to be changed by a flow.
+ */
+test.describe('the «Роли и обхват» panel', () => {
+  const panel = (page: Page) => page.getByRole('dialog', { name: /^Роли и обхват — Елена/ });
+  const radio = (drawer: Locator, name: string) =>
+    drawer.getByRole('radio', { name: new RegExp(`^${name}`) });
+
+  async function openPanel(page: Page): Promise<Locator> {
+    await openSignedIn(page, ORG_ADMIN, '/staff');
+    await page.getByRole('button', { name: 'Роли и обхват — Елена Петрова' }).click();
+    await expect(panel(page)).toBeVisible();
+    return panel(page);
+  }
+
+  /** Answers the PATCH itself; `calls` counts how many times it was asked. */
+  async function answerSave(
+    page: Page,
+    answer: (route: Route, calls: number) => Promise<void>,
+  ): Promise<{ calls: number }> {
+    const count = { calls: 0 };
+    await page.route('**/v1/tenant/staff/*', async (route) => {
+      if (route.request().method() !== 'PATCH') return route.fallback();
+      count.calls += 1;
+      await answer(route, count.calls);
+    });
+    return count;
+  }
+
+  test('names the words of the approved frame', async ({ page }) => {
+    const drawer = await openPanel(page);
+    await expect(drawer.getByRole('button', { name: 'Изтрий достъпа' })).toBeVisible();
+    await expect(
+      drawer.getByText('Спирането е обратимо. Изтриването прекратява достъпа завинаги.'),
+    ).toBeVisible();
+    await expect(drawer.getByText('Няма промени')).toBeVisible();
+    await expect(drawer.getByRole('button', { name: 'Запази промените' })).toBeDisabled();
+    await expect(radio(drawer, 'Домоуправител')).toHaveAttribute('aria-checked', 'true');
+  });
+
+  test('choosing another role says which rights come and go, before anything is saved', async ({
+    page,
+  }) => {
+    const drawer = await openPanel(page);
+    await expect(drawer.getByText('Какво се променя при запис')).toHaveCount(0);
+
+    await radio(drawer, 'Администратор').click();
+
+    await expect(drawer.getByText('Какво се променя при запис')).toBeVisible();
+    await expect(drawer.getByRole('list', { name: 'Получава' }).getByRole('listitem')).toHaveText([
+      'Настройки на организацията',
+      'Роли и права',
+    ]);
+    await expect(drawer.getByRole('list', { name: 'Губи' }).getByRole('listitem')).toHaveText([
+      'нищо',
+    ]);
+    await expect(drawer.getByText('1 незапазена промяна')).toBeVisible();
+    await expect(drawer.getByRole('button', { name: 'Запази промените' })).toBeEnabled();
+
+    // Back to the role the account has: nothing changes, nothing to save.
+    await radio(drawer, 'Домоуправител').click();
+    await expect(drawer.getByText('Какво се променя при запис')).toHaveCount(0);
+    await expect(drawer.getByText('Няма промени')).toBeVisible();
+  });
+
+  test('while the save runs the form is locked; once saved it says so and offers to close', async ({
+    page,
+  }) => {
+    let release: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => (release = resolve));
+    await answerSave(page, async (route) => {
+      await held;
+      await route.fulfill({ status: 200, json: { ok: true } });
+    });
+    const drawer = await openPanel(page);
+    await radio(drawer, 'Администратор').click();
+    await drawer.getByRole('button', { name: 'Запази промените' }).click();
+
+    await expect(drawer.getByText('Прилагане на 1 промяна…')).toBeVisible();
+    await expect(drawer.getByRole('button', { name: 'Запазване…' })).toBeDisabled();
+    await expect(radio(drawer, 'Жител')).toBeDisabled();
+    await expect(drawer.getByRole('button', { name: 'Отказ' })).toBeDisabled();
+
+    release();
+    await expect(
+      drawer.getByText('Запазено. Елена Петрова е Администратор във всички сгради.'),
+    ).toBeVisible();
+    await expect(drawer.getByText('Няма промени')).toBeVisible();
+    await expect(drawer.getByText('Какво се променя при запис')).toHaveCount(0);
+    // The footer's «Затвори», not the × (which has the same name).
+    await drawer.getByText('Затвори', { exact: true }).click();
+    await expect(panel(page)).toHaveCount(0);
+  });
+
+  test('a failed save keeps the choice, says why, and «Опитай отново» sends it again', async ({
+    page,
+  }) => {
+    const saves = await answerSave(page, (route, calls) =>
+      calls === 1
+        ? route.fulfill({
+            status: 400,
+            json: { message: 'At least one active administrator is required' },
+          })
+        : route.fulfill({ status: 200, json: { ok: true } }),
+    );
+    const drawer = await openPanel(page);
+    await radio(drawer, 'Администратор').click();
+    await drawer.getByRole('button', { name: 'Запази промените' }).click();
+
+    await expect(
+      drawer.getByText('Не се запази — At least one active administrator is required'),
+    ).toBeVisible();
+    await expect(radio(drawer, 'Администратор')).toHaveAttribute('aria-checked', 'true');
+    await expect(radio(drawer, 'Администратор')).toBeEnabled();
+
+    await drawer.getByRole('button', { name: 'Опитай отново' }).click();
+    await expect(drawer.getByText(/^Запазено\./)).toBeVisible();
+    expect(saves.calls).toBe(2);
+  });
+
+  test('closing with an unsaved change asks «Да се откажа ли?»; without one it just closes', async ({
+    page,
+  }) => {
+    const drawer = await openPanel(page);
+    await page.keyboard.press('Escape');
+    await expect(panel(page)).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Роли и обхват — Елена Петрова' }).click();
+    await radio(drawer, 'Администратор').click();
+    await page.keyboard.press('Escape');
+
+    const question = page.getByRole('alertdialog', { name: 'Да се откажа ли?' });
+    await expect(question).toBeVisible();
+    await expect(question.getByText('Въведеното във формата няма да се запази.')).toBeVisible();
+    await expect(question.getByRole('button', { name: 'Остани' })).toBeFocused();
+
+    // Esc means «Остани»: the edit is still there.
+    await page.keyboard.press('Escape');
+    await expect(question).toHaveCount(0);
+    await expect(radio(drawer, 'Администратор')).toHaveAttribute('aria-checked', 'true');
+
+    await drawer.getByLabel('Затвори').click();
+    await question.getByRole('button', { name: 'Остани' }).click();
+    await expect(question).toHaveCount(0);
+    await expect(drawer).toBeVisible();
+
+    await drawer.getByRole('button', { name: 'Отказ' }).click();
+    await question.getByRole('button', { name: 'Откажи' }).click();
+    await expect(question).toHaveCount(0);
+    await expect(panel(page)).toHaveCount(0);
   });
 });

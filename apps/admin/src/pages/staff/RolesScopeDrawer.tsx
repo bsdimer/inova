@@ -1,35 +1,40 @@
 import {
   Info,
+  CheckCircle,
   CircleNotch,
   ArrowCounterClockwise,
   ShieldSlash,
   UserMinus,
+  WarningCircle,
   X,
 } from '../../components/icons';
-import { useEffect, useState } from 'react';
-import { Avatar, Drawer, StatusDot } from '../../components/ui';
+import { useState } from 'react';
+import { Avatar, ConfirmDialog, Drawer, StatusDot } from '../../components/ui';
 import type { Role, StaffMember } from '../../lib/api';
+import { permissionLabel, sortPermissions } from '../roles/permissions';
 import {
+  ACTION_PROGRESS,
   ROLE_NAMES,
   STATUS_LABELS,
   STATUS_TONES,
   formatSince,
+  permissionDiff,
   roleName,
   type RowAction,
 } from './model';
 
 /**
- * What each seeded role is for, in the stakeholder's own words from the
- * 2026-09-22 decisions. A tenant's custom role falls back to its permission
- * count, which is the only description the API can supply.
+ * What each seeded role is for, in the words of the approved panel
+ * (1607:36771). A tenant's custom role falls back to its permission count,
+ * which is the only description the API can supply.
  */
 const ROLE_DESCRIPTIONS: Record<string, string> = {
   admin: 'Всички права в организацията.',
-  manager: 'Ежедневни операции в сградите в обхвата.',
-  accountant: 'Такси, плащания и финансови отчети.',
-  resident: 'Собственият апартамент.',
-  owner: 'Собственият апартамент. Предлага анкети и гласува.',
-  tenant: 'Собственият апартамент. Без предложения и гласуване.',
+  manager: 'Ежедневни операции за сградите в обхвата.',
+  accountant: 'Входни такси, плащания и финансови отчети.',
+  resident: 'Собственият имот.',
+  owner: 'Собственият имот. Предлага анкети и гласува.',
+  tenant: 'Собственият имот. Без предложения и гласуване.',
   cleaning: 'Само сигналите с етикет «Чистота».',
   technician: 'Само сигналите с етикет «Поддръжка».',
 };
@@ -41,11 +46,20 @@ function describeRole(role: Role): string {
   );
 }
 
+/**
+ * How the last save from the panel went. Owned by the page, which runs the
+ * request; the panel only draws it (the five approved states of 1607:36771).
+ */
+export type SaveState =
+  | { kind: 'idle' }
+  | { kind: 'saving' }
+  | { kind: 'failed'; action: RowAction; reason: string }
+  | { kind: 'saved'; roleKey: string };
+
 export function RolesScopeDrawer({
   member,
   roles,
-  saving,
-  error,
+  save,
   protection,
   onClose,
   onSave,
@@ -53,17 +67,16 @@ export function RolesScopeDrawer({
 }: {
   member: StaffMember | null;
   roles: Role[];
-  saving: boolean;
-  error: string | null;
+  save: SaveState;
   protection: string | null;
   onClose: () => void;
   onSave: (roleKey: string) => void;
-  onAccountAction: (action: RowAction) => void;
+  onAccountAction: (action: Exclude<RowAction, 'change-role'>) => void;
 }) {
-  const [draft, setDraft] = useState<string | null>(null);
-
-  // A different member in the same drawer starts from that member's own role.
-  useEffect(() => setDraft(null), [member?.userId]);
+  // The draft remembers whose it is, so opening the panel on another member
+  // starts from that member's own role without an effect to reset it.
+  const [draft, setDraft] = useState<{ userId: string; roleKey: string } | null>(null);
+  const [asking, setAsking] = useState(false);
 
   if (!member) {
     return (
@@ -73,13 +86,28 @@ export function RolesScopeDrawer({
     );
   }
 
-  const selected = draft ?? member.roleKey;
-  const dirty = selected !== member.roleKey;
-  const close = () => {
-    if (saving) return;
+  // Once saved, the panel measures changes against the role it just saved:
+  // the list behind it catches up a moment later.
+  const base = save.kind === 'saved' ? save.roleKey : member.roleKey;
+  const selected = draft?.userId === member.userId ? draft.roleKey : base;
+  const dirty = selected !== base;
+  const saving = save.kind === 'saving';
+
+  const leave = () => {
     setDraft(null);
+    setAsking(false);
     onClose();
   };
+  const close = () => {
+    if (saving) return;
+    if (dirty) setAsking(true);
+    else leave();
+  };
+
+  const fromRole = roles.find((role) => role.key === base);
+  const toRole = roles.find((role) => role.key === selected);
+  const diff =
+    dirty && fromRole && toRole ? permissionDiff(fromRole.permissions, toRole.permissions) : null;
 
   return (
     <Drawer
@@ -102,6 +130,7 @@ export function RolesScopeDrawer({
           <button
             type="button"
             onClick={close}
+            data-dialog-close
             aria-label="Затвори"
             className="rounded-full p-1.5 text-panel-ink-muted transition-colors hover:bg-panel-row hover:text-panel-ink"
           >
@@ -110,30 +139,17 @@ export function RolesScopeDrawer({
         </div>
       }
       footer={
-        <div className="flex items-center gap-3">
-          <span className="min-w-0 flex-1 truncate text-xs text-panel-ink-faint">
-            {error ?? (dirty ? 'Има незапазени промени' : 'Няма промени')}
-          </span>
-          <button
-            type="button"
-            onClick={close}
-            disabled={saving}
-            className="rounded-full border border-panel-border px-4 py-2 text-sm font-medium text-panel-ink disabled:opacity-40"
-          >
-            Отказ
-          </button>
-          <button
-            type="button"
-            onClick={() => onSave(selected)}
-            disabled={!dirty || saving}
-            className="flex items-center gap-2 rounded-full bg-panel-ink px-5 py-2 text-sm font-semibold text-panel-ink-inverse disabled:opacity-40"
-          >
-            {saving && <CircleNotch size="0.875rem" className="animate-spin" />}
-            Запази
-          </button>
-        </div>
+        <Footer
+          save={save}
+          dirty={dirty}
+          onCancel={close}
+          onSave={() => onSave(selected)}
+          onDone={leave}
+        />
       }
     >
+      <SaveBand save={save} member={member} roles={roles} dirty={dirty} />
+
       <fieldset disabled={saving} className="space-y-7">
         <section>
           <h3 className="text-sm font-semibold">Роли</h3>
@@ -145,7 +161,7 @@ export function RolesScopeDrawer({
           <p className="mt-0.5 text-xs text-panel-ink-muted">
             Акаунтът има една роля. Няколко роли на един акаунт ще са възможни по-късно.
           </p>
-          <div className="mt-3 space-y-1.5">
+          <div role="radiogroup" aria-label="Роля" className="mt-3 space-y-1.5">
             {roles.map((role) => {
               const checked = role.key === selected;
               return (
@@ -154,7 +170,8 @@ export function RolesScopeDrawer({
                   type="button"
                   role="radio"
                   aria-checked={checked}
-                  onClick={() => setDraft(role.key)}
+                  data-autofocus={checked ? '' : undefined}
+                  onClick={() => setDraft({ userId: member.userId, roleKey: role.key })}
                   className={`flex w-full items-start gap-3 rounded-2xl px-3.5 py-3 text-left transition-colors ${
                     checked ? 'bg-panel-row-strong' : 'bg-panel-row hover:bg-panel-row-strong'
                   }`}
@@ -196,11 +213,13 @@ export function RolesScopeDrawer({
           </div>
         </section>
 
+        {diff && <Changes gains={diff.gains} losses={diff.losses} />}
+
         <section>
           <h3 className="text-sm font-semibold">Акаунт</h3>
           {!protection && (
             <p className="mt-0.5 text-xs text-panel-ink-muted">
-              Спирането е обратимо. Отмяната прекратява достъпа завинаги.
+              Спирането е обратимо. Изтриването прекратява достъпа завинаги.
             </p>
           )}
           {protection ? (
@@ -236,13 +255,184 @@ export function RolesScopeDrawer({
                 onClick={() => onAccountAction('revoke')}
                 danger
               >
-                {member.status === 'invited' ? 'Отмени поканата' : 'Отмени достъпа'}
+                Изтрий достъпа
               </AccountAction>
             </div>
           )}
         </section>
       </fieldset>
+
+      <ConfirmDialog
+        open={asking}
+        title="Да се откажа ли?"
+        stay="Остани"
+        leave="Откажи"
+        onStay={() => setAsking(false)}
+        onLeave={leave}
+      >
+        Въведеното във формата няма да се запази.
+      </ConfirmDialog>
     </Drawer>
+  );
+}
+
+/** The band above the form: how the last save went (states 4 and 5). */
+function SaveBand({
+  save,
+  member,
+  roles,
+  dirty,
+}: {
+  save: SaveState;
+  member: StaffMember;
+  roles: Role[];
+  dirty: boolean;
+}) {
+  if (save.kind === 'failed') {
+    const text =
+      save.action === 'change-role'
+        ? `Не се запази — ${save.reason}`
+        : `${ACTION_PROGRESS[save.action]} ${member.fullName} не успя: ${save.reason}`;
+    return (
+      <p
+        role="alert"
+        className="mb-5 flex gap-2 rounded-2xl px-3.5 py-3 text-sm text-panel-ink"
+        style={{ boxShadow: 'inset 0 0 0 0.0625rem var(--panel-status-urgent)' }}
+      >
+        <WarningCircle size="1rem" className="mt-0.5 shrink-0 text-panel-status-urgent" />
+        <span>{text}</span>
+      </p>
+    );
+  }
+  // A new choice after a save is a new change; the confirmation steps aside.
+  if (save.kind === 'saved' && !dirty) {
+    return (
+      <p
+        role="status"
+        className="mb-5 flex gap-2 rounded-2xl px-3.5 py-3 text-sm text-panel-ink"
+        style={{ boxShadow: 'inset 0 0 0 0.0625rem var(--panel-status-resolved)' }}
+      >
+        <CheckCircle size="1rem" className="mt-0.5 shrink-0 text-panel-status-resolved" />
+        <span>
+          Запазено. {member.fullName} е {roleName(save.roleKey, roles)} във всички сгради.
+        </span>
+      </p>
+    );
+  }
+  return null;
+}
+
+/** «Какво се променя при запис» (1607:976): the rights that come and go. */
+function Changes({ gains, losses }: { gains: string[]; losses: string[] }) {
+  return (
+    <section className="rounded-2xl bg-panel-row p-4">
+      <h3 className="text-sm font-semibold">Какво се променя при запис</h3>
+      <dl className="mt-3 space-y-2.5">
+        <ChangeRow label="Получава" keys={gains} />
+        <ChangeRow label="Губи" keys={losses} />
+      </dl>
+    </section>
+  );
+}
+
+function ChangeRow({ label, keys }: { label: string; keys: string[] }) {
+  const chip =
+    'text-label-12 inline-flex items-center rounded-full px-2.5 py-1 font-semibold whitespace-nowrap';
+  return (
+    <div className="grid grid-cols-[5.25rem_1fr] gap-x-3">
+      <dt className="pt-1 text-xs text-panel-ink-muted">{label}</dt>
+      <dd>
+        <ul aria-label={label} className="flex flex-wrap gap-1.5">
+          {keys.length === 0 ? (
+            <li className={`${chip} bg-panel-row-strong text-panel-ink-muted`}>нищо</li>
+          ) : (
+            sortPermissions(keys).map((key) => (
+              <li
+                key={key}
+                className={`${chip} text-panel-ink`}
+                style={{ boxShadow: 'inset 0 0 0 0.0625rem var(--panel-status-resolved)' }}
+              >
+                {permissionLabel(key)}
+              </li>
+            ))
+          )}
+        </ul>
+      </dd>
+    </div>
+  );
+}
+
+/**
+ * The footer per state: what is unsaved, then «Отказ» and the save; while
+ * saving both wait; after a failure the save is a retry; once saved and
+ * untouched, only «Затвори».
+ */
+function Footer({
+  save,
+  dirty,
+  onCancel,
+  onSave,
+  onDone,
+}: {
+  save: SaveState;
+  dirty: boolean;
+  onCancel: () => void;
+  onSave: () => void;
+  onDone: () => void;
+}) {
+  const secondary =
+    'rounded-full border border-panel-border px-4 py-2 text-sm font-medium text-panel-ink disabled:opacity-40';
+  const primary =
+    'flex items-center gap-2 rounded-full bg-panel-ink px-5 py-2 text-sm font-semibold text-panel-ink-inverse disabled:opacity-40';
+
+  if (save.kind === 'saved' && !dirty) {
+    return (
+      <div className="flex items-center gap-3">
+        <span className="min-w-0 flex-1 truncate text-xs text-panel-ink-faint">Няма промени</span>
+        <button type="button" onClick={onDone} className={secondary}>
+          Затвори
+        </button>
+      </div>
+    );
+  }
+
+  const saving = save.kind === 'saving';
+  // A retry sends the choice that failed; put back to the saved role there
+  // is nothing to retry.
+  const failed = save.kind === 'failed' && save.action === 'change-role' && dirty;
+  const note = saving
+    ? 'Прилагане на 1 промяна…'
+    : failed
+      ? 'Не се запази'
+      : dirty
+        ? '1 незапазена промяна'
+        : 'Няма промени';
+
+  return (
+    <div className="flex items-center gap-3">
+      <span className="min-w-0 flex-1 truncate text-xs text-panel-ink-faint">{note}</span>
+      <button type="button" onClick={onCancel} disabled={saving} className={secondary}>
+        Отказ
+      </button>
+      <button
+        type="button"
+        onClick={onSave}
+        disabled={saving || !(dirty || failed)}
+        className={primary}
+      >
+        {saving && <CircleNotch size="0.875rem" className="animate-spin" />}
+        {saving ? (
+          'Запазване…'
+        ) : failed ? (
+          'Опитай отново'
+        ) : (
+          // The phone frame (1764:28895) keeps the short «Запази».
+          <span>
+            Запази<span className="hidden sm:inline"> промените</span>
+          </span>
+        )}
+      </button>
+    </div>
   );
 }
 

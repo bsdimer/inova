@@ -1,6 +1,14 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowsDownUp, Check, CaretDown, MagnifyingGlass, X } from './icons';
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { rem } from '../lib/rem';
 
@@ -643,6 +651,107 @@ export function MenuItem({
   );
 }
 
+/** The dialogs open right now, the one on top last. */
+const openDialogs: HTMLElement[] = [];
+/** Where the keyboard returns once the last dialog has gone. */
+let focusAfterDialogs: HTMLElement | null = null;
+
+function tabbableIn(root: HTMLElement): HTMLElement[] {
+  return [
+    ...root.querySelectorAll<HTMLElement>(
+      'button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    ),
+  ].filter((el) => !el.hasAttribute('disabled') && el.tabIndex >= 0);
+}
+
+/**
+ * What every dialog does (design.md → Windows and navigation): the page
+ * behind is inert and does not scroll, Tab runs round the dialog, Esc calls
+ * `onClose`, the focus goes in on opening — to `[data-autofocus]`, else the
+ * first control that is not the × — and back to the opener on closing.
+ * Dialogs stack: a question over a form hears the keyboard alone, and the
+ * page turns inert once, for the first of them.
+ */
+function useDialog<T extends HTMLElement>(open: boolean, onClose: () => void): RefObject<T | null> {
+  const dialog = useRef<T>(null);
+  // Read through a ref: a caller hands a new onClose on every render, and a
+  // re-render must not move the focus.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
+
+  useEffect(() => {
+    if (!open) return;
+    const el = dialog.current;
+    if (!el) return;
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const html = document.documentElement;
+    const app = document.getElementById('root');
+    const overflow = html.style.overflow;
+    if (openDialogs.length === 0) {
+      app?.setAttribute('inert', '');
+      html.style.overflow = 'hidden';
+    }
+    openDialogs.push(el);
+
+    const stops = tabbableIn(el);
+    (
+      el.querySelector<HTMLElement>('[data-autofocus]') ??
+      stops.find((stop) => !stop.hasAttribute('data-dialog-close')) ??
+      stops[0] ??
+      el
+    ).focus();
+
+    const onKey = (e: KeyboardEvent) => {
+      if (openDialogs[openDialogs.length - 1] !== el) return;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onCloseRef.current();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const current = tabbableIn(el);
+      const first = current[0];
+      const last = current[current.length - 1];
+      if (!first || !last) return;
+      if (!el.contains(document.activeElement)) {
+        e.preventDefault();
+        first.focus();
+      } else if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      const index = openDialogs.indexOf(el);
+      if (index >= 0) openDialogs.splice(index, 1);
+      const target = opener?.isConnected ? opener : null;
+      const insideOpenDialog = target && openDialogs.some((other) => other.contains(target));
+      if (openDialogs.length > 0) {
+        // A question closed over its form: back to the button that asked.
+        // The form closed under its question: the page is still inert, so
+        // its opener waits for the question to go.
+        if (insideOpenDialog) target.focus();
+        else focusAfterDialogs = target ?? focusAfterDialogs;
+        return;
+      }
+      app?.removeAttribute('inert');
+      html.style.overflow = overflow;
+      (focusAfterDialogs ?? target)?.focus();
+      focusAfterDialogs = null;
+    };
+  }, [open]);
+
+  return dialog;
+}
+
 /**
  * Side panel with a pinned header and footer; only the middle scrolls, so the
  * save button never slides under the fold. On a narrow screen it becomes a
@@ -663,14 +772,7 @@ export function Drawer({
   children: ReactNode;
   label: string;
 }) {
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
+  const dialog = useDialog<HTMLElement>(open, onClose);
 
   return createPortal(
     <AnimatePresence>
@@ -684,15 +786,19 @@ export function Drawer({
           style={{ background: 'rgb(0 0 0 / 0.35)' }}
         >
           <motion.aside
+            ref={dialog}
             role="dialog"
             aria-modal="true"
             aria-label={label}
+            tabIndex={-1}
             onClick={(e) => e.stopPropagation()}
             initial={{ x: 0, y: 40, opacity: 0 }}
             animate={{ x: 0, y: 0, opacity: 1 }}
             exit={{ y: 40, opacity: 0 }}
             transition={{ type: 'spring', damping: 30, stiffness: 320 }}
-            className="panel flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl sm:h-full sm:max-h-none sm:w-[26.25rem] sm:rounded-none sm:rounded-l-3xl"
+            // 520 wide, as the panel is drawn (1607:36771): its footer holds
+            // the note, «Отказ» and «Запази промените» side by side.
+            className="panel flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl sm:h-full sm:max-h-none sm:w-[32.5rem] sm:rounded-none sm:rounded-l-3xl"
           >
             <div className="shrink-0 border-b border-panel-divider px-5 py-4">{header}</div>
             <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
@@ -719,6 +825,9 @@ export function Modal({
   children: ReactNode;
   wide?: boolean;
 }) {
+  const dialog = useDialog<HTMLDivElement>(open, onClose);
+  const titleId = useId();
+
   return createPortal(
     <AnimatePresence>
       {open && (
@@ -731,8 +840,11 @@ export function Modal({
           style={{ background: 'rgb(0 0 0 / 0.35)' }}
         >
           <motion.div
+            ref={dialog}
             role="dialog"
             aria-modal="true"
+            aria-labelledby={titleId}
+            tabIndex={-1}
             className={`panel max-h-[90vh] w-full ${wide ? 'max-w-2xl' : 'max-w-md'} overflow-y-auto rounded-3xl p-6`}
             initial={{ opacity: 0, y: 16, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -741,9 +853,13 @@ export function Modal({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">{title}</h2>
+              <h2 id={titleId} className="text-lg font-semibold">
+                {title}
+              </h2>
               <button
+                type="button"
                 onClick={onClose}
+                data-dialog-close
                 className="rounded-full p-1.5 text-panel-ink-muted transition-colors hover:bg-panel-row hover:text-panel-ink"
                 aria-label="Затвори"
               >
@@ -751,6 +867,91 @@ export function Modal({
               </button>
             </div>
             {children}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    document.body,
+  );
+}
+
+/**
+ * A question over a form (design.md → Windows and navigation; 1925:2): a
+ * small window with its own scrim, the focus on the answer that keeps the
+ * form, and Esc or a click outside meaning the same. Above the form's own
+ * dialog, so it stacks on a drawer as well as on a modal.
+ */
+export function ConfirmDialog({
+  open,
+  title,
+  children,
+  stay,
+  leave,
+  onStay,
+  onLeave,
+}: {
+  open: boolean;
+  title: string;
+  children: ReactNode;
+  /** The answer that returns to the form, e.g. «Остани». */
+  stay: string;
+  /** The answer that closes the form without saving, e.g. «Откажи». */
+  leave: string;
+  onStay: () => void;
+  onLeave: () => void;
+}) {
+  const dialog = useDialog<HTMLDivElement>(open, onStay);
+  const titleId = useId();
+  const textId = useId();
+
+  return createPortal(
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onStay}
+          style={{ background: 'rgb(0 0 0 / 0.35)' }}
+        >
+          <motion.div
+            ref={dialog}
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            aria-describedby={textId}
+            tabIndex={-1}
+            className="panel-strong w-full max-w-sm rounded-3xl p-6"
+            initial={{ opacity: 0, y: 16, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.98 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 350 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id={titleId} className="text-lg font-semibold">
+              {title}
+            </h2>
+            <p id={textId} className="mt-2 text-sm text-panel-ink-muted">
+              {children}
+            </p>
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                data-autofocus
+                onClick={onStay}
+                className="h-11 rounded-full bg-panel-row-strong px-5 text-sm font-semibold text-panel-ink transition-colors hover:bg-panel-border"
+              >
+                {stay}
+              </button>
+              <button
+                type="button"
+                onClick={onLeave}
+                className="h-11 rounded-full border border-panel-status-urgent px-5 text-sm font-semibold text-panel-status-urgent transition-colors hover:bg-panel-row"
+              >
+                {leave}
+              </button>
+            </div>
           </motion.div>
         </motion.div>
       )}
@@ -787,6 +988,7 @@ export function ErrorNote({ message }: { message: string | null }) {
   if (!message) return null;
   return (
     <p
+      role="alert"
       className="rounded-xl px-3.5 py-2.5 text-sm font-medium"
       style={{
         background: 'var(--glass-chip)',

@@ -22,8 +22,9 @@ import {
 import { api, ApiError, type Role, type StaffMember, type TenantContext } from '../lib/api';
 import { getSession } from '../lib/auth';
 import { useSelectedTenantId } from '../lib/tenant';
+import { permissionLabel } from './roles/permissions';
 import { InviteModal } from './staff/InviteModal';
-import { RolesScopeDrawer } from './staff/RolesScopeDrawer';
+import { RolesScopeDrawer, type SaveState } from './staff/RolesScopeDrawer';
 import { StaffCard, StaffRow } from './staff/StaffRow';
 import { BodyMessage, SkeletonRows, StaffCards, StaffTable } from './staff/StaffTable';
 import { StaffToolbar } from './staff/StaffToolbar';
@@ -32,7 +33,7 @@ import {
   ACTION_PROGRESS,
   EMPTY_FILTERS,
   applyFilters,
-  describeFacet,
+  describeFilters,
   hasAnyFilter,
   protectionReason,
   roleName,
@@ -48,6 +49,12 @@ interface Notice {
   text: string;
 }
 
+type Update =
+  | { member: StaffMember; action: 'change-role'; roleKey: string }
+  | { member: StaffMember; action: Exclude<RowAction, 'change-role'> };
+
+const IDLE: SaveState = { kind: 'idle' };
+
 export function StaffPage() {
   const tenantId = useSelectedTenantId();
   const queryClient = useQueryClient();
@@ -57,7 +64,7 @@ export function StaffPage() {
   const [notice, setNotice] = useState<Notice | null>(null);
   const [pending, setPending] = useState<{ member: StaffMember; action: RowAction } | null>(null);
   const [drawerFor, setDrawerFor] = useState<string | null>(null);
-  const [drawerError, setDrawerError] = useState<string | null>(null);
+  const [drawerSave, setDrawerSave] = useState<SaveState>(IDLE);
 
   const context = useQuery({
     queryKey: ['tenant', tenantId],
@@ -77,11 +84,11 @@ export function StaffPage() {
   });
 
   const update = useMutation({
-    mutationFn: (input: { member: StaffMember; action: RowAction; roleKey?: string }) => {
+    mutationFn: (input: Update) => {
       const body =
         input.action === 'change-role'
           ? { roleKey: input.roleKey }
-          : { status: STATUS_FOR_ACTION[input.action as Exclude<RowAction, 'change-role'>] };
+          : { status: STATUS_FOR_ACTION[input.action] };
       return api(`/tenant/staff/${input.member.userId}`, {
         method: 'PATCH',
         tenantId: tenantId!,
@@ -90,7 +97,7 @@ export function StaffPage() {
     },
     onMutate: (input) => {
       setNotice(null);
-      setDrawerError(null);
+      setDrawerSave(input.action === 'change-role' ? { kind: 'saving' } : IDLE);
       setPending({ member: input.member, action: input.action });
     },
     onSuccess: (_data, input) => {
@@ -98,14 +105,17 @@ export function StaffPage() {
         tone: 'success',
         text: `${input.member.fullName} ${ACTION_DONE[input.action]}.`,
       });
-      setDrawerFor(null);
+      // A saved role stays on screen with its confirmation (1607:37346); an
+      // account action returns to the list, where the strip names it.
+      if (input.action === 'change-role') setDrawerSave({ kind: 'saved', roleKey: input.roleKey });
+      else setDrawerFor(null);
       void queryClient.invalidateQueries({ queryKey: ['staff', tenantId] });
       void queryClient.invalidateQueries({ queryKey: ['roles', tenantId] });
     },
     onError: (e, input) => {
       const reason = e instanceof ApiError ? e.message : 'нещо се обърка.';
       // A failed save keeps the drawer open with the edit still in it.
-      setDrawerError(reason);
+      setDrawerSave({ kind: 'failed', action: input.action, reason });
       setNotice({
         tone: 'danger',
         text: `${ACTION_PROGRESS[input.action]} ${input.member.fullName} не успя: ${reason}`,
@@ -146,7 +156,7 @@ export function StaffPage() {
       busy: pending?.member.userId === member.userId,
       onAction: (action: RowAction) => {
         if (action === 'change-role') {
-          setDrawerError(null);
+          setDrawerSave(IDLE);
           setDrawerFor(member.userId);
           return;
         }
@@ -244,8 +254,7 @@ export function StaffPage() {
       <RolesScopeDrawer
         member={drawerMember}
         roles={roleList}
-        saving={update.isPending && pending?.action === 'change-role'}
-        error={drawerError}
+        save={drawerSave}
         protection={
           drawerMember
             ? protectionReason({
@@ -258,7 +267,7 @@ export function StaffPage() {
         }
         onClose={() => {
           setDrawerFor(null);
-          setDrawerError(null);
+          setDrawerSave(IDLE);
         }}
         onSave={(roleKey) => {
           if (drawerMember) update.mutate({ member: drawerMember, action: 'change-role', roleKey });
@@ -293,8 +302,8 @@ function buildEmptyBody(input: {
   if (input.denied) {
     return (
       <EmptyState icon={<Lock size="1.375rem" />} title="Ролята ви не може да вижда служители">
-        Преглеждането на акаунти изисква правото staff.read. Администратор на {input.tenantName}{' '}
-        може да го добави към ролята ви.
+        За преглед на акаунти е нужно правото „{permissionLabel('staff.read')}“. Администратор на{' '}
+        {input.tenantName} може да го добави към ролята ви.
       </EmptyState>
     );
   }
@@ -303,7 +312,7 @@ function buildEmptyBody(input: {
     return (
       <EmptyState
         icon={<Users size="1.375rem" />}
-        title="Още няма акаунти на служители"
+        title="Още няма служители"
         action={
           input.canManage && (
             <PrimaryButton onClick={input.onInvite}>
@@ -314,24 +323,21 @@ function buildEmptyBody(input: {
           )
         }
       >
-        Поканете първия човек, който трябва да има достъп до организацията. Акаунтът се активира с
-        код, изпратен по имейл, SMS или Viber.
+        Поканете първия човек, който трябва да може да влиза в тази организация. Активира се с код
+        по имейл, SMS или Viber.
       </EmptyState>
     );
   }
   if (input.visible.length === 0) {
-    const parts = (['status', 'role', 'invite'] as const)
-      .filter((k) => input.filters[k].length > 0)
-      .map((k) => describeFacet(k, input.filters[k], input.roles));
-    if (input.filters.search.trim()) parts.push(`Търсенето е „${input.filters.search.trim()}“`);
     return (
       <EmptyState
         icon={<MagnifyingGlass size="1.375rem" />}
         title="Няма служители по тези филтри"
         action={<GhostButton onClick={input.onReset}>Изчисти филтрите</GhostButton>}
       >
-        {parts.join(' и ')}. Разширете филтър или ги изчистете, за да видите другите{' '}
-        {input.members.length} {input.members.length === 1 ? 'акаунт' : 'акаунта'}.
+        {describeFilters(input.filters, input.roles)}. Разширете опциите във филтрите или ги
+        изчистете, за да видите другите {input.members.length}{' '}
+        {input.members.length === 1 ? 'акаунт' : 'акаунта'}.
       </EmptyState>
     );
   }
@@ -370,7 +376,7 @@ function pickStrip(input: {
     return (
       <TableStrip tone="busy" icon={<CircleNotch size="0.875rem" />}>
         {ACTION_PROGRESS[input.pending.action]} {input.pending.member.fullName} — редът остава на
-        мястото си, докато сървърът потвърди.
+        място, докато сървърът потвърди.
       </TableStrip>
     );
   }
@@ -394,14 +400,14 @@ function pickStrip(input: {
   if (input.refreshing) {
     return (
       <TableStrip tone="info" icon={<ArrowsClockwise size="0.8125rem" />}>
-        Обновява се — показва се последно зареденият списък
+        Обновяване — показва последно заредения списък
       </TableStrip>
     );
   }
   if (input.canManage === false) {
     return (
       <TableStrip tone="muted" icon={<Eye size="0.875rem" />}>
-        Само за четене — ролята ви вижда акаунтите, но не може да кани, спира или променя роли.
+        Само за четене — ролята ви може да вижда акаунти, но не и да кани, спира или сменя роли.
       </TableStrip>
     );
   }
