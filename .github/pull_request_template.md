@@ -12,6 +12,6 @@ Closes WHI-
 
 <!-- Delete this section for a docs, plan or backend-only PR. An empty line here is a skipped step. -->
 
-- Размери: <!-- 402 / 1024 / 1728 and a 600 px tall window — what was checked, or «no layout change» -->
-- Контраст: <!-- the method (band along the text, p95) and the numbers, or «no text changed» -->
+- Sizes: <!-- 402 / 1024 / 1728 and a 600 px tall window — what was checked, or «no layout change» -->
+- Contrast: <!-- the method (band along the text, p95) and the numbers, or «no text changed» -->
 - Self-review clean-code.md: <!-- done on the full diff / what was fixed -->

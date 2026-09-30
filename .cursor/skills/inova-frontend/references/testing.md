@@ -29,7 +29,7 @@
   manual flow/visual QA rather than a new unit test.
 - A layout test — Playwright or the manual check — always covers 402, 1024
   and 1728 wide and a 600 px tall window, light and dark; the PR's
-  «Размери» line names what was run. Twice a screen shipped that broke at a
+  «Sizes» line names what was run. Twice a screen shipped that broke at a
   width or height nobody opened.
 - Prefer a small unit test for pure display math (money formatting, gauge
   geometry) in the owning package.
