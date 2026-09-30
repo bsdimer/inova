@@ -177,14 +177,15 @@ test.describe('the «Роли и обхват» panel', () => {
     const drawer = await openPanel(page);
     await expect(drawer.getByText('Какво се променя при запис')).toHaveCount(0);
 
-    // Жител holds only «Преглед на организацията»; Домоуправител adds six
-    // rights, listed by area (Имоти, Служители, Настройки, Одит) and drops none.
+    // Жител holds only «Преглед на организацията»; Домоуправител adds seven
+    // rights, listed by area (Имоти, Жители, Служители, Настройки, Одит) and drops none.
     await radio(drawer, 'Домоуправител').click();
 
     await expect(drawer.getByText('Какво се променя при запис')).toBeVisible();
     await expect(drawer.getByRole('list', { name: 'Получава' }).getByRole('listitem')).toHaveText([
       'Преглед на сгради и имоти',
       'Управление на сгради и имоти',
+      'Преглед на жителите',
       'Преглед на служителите',
       'Покани и управление на служители',
       'Преглед на ролите',

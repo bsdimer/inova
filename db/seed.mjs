@@ -15,6 +15,7 @@
  *   demo admin:   ivan@demo.bg    / demo-owner
  *   demo manager: maria@inova.bg  / demo-maria   (same e-mail, another account)
  *   invite codes: 482913 (Elena, inova) · 735026 (Georgi, demo)
+ *   residents:    Elena owns бл. 3 ап. 4 (inova) · Georgi rents бл. 12 ап. 2 (demo)
  */
 import argon2 from 'argon2';
 import { createHash } from 'node:crypto';
@@ -46,6 +47,7 @@ const ROLE_TEMPLATES = [
       'audit.read',
       'property.read',
       'property.write',
+      'residents.read',
     ],
   },
   // TODO(M2): residents move to occupancy-based linking; until then a system
@@ -249,6 +251,91 @@ export async function seed(url = databaseUrl, { quiet = false } = {}) {
         `INSERT INTO invite_codes (tenant_id, user_id, code_hash, channel, phone, expires_at)
          VALUES ($1, $2, $3, 'sms', $4, now() + interval '30 days')`,
         [tenantId, userId, sha256(r.code), r.phone],
+      );
+    }
+
+    // A building per tenant with the pending residents on it, so the resident
+    // app shows real data on the test environment (M2). Elena owns ап. 4 in
+    // inova, Georgi rents ап. 2 in demo; both from 1 January 2026.
+    const buildings = [
+      {
+        tenant: 'inova',
+        name: 'бл. 3',
+        district: 'Лозенец',
+        address: 'ул. Кораб планина 12',
+        resident: '+359881000001',
+        flat: '4',
+        role: 'owner',
+      },
+      {
+        tenant: 'demo',
+        name: 'бл. 12',
+        district: 'Младост',
+        address: 'ул. Проф. Александър Фол 7',
+        resident: '+359881000002',
+        flat: '2',
+        role: 'tenant',
+      },
+    ];
+    for (const b of buildings) {
+      const tenantId = tenantIds[b.tenant];
+      const buildingId =
+        (
+          await client.query('SELECT id FROM buildings WHERE tenant_id = $1 AND name = $2', [
+            tenantId,
+            b.name,
+          ])
+        ).rows[0]?.id ??
+        (
+          await client.query(
+            `INSERT INTO buildings (tenant_id, name, city, district, address, floors, has_elevator,
+                                    assessment_basis, status, activated_at)
+             VALUES ($1, $2, 'София', $3, $4, 4, true, 'per_occupant', 'active', now())
+             RETURNING id`,
+            [tenantId, b.name, b.district, b.address],
+          )
+        ).rows[0].id;
+      const entranceId =
+        (
+          await client.query(
+            `SELECT id FROM entrances WHERE tenant_id = $1 AND building_id = $2 AND name = 'А'`,
+            [tenantId, buildingId],
+          )
+        ).rows[0]?.id ??
+        (
+          await client.query(
+            `INSERT INTO entrances (tenant_id, building_id, name) VALUES ($1, $2, 'А') RETURNING id`,
+            [tenantId, buildingId],
+          )
+        ).rows[0].id;
+      for (const number of ['1', '2', '3', '4']) {
+        await client.query(
+          `INSERT INTO apartments (tenant_id, building_id, entrance_id, floor, number, rooms, area_m2, ideal_parts)
+           VALUES ($1, $2, $3, $4, $5, 3, '72.50', '2.5000')
+           ON CONFLICT (tenant_id, building_id, entrance_id, floor, lower(number)) DO NOTHING`,
+          [tenantId, buildingId, entranceId, Number(number), number],
+        );
+      }
+      const flatId = (
+        await client.query(
+          `SELECT id FROM apartments WHERE tenant_id = $1 AND building_id = $2 AND number = $3`,
+          [tenantId, buildingId, b.flat],
+        )
+      ).rows[0].id;
+      const residentId = (
+        await client.query('SELECT id FROM users WHERE tenant_id = $1 AND phone = $2', [
+          tenantId,
+          b.resident,
+        ])
+      ).rows[0].id;
+      await client.query(
+        `INSERT INTO occupancies (tenant_id, apartment_id, user_id, role, valid_from, created_by)
+         SELECT $1, $2, $3, $4, '2026-01-01', $3
+         WHERE NOT EXISTS (
+           SELECT 1 FROM occupancies
+           WHERE tenant_id = $1 AND apartment_id = $2 AND user_id = $3 AND role = $4 AND valid_to IS NULL
+         )`,
+        [tenantId, flatId, residentId, b.role],
       );
     }
 

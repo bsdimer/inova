@@ -449,7 +449,11 @@ describe("another organisation's buildings", () => {
 
     const list = await demo.get('/buildings');
     expect(list.status).toBe(200);
-    expect(list.body).toEqual([]);
+    // Only its own buildings (the seed gives it one), never this one.
+    expect(list.body.map((b: { id: string }) => b.id)).not.toContain(id);
+    expect(new Set(list.body.map((b: { tenantId: string }) => b.tenantId))).toEqual(
+      new Set([tenantB]),
+    );
     expect((await demo.get(`/buildings/${id}`)).status).toBe(404);
     expect((await demo.patch(`/buildings/${id}`, { name: 'Превзета' })).status).toBe(404);
     expect((await demo.post(`/buildings/${id}/properties`, property(a, 1, '1'))).status).toBe(404);
