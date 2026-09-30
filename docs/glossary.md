@@ -157,6 +157,13 @@ does not take the entry for the current UI.
 
 ## Account and settings
 
+- **До кого** — the audience field of a notice or a bulk message («Всички»,
+  buildings, entrances, chosen residents; `notice.audience`). Avoid: «Кому».
+  Source: WHI-30 (29.09 12:12), D36.
+- **Известие** — a notice from the manager to residents (`notice`), in one of
+  six categories: «Общо», «Ремонт», «Събрание», «Плащания», «Анкети», «Важно»
+  (`general` / `repair` / `assembly` / `payments` / `surveys` /
+  `important`). Source: WHI-30 (29.09 12:12), D36.
 - **Връзка** — a link sent by e-mail or SMS (password recovery, invitation);
   the button is «Изпрати връзка». Avoid: «линк». Source: WHI-20 (23.09).
 - **Тема** — the theme setting, in this order: «Динамична» (the default:

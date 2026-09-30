@@ -28,8 +28,8 @@ stored in BGN.
 
 Each can block go-live on its own, and each takes weeks of someone else's time.
 
-- [ ] SMS/Viber gateway chosen (Twilio vs Infobip), contract signed, **sender
-      ID / Viber business sender registered** for Bulgaria.
+- [ ] SMS/Viber gateway: **Infobip** (team lead, 30.09, D36); contract signed,
+      **sender ID / Viber business sender registered** for Bulgaria.
 - [ ] Apple Developer organisation account (D-U-N-S) and Google Play
       organisation account for the shared app; bundle id `bg.inova.resident`
       reserved.
