@@ -5,6 +5,9 @@
   by the CI job `e2e`, which also keeps screenshots of the key screens
   (`e2e-screens/`). A changed flow changes or adds its spec. Mobile has no
   e2e suite yet. Neither replaces `pnpm verify`.
+- Screenshots for the PR description: `pnpm pr-assets whi-NN a.png b.png`
+  puts them in `whi-NN/` on the `pr-screenshots` branch and prints the
+  `<img>` lines to paste.
 - Every feature brief includes a test plan. Treat it as the minimum test
   contract for the change; do not add tests only to satisfy a line-count rule.
 - Use TDD for behavior with meaningful failure modes: validation, forms,

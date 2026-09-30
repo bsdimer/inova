@@ -87,6 +87,9 @@ stage needs it; do not front-load the whole library.
 2. Before finishing the change set, run `pnpm verify`.
 3. If the change is user-visible in admin and a browser is available, exercise
    the flow (not only a screenshot).
+   After merging develop into the branch, check the PR is not in conflict —
+   a conflicting PR runs no CI. Playwright rebuilds `packages/shared` on
+   start; a dev server started by hand needs `pnpm --filter @inova/shared build`.
 4. Self-review substantive logic changes against `references/clean-code.md`.
 5. Confirm the implementation covers the active contract's acceptance criteria
    and test plan.

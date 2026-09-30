@@ -35,9 +35,12 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], viewport: { width: 1728, height: 1117 } },
     },
   ],
+  // The servers start one after another, so the first one rebuilds the
+  // shared package: after a merge of develop its dist can lag behind the
+  // source, and every service and the admin build read dist.
   webServer: [
     {
-      command: 'node dist/main.js',
+      command: 'pnpm --filter @inova/shared build && node dist/main.js',
       cwd: '../auth-service',
       url: `${AUTH_URL}/health`,
       env: {
