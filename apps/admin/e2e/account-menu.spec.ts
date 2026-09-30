@@ -81,11 +81,12 @@ test.describe('desktop', () => {
     await openSignedIn(page, ORG_ADMIN, '/');
     const menu = await openMenu(page);
     const theme = menu.getByRole('radiogroup', { name: 'Тема' });
-    await expect(theme.getByRole('radio')).toHaveText(['Светла', 'Тъмна', 'Динамична']);
-    await expect(theme.getByRole('radio', { name: 'Светла' })).toBeChecked();
+    // The order and captions are theme.spec.ts's; here: the stored «Светла».
+    await expect(theme.getByRole('radio')).toHaveCount(3);
+    await expect(theme.getByRole('radio', { name: /^Светла/ })).toBeChecked();
 
-    await theme.getByRole('radio', { name: 'Тъмна' }).click();
-    await expect(theme.getByRole('radio', { name: 'Тъмна' })).toBeChecked();
+    await theme.getByRole('radio', { name: /^Тъмна/ }).click();
+    await expect(theme.getByRole('radio', { name: /^Тъмна/ })).toBeChecked();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   });
 
@@ -215,8 +216,8 @@ test.describe('desktop, keyboard and data', () => {
   test('the arrows move the theme choice, the selected row is rounded', async ({ page }) => {
     await openSignedIn(page, ORG_ADMIN, '/');
     const menu = await openMenu(page);
-    const light = menu.getByRole('radio', { name: 'Светла' });
-    const dark = menu.getByRole('radio', { name: 'Тъмна' });
+    const light = menu.getByRole('radio', { name: /^Светла/ });
+    const dark = menu.getByRole('radio', { name: /^Тъмна/ });
     await expect(light).toHaveAttribute('tabindex', '0');
     await expect(dark).toHaveAttribute('tabindex', '-1');
     // The menu takes the focus a frame after it opens; move on from there.
