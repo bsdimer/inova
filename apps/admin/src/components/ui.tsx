@@ -655,13 +655,16 @@ export function MenuItem({
 const openDialogs: HTMLElement[] = [];
 /** Where the keyboard returns once the last dialog has gone. */
 let focusAfterDialogs: HTMLElement | null = null;
+/** The page's own overflow, taken once when the first dialog opens. */
+let pageOverflow = '';
 
+/** `:disabled` also covers a control inside a disabled <fieldset>. */
 function tabbableIn(root: HTMLElement): HTMLElement[] {
   return [
     ...root.querySelectorAll<HTMLElement>(
       'button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
     ),
-  ].filter((el) => !el.hasAttribute('disabled') && el.tabIndex >= 0);
+  ].filter((el) => !el.matches(':disabled') && el.tabIndex >= 0);
 }
 
 /**
@@ -688,8 +691,10 @@ function useDialog<T extends HTMLElement>(open: boolean, onClose: () => void): R
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const html = document.documentElement;
     const app = document.getElementById('root');
-    const overflow = html.style.overflow;
+    // One snapshot for the whole stack: a dialog that closes last must not
+    // put back the 'hidden' it saw when it opened over another one.
     if (openDialogs.length === 0) {
+      pageOverflow = html.style.overflow;
       app?.setAttribute('inert', '');
       html.style.overflow = 'hidden';
     }
@@ -743,7 +748,7 @@ function useDialog<T extends HTMLElement>(open: boolean, onClose: () => void): R
         return;
       }
       app?.removeAttribute('inert');
-      html.style.overflow = overflow;
+      html.style.overflow = pageOverflow;
       (focusAfterDialogs ?? target)?.focus();
       focusAfterDialogs = null;
     };

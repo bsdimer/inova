@@ -217,6 +217,10 @@ test.describe('the «Роли и обхват» panel', () => {
     await expect(drawer.getByRole('button', { name: 'Запазване…' })).toBeDisabled();
     await expect(radio(drawer, 'Домоуправител')).toBeDisabled();
     await expect(drawer.getByRole('button', { name: 'Отказ' })).toBeDisabled();
+    // The × is the only control left; Tab stays on it instead of leaving the panel.
+    await drawer.getByLabel('Затвори').focus();
+    await page.keyboard.press('Tab');
+    await expect(drawer.getByLabel('Затвори')).toBeFocused();
 
     release();
     await expect(
@@ -285,5 +289,15 @@ test.describe('the «Роли и обхват» panel', () => {
     await question.getByRole('button', { name: 'Откажи' }).click();
     await expect(question).toHaveCount(0);
     await expect(panel(page)).toHaveCount(0);
+    // Both closed at once: the page under them scrolls and hears the keyboard again.
+    await expect
+      .poll(() =>
+        page.evaluate(() => [
+          document.documentElement.style.overflow,
+          document.getElementById('root')?.hasAttribute('inert') ?? null,
+        ]),
+      )
+      .toEqual(['', false]);
+    await expect(page.getByRole('button', { name: 'Роли и обхват — Елена Петрова' })).toBeFocused();
   });
 });

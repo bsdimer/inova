@@ -80,9 +80,12 @@ export function RolesScopeDrawer({
 
   if (!member) {
     return (
-      <Drawer open={false} onClose={onClose} label="Роли и обхват" header={null} footer={null}>
-        {null}
-      </Drawer>
+      <>
+        <Drawer open={false} onClose={onClose} label="Роли и обхват" header={null} footer={null}>
+          {null}
+        </Drawer>
+        <DiscardQuestion open={false} onStay={onClose} onLeave={onClose} />
+      </>
     );
   }
 
@@ -110,169 +113,193 @@ export function RolesScopeDrawer({
     dirty && fromRole && toRole ? permissionDiff(fromRole.permissions, toRole.permissions) : null;
 
   return (
-    <Drawer
-      open
-      onClose={close}
-      label={`Роли и обхват — ${member.fullName}`}
-      header={
-        <div className="flex items-start gap-3">
-          <Avatar name={member.fullName} size={40} />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-base font-semibold">{member.fullName}</p>
-            <p className="truncate text-sm text-panel-ink-muted">{member.email ?? member.phone}</p>
-            <p className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-panel-ink-muted">
-              <StatusDot tone={STATUS_TONES[member.status]} onPanel>
-                <span className="text-xs">{STATUS_LABELS[member.status]}</span>
-              </StatusDot>
-              <span className="num">· Член от {formatSince(member.since)}</span>
-            </p>
+    <>
+      <Drawer
+        open
+        onClose={close}
+        label={`Роли и обхват — ${member.fullName}`}
+        header={
+          <div className="flex items-start gap-3">
+            <Avatar name={member.fullName} size={40} />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-base font-semibold">{member.fullName}</p>
+              <p className="truncate text-sm text-panel-ink-muted">
+                {member.email ?? member.phone}
+              </p>
+              <p className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-panel-ink-muted">
+                <StatusDot tone={STATUS_TONES[member.status]} onPanel>
+                  <span className="text-xs">{STATUS_LABELS[member.status]}</span>
+                </StatusDot>
+                <span className="num">· Член от {formatSince(member.since)}</span>
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={close}
+              data-dialog-close
+              aria-label="Затвори"
+              className="rounded-full p-1.5 text-panel-ink-muted transition-colors hover:bg-panel-row hover:text-panel-ink"
+            >
+              <X size="1.125rem" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={close}
-            data-dialog-close
-            aria-label="Затвори"
-            className="rounded-full p-1.5 text-panel-ink-muted transition-colors hover:bg-panel-row hover:text-panel-ink"
-          >
-            <X size="1.125rem" />
-          </button>
-        </div>
-      }
-      footer={
-        <Footer
-          save={save}
-          dirty={dirty}
-          onCancel={close}
-          onSave={() => onSave(selected)}
-          onDone={leave}
-        />
-      }
-    >
-      <SaveBand save={save} member={member} roles={roles} dirty={dirty} />
+        }
+        footer={
+          <Footer
+            save={save}
+            dirty={dirty}
+            onCancel={close}
+            onSave={() => onSave(selected)}
+            onDone={leave}
+          />
+        }
+      >
+        <SaveBand save={save} member={member} roles={roles} dirty={dirty} />
 
-      <fieldset disabled={saving} className="space-y-7">
-        <section>
-          <h3 className="text-sm font-semibold">Роли</h3>
-          {/*
+        <fieldset disabled={saving} className="space-y-7">
+          <section>
+            <h3 className="text-sm font-semibold">Роли</h3>
+            {/*
             TODO(M1-B8): several roles per account. `PATCH /tenant/staff/:id`
             takes one `roleKey`, so this is a single choice — check boxes here
             would let the drawer show a second role the server silently drops.
           */}
-          <p className="mt-0.5 text-xs text-panel-ink-muted">
-            Акаунтът има една роля. Няколко роли на един акаунт ще са възможни по-късно.
-          </p>
-          <div role="radiogroup" aria-label="Роля" className="mt-3 space-y-1.5">
-            {roles.map((role) => {
-              const checked = role.key === selected;
-              return (
-                <button
-                  key={role.key}
-                  type="button"
-                  role="radio"
-                  aria-checked={checked}
-                  data-autofocus={checked ? '' : undefined}
-                  onClick={() => setDraft({ userId: member.userId, roleKey: role.key })}
-                  className={`flex w-full items-start gap-3 rounded-2xl px-3.5 py-3 text-left transition-colors ${
-                    checked ? 'bg-panel-row-strong' : 'bg-panel-row hover:bg-panel-row-strong'
-                  }`}
-                >
-                  <span
-                    className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
-                    style={{ boxShadow: 'inset 0 0 0 0.09375rem var(--panel-border)' }}
-                  >
-                    {checked && (
-                      <span
-                        className="h-2 w-2 rounded-full"
-                        style={{ background: 'var(--panel-text)' }}
-                      />
-                    )}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-sm font-medium text-panel-ink">
-                      {ROLE_NAMES[role.key] ?? roleName(role.key, roles)}
-                    </span>
-                    <span className="block text-xs text-panel-ink-muted">{describeRole(role)}</span>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        <section>
-          <h3 className="text-sm font-semibold">Обхват</h3>
-          <p className="mt-0.5 text-xs text-panel-ink-muted">
-            Къде важат ролите. Стесняването на обхвата никога не разширява правата.
-          </p>
-          {/* TODO(M2): building scope — assignments arrive with the property hierarchy. */}
-          <div className="mt-3 rounded-2xl bg-panel-row px-3.5 py-3 opacity-60">
-            <p className="text-sm font-medium text-panel-ink">Всички сгради в организацията</p>
-            <p className="text-xs text-panel-ink-muted">
-              Избор на отделни сгради идва с йерархията на имотите.
-            </p>
-          </div>
-        </section>
-
-        {diff && <Changes gains={diff.gains} losses={diff.losses} />}
-
-        <section>
-          <h3 className="text-sm font-semibold">Акаунт</h3>
-          {!protection && (
             <p className="mt-0.5 text-xs text-panel-ink-muted">
-              Спирането е обратимо. Изтриването прекратява достъпа завинаги.
+              Акаунтът има една роля. Няколко роли на един акаунт ще са възможни по-късно.
             </p>
-          )}
-          {protection ? (
-            <p className="mt-3 flex gap-2 rounded-2xl bg-panel-row px-3.5 py-3 text-xs text-panel-status-urgent">
-              <Info size="0.875rem" className="mt-0.5 shrink-0" />
-              {protection}
-            </p>
-          ) : (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {member.status === 'suspended' ? (
-                <AccountAction
-                  icon={<ArrowCounterClockwise size="0.9375rem" />}
-                  onClick={() => onAccountAction('reactivate')}
-                >
-                  Възстанови достъпа
-                </AccountAction>
-              ) : (
-                <AccountAction
-                  icon={<ShieldSlash size="0.9375rem" />}
-                  onClick={() => onAccountAction('suspend')}
-                  disabled={member.status === 'invited'}
-                  hint={
-                    member.status === 'invited'
-                      ? 'Поканените активират акаунта си с код първо.'
-                      : undefined
-                  }
-                >
-                  Спри достъпа
-                </AccountAction>
-              )}
-              <AccountAction
-                icon={<UserMinus size="0.9375rem" />}
-                onClick={() => onAccountAction('revoke')}
-                danger
-              >
-                Изтрий достъпа
-              </AccountAction>
+            <div role="radiogroup" aria-label="Роля" className="mt-3 space-y-1.5">
+              {roles.map((role) => {
+                const checked = role.key === selected;
+                return (
+                  <button
+                    key={role.key}
+                    type="button"
+                    role="radio"
+                    aria-checked={checked}
+                    data-autofocus={checked ? '' : undefined}
+                    onClick={() => setDraft({ userId: member.userId, roleKey: role.key })}
+                    className={`flex w-full items-start gap-3 rounded-2xl px-3.5 py-3 text-left transition-colors ${
+                      checked ? 'bg-panel-row-strong' : 'bg-panel-row hover:bg-panel-row-strong'
+                    }`}
+                  >
+                    <span
+                      className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
+                      style={{ boxShadow: 'inset 0 0 0 0.09375rem var(--panel-border)' }}
+                    >
+                      {checked && (
+                        <span
+                          className="h-2 w-2 rounded-full"
+                          style={{ background: 'var(--panel-text)' }}
+                        />
+                      )}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium text-panel-ink">
+                        {ROLE_NAMES[role.key] ?? roleName(role.key, roles)}
+                      </span>
+                      <span className="block text-xs text-panel-ink-muted">
+                        {describeRole(role)}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-          )}
-        </section>
-      </fieldset>
+          </section>
 
-      <ConfirmDialog
-        open={asking}
-        title="Да се откажа ли?"
-        stay="Остани"
-        leave="Откажи"
-        onStay={() => setAsking(false)}
-        onLeave={leave}
-      >
-        Въведеното във формата няма да се запази.
-      </ConfirmDialog>
-    </Drawer>
+          <section>
+            <h3 className="text-sm font-semibold">Обхват</h3>
+            <p className="mt-0.5 text-xs text-panel-ink-muted">
+              Къде важат ролите. Стесняването на обхвата никога не разширява правата.
+            </p>
+            {/* TODO(M2): building scope — assignments arrive with the property hierarchy. */}
+            <div className="mt-3 rounded-2xl bg-panel-row px-3.5 py-3 opacity-60">
+              <p className="text-sm font-medium text-panel-ink">Всички сгради в организацията</p>
+              <p className="text-xs text-panel-ink-muted">
+                Избор на отделни сгради идва с йерархията на имотите.
+              </p>
+            </div>
+          </section>
+
+          {diff && <Changes gains={diff.gains} losses={diff.losses} />}
+
+          <section>
+            <h3 className="text-sm font-semibold">Акаунт</h3>
+            {!protection && (
+              <p className="mt-0.5 text-xs text-panel-ink-muted">
+                Спирането е обратимо. Изтриването прекратява достъпа завинаги.
+              </p>
+            )}
+            {protection ? (
+              <p className="mt-3 flex gap-2 rounded-2xl bg-panel-row px-3.5 py-3 text-xs text-panel-status-urgent">
+                <Info size="0.875rem" className="mt-0.5 shrink-0" />
+                {protection}
+              </p>
+            ) : (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {member.status === 'suspended' ? (
+                  <AccountAction
+                    icon={<ArrowCounterClockwise size="0.9375rem" />}
+                    onClick={() => onAccountAction('reactivate')}
+                  >
+                    Възстанови достъпа
+                  </AccountAction>
+                ) : (
+                  <AccountAction
+                    icon={<ShieldSlash size="0.9375rem" />}
+                    onClick={() => onAccountAction('suspend')}
+                    disabled={member.status === 'invited'}
+                    hint={
+                      member.status === 'invited'
+                        ? 'Поканените активират акаунта си с код първо.'
+                        : undefined
+                    }
+                  >
+                    Спри достъпа
+                  </AccountAction>
+                )}
+                <AccountAction
+                  icon={<UserMinus size="0.9375rem" />}
+                  onClick={() => onAccountAction('revoke')}
+                  danger
+                >
+                  Изтрий достъпа
+                </AccountAction>
+              </div>
+            )}
+          </section>
+        </fieldset>
+      </Drawer>
+      <DiscardQuestion open={asking} onStay={() => setAsking(false)} onLeave={leave} />
+    </>
+  );
+}
+
+/**
+ * The question stands beside the drawer, not inside it: a child of the
+ * closing drawer would leave with it, frozen open through the exit
+ * animation — visible over the departing panel, the page inert meanwhile.
+ */
+function DiscardQuestion({
+  open,
+  onStay,
+  onLeave,
+}: {
+  open: boolean;
+  onStay: () => void;
+  onLeave: () => void;
+}) {
+  return (
+    <ConfirmDialog
+      open={open}
+      title="Да се откажа ли?"
+      stay="Остани"
+      leave="Откажи"
+      onStay={onStay}
+      onLeave={onLeave}
+    >
+      Въведеното във формата няма да се запази.
+    </ConfirmDialog>
   );
 }
 
