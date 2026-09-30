@@ -78,7 +78,7 @@ Small, independently implementable, agent-sized items in build order. A planning
 - [ ] **40a.** Migration: tasks (tenant-leading PK, RLS, `(tenant_id, scheduled_on)` index) + schema contract + isolation coverage
 - [ ] **40b.** `tasks` module: CRUD, day/range lists, month calendar counts, complete/reopen/cancel, `tasks.read` / `tasks.manage`, building-scope visibility, tenant-timezone day boundaries
 - [ ] **40c.** Admin: Tasks section (list + form) and the Calendar card (Month with dots + Upcoming, Day with checkbox; day pick switches view)
-- [ ] **40d.** Contractor visits (D29): `contractor` record + `staff_membership.contractor_id` in the staff module; `contractor_visit` kind with firm, scope (entrances / whole building) and time range; `visits.manage` scoped to the firm for contractor roles; `GET /v1/me/visits` for residents by entrance; no notifications; «Ново посещение» in admin, visits list in the app
+- [ ] **40d.** Contractor visits (D29): `contractor` record + `staff_membership.contractor_id` in the staff module; `contractor_visit` kind with firm, scope (entrances / whole building) and time range; `visits.manage` scoped to the firm for contractor roles; `GET /v1/me/calendar` for residents by entrance (visits, and events since D33); no notifications; «Ново посещение» in admin, visits list in the app
 
 ## Reporting & ops
 
