@@ -6,6 +6,7 @@ import { HealthController } from './health/health.controller';
 import { BrandsModule } from './modules/brands/brands.module';
 import { InvitesModule } from './modules/invites/invites.module';
 import { PlatformModule } from './modules/platform/platform.module';
+import { PropertyModule } from './modules/property/property.module';
 import { TenantModule } from './modules/tenant/tenant.module';
 
 @Module({
@@ -16,6 +17,7 @@ import { TenantModule } from './modules/tenant/tenant.module';
     InvitesModule,
     BrandsModule,
     PlatformModule,
+    PropertyModule,
     TenantModule,
   ],
   controllers: [HealthController],

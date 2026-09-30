@@ -481,3 +481,125 @@ describe('Accounts are created inside one realm (B8)', () => {
     expect(invite.rows).toEqual([{ user_id: marias.rows[2].id, created_by: platformAdminId }]);
   });
 });
+
+describe('Property hierarchy (M2) stays inside its tenant', () => {
+  let buildingA: string;
+  let entranceA: string;
+  let propertyA: string;
+
+  beforeAll(async () => {
+    buildingA = (
+      await adminPool.query(
+        `INSERT INTO buildings (tenant_id, name, city, district, address, floors, assessment_basis)
+         VALUES ($1, 'Isolation Tower', 'София', 'Център', 'ул. Проба 1', 5, 'fixed') RETURNING id`,
+        [tenantA],
+      )
+    ).rows[0].id;
+    entranceA = (
+      await adminPool.query(
+        `INSERT INTO entrances (tenant_id, building_id, name) VALUES ($1, $2, 'А') RETURNING id`,
+        [tenantA, buildingA],
+      )
+    ).rows[0].id;
+    propertyA = (
+      await adminPool.query(
+        `INSERT INTO apartments (tenant_id, building_id, entrance_id, floor, number)
+         VALUES ($1, $2, $3, 1, '1') RETURNING id`,
+        [tenantA, buildingA, entranceA],
+      )
+    ).rows[0].id;
+  });
+
+  it('RLS: another tenant reads and changes none of the three tables', async () => {
+    for (const table of ['buildings', 'entrances', 'apartments']) {
+      expect((await appPool.query(`SELECT 1 FROM ${table}`)).rows, table).toHaveLength(0);
+    }
+    const client = await appPool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [tenantB]);
+      for (const table of ['buildings', 'entrances', 'apartments']) {
+        expect((await client.query(`SELECT 1 FROM ${table}`)).rows, table).toHaveLength(0);
+      }
+      const renamed = await client.query(
+        `UPDATE buildings SET name = 'Hijacked' WHERE id = $1 RETURNING id`,
+        [buildingA],
+      );
+      expect(renamed.rows).toHaveLength(0);
+      const removed = await client.query(`DELETE FROM apartments WHERE id = $1 RETURNING id`, [
+        propertyA,
+      ]);
+      expect(removed.rows).toHaveLength(0);
+      await expect(
+        client.query(
+          `INSERT INTO apartments (tenant_id, building_id, entrance_id, floor, number)
+           VALUES ($1, $2, $3, 2, '2')`,
+          [tenantA, buildingA, entranceA],
+        ),
+      ).rejects.toMatchObject({ code: '42501' });
+      await client.query('ROLLBACK');
+    } finally {
+      client.release();
+    }
+  });
+
+  it('a property cannot sit in an entrance of another building or another tenant', async () => {
+    // Tenant B's own building, pointing at tenant A's entrance: the key refuses it.
+    const buildingB = (
+      await adminPool.query(
+        `INSERT INTO buildings (tenant_id, name, city, district, address, floors, assessment_basis)
+         VALUES ($1, 'Demo House', 'София', 'Център', 'ул. Проба 2', 5, 'fixed') RETURNING id`,
+        [tenantB],
+      )
+    ).rows[0].id;
+    await expect(
+      adminPool.query(
+        `INSERT INTO apartments (tenant_id, building_id, entrance_id, floor, number)
+         VALUES ($1, $2, $3, 1, '1')`,
+        [tenantB, buildingB, entranceA],
+      ),
+    ).rejects.toMatchObject({ code: '23503' });
+  });
+
+  it('API: a manager of tenant B cannot reach a building of tenant A by any route', async () => {
+    // The demo account with Maria's e-mail is a manager there: it holds both property rights.
+    const inB = await tenantToken(demoMariaId, tenantB, ['manager']);
+    const call = (method: 'get' | 'patch' | 'post' | 'delete', url: string, tenantId: string) => {
+      const agent = request(app.getHttpServer());
+      return agent[method](url)
+        .set('Authorization', `Bearer ${inB}`)
+        .set('X-Tenant-Id', tenantId)
+        .send(method === 'get' || method === 'delete' ? undefined : { name: 'Hijacked' });
+    };
+
+    const own = await call('get', '/buildings', tenantB);
+    expect(own.status).toBe(200);
+    expect(own.body.map((b: { id: string }) => b.id)).not.toContain(buildingA);
+
+    const routes: Array<['get' | 'patch' | 'post' | 'delete', string]> = [
+      ['get', `/buildings/${buildingA}`],
+      ['patch', `/buildings/${buildingA}`],
+      ['post', `/buildings/${buildingA}/activate`],
+      ['post', `/buildings/${buildingA}/entrances`],
+      ['patch', `/buildings/${buildingA}/entrances/${entranceA}`],
+      ['delete', `/buildings/${buildingA}/entrances/${entranceA}`],
+      ['get', `/buildings/${buildingA}/properties`],
+      ['patch', `/buildings/${buildingA}/properties/${propertyA}`],
+      ['delete', `/buildings/${buildingA}/properties/${propertyA}`],
+    ];
+    for (const [method, url] of routes) {
+      // In its own tenant the building does not exist; with the other tenant's
+      // id in the header the token is refused before anything is looked up.
+      expect((await call(method, url, tenantB)).status, `${method} ${url}`).toBe(404);
+      expect((await call(method, url, tenantA)).status, `${method} ${url} as A`).toBe(403);
+    }
+
+    const intact = await adminPool.query(
+      `SELECT b.name, b.status, count(a.id)::int AS properties FROM buildings b
+       LEFT JOIN apartments a ON a.tenant_id = b.tenant_id AND a.building_id = b.id
+       WHERE b.id = $1 GROUP BY b.name, b.status`,
+      [buildingA],
+    );
+    expect(intact.rows).toEqual([{ name: 'Isolation Tower', status: 'draft', properties: 1 }]);
+  });
+});

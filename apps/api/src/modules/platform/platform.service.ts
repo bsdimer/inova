@@ -23,7 +23,15 @@ const ROLE_TEMPLATES = [
   {
     key: 'manager',
     name: 'House manager',
-    permissions: ['tenant.read', 'staff.read', 'staff.manage', 'roles.read', 'audit.read'],
+    permissions: [
+      'tenant.read',
+      'staff.read',
+      'staff.manage',
+      'roles.read',
+      'audit.read',
+      'property.read',
+      'property.write',
+    ],
   },
   { key: 'resident', name: 'Resident', permissions: ['tenant.read'] },
 ];
