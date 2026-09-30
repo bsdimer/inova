@@ -72,18 +72,45 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   | Too wide for a panel (e.g. «Пробно начисляване»)                           | centred window, about 16:9 and smaller than the screen, over the dimmed screen, × | as the view row above                                               |
   | A work place (Апартамент, search results) or a multi-step process (import) | its own page                                                                      | its own page                                                        |
 
-- If the user entered data and then presses × or back, ask «Да се откажа ли?».
-  The confirmation opens over the form with its own scrim. Focus starts on
-  «Остани»; Esc and a click on the scrim mean «Остани». «Откажи» closes both
-  the confirmation and the form.
+- × or back on a panel or form with unsaved changes asks «Да се запазят ли
+  промените?» — «Промените още не са запазени.» — with «Не запазвай» /
+  «Запази». The confirmation opens over the form with its own scrim; Esc, a
+  click on the scrim or the confirmation's × return to the form. «Не
+  запазвай» closes both without saving. «Запази» saves and closes; if the
+  form has a validation error, the confirmation closes and the form shows the
+  error. Without changes × closes at once. On 402 the buttons stack: Запази,
+  Не запазвай. Figma: 1728 node `1925:2`, 402 node `1925:86`.
 - A secondary window keeps the screen under it in place: the list under a
   drawer is dimmed, not replaced, and after closing the user is exactly where
   they were.
 - When a page is shorter than the window, its footer with the actions sits at
   the bottom of the window, not in the middle.
-- Panels and windows keep the header and footer fixed; only the body
-  scrolls. On 402, the main action of a view screen is pinned full width at
-  the bottom.
+- A panel keeps only its header fixed (sticky); the body scrolls. The action
+  buttons («Отказ», «Запази» and the like) are not pinned: they sit at the end
+  of the content and scroll with it, so the user sees every option before
+  saving; × in the header closes the panel. When the form is shorter than the
+  panel, the buttons sit at the bottom of the panel.
+- Buttons stay pinned at the bottom, with the fade above them, only in: the
+  filter sheet («Изчисти» / «Покажи N»), a window with a long table («Пробно
+  начисляване» — «Начисли»), and, on 402, the main action of a view screen,
+  full width (e.g. «Обади се» in a listing).
+- While a panel has more below, it shows two cues: a thin scrollbar on the
+  right (`V2/Drawer · Scrollbar`) and a 48px fade at the bottom edge of the
+  panel (`V2/Drawer · Fade`), where the text dissolves into the panel. The
+  fade goes when the body is scrolled to the end. Build it with a mask or
+  opacity, not a solid colour, so it works in both themes. On 402 there is
+  only the fade, no drawn scrollbar: the mobile browser's own scrollbar shows
+  while the user scrolls (Figma `V2 · Служители 402 · лист с филтри`, node
+  `1126:10849`).
+- A form's fields go in this order: what → for whom and where → what follows
+  (the notice to residents, the SMS count) → optional fields. A «notify
+  residents» checkbox never comes after an optional «Бележка».
+- A panel that overflows by a little (up to about 100px at 1117 high) is
+  tightened first: 16px between blocks and at the bottom, shorter hints. Field
+  and font sizes stay. A larger overflow scrolls.
+- Check panels at about 700px high as well as 1117: in the browser the panel
+  is shorter than in the frame. Long panels are shown in full in Figma, section
+  «V2 · Панели целиком» (node `2621:66107`).
 - Search on 402 is a mode over the current screen: the field on top and
   «Отказ» on the right, which returns to the screen the user came from. A
   search result opens a normal page. The search dropdown has no scrim (it
