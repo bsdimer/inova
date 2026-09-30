@@ -84,6 +84,20 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
 - Panels and windows keep the header and footer fixed; only the body
   scrolls. On 402, the main action of a view screen is pinned full width at
   the bottom.
+- While a panel body has more below, it shows two cues: a thin scrollbar on
+  the right (`V2/Drawer · Scrollbar`) and a 48px fade above the footer
+  (`V2/Drawer · Fade`), where the text dissolves into the panel. The fade
+  goes when the body is scrolled to the end. Build it with a mask or opacity,
+  not a solid colour, so it works in both themes.
+- A form's fields go in this order: what → for whom and where → what follows
+  (the notice to residents, the SMS count) → optional fields. A «notify
+  residents» checkbox never comes after an optional «Бележка».
+- A panel that overflows by a little (up to about 100px at 1117 high) is
+  tightened first: 16px between blocks and at the bottom, shorter hints. Field
+  and font sizes stay. A larger overflow scrolls.
+- Check panels at about 700px high as well as 1117: in the browser the panel
+  is shorter than in the frame. Long panels are shown in full in Figma, section
+  «V2 · Панели целиком» (node `2621:66107`).
 - Search on 402 is a mode over the current screen: the field on top and
   «Отказ» on the right, which returns to the screen the user came from. A
   search result opens a normal page. The search dropdown has no scrim (it
