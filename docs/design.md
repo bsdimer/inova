@@ -90,10 +90,10 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   of the content and scroll with it, so the user sees every option before
   saving; × in the header closes the panel. When the form is shorter than the
   panel, the buttons sit at the bottom of the panel.
-- Buttons stay pinned at the bottom only in: the filter sheet («Изчисти» /
-  «Покажи N»), a window with a long table («Пробно начисляване» —
-  «Начисли»), and, on 402, the main action of a view screen, full width (e.g.
-  «Обади се» in a listing).
+- Buttons stay pinned at the bottom, with the fade above them, only in: the
+  filter sheet («Изчисти» / «Покажи N»), a window with a long table («Пробно
+  начисляване» — «Начисли»), and, on 402, the main action of a view screen,
+  full width (e.g. «Обади се» in a listing).
 - While a panel has more below, it shows two cues: a thin scrollbar on the
   right (`V2/Drawer · Scrollbar`) and a 48px fade at the bottom edge of the
   panel (`V2/Drawer · Fade`), where the text dissolves into the panel. The
