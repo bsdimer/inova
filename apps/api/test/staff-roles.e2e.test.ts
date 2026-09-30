@@ -282,3 +282,44 @@ describe('Staff endpoints', () => {
     expect(res.status).toBe(403);
   });
 });
+
+describe('Tenant context (GET /tenant)', () => {
+  it('names the caller’s own role, even without roles.read', async () => {
+    // Residents hold tenant.read only — they cannot list roles.
+    expect((await resident.get('/tenant/roles')).status).toBe(403);
+    const res = await resident.get('/tenant');
+    expect(res.status).toBe(200);
+    expect(res.body.role).toBe('resident');
+    expect(res.body.roleName).toBe('Resident');
+  });
+
+  it('names a role the organisation created itself', async () => {
+    expect(
+      (
+        await admin.post('/tenant/roles', {
+          key: 'cashier',
+          name: 'Касиер',
+          permissions: ['tenant.read'],
+        })
+      ).status,
+    ).toBe(201);
+    const cashierId = (
+      await adminPool.query(
+        `INSERT INTO users (email, full_name, status) VALUES ('cashier@inova.bg', 'Test Cashier', 'active') RETURNING id`,
+      )
+    ).rows[0].id;
+    await adminPool.query(
+      `INSERT INTO staff_memberships (tenant_id, user_id, role_key, status) VALUES ($1, $2, 'cashier', 'active')`,
+      [tenantA, cashierId],
+    );
+    const cashier = as(await sign(cashierId, [{ t: tenantA, r: 'cashier' }]), tenantA);
+
+    const res = await cashier.get('/tenant');
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      role: 'cashier',
+      roleName: 'Касиер',
+      permissions: ['tenant.read'],
+    });
+  });
+});

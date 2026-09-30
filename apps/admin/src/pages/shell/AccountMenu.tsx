@@ -1,5 +1,4 @@
 import { Link } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   useCallback,
@@ -21,7 +20,6 @@ import {
   XCircle,
 } from '../../components/icons';
 import { Avatar, Popover, SkeletonBar } from '../../components/ui';
-import { api, type Role } from '../../lib/api';
 import { clearSession, type Session } from '../../lib/auth';
 import { setTheme, useThemeChoice, type ThemeChoice } from '../../lib/theme';
 import {
@@ -60,23 +58,17 @@ const THEMES: { value: ThemeChoice; label: string; hint: string }[] = [
 ];
 
 /**
- * The role in words: the seeded names, a custom role's own name. A custom
- * role read without roles.read still shows its key: /tenant carries the key
- * only (see the PR's Remains).
+ * The role in words: the seeded roles by their Bulgarian names (their stored
+ * names are English), any other role by the name /tenant sends with the
+ * context — never a key.
  */
 export function useRoleName(session: Session | null): string {
   const tenantId = useSelectedTenantId();
   const context = useTenantContext();
-  const key = context.data?.role ?? session?.memberships.find((m) => m.t === tenantId)?.r ?? null;
-  const custom = Boolean(key && !ROLE_NAMES[key]);
-  const roles = useQuery({
-    queryKey: ['roles', tenantId],
-    queryFn: () => api<Role[]>('/tenant/roles', { tenantId: tenantId! }),
-    enabled: custom && Boolean(context.data?.permissions.includes('roles.read')),
-  });
   if (session?.user.platformRole === 'super_admin') return PLATFORM_ROLE;
+  const key = context.data?.role ?? session?.memberships.find((m) => m.t === tenantId)?.r;
   if (!key) return '—';
-  return ROLE_NAMES[key] ?? roles.data?.find((r) => r.key === key)?.name ?? key;
+  return ROLE_NAMES[key] ?? context.data?.roleName ?? '—';
 }
 
 /** A phone as it is read aloud: +359 88 100 0001. Other shapes stay as stored. */
