@@ -7,7 +7,9 @@
 - Empty, error, and loading states — not only the happy path.
 - Admin at the ladder widths of Figma 1074:9754 — 1728, 1536, 1280, 1180,
   820, 402, plus 1920×980 (height) and 2560 (×1.25); table screens also at
-  1024 — if layout changed, light and dark; no unexpected overflow.
+  1024 — if layout changed, light and dark; no unexpected overflow. The
+  four that are never skipped: 402, 1024, 1728 and a 600 px tall window;
+  they go into the PR's «Размери» line.
   `apps/admin/e2e/responsive.spec.ts` covers the ladder. Glass once on a
   Windows laptop with integrated graphics in Chrome and Firefox — a Mac
   hides the cost of `backdrop-filter`.
