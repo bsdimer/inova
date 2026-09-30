@@ -6,7 +6,7 @@
  */
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { JWT_AUDIENCE, JWT_ISSUER, type MembershipClaim } from '@inova/shared';
+import { JWT_AUDIENCE, JWT_ISSUER } from '@inova/shared';
 import { SignJWT, calculateJwkThumbprint, exportJWK, generateKeyPair } from 'jose';
 import pg from 'pg';
 import request from 'supertest';
@@ -28,8 +28,9 @@ type SigningKey = Awaited<ReturnType<typeof generateKeyPair>>['privateKey'];
 let signingKey: SigningKey;
 let kid: string;
 
-async function sign(sub: string, memberships: MembershipClaim[]): Promise<string> {
-  return new SignJWT({ name: 'Test User', memberships })
+/** A tenant account's token: one tenant, the role held there (decision B8). */
+async function sign(sub: string, tid: string, role: string): Promise<string> {
+  return new SignJWT({ kind: 'tenant', name: 'Test User', tid, roles: [role] })
     .setProtectedHeader({ alg: 'RS256', kid })
     .setSubject(sub)
     .setIssuer(JWT_ISSUER)
@@ -85,17 +86,26 @@ beforeAll(async () => {
   const { AppModule } = await import('../src/app.module');
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
   app = moduleRef.createNestApplication();
-  await app.init();
+  // Listen once: on a server that is not listening, supertest binds a fresh
+  // ephemeral port for every request.
+  await app.listen(0);
 
   adminPool = new pg.Pool({ connectionString: migratorUrl, max: 2 });
 
   const tenants = await adminPool.query('SELECT id, key FROM tenants ORDER BY key');
   tenantA = tenants.rows.find((r) => r.key === 'inova').id;
   tenantB = tenants.rows.find((r) => r.key === 'demo').id;
-  mariaId = (await adminPool.query(`SELECT id FROM users WHERE email = 'maria@inova.bg'`)).rows[0]
-    .id;
-  elenaId = (await adminPool.query(`SELECT id FROM users WHERE phone = '+359881000001'`)).rows[0]
-    .id;
+  mariaId = (
+    await adminPool.query(
+      `SELECT id FROM users WHERE tenant_id = $1 AND email = 'maria@inova.bg'`,
+      [tenantA],
+    )
+  ).rows[0].id;
+  elenaId = (
+    await adminPool.query(`SELECT id FROM users WHERE tenant_id = $1 AND phone = '+359881000001'`, [
+      tenantA,
+    ])
+  ).rows[0].id;
   await adminPool.query(
     `UPDATE staff_memberships SET status = 'active' WHERE user_id = $1 AND tenant_id = $2`,
     [elenaId, tenantA],
@@ -104,7 +114,9 @@ beforeAll(async () => {
   // An active manager so we can exercise staff.manage without roles.manage.
   managerId = (
     await adminPool.query(
-      `INSERT INTO users (email, full_name, status) VALUES ('manager@inova.bg', 'Test Manager', 'active') RETURNING id`,
+      `INSERT INTO users (tenant_id, email, first_name, last_name, status)
+       VALUES ($1, 'manager@inova.bg', 'Test', 'Manager', 'active') RETURNING id`,
+      [tenantA],
     )
   ).rows[0].id;
   await adminPool.query(
@@ -112,9 +124,9 @@ beforeAll(async () => {
     [tenantA, managerId],
   );
 
-  admin = as(await sign(mariaId, [{ t: tenantA, r: 'admin' }]), tenantA);
-  manager = as(await sign(managerId, [{ t: tenantA, r: 'manager' }]), tenantA);
-  resident = as(await sign(elenaId, [{ t: tenantA, r: 'resident' }]), tenantA);
+  admin = as(await sign(mariaId, tenantA, 'admin'), tenantA);
+  manager = as(await sign(managerId, tenantA, 'manager'), tenantA);
+  resident = as(await sign(elenaId, tenantA, 'resident'), tenantA);
 });
 
 afterAll(async () => {
@@ -273,7 +285,7 @@ describe('Staff endpoints', () => {
   });
 
   it('rejects cross-tenant staff mutations (403)', async () => {
-    const token = await sign(managerId, [{ t: tenantA, r: 'manager' }]);
+    const token = await sign(managerId, tenantA, 'manager');
     const res = await as(token, tenantB).post('/tenant/staff', {
       email: 'x@demo.bg',
       fullName: 'X Y',
@@ -305,14 +317,16 @@ describe('Tenant context (GET /tenant)', () => {
     ).toBe(201);
     const cashierId = (
       await adminPool.query(
-        `INSERT INTO users (email, full_name, status) VALUES ('cashier@inova.bg', 'Test Cashier', 'active') RETURNING id`,
+        `INSERT INTO users (tenant_id, email, first_name, last_name, status)
+         VALUES ($1, 'cashier@inova.bg', 'Test', 'Cashier', 'active') RETURNING id`,
+        [tenantA],
       )
     ).rows[0].id;
     await adminPool.query(
       `INSERT INTO staff_memberships (tenant_id, user_id, role_key, status) VALUES ($1, $2, 'cashier', 'active')`,
       [tenantA, cashierId],
     );
-    const cashier = as(await sign(cashierId, [{ t: tenantA, r: 'cashier' }]), tenantA);
+    const cashier = as(await sign(cashierId, tenantA, 'cashier'), tenantA);
 
     const res = await cashier.get('/tenant');
     expect(res.status).toBe(200);

@@ -87,8 +87,8 @@ services:
         condition: service_healthy
     environment:
       NODE_ENV: production
-      # Its own database role: only inova_auth may use the cross-tenant identity
-      # scope (db/migrations/0003). core-api's inova_app cannot.
+      # Its own database role: only inova_auth reads refresh tokens and platform
+      # identities (db/migrations/0004). core-api's inova_app cannot.
       AUTH_DATABASE_URL: postgres://inova_auth:${AUTH_DB_PASSWORD:?set in .env}@postgres:5432/inova
       REDIS_URL: redis://redis:6379
       JWT_PRIVATE_KEY_PATH: /run/secrets/jwt-private.pem
@@ -101,6 +101,11 @@ services:
       # Empty in production: the service then refuses to start instead of
       # writing one-time codes to the log. provision-env.sh sets `log` for test.
       CODE_DELIVERY: ${CODE_DELIVERY:-}
+      # The organisation a sign-in lands in when the request names none (the
+      # portal's form does not ask for one yet). Empty = no default: such a
+      # request then fails like a wrong password. provision-env.sh sets the
+      # seeded `inova` for test.
+      AUTH_DEFAULT_REALM: ${AUTH_DEFAULT_REALM:-}
     volumes:
       # Relative to the stack directory, never absolute: this file is shared by
       # every environment, and an absolute path would make them all sign with

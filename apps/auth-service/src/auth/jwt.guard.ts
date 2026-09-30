@@ -1,5 +1,10 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
-import { JWT_AUDIENCE, JWT_ISSUER, type AccessTokenClaims } from '@inova/shared';
+import {
+  JWT_AUDIENCE,
+  JWT_ISSUER,
+  isAccessTokenClaims,
+  type AccessTokenClaims,
+} from '@inova/shared';
 import type { Request } from 'express';
 import { jwtVerify } from 'jose';
 import { KeysService } from '../keys/keys.service';
@@ -24,7 +29,9 @@ export class JwtGuard implements CanActivate {
         issuer: JWT_ISSUER,
         audience: JWT_AUDIENCE,
       });
-      req.user = payload as unknown as AccessTokenClaims;
+      // A token of the pre-B8 shape is signed by the same key and still unusable.
+      if (!isAccessTokenClaims(payload)) throw new Error('Unknown claims shape');
+      req.user = payload;
       return true;
     } catch {
       throw new UnauthorizedException('Invalid token');

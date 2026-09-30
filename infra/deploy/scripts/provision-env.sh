@@ -60,6 +60,14 @@ if [ "$ENV_NAME" = "test" ] && ! grep -q '^CODE_DELIVERY=' "$STACK_DIR/.env"; th
   log "added CODE_DELIVERY=log (test only)"
 fi
 
+# Accounts belong to one organisation each; a sign-in that names none lands in
+# this one. Test has the seeded `inova` organisation. Production gets the key
+# of its own first organisation when that environment is created.
+if [ "$ENV_NAME" = "test" ] && ! grep -q '^AUTH_DEFAULT_REALM=' "$STACK_DIR/.env"; then
+  echo 'AUTH_DEFAULT_REALM=inova' >>"$STACK_DIR/.env"
+  log "added AUTH_DEFAULT_REALM=inova (test only)"
+fi
+
 if [ ! -f "$STACK_DIR/secrets/jwt-private.pem" ]; then
   log "generating the auth-service JWT signing key"
   umask 077

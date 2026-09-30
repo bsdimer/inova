@@ -1,13 +1,22 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { MockCodeDelivery, type MembershipClaim } from '@inova/shared';
+import { MockCodeDelivery, type AccessTokenClaims } from '@inova/shared';
 import { and, eq, gt, inArray, isNull, sql } from 'drizzle-orm';
 import { createHash, randomInt } from 'node:crypto';
-import { DbService, type IdentityTx } from '../db/db.service';
+import { DbService, type AuthTx } from '../db/db.service';
+import { inviteCodes, platformUsers, staffMemberships, users } from '../db/schema';
 import { PasswordHasher } from './password-hasher';
-import { inviteCodes, staffMemberships, tenants, users } from '../db/schema';
-import { TokenService, type TokenPair } from './token.service';
+import { RealmResolver, type Realm, type RealmHint } from './realm-resolver';
+import { RefreshTokens, type RefreshOwner } from './refresh-tokens';
+import { ACCESS_TTL_SECONDS, TokenService, type TokenPair } from './token.service';
 
 const sha256 = (value: string): string => createHash('sha256').update(value).digest('hex');
+
+type Account = typeof users.$inferSelect;
+type PlatformUser = typeof platformUsers.$inferSelect;
+
+/** Who a sign-in attempt is about, once the realm is known. */
+type Credential =
+  { kind: 'tenant'; realm: Realm; account: Account } | { kind: 'platform'; user: PlatformUser };
 
 export interface SessionResult extends TokenPair {
   user: {
@@ -18,108 +27,92 @@ export interface SessionResult extends TokenPair {
     platformRole: 'super_admin' | null;
     mustSetPassword: boolean;
   };
-  memberships: Array<MembershipClaim & { tenantKey: string; tenantName: string }>;
+  /**
+   * The session's own tenant, once per role held there — empty for a platform
+   * user. A session never lists another tenant (decision B8); the name is the
+   * pre-B8 one, kept so the clients read the response unchanged.
+   */
+  memberships: Array<{ t: string; r: string; tenantKey: string; tenantName: string }>;
 }
 
+type Profile = Omit<SessionResult, keyof TokenPair>;
+
+/**
+ * Sign-in, activation and session upkeep. Tenant accounts are looked up inside
+ * the one tenant the realm hint resolved to (decision B8); platform operators
+ * are separate identities. Every failure answers like a wrong password, so no
+ * response tells whether an account — here or in another tenant — exists.
+ */
 @Injectable()
 export class AuthService {
   constructor(
     private readonly dbService: DbService,
+    private readonly realms: RealmResolver,
     private readonly tokens: TokenService,
+    private readonly refreshTokens: RefreshTokens,
     private readonly codeDelivery: MockCodeDelivery,
     private readonly passwords: PasswordHasher,
   ) {}
 
-  private async loadMemberships(
-    tx: IdentityTx,
-    userId: string,
-  ): Promise<SessionResult['memberships']> {
-    const rows = await tx
-      .select({
-        tenantId: staffMemberships.tenantId,
-        roleKey: staffMemberships.roleKey,
-        tenantKey: tenants.key,
-        tenantName: tenants.name,
-      })
-      .from(staffMemberships)
-      .innerJoin(tenants, eq(tenants.id, staffMemberships.tenantId))
-      .where(and(eq(staffMemberships.userId, userId), eq(staffMemberships.status, 'active')));
-    return rows.map((r) => ({
-      t: r.tenantId,
-      r: r.roleKey,
-      tenantKey: r.tenantKey,
-      tenantName: r.tenantName,
-    }));
-  }
+  async login(email: string, password: string, hint: RealmHint = {}): Promise<SessionResult> {
+    const credential = await this.findCredential(email, hint);
+    const row = credential?.kind === 'tenant' ? credential.account : credential?.user;
 
-  private async buildSession(
-    tx: IdentityTx,
-    user: typeof users.$inferSelect,
-    familyId?: string,
-  ): Promise<SessionResult> {
-    const memberships = await this.loadMemberships(tx, user.id);
-    const pair = await this.tokens.issuePair(
-      tx,
-      {
-        id: user.id,
-        email: user.email,
-        fullName: user.fullName,
-        platformRole: user.platformRole,
-      },
-      memberships.map(({ t, r }) => ({ t, r })),
-      familyId,
-    );
-    return {
-      ...pair,
-      user: {
-        id: user.id,
-        email: user.email,
-        phone: user.phone,
-        fullName: user.fullName,
-        platformRole: user.platformRole,
-        mustSetPassword: user.passwordHash === null,
-      },
-      memberships,
-    };
-  }
+    const storedHash = row?.status === 'active' ? row.passwordHash : null;
+    // Verify even without a usable hash: skipping argon2 would answer an
+    // unknown realm, an unknown or inactive account faster than a wrong
+    // password (B13–B15).
+    const matches = await this.passwords.verify(storedHash ?? PasswordHasher.DUMMY_HASH, password);
+    if (!credential || storedHash === null || !matches) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    // Legacy bcrypt hashes (and weaker argon2 parameters) are upgraded on
+    // the first successful login — the only moment the plaintext is known.
+    const upgradedHash = this.passwords.needsRehash(storedHash)
+      ? await this.passwords.hash(password)
+      : null;
 
-  async login(email: string, password: string): Promise<SessionResult> {
-    return this.dbService.identityTx(async (tx) => {
-      const [user] = await tx
-        .select()
-        .from(users)
-        .where(sql`lower(${users.email}) = lower(${email})`);
+    if (credential.kind === 'platform') {
+      const { user } = credential;
+      return this.dbService.platformTx(async (tx) => {
+        if (upgradedHash) {
+          await tx
+            .update(platformUsers)
+            .set({ passwordHash: upgradedHash, updatedAt: new Date() })
+            .where(eq(platformUsers.id, user.id));
+        }
+        return this.platformSession(tx, user);
+      });
+    }
 
-      const storedHash = user?.status === 'active' ? user.passwordHash : null;
-      // Verify even without a usable hash: skipping argon2 would answer an
-      // unknown or inactive account faster than a wrong password (B13–B15).
-      const matches = await this.passwords.verify(
-        storedHash ?? PasswordHasher.DUMMY_HASH,
-        password,
-      );
-      if (!user || storedHash === null || !matches) {
-        throw new UnauthorizedException('Invalid credentials');
-      }
-      // Legacy bcrypt hashes (and weaker argon2 parameters) are upgraded on
-      // the first successful login — the only moment the plaintext is known.
-      if (this.passwords.needsRehash(storedHash)) {
+    const { realm, account } = credential;
+    return this.dbService.tenantTx(realm.id, async (tx) => {
+      if (upgradedHash) {
         await tx
           .update(users)
-          .set({ passwordHash: await this.passwords.hash(password), updatedAt: new Date() })
-          .where(eq(users.id, user.id));
+          .set({ passwordHash: upgradedHash, updatedAt: new Date() })
+          .where(and(eq(users.tenantId, realm.id), eq(users.id, account.id)));
       }
-      return this.buildSession(tx, user);
+      return this.tenantSession(tx, realm, account);
     });
   }
 
-  /** Invite-code activation (decision B7): manager pre-created the account. */
-  async activate(code: string): Promise<SessionResult> {
-    return this.dbService.identityTx(async (tx) => {
+  /**
+   * Invite-code activation (decision B7): manager pre-created the account.
+   * The code is looked up inside the resolved realm only.
+   */
+  async activate(code: string, hint: RealmHint = {}): Promise<SessionResult> {
+    const realm = await this.realms.resolve(hint);
+    if (!realm) {
+      throw new UnauthorizedException('Invalid or expired code');
+    }
+    return this.dbService.tenantTx(realm.id, async (tx) => {
       const [invite] = await tx
         .select()
         .from(inviteCodes)
         .where(
           and(
+            eq(inviteCodes.tenantId, realm.id),
             eq(inviteCodes.codeHash, sha256(code)),
             isNull(inviteCodes.consumedAt),
             gt(inviteCodes.expiresAt, new Date()),
@@ -132,14 +125,20 @@ export class AuthService {
       await tx
         .update(inviteCodes)
         .set({ consumedAt: new Date() })
-        .where(and(eq(inviteCodes.tenantId, invite.tenantId), eq(inviteCodes.id, invite.id)));
+        .where(and(eq(inviteCodes.tenantId, realm.id), eq(inviteCodes.id, invite.id)));
 
-      const [user] = await tx
+      const [account] = await tx
         .update(users)
         .set({ status: 'active', updatedAt: new Date() })
-        .where(and(eq(users.id, invite.userId), inArray(users.status, ['pending', 'active'])))
+        .where(
+          and(
+            eq(users.tenantId, realm.id),
+            eq(users.id, invite.userId),
+            inArray(users.status, ['pending', 'active']),
+          ),
+        )
         .returning();
-      if (!user) {
+      if (!account) {
         throw new UnauthorizedException('Account unavailable');
       }
 
@@ -148,29 +147,40 @@ export class AuthService {
         .set({ status: 'active', updatedAt: new Date() })
         .where(
           and(
-            eq(staffMemberships.userId, user.id),
-            eq(staffMemberships.tenantId, invite.tenantId),
+            eq(staffMemberships.tenantId, realm.id),
+            eq(staffMemberships.userId, account.id),
             eq(staffMemberships.status, 'invited'),
           ),
         );
 
-      return this.buildSession(tx, user);
+      return this.tenantSession(tx, realm, account);
     });
   }
 
   /** Always responds generically — no account enumeration by phone number. */
-  async resendCode(phone: string): Promise<void> {
-    await this.dbService.identityTx(async (tx) => {
-      const [user] = await tx
+  async resendCode(phone: string, hint: RealmHint = {}): Promise<void> {
+    const realm = await this.realms.resolve(hint);
+    if (!realm) return;
+
+    await this.dbService.tenantTx(realm.id, async (tx) => {
+      const [account] = await tx
         .select()
         .from(users)
-        .where(and(eq(users.phone, phone), eq(users.status, 'pending')));
-      if (!user) return;
+        .where(
+          and(eq(users.tenantId, realm.id), eq(users.phone, phone), eq(users.status, 'pending')),
+        );
+      if (!account) return;
 
       const [existing] = await tx
         .select()
         .from(inviteCodes)
-        .where(and(eq(inviteCodes.userId, user.id), isNull(inviteCodes.consumedAt)));
+        .where(
+          and(
+            eq(inviteCodes.tenantId, realm.id),
+            eq(inviteCodes.userId, account.id),
+            isNull(inviteCodes.consumedAt),
+          ),
+        );
       if (!existing) return;
 
       const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
@@ -181,7 +191,7 @@ export class AuthService {
           attempts: 0,
           expiresAt: new Date(Date.now() + 30 * 24 * 3600 * 1000),
         })
-        .where(and(eq(inviteCodes.tenantId, existing.tenantId), eq(inviteCodes.id, existing.id)));
+        .where(and(eq(inviteCodes.tenantId, realm.id), eq(inviteCodes.id, existing.id)));
 
       // TODO(M1): deliver via SMS/Viber gateway through the worker. MOCK: log only.
       this.codeDelivery.deliver('invite code', phone, code);
@@ -189,57 +199,236 @@ export class AuthService {
   }
 
   async refresh(rawToken: string): Promise<SessionResult> {
-    const outcome = await this.dbService.identityTx((tx) => this.tokens.rotate(tx, rawToken));
+    const owner = RefreshTokens.ownerOf(rawToken);
+    if (!owner) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+    const outcome = await this.ownerTx(owner, (tx) =>
+      this.refreshTokens.rotate(tx, owner, rawToken),
+    );
     if (!outcome.ok) {
-      if (outcome.reusedFamilyId) {
+      const { reusedFamilyId } = outcome;
+      if (reusedFamilyId) {
         // Commit the family revocation independently of the failing request.
-        await this.dbService.identityTx((tx) =>
-          this.tokens.revokeFamily(tx, outcome.reusedFamilyId!),
+        await this.ownerTx(owner, (tx) =>
+          this.refreshTokens.revokeFamily(tx, owner, reusedFamilyId),
         );
       }
       throw new UnauthorizedException('Invalid refresh token');
     }
-    return this.dbService.identityTx(async (tx) => {
-      const [user] = await tx.select().from(users).where(eq(users.id, outcome.userId));
-      if (!user || user.status !== 'active') {
-        throw new UnauthorizedException('Account unavailable');
-      }
-      return this.buildSession(tx, user, outcome.familyId);
+
+    if (owner.kind === 'platform') {
+      return this.dbService.platformTx(async (tx) => {
+        const user = await this.activePlatformUser(tx, outcome.userId);
+        return this.platformSession(tx, user, outcome.familyId);
+      });
+    }
+    const realm = await this.realmOf(owner.tenantId);
+    return this.dbService.tenantTx(realm.id, async (tx) => {
+      const account = await this.activeAccount(tx, realm.id, outcome.userId);
+      return this.tenantSession(tx, realm, account, outcome.familyId);
     });
   }
 
   async logout(rawToken: string): Promise<void> {
-    await this.dbService.identityTx(async (tx) => this.tokens.revoke(tx, rawToken));
+    const owner = RefreshTokens.ownerOf(rawToken);
+    if (!owner) return;
+    await this.ownerTx(owner, (tx) => this.refreshTokens.revoke(tx, owner, rawToken));
   }
 
-  async setPassword(userId: string, newPassword: string): Promise<void> {
+  async setPassword(claims: AccessTokenClaims, newPassword: string): Promise<void> {
     const passwordHash = await this.passwords.hash(newPassword);
-    await this.dbService.identityTx(async (tx) => {
+    if (claims.kind === 'platform') {
+      await this.dbService.platformTx(async (tx) => {
+        await tx
+          .update(platformUsers)
+          .set({ passwordHash, updatedAt: new Date() })
+          .where(eq(platformUsers.id, claims.sub));
+      });
+      return;
+    }
+    await this.dbService.tenantTx(claims.tid, async (tx) => {
       await tx
         .update(users)
         .set({ passwordHash, updatedAt: new Date() })
-        .where(eq(users.id, userId));
+        .where(and(eq(users.tenantId, claims.tid), eq(users.id, claims.sub)));
     });
   }
 
-  async me(userId: string): Promise<Omit<SessionResult, keyof TokenPair>> {
-    return this.dbService.identityTx(async (tx) => {
-      const [user] = await tx.select().from(users).where(eq(users.id, userId));
-      if (!user || user.status !== 'active') {
-        throw new UnauthorizedException('Account unavailable');
-      }
-      const memberships = await this.loadMemberships(tx, user.id);
-      return {
-        user: {
-          id: user.id,
-          email: user.email,
-          phone: user.phone,
-          fullName: user.fullName,
-          platformRole: user.platformRole,
-          mustSetPassword: user.passwordHash === null,
-        },
-        memberships,
-      };
+  async me(claims: AccessTokenClaims): Promise<Profile> {
+    if (claims.kind === 'platform') {
+      return this.dbService.platformTx(async (tx) =>
+        this.platformProfile(await this.activePlatformUser(tx, claims.sub)),
+      );
+    }
+    const realm = await this.realmOf(claims.tid);
+    return this.dbService.tenantTx(realm.id, async (tx) => {
+      const account = await this.activeAccount(tx, realm.id, claims.sub);
+      return this.tenantProfile(realm, account, await this.activeRoles(tx, realm.id, account.id));
     });
+  }
+
+  /**
+   * Finds the one identity a sign-in attempt can be about. A request that
+   * names no realm comes from the portal's sign-in form, which platform
+   * operators share with the organisation's staff: a platform identity with
+   * that e-mail is tried first, then the default realm. A request that names
+   * a realm is only ever about a tenant account in it.
+   */
+  private async findCredential(email: string, hint: RealmHint): Promise<Credential | null> {
+    if (RealmResolver.isUnspecified(hint)) {
+      const [user] = await this.dbService.platformTx((tx) =>
+        tx
+          .select()
+          .from(platformUsers)
+          .where(sql`lower(${platformUsers.email}) = lower(${email})`),
+      );
+      if (user) return { kind: 'platform', user };
+    }
+
+    const realm = await this.realms.resolve(hint);
+    if (!realm) return null;
+    const [account] = await this.dbService.tenantTx(realm.id, (tx) =>
+      tx
+        .select()
+        .from(users)
+        .where(and(eq(users.tenantId, realm.id), sql`lower(${users.email}) = lower(${email})`)),
+    );
+    return account ? { kind: 'tenant', realm, account } : null;
+  }
+
+  private async tenantSession(
+    tx: AuthTx,
+    realm: Realm,
+    account: Account,
+    familyId?: string,
+  ): Promise<SessionResult> {
+    const roles = await this.activeRoles(tx, realm.id, account.id);
+    const accessToken = await this.tokens.signAccessToken({
+      kind: 'tenant',
+      sub: account.id,
+      tid: realm.id,
+      roles,
+      name: account.fullName,
+      ...(account.email ? { email: account.email } : {}),
+    });
+    const refreshToken = await this.refreshTokens.issue(
+      tx,
+      { kind: 'tenant', tenantId: realm.id },
+      account.id,
+      familyId,
+    );
+    return {
+      accessToken,
+      refreshToken,
+      expiresIn: ACCESS_TTL_SECONDS,
+      ...this.tenantProfile(realm, account, roles),
+    };
+  }
+
+  private async platformSession(
+    tx: AuthTx,
+    user: PlatformUser,
+    familyId?: string,
+  ): Promise<SessionResult> {
+    const accessToken = await this.tokens.signAccessToken({
+      kind: 'platform',
+      sub: user.id,
+      platform_role: user.platformRole,
+      name: user.fullName,
+      email: user.email,
+    });
+    const refreshToken = await this.refreshTokens.issue(
+      tx,
+      { kind: 'platform' },
+      user.id,
+      familyId,
+    );
+    return {
+      accessToken,
+      refreshToken,
+      expiresIn: ACCESS_TTL_SECONDS,
+      ...this.platformProfile(user),
+    };
+  }
+
+  private tenantProfile(realm: Realm, account: Account, roles: string[]): Profile {
+    return {
+      user: {
+        id: account.id,
+        email: account.email,
+        phone: account.phone,
+        fullName: account.fullName,
+        platformRole: null,
+        mustSetPassword: account.passwordHash === null,
+      },
+      memberships: roles.map((r) => ({
+        t: realm.id,
+        r,
+        tenantKey: realm.key,
+        tenantName: realm.name,
+      })),
+    };
+  }
+
+  private platformProfile(user: PlatformUser): Profile {
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        phone: null,
+        fullName: user.fullName,
+        platformRole: user.platformRole,
+        mustSetPassword: user.passwordHash === null,
+      },
+      memberships: [],
+    };
+  }
+
+  private async activeRoles(tx: AuthTx, tenantId: string, accountId: string): Promise<string[]> {
+    const rows = await tx
+      .select({ roleKey: staffMemberships.roleKey })
+      .from(staffMemberships)
+      .where(
+        and(
+          eq(staffMemberships.tenantId, tenantId),
+          eq(staffMemberships.userId, accountId),
+          eq(staffMemberships.status, 'active'),
+        ),
+      );
+    return rows.map((row) => row.roleKey);
+  }
+
+  private async activeAccount(tx: AuthTx, tenantId: string, accountId: string): Promise<Account> {
+    const [account] = await tx
+      .select()
+      .from(users)
+      .where(and(eq(users.tenantId, tenantId), eq(users.id, accountId)));
+    if (!account || account.status !== 'active') {
+      throw new UnauthorizedException('Account unavailable');
+    }
+    return account;
+  }
+
+  private async activePlatformUser(tx: AuthTx, userId: string): Promise<PlatformUser> {
+    const [user] = await tx.select().from(platformUsers).where(eq(platformUsers.id, userId));
+    if (!user || user.status !== 'active') {
+      throw new UnauthorizedException('Account unavailable');
+    }
+    return user;
+  }
+
+  private async realmOf(tenantId: string): Promise<Realm> {
+    const realm = await this.realms.byId(tenantId);
+    if (!realm) {
+      throw new UnauthorizedException('Account unavailable');
+    }
+    return realm;
+  }
+
+  private ownerTx<T>(owner: RefreshOwner, fn: (tx: AuthTx) => Promise<T>): Promise<T> {
+    return owner.kind === 'tenant'
+      ? this.dbService.tenantTx(owner.tenantId, fn)
+      : this.dbService.platformTx(fn);
   }
 }

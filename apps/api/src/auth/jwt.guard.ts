@@ -1,5 +1,10 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
-import { JWT_AUDIENCE, JWT_ISSUER, type AccessTokenClaims } from '@inova/shared';
+import {
+  JWT_AUDIENCE,
+  JWT_ISSUER,
+  isAccessTokenClaims,
+  type AccessTokenClaims,
+} from '@inova/shared';
 import type { Request } from 'express';
 import { createLocalJWKSet, createRemoteJWKSet, jwtVerify } from 'jose';
 
@@ -48,7 +53,10 @@ export class JwtGuard implements CanActivate {
         issuer: JWT_ISSUER,
         audience: JWT_AUDIENCE,
       });
-      req.auth = payload as unknown as AccessTokenClaims;
+      // Tokens issued before B8 carry a membership list and no tenant of their
+      // own: signed by the same key, and still not a token of this contract.
+      if (!isAccessTokenClaims(payload)) throw new Error('Unknown claims shape');
+      req.auth = payload;
       return true;
     } catch {
       throw new UnauthorizedException('Invalid token');

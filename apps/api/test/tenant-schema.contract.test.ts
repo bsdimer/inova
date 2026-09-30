@@ -48,13 +48,17 @@ describe('tenant schema contract', () => {
     expect(rows[0]).toEqual({ rolbypassrls: false, rolsuper: false });
   });
 
-  it('identity-scope policies are granted to inova_auth only', async () => {
+  it('no policy opens tenant-owned rows across tenants', async () => {
+    // Until B8 an `identity_scope` policy let auth-service read memberships
+    // and invites of every tenant. Sign-in now resolves the realm first, so
+    // every policy is bound to the tenant context and none to that scope.
     const { rows } = await pool.query(
-      `SELECT tablename, roles::text[] AS roles FROM pg_policies WHERE policyname = 'identity_scope'`,
+      `SELECT tablename, policyname, qual FROM pg_policies WHERE schemaname = 'public'`,
     );
     expect(rows.length).toBeGreaterThan(0);
     for (const row of rows) {
-      expect(row.roles, `${row.tablename}.identity_scope roles`).toEqual(['inova_auth']);
+      expect(row.qual, `${row.tablename}.${row.policyname}`).toContain('app.tenant_id');
+      expect(row.qual, `${row.tablename}.${row.policyname}`).not.toContain('identity_scope');
     }
   });
 
@@ -97,15 +101,10 @@ describe('tenant schema contract', () => {
            WHERE t.attrelid = c.oid AND t.attname = 'tenant_id' AND NOT t.attisdropped
          )`,
     );
-    // Auth must find a membership/invite before it knows the tenant. These exact
-    // identity-scope indexes are the only audited exceptions to tenant-leading indexes.
-    const identityScopeIndexes = new Set([
-      'staff_memberships_user_idx',
-      'invite_codes_hash_idx',
-      'invite_codes_user_idx',
-    ]);
+    // No exceptions: since B8 auth resolves the realm before any lookup, so
+    // not even the identity tables keep an index that leads with a global key.
+    expect(rows.length).toBeGreaterThan(0);
     for (const row of rows) {
-      if (identityScopeIndexes.has(row.index_name)) continue;
       expect(row.first_col, `${row.table_name}.${row.index_name}`).toBe('tenant_id');
     }
   });

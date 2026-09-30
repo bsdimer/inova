@@ -5,14 +5,15 @@ import { Pool } from 'pg';
 import * as schema from './schema';
 
 export type Db = NodePgDatabase<typeof schema>;
-export type IdentityTx = Parameters<Parameters<Db['transaction']>[0]>[0];
+export type AuthTx = Parameters<Parameters<Db['transaction']>[0]>[0];
 
 /**
  * Connects as `inova_auth`, a non-privileged role (no BYPASSRLS) that only this
- * service uses. Identity tables are RLS-protected; every query must run inside
- * identityTx(), which sets `app.identity_scope = 'auth'` for the transaction. The
- * identity-scope policies are granted to `inova_auth` alone (db/migrations/0003), so
- * core-api's `inova_app` role cannot widen its view by setting the same variable.
+ * service uses. Tenant accounts, their memberships, invites and refresh tokens
+ * are RLS-protected: every query on them runs inside tenantTx(), scoped to the
+ * one tenant the realm resolved to (decision B8). There is no cross-tenant
+ * account search — not for this service either. Platform identities have no
+ * tenant and go through platformTx().
  *
  * AUTH_DATABASE_URL, not DATABASE_URL: local `.env` files hold one DATABASE_URL for
  * core-api, and falling back to it would silently connect as the wrong role.
@@ -31,11 +32,16 @@ export class DbService implements OnModuleDestroy {
     this.db = drizzle(this.pool, { schema });
   }
 
-  async identityTx<T>(fn: (tx: IdentityTx) => Promise<T>): Promise<T> {
+  async tenantTx<T>(tenantId: string, fn: (tx: AuthTx) => Promise<T>): Promise<T> {
     return this.db.transaction(async (tx) => {
-      await tx.execute(sql`SELECT set_config('app.identity_scope', 'auth', true)`);
+      await tx.execute(sql`SELECT set_config('app.tenant_id', ${tenantId}, true)`);
       return fn(tx);
     });
+  }
+
+  /** No tenant context: tenant-owned rows are invisible inside it. */
+  async platformTx<T>(fn: (tx: AuthTx) => Promise<T>): Promise<T> {
+    return this.db.transaction(fn);
   }
 
   async onModuleDestroy(): Promise<void> {
