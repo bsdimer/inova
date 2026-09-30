@@ -1,6 +1,6 @@
-import { MockCodeDelivery } from '@inova/shared';
+import { MockCodeDelivery, splitFullName } from '@inova/shared';
 import { ConflictException, Injectable } from '@nestjs/common';
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { createHash, randomInt } from 'node:crypto';
 import { DbService } from '../../db/db.service';
 import {
@@ -93,46 +93,38 @@ export class PlatformService {
       }
 
       if (input.adminEmail && input.adminName) {
-        // Reuse an existing user (staff can belong to multiple tenants).
-        const [existingUser] = await tx
-          .select()
-          .from(users)
-          .where(sql`lower(${users.email}) = lower(${input.adminEmail})`);
-        const admin =
-          existingUser ??
-          (
-            await tx
-              .insert(users)
-              .values({
-                email: input.adminEmail,
-                phone: input.adminPhone,
-                fullName: input.adminName,
-                status: 'pending',
-              })
-              .returning()
-          )[0];
+        // Always a new account of this tenant (decision B8) — an account with
+        // the same e-mail in another tenant is unrelated and never reused.
+        const [admin] = await tx
+          .insert(users)
+          .values({
+            tenantId: tenant.id,
+            email: input.adminEmail,
+            phone: input.adminPhone,
+            ...splitFullName(input.adminName),
+            status: 'pending',
+          })
+          .returning();
 
         await tx.insert(staffMemberships).values({
           tenantId: tenant.id,
           userId: admin.id,
           roleKey: 'admin',
-          status: admin.status === 'active' ? 'active' : 'invited',
+          status: 'invited',
         });
 
-        if (admin.status !== 'active') {
-          inviteCode = String(randomInt(0, 1_000_000)).padStart(6, '0');
-          await tx.insert(inviteCodes).values({
-            tenantId: tenant.id,
-            userId: admin.id,
-            codeHash: sha256(inviteCode),
-            channel: 'sms',
-            phone: input.adminPhone,
-            expiresAt: new Date(Date.now() + 30 * 24 * 3600 * 1000),
-            createdBy: actorUserId,
-          });
-          // TODO(M1): deliver via SMS/Viber gateway through the worker. MOCK: log only.
-          this.codeDelivery.deliver('tenant admin invite code', input.adminEmail, inviteCode);
-        }
+        inviteCode = String(randomInt(0, 1_000_000)).padStart(6, '0');
+        await tx.insert(inviteCodes).values({
+          tenantId: tenant.id,
+          userId: admin.id,
+          codeHash: sha256(inviteCode),
+          channel: 'sms',
+          phone: input.adminPhone,
+          expiresAt: new Date(Date.now() + 30 * 24 * 3600 * 1000),
+          createdBy: actorUserId,
+        });
+        // TODO(M1): deliver via SMS/Viber gateway through the worker. MOCK: log only.
+        this.codeDelivery.deliver('tenant admin invite code', input.adminEmail, inviteCode);
       }
 
       await this.audit.record(tx, {

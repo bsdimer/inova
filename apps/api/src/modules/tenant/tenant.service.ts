@@ -1,4 +1,4 @@
-import { MockCodeDelivery } from '@inova/shared';
+import { MockCodeDelivery, splitFullName } from '@inova/shared';
 import {
   BadRequestException,
   ConflictException,
@@ -235,20 +235,24 @@ export class TenantService {
     return this.dbService.withTenant(tenantId, async (tx) => {
       await this.assertRoleExists(tx, tenantId, input.roleKey);
 
-      // Reuse an existing user — staff can belong to multiple tenants.
+      // The account is this tenant's own (decision B8): the same e-mail in
+      // another tenant is an unrelated account and is neither seen nor reused.
       const [existingUser] = await tx
         .select()
         .from(users)
-        .where(sql`lower(${users.email}) = lower(${input.email})`);
+        .where(
+          and(eq(users.tenantId, tenantId), sql`lower(${users.email}) = lower(${input.email})`),
+        );
       const user =
         existingUser ??
         (
           await tx
             .insert(users)
             .values({
+              tenantId,
               email: input.email,
               phone: input.phone,
-              fullName: input.fullName,
+              ...splitFullName(input.fullName),
               status: 'pending',
             })
             .returning()

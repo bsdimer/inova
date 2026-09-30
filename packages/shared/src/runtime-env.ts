@@ -17,6 +17,12 @@ export class RuntimeEnv {
     return this.int(name, fallback, 0);
   }
 
+  /** A setting that may be absent: an empty value counts as not set. */
+  optionalString(name: string): string | undefined {
+    const raw = this.source[name]?.trim();
+    return raw === undefined || raw === '' ? undefined : raw;
+  }
+
   private int(name: string, fallback: number, min: number): number {
     const raw = this.source[name];
     if (raw === undefined || raw === '') return fallback;

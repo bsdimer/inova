@@ -4,6 +4,7 @@ import { Throttle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { ActivateDto, LoginDto, RefreshDto, ResendCodeDto, SetPasswordDto } from './dto';
+import type { RealmHint } from './realm-resolver';
 import { JwtGuard, type AuthedRequest } from './jwt.guard';
 import { Public } from './public.decorator';
 
@@ -17,6 +18,11 @@ const STRICT = {
   },
 };
 
+const realmHint = (dto: { realm?: string; brand?: string }): RealmHint => ({
+  realm: dto.realm,
+  brand: dto.brand,
+});
+
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
@@ -26,9 +32,9 @@ export class AuthController {
   @Post('login')
   @HttpCode(200)
   @Throttle(STRICT)
-  @ApiOperation({ summary: 'Password login (staff and activated residents)' })
+  @ApiOperation({ summary: 'Password login inside one realm (staff and activated residents)' })
   login(@Body() dto: LoginDto) {
-    return this.auth.login(dto.email, dto.password);
+    return this.auth.login(dto.email, dto.password, realmHint(dto));
   }
 
   @Public()
@@ -37,7 +43,7 @@ export class AuthController {
   @Throttle(STRICT)
   @ApiOperation({ summary: 'Activate a manager-created account with an invite code (B7)' })
   activate(@Body() dto: ActivateDto) {
-    return this.auth.activate(dto.code);
+    return this.auth.activate(dto.code, realmHint(dto));
   }
 
   @Public()
@@ -46,7 +52,7 @@ export class AuthController {
   @Throttle(STRICT)
   @ApiOperation({ summary: 'Resend the invite code via SMS/Viber (generic response)' })
   async resendCode(@Body() dto: ResendCodeDto) {
-    await this.auth.resendCode(dto.phone);
+    await this.auth.resendCode(dto.phone, realmHint(dto));
     return { status: 'ok' };
   }
 
@@ -72,14 +78,14 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Set/replace own password (after invite-code activation)' })
   async setPassword(@Req() req: AuthedRequest, @Body() dto: SetPasswordDto) {
-    await this.auth.setPassword(req.user.sub, dto.password);
+    await this.auth.setPassword(req.user, dto.password);
   }
 
   @Get('me')
   @UseGuards(JwtGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Current user profile and memberships' })
+  @ApiOperation({ summary: "Current account profile and its roles in the session's tenant" })
   me(@Req() req: AuthedRequest) {
-    return this.auth.me(req.user.sub);
+    return this.auth.me(req.user);
   }
 }

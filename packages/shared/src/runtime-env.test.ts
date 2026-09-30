@@ -25,6 +25,15 @@ describe('RuntimeEnv', () => {
   });
 });
 
+describe('RuntimeEnv.optionalString', () => {
+  it('treats an unset, empty or blank value as not set and trims the rest', () => {
+    expect(new RuntimeEnv({}).optionalString('REALM')).toBeUndefined();
+    expect(new RuntimeEnv({ REALM: '' }).optionalString('REALM')).toBeUndefined();
+    expect(new RuntimeEnv({ REALM: '  ' }).optionalString('REALM')).toBeUndefined();
+    expect(new RuntimeEnv({ REALM: ' inova ' }).optionalString('REALM')).toBe('inova');
+  });
+});
+
 describe('MockCodeDelivery', () => {
   it('logs the code outside production without any opt-in', () => {
     const lines: string[] = [];

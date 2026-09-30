@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import { boolean, jsonb, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 /** Domain tables owned by core-api (see db/migrations/0001). */
@@ -63,19 +64,31 @@ export const auditRecords = pgTable(
 
 /**
  * Identity tables owned by auth-service. core-api reads them for membership
- * re-checks and staff listings, and inserts memberships/invites during tenant
- * provisioning. Schema changes belong to the identity domain — do not alter
- * these from core-api migrations.
+ * re-checks and staff listings, and inserts accounts/memberships/invites when
+ * staff are invited and tenants provisioned. A row of `users` is a tenant
+ * account (decision B8): it belongs to one tenant, under RLS like any other
+ * tenant-owned table. Schema changes belong to the identity domain — do not
+ * alter these from core-api migrations.
  */
-export const users = pgTable('users', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  email: text('email'),
-  phone: text('phone'),
-  fullName: text('full_name').notNull(),
-  status: text('status', { enum: ['pending', 'active', 'suspended'] }).notNull(),
-  platformRole: text('platform_role', { enum: ['super_admin'] }),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-});
+export const users = pgTable(
+  'users',
+  {
+    tenantId: uuid('tenant_id').notNull(),
+    id: uuid('id').notNull().defaultRandom(),
+    email: text('email'),
+    phone: text('phone'),
+    salutation: text('salutation', { enum: ['mr', 'mrs'] }),
+    firstName: text('first_name').notNull(),
+    lastName: text('last_name').notNull().default(''),
+    /** Derived by the database from the first and last name (D36). */
+    fullName: text('full_name')
+      .notNull()
+      .generatedAlwaysAs(sql`btrim(first_name || ' ' || last_name)`),
+    status: text('status', { enum: ['pending', 'active', 'suspended'] }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
+);
 
 export const staffMemberships = pgTable(
   'staff_memberships',

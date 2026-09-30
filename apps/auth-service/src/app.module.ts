@@ -7,6 +7,8 @@ import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { JwtGuard } from './auth/jwt.guard';
 import { PasswordHasher } from './auth/password-hasher';
+import { RealmResolver } from './auth/realm-resolver';
+import { RefreshTokens } from './auth/refresh-tokens';
 import { TokenService } from './auth/token.service';
 import { DbService } from './db/db.service';
 import { HealthController } from './health/health.controller';
@@ -23,7 +25,14 @@ import { KeysService } from './keys/keys.service';
     DbService,
     KeysService,
     TokenService,
+    RefreshTokens,
     PasswordHasher,
+    {
+      provide: RealmResolver,
+      inject: [DbService],
+      useFactory: (dbService: DbService) =>
+        new RealmResolver(dbService, RealmResolver.defaultRealmKey(process.env)),
+    },
     AuthService,
     JwtGuard,
     {

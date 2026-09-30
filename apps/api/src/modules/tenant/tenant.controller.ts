@@ -95,7 +95,7 @@ class UpdateStaffDto {
 
 @ApiTags('tenant')
 @ApiBearerAuth()
-@ApiHeader({ name: 'X-Tenant-Id', description: 'Tenant id from the membership claim' })
+@ApiHeader({ name: 'X-Tenant-Id', description: "The tenant of the account's token (`tid` claim)" })
 @Controller('tenant')
 @UseGuards(JwtGuard, TenantContextGuard, PermissionsGuard)
 export class TenantController {
@@ -153,7 +153,10 @@ export class TenantController {
           since: staffMemberships.createdAt,
         })
         .from(staffMemberships)
-        .innerJoin(users, eq(users.id, staffMemberships.userId))
+        .innerJoin(
+          users,
+          and(eq(users.tenantId, staffMemberships.tenantId), eq(users.id, staffMemberships.userId)),
+        )
         .where(eq(staffMemberships.tenantId, tenantId))
         .orderBy(staffMemberships.createdAt),
     );
@@ -161,7 +164,7 @@ export class TenantController {
 
   @Post('staff')
   @RequirePermissions('staff.manage')
-  @ApiOperation({ summary: 'Invite a staff member (creates the user if needed)' })
+  @ApiOperation({ summary: 'Invite a staff member (creates the tenant account if needed)' })
   inviteStaff(@Req() req: AuthedRequest, @Body() dto: InviteStaffDto) {
     return this.tenantService.inviteStaff(
       req.tenantId!,

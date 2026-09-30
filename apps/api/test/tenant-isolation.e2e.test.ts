@@ -7,7 +7,7 @@
  */
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { JWT_AUDIENCE, JWT_ISSUER, type MembershipClaim } from '@inova/shared';
+import { JWT_AUDIENCE, JWT_ISSUER } from '@inova/shared';
 import { SignJWT, calculateJwkThumbprint, exportJWK, generateKeyPair } from 'jose';
 import pg from 'pg';
 import request from 'supertest';
@@ -18,7 +18,7 @@ import { createTestDb } from './db-helper';
 let app: INestApplication;
 let adminPool: pg.Pool;
 let appPool: pg.Pool;
-/** auth-service's role — only used to prove identity scope is reserved for it. */
+/** auth-service's role — only used to prove it is tenant-scoped like core-api's. */
 let authUrl: string;
 let disposeDb: () => Promise<void>;
 
@@ -26,6 +26,8 @@ let tenantA: string; // inova
 let tenantB: string; // demo
 let mariaId: string; // tenant admin of A
 let elenaId: string; // resident of A
+let demoMariaId: string; // manager of B — same e-mail as Maria, another account
+let platformAdminId: string; // platform super_admin, no tenant
 
 type SigningKey = Awaited<ReturnType<typeof generateKeyPair>>['privateKey'];
 let signingKey: SigningKey;
@@ -33,23 +35,32 @@ let rogueKey: SigningKey;
 let kid: string;
 
 async function sign(
-  sub: string,
-  memberships: MembershipClaim[],
-  opts: { platformRole?: string; key?: SigningKey } = {},
+  claims: Record<string, unknown>,
+  key: SigningKey = signingKey,
 ): Promise<string> {
-  return new SignJWT({
-    name: 'Test User',
-    memberships,
-    ...(opts.platformRole ? { platform_role: opts.platformRole } : {}),
-  })
+  const { sub, ...rest } = claims;
+  return new SignJWT({ name: 'Test User', ...rest })
     .setProtectedHeader({ alg: 'RS256', kid })
-    .setSubject(sub)
+    .setSubject(String(sub))
     .setIssuer(JWT_ISSUER)
     .setAudience(JWT_AUDIENCE)
     .setIssuedAt()
     .setExpirationTime('5m')
-    .sign(opts.key ?? signingKey);
+    .sign(key);
 }
+
+/** A tenant account's token: one tenant, the roles held there (decision B8). */
+const tenantToken = (sub: string, tid: string, roles: string[], key?: SigningKey) =>
+  sign({ kind: 'tenant', sub, tid, roles }, key);
+
+const platformToken = (sub: string) =>
+  sign({ kind: 'platform', sub, platform_role: 'super_admin' });
+
+const getTenant = (token: string, tenantId: string) =>
+  request(app.getHttpServer())
+    .get('/tenant')
+    .set('Authorization', `Bearer ${token}`)
+    .set('X-Tenant-Id', tenantId);
 
 beforeAll(async () => {
   const { migratorUrl, appUrl, dispose } = await createTestDb('inova_test_api');
@@ -69,7 +80,9 @@ beforeAll(async () => {
   const { AppModule } = await import('../src/app.module');
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
   app = moduleRef.createNestApplication();
-  await app.init();
+  // Listen once: on a server that is not listening, supertest binds a fresh
+  // ephemeral port for every request.
+  await app.listen(0);
 
   adminPool = new pg.Pool({ connectionString: migratorUrl, max: 2 });
   appPool = new pg.Pool({ connectionString: appUrl, max: 2 });
@@ -77,10 +90,19 @@ beforeAll(async () => {
   const tenants = await adminPool.query('SELECT id, key FROM tenants ORDER BY key');
   tenantB = tenants.rows.find((r) => r.key === 'demo').id;
   tenantA = tenants.rows.find((r) => r.key === 'inova').id;
-  mariaId = (await adminPool.query(`SELECT id FROM users WHERE email = 'maria@inova.bg'`)).rows[0]
-    .id;
-  elenaId = (await adminPool.query(`SELECT id FROM users WHERE phone = '+359881000001'`)).rows[0]
-    .id;
+  const accountId = async (tenantId: string, column: 'email' | 'phone', value: string) =>
+    (
+      await adminPool.query(`SELECT id FROM users WHERE tenant_id = $1 AND ${column} = $2`, [
+        tenantId,
+        value,
+      ])
+    ).rows[0].id;
+  mariaId = await accountId(tenantA, 'email', 'maria@inova.bg');
+  elenaId = await accountId(tenantA, 'phone', '+359881000001');
+  demoMariaId = await accountId(tenantB, 'email', 'maria@inova.bg');
+  platformAdminId = (
+    await adminPool.query(`SELECT id FROM platform_users WHERE email = 'admin@inova.bg'`)
+  ).rows[0].id;
 
   // Elena is seeded as 'invited'; activate her so the permission layer (not the
   // membership re-check) is what rejects her staff-listing request.
@@ -133,9 +155,10 @@ describe('RLS at the SQL layer (inova_app role)', () => {
     }
   });
 
-  it('cannot widen its view with the identity scope reserved for auth-service', async () => {
-    // Regression: the identity_scope policies used to apply to every role, so
+  it('cannot widen its view by setting the old identity scope', async () => {
+    // Regression: `identity_scope` policies once applied to every role, so
     // setting this variable from core-api exposed all tenants' identity rows.
+    // Since B8 the policies are gone for every role.
     const client = await appPool.connect();
     try {
       await client.query('BEGIN');
@@ -150,10 +173,59 @@ describe('RLS at the SQL layer (inova_app role)', () => {
     }
   });
 
-  it('has no access to refresh tokens', async () => {
-    await expect(appPool.query('SELECT 1 FROM refresh_tokens')).rejects.toMatchObject({
-      code: '42501',
-    });
+  it('has no access to refresh tokens or to platform identities', async () => {
+    for (const table of ['refresh_tokens', 'platform_refresh_tokens', 'platform_users']) {
+      await expect(appPool.query(`SELECT 1 FROM ${table}`), table).rejects.toMatchObject({
+        code: '42501',
+      });
+    }
+  });
+
+  it('sees accounts of the configured tenant only (B8)', async () => {
+    expect((await appPool.query('SELECT 1 FROM users')).rows).toHaveLength(0);
+
+    const client = await appPool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [tenantA]);
+      const accounts = await client.query('SELECT tenant_id, id FROM users');
+      expect(accounts.rows.length).toBeGreaterThan(0);
+      expect(new Set(accounts.rows.map((r) => r.tenant_id))).toEqual(new Set([tenantA]));
+      // The other tenant's account with the very same e-mail stays out of sight.
+      const marias = await client.query(`SELECT id FROM users WHERE email = 'maria@inova.bg'`);
+      expect(marias.rows).toEqual([{ id: mariaId }]);
+
+      // The identity scope reserved for auth-service widens nothing here.
+      await client.query(`SELECT set_config('app.identity_scope', 'auth', true)`);
+      const stillScoped = await client.query('SELECT DISTINCT tenant_id FROM users');
+      expect(stillScoped.rows).toEqual([{ tenant_id: tenantA }]);
+      await client.query('ROLLBACK');
+    } finally {
+      client.release();
+    }
+  });
+
+  it("cannot create or change an account in another tenant's realm", async () => {
+    const client = await appPool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [tenantA]);
+      const renamed = await client.query(
+        `UPDATE users SET first_name = 'Hijacked' WHERE id = $1 RETURNING id`,
+        [demoMariaId],
+      );
+      expect(renamed.rows).toHaveLength(0);
+      await expect(
+        client.query(
+          `INSERT INTO users (tenant_id, email, first_name, status)
+           VALUES ($1, 'sneaky@demo.bg', 'Sneaky', 'pending')`,
+          [tenantB],
+        ),
+      ).rejects.toMatchObject({ code: '42501' });
+      await client.query('ROLLBACK');
+    } finally {
+      client.release();
+    }
   });
 
   it('denies UPDATE/DELETE on the append-only audit trail entirely', async () => {
@@ -167,21 +239,24 @@ describe('RLS at the SQL layer (inova_app role)', () => {
     });
   });
 
-  it('hides identity tables without tenant or identity scope', async () => {
+  it('hides identity tables without a tenant context — from auth-service too', async () => {
     const none = await appPool.query('SELECT * FROM staff_memberships');
     expect(none.rows).toHaveLength(0);
 
-    // Identity scope sees across tenants — for auth-service's own role only.
+    // auth-service's own role gets one tenant at a time, like everyone else.
     const authPool = new pg.Pool({ connectionString: authUrl, max: 1 });
     const client = await authPool.connect();
     try {
-      const unscoped = await client.query('SELECT 1 FROM staff_memberships');
-      expect(unscoped.rows).toHaveLength(0);
-
       await client.query('BEGIN');
       await client.query(`SELECT set_config('app.identity_scope', 'auth', true)`);
-      const all = await client.query('SELECT DISTINCT tenant_id FROM staff_memberships');
-      expect(all.rows.length).toBeGreaterThan(1);
+      for (const table of ['staff_memberships', 'invite_codes', 'users']) {
+        const unscoped = await client.query(`SELECT 1 FROM ${table}`);
+        expect(unscoped.rows, table).toHaveLength(0);
+      }
+
+      await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [tenantB]);
+      const scoped = await client.query('SELECT DISTINCT tenant_id FROM staff_memberships');
+      expect(scoped.rows).toEqual([{ tenant_id: tenantB }]);
       await client.query('ROLLBACK');
     } finally {
       client.release();
@@ -192,46 +267,55 @@ describe('RLS at the SQL layer (inova_app role)', () => {
 
 describe('Tenant isolation at the API layer', () => {
   it('allows a member to read their own tenant', async () => {
-    const token = await sign(mariaId, [{ t: tenantA, r: 'admin' }]);
-    const res = await request(app.getHttpServer())
-      .get('/tenant')
-      .set('Authorization', `Bearer ${token}`)
-      .set('X-Tenant-Id', tenantA);
+    const res = await getTenant(await tenantToken(mariaId, tenantA, ['admin']), tenantA);
     expect(res.status).toBe(200);
     expect(res.body.tenant.key).toBe('inova');
     expect(res.body.role).toBe('admin');
   });
 
-  it("rejects a valid user targeting another tenant's id (403)", async () => {
-    const token = await sign(mariaId, [{ t: tenantA, r: 'admin' }]);
-    const res = await request(app.getHttpServer())
-      .get('/tenant')
-      .set('Authorization', `Bearer ${token}`)
-      .set('X-Tenant-Id', tenantB);
+  it("rejects a valid token targeting another tenant's id (403)", async () => {
+    const res = await getTenant(await tenantToken(mariaId, tenantA, ['admin']), tenantB);
     expect(res.status).toBe(403);
   });
 
-  it('rejects forged membership claims when the DB re-check fails (403)', async () => {
-    // Token *claims* membership in tenant B, but no membership row exists.
-    const token = await sign(mariaId, [{ t: tenantB, r: 'admin' }]);
-    const res = await request(app.getHttpServer())
-      .get('/tenant')
-      .set('Authorization', `Bearer ${token}`)
-      .set('X-Tenant-Id', tenantB);
+  it('never lets X-Tenant-Id move a token into another tenant, whatever the account (B8)', async () => {
+    // The demo account with Maria's e-mail is a real, active manager of B —
+    // its token still opens nothing in A, and Maria's nothing in B.
+    const demoMaria = await tenantToken(demoMariaId, tenantB, ['manager']);
+    expect((await getTenant(demoMaria, tenantB)).status).toBe(200);
+    expect((await getTenant(demoMaria, tenantA)).status).toBe(403);
+    expect((await getTenant(await tenantToken(mariaId, tenantA, ['admin']), tenantB)).status).toBe(
+      403,
+    );
+  });
+
+  it('rejects a forged tenant claim when the DB re-check fails (403)', async () => {
+    // Token *claims* tenant B, but Maria's account does not exist there.
+    const res = await getTenant(await tenantToken(mariaId, tenantB, ['admin']), tenantB);
     expect(res.status).toBe(403);
+  });
+
+  it('takes the role from the database, not from the token', async () => {
+    // Elena claims admin; her membership says resident.
+    const res = await getTenant(await tenantToken(elenaId, tenantA, ['admin']), tenantA);
+    expect(res.status).toBe(200);
+    expect(res.body.role).toBe('resident');
   });
 
   it('rejects tokens signed by an untrusted key (401)', async () => {
-    const token = await sign(mariaId, [{ t: tenantA, r: 'admin' }], { key: rogueKey });
-    const res = await request(app.getHttpServer())
-      .get('/tenant')
-      .set('Authorization', `Bearer ${token}`)
-      .set('X-Tenant-Id', tenantA);
+    const res = await getTenant(await tenantToken(mariaId, tenantA, ['admin'], rogueKey), tenantA);
     expect(res.status).toBe(401);
   });
 
+  it('rejects a correctly signed token of the pre-B8 shape (401)', async () => {
+    const legacy = await sign({ sub: mariaId, memberships: [{ t: tenantA, r: 'admin' }] });
+    expect((await getTenant(legacy, tenantA)).status).toBe(401);
+    const withoutTenant = await sign({ kind: 'tenant', sub: mariaId, roles: ['admin'] });
+    expect((await getTenant(withoutTenant, tenantA)).status).toBe(401);
+  });
+
   it('enforces permissions per role (resident cannot list staff)', async () => {
-    const token = await sign(elenaId, [{ t: tenantA, r: 'resident' }]);
+    const token = await tenantToken(elenaId, tenantA, ['resident']);
     const res = await request(app.getHttpServer())
       .get('/tenant/staff')
       .set('Authorization', `Bearer ${token}`)
@@ -239,18 +323,161 @@ describe('Tenant isolation at the API layer', () => {
     expect(res.status).toBe(403);
   });
 
-  it('restricts platform endpoints to super_admin', async () => {
-    const staffToken = await sign(mariaId, [{ t: tenantA, r: 'admin' }]);
-    const denied = await request(app.getHttpServer())
-      .get('/platform/tenants')
-      .set('Authorization', `Bearer ${staffToken}`);
+  it("lists only the tenant's own staff, also when an e-mail exists in both tenants", async () => {
+    const staffOf = async (token: string, tenantId: string) =>
+      (
+        await request(app.getHttpServer())
+          .get('/tenant/staff')
+          .set('Authorization', `Bearer ${token}`)
+          .set('X-Tenant-Id', tenantId)
+      ).body as Array<{ userId: string; email: string | null; fullName: string }>;
+
+    const inA = await staffOf(await tenantToken(mariaId, tenantA, ['admin']), tenantA);
+    const inB = await staffOf(await tenantToken(demoMariaId, tenantB, ['manager']), tenantB);
+
+    expect(inA.filter((m) => m.email === 'maria@inova.bg')).toEqual([
+      expect.objectContaining({ userId: mariaId, fullName: 'Мария Иванова' }),
+    ]);
+    expect(inB.filter((m) => m.email === 'maria@inova.bg')).toEqual([
+      expect.objectContaining({ userId: demoMariaId, fullName: 'Мария Стоянова' }),
+    ]);
+    expect(inA.map((m) => m.userId)).not.toContain(demoMariaId);
+  });
+});
+
+describe('Platform identities', () => {
+  const listTenants = (token: string) =>
+    request(app.getHttpServer()).get('/platform/tenants').set('Authorization', `Bearer ${token}`);
+
+  it('restricts platform endpoints to a platform super_admin', async () => {
+    const denied = await listTenants(await tenantToken(mariaId, tenantA, ['admin']));
     expect(denied.status).toBe(403);
 
-    const adminToken = await sign(mariaId, [], { platformRole: 'super_admin' });
-    const allowed = await request(app.getHttpServer())
-      .get('/platform/tenants')
-      .set('Authorization', `Bearer ${adminToken}`);
+    const allowed = await listTenants(await platformToken(platformAdminId));
     expect(allowed.status).toBe(200);
     expect(allowed.body.map((t: { key: string }) => t.key).sort()).toEqual(['demo', 'inova']);
+  });
+
+  it('never treats a tenant account as platform, whatever its token claims', async () => {
+    const forged = await sign({
+      kind: 'tenant',
+      sub: mariaId,
+      tid: tenantA,
+      roles: ['admin'],
+      platform_role: 'super_admin',
+    });
+    expect((await listTenants(forged)).status).toBe(403);
+    // …and the claim does not carry it into another tenant either.
+    expect((await getTenant(forged, tenantB)).status).toBe(403);
+  });
+
+  it('lets a super_admin enter any tenant and records the entry in its audit trail', async () => {
+    const token = await platformToken(platformAdminId);
+    const accessRecords = async (tenantId: string) =>
+      (
+        await adminPool.query(
+          `SELECT actor_user_id, actor_type, entity_id, payload FROM audit_records
+           WHERE tenant_id = $1 AND action = 'platform.access'`,
+          [tenantId],
+        )
+      ).rows;
+    expect(await accessRecords(tenantB)).toHaveLength(0);
+
+    const first = await getTenant(token, tenantB);
+    expect(first.status).toBe(200);
+    expect(first.body.tenant.key).toBe('demo');
+    expect(first.body.role).toBe('admin');
+    // A second request in the same visit is not a second entry.
+    expect((await getTenant(token, tenantB)).status).toBe(200);
+
+    expect(await accessRecords(tenantB)).toEqual([
+      {
+        actor_user_id: platformAdminId,
+        actor_type: 'platform',
+        entity_id: tenantB,
+        payload: { platform_access: true },
+      },
+    ]);
+    expect(await accessRecords(tenantA)).toHaveLength(0);
+  });
+
+  it('refuses a tenant that does not exist (403)', async () => {
+    const token = await platformToken(platformAdminId);
+    const missing = await getTenant(token, '00000000-0000-4000-8000-000000000000');
+    expect(missing.status).toBe(403);
+    expect((await getTenant(token, 'not-a-tenant-id')).status).toBe(403);
+
+    const { rows } = await adminPool.query(
+      `SELECT 1 FROM audit_records WHERE tenant_id = '00000000-0000-4000-8000-000000000000'`,
+    );
+    expect(rows).toHaveLength(0);
+  });
+});
+
+describe('Accounts are created inside one realm (B8)', () => {
+  it('invites staff with an e-mail that another tenant already uses as a separate account', async () => {
+    const before = await adminPool.query(
+      `SELECT id, first_name, status FROM users WHERE tenant_id = $1 AND email = 'ivan@demo.bg'`,
+      [tenantB],
+    );
+
+    const res = await request(app.getHttpServer())
+      .post('/tenant/staff')
+      .set('Authorization', `Bearer ${await tenantToken(mariaId, tenantA, ['admin'])}`)
+      .set('X-Tenant-Id', tenantA)
+      .send({ email: 'ivan@demo.bg', fullName: 'Иван Нов', roleKey: 'manager' });
+    expect(res.status).toBe(201);
+    // Ivan is active in demo; here he is a new, pending account with an invite.
+    expect(res.body).toMatchObject({ status: 'invited', inviteSent: true, fullName: 'Иван Нов' });
+    expect(res.body.userId).not.toBe(before.rows[0].id);
+
+    const created = await adminPool.query(
+      `SELECT tenant_id, first_name, last_name, status FROM users WHERE id = $1`,
+      [res.body.userId],
+    );
+    expect(created.rows).toEqual([
+      { tenant_id: tenantA, first_name: 'Иван', last_name: 'Нов', status: 'pending' },
+    ]);
+    const after = await adminPool.query(
+      `SELECT id, first_name, status FROM users WHERE tenant_id = $1 AND email = 'ivan@demo.bg'`,
+      [tenantB],
+    );
+    expect(after.rows).toEqual(before.rows);
+    const memberships = await adminPool.query(
+      `SELECT tenant_id FROM staff_memberships WHERE user_id = $1`,
+      [res.body.userId],
+    );
+    expect(memberships.rows).toEqual([{ tenant_id: tenantA }]);
+  });
+
+  it("provisions a tenant whose first admin shares an e-mail with another tenant's account", async () => {
+    const res = await request(app.getHttpServer())
+      .post('/platform/tenants')
+      .set('Authorization', `Bearer ${await platformToken(platformAdminId)}`)
+      .send({
+        key: 'third',
+        name: 'Third Homes',
+        adminEmail: 'maria@inova.bg',
+        adminName: 'Мария Трета',
+      });
+    expect(res.status).toBe(201);
+    expect(res.body.adminInviteSent).toBe(true);
+
+    const marias = await adminPool.query(
+      `SELECT u.id, t.key, u.status, u.full_name FROM users u JOIN tenants t ON t.id = u.tenant_id
+       WHERE u.email = 'maria@inova.bg' ORDER BY t.key`,
+    );
+    expect(marias.rows.map((r) => [r.key, r.status, r.full_name])).toEqual([
+      ['demo', 'active', 'Мария Стоянова'],
+      ['inova', 'active', 'Мария Иванова'],
+      ['third', 'pending', 'Мария Трета'],
+    ]);
+    expect(new Set(marias.rows.map((r) => r.id)).size).toBe(3);
+
+    const invite = await adminPool.query(
+      `SELECT user_id, created_by FROM invite_codes WHERE tenant_id = $1`,
+      [res.body.tenant.id],
+    );
+    expect(invite.rows).toEqual([{ user_id: marias.rows[2].id, created_by: platformAdminId }]);
   });
 });

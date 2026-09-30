@@ -3,6 +3,8 @@
  * Development seed: two tenants (isolation testing needs at least two), role
  * templates, a platform super_admin, per-tenant admin staff, and pending
  * residents with fixed invite codes for demoing the mobile activation flow.
+ * Accounts are tenant-scoped (decision B8): maria@inova.bg exists in both
+ * tenants as two unrelated accounts with different passwords.
  *
  * Idempotent — safe to rerun. Connects as the migrator role (superuser locally),
  * which bypasses RLS; runtime services never do this.
@@ -11,6 +13,7 @@
  *   super admin:  admin@inova.bg / inova-admin
  *   inova admin: maria@inova.bg / inova-owner
  *   demo admin:   ivan@demo.bg    / demo-owner
+ *   demo manager: maria@inova.bg  / demo-maria   (same e-mail, another account)
  *   invite codes: 482913 (Elena, inova) · 735026 (Georgi, demo)
  */
 import argon2 from 'argon2';
@@ -100,106 +103,144 @@ export async function seed(url = databaseUrl, { quiet = false } = {}) {
       }
     }
 
-    const upsertUser = async ({ email, phone, fullName, password, status, platformRole }) => {
-      // Same argon2id parameters as auth-service's PasswordHasher, so seeded
-      // accounts are not rehashed on their first login.
-      const passwordHash = password
-        ? await argon2.hash(password, {
-            type: argon2.argon2id,
-            memoryCost: 19 * 1024,
-            timeCost: 2,
-            parallelism: 1,
-          })
-        : null;
-      const res = await client.query(
-        `INSERT INTO users (email, phone, full_name, password_hash, status, platform_role)
-         VALUES ($1, $2, $3, $4, $5, $6)
-         ON CONFLICT (lower(email)) WHERE email IS NOT NULL
-         DO UPDATE SET full_name = EXCLUDED.full_name,
-                       password_hash = COALESCE(EXCLUDED.password_hash, users.password_hash),
-                       status = EXCLUDED.status,
-                       platform_role = EXCLUDED.platform_role,
-                       updated_at = now()
-         RETURNING id`,
-        [email ?? null, phone ?? null, fullName, passwordHash, status, platformRole ?? null],
-      );
-      return res.rows[0].id;
-    };
+    // Same argon2id parameters as auth-service's PasswordHasher, so seeded
+    // accounts are not rehashed on their first login.
+    const hashPassword = (password) =>
+      argon2.hash(password, {
+        type: argon2.argon2id,
+        memoryCost: 19 * 1024,
+        timeCost: 2,
+        parallelism: 1,
+      });
 
-    // Platform super admin (no tenant memberships — platform_role claim only)
-    await upsertUser({
-      email: 'admin@inova.bg',
-      fullName: 'Пламен Атанасов',
-      password: 'inova-admin',
-      status: 'active',
-      platformRole: 'super_admin',
-    });
+    // Platform super admin: a platform identity, never a tenant account.
+    await client.query(
+      `INSERT INTO platform_users (email, full_name, password_hash, status, platform_role)
+       VALUES ($1, $2, $3, 'active', 'super_admin')
+       ON CONFLICT (lower(email))
+       DO UPDATE SET full_name = EXCLUDED.full_name,
+                     password_hash = EXCLUDED.password_hash,
+                     status = EXCLUDED.status,
+                     updated_at = now()`,
+      ['admin@inova.bg', 'Пламен Атанасов', await hashPassword('inova-admin')],
+    );
 
-    // First user of each tenant gets the per-tenant 'admin' role
-    const admins = [
+    // Staff accounts. The first user of each tenant gets the per-tenant 'admin'
+    // role. Мария Стоянова in demo shares her e-mail with Мария Иванова in
+    // inova on purpose: the two accounts must never meet.
+    const staff = [
       {
         tenant: 'inova',
         email: 'maria@inova.bg',
-        fullName: 'Мария Иванова',
+        salutation: 'mrs',
+        firstName: 'Мария',
+        lastName: 'Иванова',
         password: 'inova-owner',
+        role: 'admin',
       },
-      { tenant: 'demo', email: 'ivan@demo.bg', fullName: 'Иван Петров', password: 'demo-owner' },
+      {
+        tenant: 'demo',
+        email: 'ivan@demo.bg',
+        salutation: 'mr',
+        firstName: 'Иван',
+        lastName: 'Петров',
+        password: 'demo-owner',
+        role: 'admin',
+      },
+      {
+        tenant: 'demo',
+        email: 'maria@inova.bg',
+        salutation: 'mrs',
+        firstName: 'Мария',
+        lastName: 'Стоянова',
+        password: 'demo-maria',
+        role: 'manager',
+      },
     ];
-    for (const o of admins) {
-      const userId = await upsertUser({
-        email: o.email,
-        fullName: o.fullName,
-        password: o.password,
-        status: 'active',
-      });
+    for (const o of staff) {
+      const res = await client.query(
+        `INSERT INTO users (tenant_id, email, salutation, first_name, last_name, password_hash, status)
+         VALUES ($1, $2, $3, $4, $5, $6, 'active')
+         ON CONFLICT (tenant_id, lower(email)) WHERE email IS NOT NULL
+         DO UPDATE SET salutation = EXCLUDED.salutation,
+                       first_name = EXCLUDED.first_name,
+                       last_name = EXCLUDED.last_name,
+                       password_hash = EXCLUDED.password_hash,
+                       status = EXCLUDED.status,
+                       updated_at = now()
+         RETURNING id`,
+        [
+          tenantIds[o.tenant],
+          o.email,
+          o.salutation,
+          o.firstName,
+          o.lastName,
+          await hashPassword(o.password),
+        ],
+      );
       await client.query(
         `INSERT INTO staff_memberships (tenant_id, user_id, role_key, status)
-         VALUES ($1, $2, 'admin', 'active')
-         ON CONFLICT (tenant_id, user_id) DO UPDATE SET role_key = 'admin', status = 'active'`,
-        [tenantIds[o.tenant], userId],
+         VALUES ($1, $2, $3, 'active')
+         ON CONFLICT (tenant_id, user_id) DO UPDATE SET role_key = EXCLUDED.role_key, status = 'active'`,
+        [tenantIds[o.tenant], res.rows[0].id, o.role],
       );
     }
 
     // Pending residents with invite codes (manager-created accounts, decision B7)
     const residents = [
-      { tenant: 'inova', phone: '+359881000001', fullName: 'Елена Петрова', code: '482913' },
-      { tenant: 'demo', phone: '+359881000002', fullName: 'Георги Димитров', code: '735026' },
+      {
+        tenant: 'inova',
+        phone: '+359881000001',
+        salutation: 'mrs',
+        firstName: 'Елена',
+        lastName: 'Петрова',
+        code: '482913',
+      },
+      {
+        tenant: 'demo',
+        phone: '+359881000002',
+        salutation: 'mr',
+        firstName: 'Георги',
+        lastName: 'Димитров',
+        code: '735026',
+      },
     ];
     for (const r of residents) {
-      const existing = await client.query('SELECT id FROM users WHERE phone = $1', [r.phone]);
-      const userId =
-        existing.rows[0]?.id ??
-        (
-          await client.query(
-            `INSERT INTO users (phone, full_name, status) VALUES ($1, $2, 'pending') RETURNING id`,
-            [r.phone, r.fullName],
-          )
-        ).rows[0].id;
+      const tenantId = tenantIds[r.tenant];
+      // Reset to pending if a previous run activated this demo account, and
+      // carry the name across so a renamed fixture does not stick.
+      const userId = (
+        await client.query(
+          `INSERT INTO users (tenant_id, phone, salutation, first_name, last_name, status)
+           VALUES ($1, $2, $3, $4, $5, 'pending')
+           ON CONFLICT (tenant_id, phone) WHERE phone IS NOT NULL
+           DO UPDATE SET salutation = EXCLUDED.salutation,
+                         first_name = EXCLUDED.first_name,
+                         last_name = EXCLUDED.last_name,
+                         status = CASE WHEN users.status = 'suspended' THEN users.status ELSE 'pending' END,
+                         password_hash = CASE WHEN users.status = 'suspended' THEN users.password_hash END,
+                         updated_at = now()
+           RETURNING id`,
+          [tenantId, r.phone, r.salutation, r.firstName, r.lastName],
+        )
+      ).rows[0].id;
 
       await client.query(
         `INSERT INTO staff_memberships (tenant_id, user_id, role_key, status)
          VALUES ($1, $2, 'resident', 'invited')
          ON CONFLICT (tenant_id, user_id) DO NOTHING`,
-        [tenantIds[r.tenant], userId],
+        [tenantId, userId],
       );
 
       // Fresh, never-expiring-soon code on each seed run
-      await client.query(`DELETE FROM invite_codes WHERE user_id = $1 AND consumed_at IS NULL`, [
-        userId,
-      ]);
+      await client.query(
+        `DELETE FROM invite_codes WHERE tenant_id = $1 AND user_id = $2 AND consumed_at IS NULL`,
+        [tenantId, userId],
+      );
       await client.query(
         `INSERT INTO invite_codes (tenant_id, user_id, code_hash, channel, phone, expires_at)
          VALUES ($1, $2, $3, 'sms', $4, now() + interval '30 days')`,
-        [tenantIds[r.tenant], userId, sha256(r.code), r.phone],
-      );
-      // Reset consumed state if a previous run activated this demo user, and
-      // carry the name across: unlike the email upsert above, a phone-only
-      // user is matched, not re-inserted, so a renamed fixture would stick.
-      await client.query(
-        `UPDATE users SET status = 'pending', password_hash = NULL,
-                          full_name = $2, updated_at = now()
-         WHERE id = $1 AND status <> 'suspended'`,
-        [userId, r.fullName],
+        [tenantId, userId, sha256(r.code), r.phone],
       );
     }
 
@@ -208,6 +249,7 @@ export async function seed(url = databaseUrl, { quiet = false } = {}) {
     log('  super admin : admin@inova.bg / inova-admin');
     log('  inova admin : maria@inova.bg / inova-owner');
     log('  demo admin  : ivan@demo.bg / demo-owner');
+    log('  demo manager: maria@inova.bg / demo-maria (same e-mail, another account)');
     log('  invite codes: 482913 (Elena, inova) · 735026 (Georgi, demo)');
     return tenantIds;
   } catch (err) {
