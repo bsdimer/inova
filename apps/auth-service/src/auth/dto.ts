@@ -32,6 +32,15 @@ export class LoginDto extends RealmDto {
 }
 
 export class ActivateDto extends RealmDto {
+  @ApiProperty({
+    example: '+359881000001',
+    description: 'The account the code was sent to: its phone (E.164) or e-mail (B15)',
+  })
+  @Matches(/^(\+\d{6,15}|[^\s@]+@[^\s@]+\.[^\s@]+)$/, {
+    message: 'identifier must be a phone in E.164 format or an e-mail address',
+  })
+  identifier!: string;
+
   @ApiProperty({ example: '482913', description: '6-digit invite code from SMS/Viber' })
   @Matches(/^\d{6}$/, { message: 'code must be 6 digits' })
   code!: string;

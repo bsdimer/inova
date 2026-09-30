@@ -220,6 +220,10 @@ describe('Staff endpoints', () => {
       [tenantA, res.body.userId],
     );
     expect(codes.rows).toHaveLength(1);
+    expect(codes.rows[0]).toMatchObject({ status: 'active', attempts: 0, max_attempts: 5 });
+    // Valid for the configured period (INVITE_CODE_TTL_DAYS, 30 days by default).
+    const days = (codes.rows[0].expires_at - codes.rows[0].created_at) / 86_400_000;
+    expect(Math.round(days)).toBe(30);
 
     // Duplicate invite → conflict.
     const dup = await admin.post('/tenant/staff', {
@@ -228,6 +232,30 @@ describe('Staff endpoints', () => {
       roleKey: 'manager',
     });
     expect(dup.status).toBe(409);
+  });
+
+  it('voids the earlier code when a revoked invitee is invited again (B14)', async () => {
+    const invite = () =>
+      admin.post('/tenant/staff', {
+        email: 'again@inova.bg',
+        fullName: 'Invited Again',
+        roleKey: 'manager',
+      });
+    const first = await invite();
+    expect(first.status).toBe(201);
+    expect(
+      (await admin.patch(`/tenant/staff/${first.body.userId}`, { status: 'revoked' })).status,
+    ).toBe(200);
+    const second = await invite();
+    expect(second.status).toBe(201);
+    expect(second.body.userId).toBe(first.body.userId);
+
+    const codes = await adminPool.query(
+      `SELECT status, code_hash FROM invite_codes WHERE tenant_id = $1 AND user_id = $2 ORDER BY created_at`,
+      [tenantA, first.body.userId],
+    );
+    expect(codes.rows.map((r) => r.status)).toEqual(['voided', 'active']);
+    expect(codes.rows[1].code_hash).not.toBe(codes.rows[0].code_hash);
   });
 
   it('rejects invites to a nonexistent role (400)', async () => {

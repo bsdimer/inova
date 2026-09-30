@@ -1,6 +1,7 @@
 /**
  * Auth-flow suite — RELEASE BLOCKER: password login, invite-code activation
- * (B7), refresh rotation with reuse detection, and the tenant-scoped account
+ * by identifier and code (B7, B14, B15), refresh rotation with reuse
+ * detection, and the tenant-scoped account
  * realms of decision B8 (the same e-mail or phone is an independent account in
  * each tenant; no response tells one realm about another). Runs against a
  * dedicated database with real migrations, as the RLS-enforced app role.
@@ -52,6 +53,7 @@ beforeAll(async () => {
   );
   process.env.AUTH_THROTTLE_STRICT = '1000'; // throttling is not under test here
   process.env.AUTH_DEFAULT_REALM = 'inova';
+  process.env.INVITE_CODE_TTL_DAYS = '7';
 
   // Dynamic import so env vars above are read at module evaluation time.
   const { AppModule } = await import('../src/app.module');
@@ -376,34 +378,69 @@ describe('platform identities', () => {
   });
 });
 
-describe('invite-code activation (B7)', () => {
-  it("does not accept another realm's code", async () => {
-    // 735026 is Georgi's code in demo; the default realm is inova.
-    const res = await post('/auth/activate', { code: '735026' });
+const INVALID_CODE = { statusCode: 401, message: 'Invalid or expired code', error: 'Unauthorized' };
+
+/** A pending, invited account with a known code — planted directly in the DB. */
+async function invited(
+  tenantId: string,
+  contact: { phone?: string; email?: string },
+  code: string,
+): Promise<string> {
+  const id = (
+    await db.query(
+      `INSERT INTO users (tenant_id, phone, email, first_name, status)
+       VALUES ($1, $2, $3, 'Invited', 'pending') RETURNING id`,
+      [tenantId, contact.phone ?? null, contact.email ?? null],
+    )
+  ).rows[0].id;
+  await db.query(
+    `INSERT INTO invite_codes (tenant_id, user_id, code_hash, channel, phone, expires_at)
+     VALUES ($1, $2, $3, 'sms', $4, now() + interval '30 days')`,
+    [tenantId, id, sha256(code), contact.phone ?? null],
+  );
+  return id;
+}
+
+const codesOf = async (accountId: string) =>
+  (
+    await db.query(
+      `SELECT code_hash, status, attempts FROM invite_codes WHERE user_id = $1 ORDER BY created_at`,
+      [accountId],
+    )
+  ).rows;
+
+describe('invite-code activation (B7, B15)', () => {
+  const ELENA = '+359881000001';
+  const GEORGI = '+359881000002';
+
+  it("does not accept another realm's account and code", async () => {
+    // Georgi and his code 735026 live in demo; the default realm is inova.
+    const res = await post('/auth/activate', { identifier: GEORGI, code: '735026' });
     expect(res.status).toBe(401);
+    expect(res.body).toEqual(INVALID_CODE);
     const { rows } = await db.query(
-      `SELECT consumed_at FROM invite_codes WHERE tenant_id = $1 AND code_hash = $2`,
+      `SELECT status, attempts FROM invite_codes WHERE tenant_id = $1 AND code_hash = $2`,
       [demoId, sha256('735026')],
     );
-    expect(rows[0].consumed_at).toBeNull();
+    expect(rows).toEqual([{ status: 'active', attempts: 0 }]);
   });
 
-  it('activates only the account of the requested realm when two realms hold the same code', async () => {
-    // A second pending account in demo with Elena's phone and Elena's code.
-    const twinId = (
-      await db.query(
-        `INSERT INTO users (tenant_id, phone, first_name, last_name, status)
-         VALUES ($1, '+359881000001', 'Елена', 'Двойник', 'pending') RETURNING id`,
-        [demoId],
-      )
-    ).rows[0].id;
-    await db.query(
-      `INSERT INTO invite_codes (tenant_id, user_id, code_hash, channel, phone, expires_at)
-       VALUES ($1, $2, $3, 'sms', '+359881000001', now() + interval '30 days')`,
-      [demoId, twinId, sha256('482913')],
-    );
+  it('never activates by the code alone', async () => {
+    const withoutIdentifier = await post('/auth/activate', { code: '482913' });
+    expect(withoutIdentifier.status).toBe(400);
+    // The right code of one account, offered for another account of the realm.
+    const other = await invited(inovaId, { phone: '+359881666001' }, '246810');
+    const res = await post('/auth/activate', { identifier: '+359881666001', code: '482913' });
+    expect(res.status).toBe(401);
+    expect(await codesOf(other)).toEqual([
+      { code_hash: sha256('246810'), status: 'active', attempts: 1 },
+    ]);
+  });
 
-    const res = await post('/auth/activate', { code: '482913', realm: 'inova' });
+  it('activates only the account of the requested realm when two realms hold the same phone and code', async () => {
+    const twinId = await invited(demoId, { phone: ELENA }, '482913');
+
+    const res = await post('/auth/activate', { identifier: ELENA, code: '482913', realm: 'inova' });
     expect(res.status).toBe(200);
     expect(res.body.user.fullName).toBe('Елена Петрова');
     expect(res.body.user.mustSetPassword).toBe(true);
@@ -412,36 +449,114 @@ describe('invite-code activation (B7)', () => {
     ]);
     expect(decodeJwt(res.body.accessToken)).toMatchObject({ tid: inovaId, roles: ['resident'] });
 
-    const twin = await db.query(
-      `SELECT u.status, c.consumed_at FROM users u
-       JOIN invite_codes c ON c.tenant_id = u.tenant_id AND c.user_id = u.id
-       WHERE u.tenant_id = $1 AND u.id = $2`,
-      [demoId, twinId],
-    );
-    expect(twin.rows).toEqual([{ status: 'pending', consumed_at: null }]);
+    expect(await codesOf(twinId)).toEqual([
+      { code_hash: sha256('482913'), status: 'active', attempts: 0 },
+    ]);
+    const twin = await db.query(`SELECT status FROM users WHERE tenant_id = $1 AND id = $2`, [
+      demoId,
+      twinId,
+    ]);
+    expect(twin.rows).toEqual([{ status: 'pending' }]);
 
-    // The demo twin activates with the same digits, in its own realm.
-    const demo = await post('/auth/activate', { code: '482913', realm: 'demo' });
+    // The demo twin activates with the same phone and digits, in its own realm.
+    const demo = await post('/auth/activate', { identifier: ELENA, code: '482913', realm: 'demo' });
     expect(demo.status).toBe(200);
     expect(demo.body.user.id).toBe(twinId);
     expect(decodeJwt(demo.body.accessToken).tid).toBe(demoId);
   });
 
   it('rejects the same code a second time (single use)', async () => {
-    const res = await post('/auth/activate', { code: '482913' });
+    const res = await post('/auth/activate', { identifier: ELENA, code: '482913' });
     expect(res.status).toBe(401);
+    const { rows } = await db.query(
+      `SELECT status, consumed_at IS NOT NULL AS used FROM invite_codes
+       WHERE tenant_id = $1 AND code_hash = $2`,
+      [inovaId, sha256('482913')],
+    );
+    expect(rows).toEqual([{ status: 'consumed', used: true }]);
   });
 
-  it('rejects unknown codes and unknown realms with the same error (no oracle)', async () => {
-    const unknownCode = await post('/auth/activate', { code: '000000' });
-    const unknownRealm = await post('/auth/activate', { code: '735026', realm: 'no-such-org' });
-    expect(unknownCode.status).toBe(401);
-    expect(unknownRealm.status).toBe(401);
-    expect(unknownRealm.body).toEqual(unknownCode.body);
+  it('activates by e-mail as well as by phone', async () => {
+    const id = await invited(inovaId, { email: 'Invited.Staff@inova.bg' }, '135791');
+    const res = await post('/auth/activate', {
+      identifier: 'invited.staff@inova.bg',
+      code: '135791',
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.user.id).toBe(id);
+  });
+
+  it('answers an unknown realm, an unknown account, a wrong code, a voided and an expired code alike', async () => {
+    const voided = await invited(inovaId, { phone: '+359881666002' }, '111222');
+    await db.query(`UPDATE invite_codes SET status = 'voided' WHERE user_id = $1`, [voided]);
+    const expired = await invited(inovaId, { phone: '+359881666003' }, '333444');
+    await db.query(
+      `UPDATE invite_codes SET expires_at = now() - interval '1 second' WHERE user_id = $1`,
+      [expired],
+    );
+    await invited(inovaId, { phone: '+359881666004' }, '555666');
+
+    const attempts = await Promise.all([
+      post('/auth/activate', { identifier: GEORGI, code: '735026', realm: 'no-such-org' }),
+      post('/auth/activate', { identifier: '+359881999999', code: '735026' }),
+      post('/auth/activate', { identifier: '+359881666004', code: '000000' }),
+      post('/auth/activate', { identifier: '+359881666002', code: '111222' }),
+      post('/auth/activate', { identifier: '+359881666003', code: '333444' }),
+    ]);
+    for (const res of attempts) {
+      expect(res.status).toBe(401);
+      // No "N attempts left", no hint which part was wrong.
+      expect(res.body).toEqual(INVALID_CODE);
+    }
+    // Expiry is judged on read, and the row then says so.
+    expect(await codesOf(expired)).toEqual([
+      { code_hash: sha256('333444'), status: 'expired', attempts: 0 },
+    ]);
+  });
+
+  it('voids the code after five wrong tries: the sixth fails even with the right code', async () => {
+    const phone = '+359881666005';
+    const id = await invited(inovaId, { phone }, '777888');
+
+    for (let attempt = 1; attempt <= 4; attempt += 1) {
+      const res = await post('/auth/activate', { identifier: phone, code: '000000' });
+      expect(res.body).toEqual(INVALID_CODE);
+      expect(await codesOf(id)).toEqual([
+        { code_hash: sha256('777888'), status: 'active', attempts: attempt },
+      ]);
+    }
+    const fifth = await post('/auth/activate', { identifier: phone, code: '000000' });
+    expect(fifth.body).toEqual(INVALID_CODE);
+    expect(await codesOf(id)).toEqual([
+      { code_hash: sha256('777888'), status: 'voided', attempts: 5 },
+    ]);
+
+    const sixth = await post('/auth/activate', { identifier: phone, code: '777888' });
+    expect(sixth.status).toBe(401);
+    expect(sixth.body).toEqual(INVALID_CODE);
+    const account = await db.query(`SELECT status FROM users WHERE id = $1`, [id]);
+    expect(account.rows).toEqual([{ status: 'pending' }]);
+  });
+
+  it('counts parallel wrong tries one by one', async () => {
+    const phone = '+359881666006';
+    const id = await invited(inovaId, { phone }, '999000');
+    await Promise.all(
+      ['000001', '000002', '000003'].map((code) =>
+        post('/auth/activate', { identifier: phone, code }),
+      ),
+    );
+    expect(await codesOf(id)).toEqual([
+      { code_hash: sha256('999000'), status: 'active', attempts: 3 },
+    ]);
   });
 
   it('lets the activated user set a password via their access token', async () => {
-    const session = await post('/auth/activate', { code: '735026', realm: 'demo' });
+    const session = await post('/auth/activate', {
+      identifier: GEORGI,
+      code: '735026',
+      realm: 'demo',
+    });
     expect(session.status).toBe(200);
     const res = await request(app.getHttpServer())
       .post('/auth/password')
@@ -455,37 +570,90 @@ describe('invite-code activation (B7)', () => {
   });
 });
 
-describe('resend-code', () => {
-  it('replaces the code only inside the requested realm and answers the same either way', async () => {
-    const pendingId = (
-      await db.query(
-        `INSERT INTO users (tenant_id, phone, first_name, status)
-         VALUES ($1, '+359881777001', 'Pending', 'pending') RETURNING id`,
-        [inovaId],
-      )
-    ).rows[0].id;
-    await db.query(
-      `INSERT INTO invite_codes (tenant_id, user_id, code_hash, channel, phone, expires_at)
-       VALUES ($1, $2, $3, 'sms', '+359881777001', now() + interval '30 days')`,
-      [inovaId, pendingId, sha256('111111')],
-    );
-    const codeHash = async () =>
-      (
-        await db.query(`SELECT code_hash FROM invite_codes WHERE tenant_id = $1 AND user_id = $2`, [
-          inovaId,
-          pendingId,
-        ])
-      ).rows[0].code_hash;
+describe('one active code per account, unique inside the realm (B14)', () => {
+  it('cannot store a second active code for an account, nor the same active code twice in a realm', async () => {
+    const first = await invited(inovaId, { phone: '+359881888001' }, '121212');
+    const second = await invited(inovaId, { phone: '+359881888002' }, '343434');
+    const insert = (tenantId: string, accountId: string, code: string) =>
+      db.query(
+        `INSERT INTO invite_codes (tenant_id, user_id, code_hash, channel, expires_at)
+         VALUES ($1, $2, $3, 'sms', now() + interval '30 days')`,
+        [tenantId, accountId, sha256(code)],
+      );
+
+    await expect(insert(inovaId, first, '565656')).rejects.toMatchObject({
+      code: '23505',
+      constraint: 'invite_codes_active_account_unique',
+    });
+    await db.query(`UPDATE invite_codes SET status = 'voided' WHERE user_id = $1`, [second]);
+    await expect(insert(inovaId, second, '121212')).rejects.toMatchObject({
+      code: '23505',
+      constraint: 'invite_codes_active_hash_unique',
+    });
+    // Another realm may hold the very same digits.
+    const elsewhere = await invited(demoId, { phone: '+359881888001' }, '121212');
+    expect(await codesOf(elsewhere)).toHaveLength(1);
+  });
+});
+
+describe('resend-code (B14)', () => {
+  it('voids the old code and issues a new one, inside the requested realm only, answering the same either way', async () => {
+    const phone = '+359881777001';
+    const id = await invited(inovaId, { phone }, '111111');
 
     // The phone is unknown in demo: nothing changes, and the answer does not say so.
-    const elsewhere = await post('/auth/resend-code', { phone: '+359881777001', realm: 'demo' });
+    const elsewhere = await post('/auth/resend-code', { phone, realm: 'demo' });
     expect(elsewhere.status).toBe(202);
-    expect(await codeHash()).toBe(sha256('111111'));
+    expect(await codesOf(id)).toEqual([
+      { code_hash: sha256('111111'), status: 'active', attempts: 0 },
+    ]);
 
-    const here = await post('/auth/resend-code', { phone: '+359881777001', realm: 'inova' });
+    const here = await post('/auth/resend-code', { phone, realm: 'inova' });
     expect(here.status).toBe(202);
     expect(here.body).toEqual(elsewhere.body);
-    expect(await codeHash()).not.toBe(sha256('111111'));
+
+    const codes = await codesOf(id);
+    expect(codes).toHaveLength(2);
+    expect(codes[0]).toEqual({ code_hash: sha256('111111'), status: 'voided', attempts: 0 });
+    expect(codes[1]).toMatchObject({ status: 'active', attempts: 0 });
+    expect(codes[1].code_hash).not.toBe(sha256('111111'));
+
+    // The old code no longer activates.
+    const old = await post('/auth/activate', { identifier: phone, code: '111111' });
+    expect(old.status).toBe(401);
+  });
+
+  it('gives a fresh code to an account whose code was burnt by wrong tries', async () => {
+    const phone = '+359881777002';
+    const id = await invited(inovaId, { phone }, '222222');
+    await db.query(`UPDATE invite_codes SET status = 'voided', attempts = 5 WHERE user_id = $1`, [
+      id,
+    ]);
+
+    expect((await post('/auth/resend-code', { phone })).status).toBe(202);
+
+    const codes = await codesOf(id);
+    expect(codes.map((c) => c.status)).toEqual(['voided', 'active']);
+    const lifetime = await db.query(
+      `SELECT round(extract(epoch FROM expires_at - created_at) / 86400) AS days, max_attempts
+       FROM invite_codes WHERE user_id = $1 AND status = 'active'`,
+      [id],
+    );
+    // INVITE_CODE_TTL_DAYS of this suite, not the 30-day default.
+    expect(lifetime.rows).toEqual([{ days: '7', max_attempts: 5 }]);
+  });
+
+  it('sends nothing to an activated account or an account that was never invited', async () => {
+    const before = await db.query('SELECT count(*) FROM invite_codes');
+    // Elena is active by now; the second account has no invite at all.
+    await db.query(
+      `INSERT INTO users (tenant_id, phone, first_name, status) VALUES ($1, '+359881777003', 'Bare', 'pending')`,
+      [inovaId],
+    );
+    expect((await post('/auth/resend-code', { phone: '+359881000001' })).status).toBe(202);
+    expect((await post('/auth/resend-code', { phone: '+359881777003' })).status).toBe(202);
+    const after = await db.query('SELECT count(*) FROM invite_codes');
+    expect(after.rows).toEqual(before.rows);
   });
 });
 
