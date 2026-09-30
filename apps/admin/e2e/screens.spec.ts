@@ -135,6 +135,49 @@ test('Роли и обхват', async ({ page }) => {
   await page.screenshot(shot('roli-i-obhvat'));
 });
 
+/**
+ * The panel's states (1607:36771, buttons at the end as in 2621:66328) and
+ * the question over it (1925:2, 1925:86); 700 high is the design rule's
+ * second height, where the panel scrolls and shows its fade.
+ */
+for (const { name, width, height } of [
+  { name: '1728', width: 1728, height: 1117 },
+  { name: '1024-700', width: 1024, height: 700 },
+  { name: '402', width: 402, height: 874 },
+] as const) {
+  test(`Роли и обхват — промени и «Да се запазят ли промените?» at ${name}`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await openSignedIn(page, ORG_ADMIN, '/staff');
+    await page.getByRole('button', { name: 'Роли и обхват — Елена Петрова' }).click();
+    await page.getByRole('radio', { name: /^Администратор/ }).click();
+    await expect(page.getByText('Какво се променя при запис')).toBeVisible();
+    await settled(page);
+    await page.screenshot(shot(`roli-i-obhvat-promeni-${name}`));
+
+    await page.keyboard.press('Escape');
+    await expect(
+      page.getByRole('alertdialog', { name: 'Да се запазят ли промените?' }),
+    ).toBeVisible();
+    await page.waitForTimeout(400);
+    await page.screenshot(shot(`da-se-zapazyat-li-promenite-${name}`));
+  });
+}
+
+test('Роли и обхват — запазено', async ({ page }) => {
+  await page.route('**/v1/tenant/staff/*', (route) =>
+    route.request().method() === 'PATCH'
+      ? route.fulfill({ status: 200, json: { ok: true } })
+      : route.fallback(),
+  );
+  await openSignedIn(page, ORG_ADMIN, '/staff');
+  await page.getByRole('button', { name: 'Роли и обхват — Елена Петрова' }).click();
+  await page.getByRole('radio', { name: /^Администратор/ }).click();
+  await page.getByRole('button', { name: 'Запази промените' }).click();
+  await expect(page.getByText(/^Запазено\./)).toBeVisible();
+  await settled(page);
+  await page.screenshot(shot('roli-i-obhvat-zapazeno'));
+});
+
 for (const theme of ['light', 'dark'] as const) {
   test(`Роли, ${theme}`, async ({ page }) => {
     await page.setViewportSize({ width: 1728, height: 1117 });

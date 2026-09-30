@@ -32,7 +32,7 @@ export const STATUS_LABELS: Record<MemberStatus, string> = {
   active: 'Активен',
   invited: 'Поканен',
   suspended: 'Спрян',
-  revoked: 'Отменен',
+  revoked: 'Изтрит',
 };
 
 export type StatusTone = 'pending' | 'urgent' | 'resolved' | 'muted';
@@ -191,25 +191,64 @@ export function describeFacet(
   return `${title}: ${labels.join(' или ')}`;
 }
 
+/**
+ * The active filters as one sentence for the no-results state (880:3378):
+ * «Филтриране по статус е „Поканен“ или „Спрян“ и търсенето е „Иван“».
+ */
+export function describeFilters(f: StaffFilters, roles: Role[]): string {
+  const quoted = (labels: string[]) => labels.map((l) => `„${l}“`).join(' или ');
+  const parts: string[] = [];
+  if (f.status.length) {
+    parts.push(`филтриране по статус е ${quoted(f.status.map((s) => STATUS_LABELS[s]))}`);
+  }
+  if (f.role.length) {
+    parts.push(`филтриране по роля е ${quoted(f.role.map((r) => roleName(r, roles)))}`);
+  }
+  if (f.invite.length) {
+    parts.push(`филтриране по покана е ${quoted(f.invite.map((i) => INVITE_LABELS[i]))}`);
+  }
+  if (f.search.trim()) parts.push(`търсенето е „${f.search.trim()}“`);
+  const sentence = parts.join(' и ');
+  return sentence.charAt(0).toUpperCase() + sentence.slice(1);
+}
+
+/**
+ * What a change of role does to the account's rights (1607:36771, «Какво се
+ * променя при запис»): the keys the new role adds and the keys it drops.
+ */
+export function permissionDiff(
+  from: readonly string[],
+  to: readonly string[],
+): { gains: string[]; losses: string[] } {
+  const before = new Set(from);
+  const after = new Set(to);
+  return {
+    gains: to.filter((key) => !before.has(key)),
+    losses: from.filter((key) => !after.has(key)),
+  };
+}
+
 export type RowAction = 'suspend' | 'reactivate' | 'revoke' | 'change-role';
 
+/** The action as a noun, for «Спиране на Стефан Колев — …» (880:3560). */
 export const ACTION_PROGRESS: Record<RowAction, string> = {
-  suspend: 'Спира',
-  reactivate: 'Възстановява',
-  revoke: 'Отменя',
-  'change-role': 'Променя ролята на',
+  suspend: 'Спиране на',
+  reactivate: 'Възстановяване на',
+  revoke: 'Изтриване на достъпа на',
+  'change-role': 'Промяна на ролята на',
 };
 
 export const ACTION_DONE: Record<RowAction, string> = {
   suspend: 'е спрян',
   reactivate: 'е възстановен',
-  revoke: 'е отменен',
+  revoke: 'вече няма достъп',
   'change-role': 'вече има нова роля',
 };
 
 /**
  * Why a write action is blocked for this row. Mirrors the core-api guards so
- * the menu can say it before the server does; the server still decides.
+ * the panel can say it before the server does; the server still decides.
+ * The words are the approved «Защитен акаунт» state (880:3866).
  */
 export function protectionReason(input: {
   member: StaffMember;
@@ -218,9 +257,13 @@ export function protectionReason(input: {
   tenantName: string;
 }): string | null {
   const { member, isSelf, activeAdmins, tenantName } = input;
+  const lastAdmin = member.roleKey === 'admin' && member.status === 'active' && activeAdmins <= 1;
+  if (isSelf && lastAdmin) {
+    return `Вие сте последният администратор на ${tenantName}. Добавете друг администратор, преди да спрете този акаунт или да изтриете достъпа му.`;
+  }
   if (isSelf) return 'Не можете да променяте собственото си членство. Помолете друг администратор.';
-  if (member.roleKey === 'admin' && member.status === 'active' && activeAdmins <= 1) {
-    return `${member.fullName} е последният администратор на ${tenantName}. Добавете друг администратор, преди да спрете, отмените или промените този акаунт.`;
+  if (lastAdmin) {
+    return `${member.fullName} е последният администратор на ${tenantName}. Добавете друг администратор, преди да спрете този акаунт или да изтриете достъпа му.`;
   }
   return null;
 }
