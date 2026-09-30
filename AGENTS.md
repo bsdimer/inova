@@ -125,6 +125,7 @@ docker compose -f infra/docker/docker-compose.yml up -d
 pnpm db:migrate && pnpm db:seed
 pnpm check:admin                    # fast admin lint + typecheck + build loop
 pnpm verify                         # format, lint, typecheck, tests, contracts, build
+pnpm worklog:resolve                # keep both work-log entries after a merge conflict
 pnpm --filter @inova/api dev       # or: auth-service, admin, mobile
 ```
 
