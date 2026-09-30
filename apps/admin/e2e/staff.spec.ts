@@ -3,7 +3,7 @@ import { ORG_ADMIN, openSignedIn } from './session';
 
 /**
  * Служители (872:1710) on the seed: WhiteNova has Мария Иванова (active
- * administrator) and Елена Петрова (invited manager).
+ * administrator) and Елена Петрова (invited, the seed's «Жител» role).
  */
 const rows = (page: Page) => page.locator('main table tbody tr');
 
@@ -130,7 +130,7 @@ test.describe('with the list loaded', () => {
 
 /**
  * The «Роли и обхват» panel (1607:36771, five states approved 25.09) on
- * Елена Петрова, the seed's invited manager. The save itself is answered
+ * Елена Петрова, the seed's invited «Жител». The save itself is answered
  * here, in the browser: the route's own rules are covered by the core-api
  * integration tests, and the seed is not to be changed by a flow.
  */
@@ -168,7 +168,7 @@ test.describe('the «Роли и обхват» panel', () => {
     ).toBeVisible();
     await expect(drawer.getByText('Няма промени')).toBeVisible();
     await expect(drawer.getByRole('button', { name: 'Запази промените' })).toBeDisabled();
-    await expect(radio(drawer, 'Домоуправител')).toHaveAttribute('aria-checked', 'true');
+    await expect(radio(drawer, 'Жител')).toHaveAttribute('aria-checked', 'true');
   });
 
   test('choosing another role says which rights come and go, before anything is saved', async ({
@@ -177,12 +177,16 @@ test.describe('the «Роли и обхват» panel', () => {
     const drawer = await openPanel(page);
     await expect(drawer.getByText('Какво се променя при запис')).toHaveCount(0);
 
-    await radio(drawer, 'Администратор').click();
+    // Жител holds only «Преглед на организацията»; Домоуправител adds four
+    // rights, listed by area (Служители, Настройки, Одит) and drops none.
+    await radio(drawer, 'Домоуправител').click();
 
     await expect(drawer.getByText('Какво се променя при запис')).toBeVisible();
     await expect(drawer.getByRole('list', { name: 'Получава' }).getByRole('listitem')).toHaveText([
-      'Настройки на организацията',
-      'Роли и права',
+      'Преглед на служителите',
+      'Покани и управление на служители',
+      'Преглед на ролите',
+      'Одитен дневник',
     ]);
     await expect(drawer.getByRole('list', { name: 'Губи' }).getByRole('listitem')).toHaveText([
       'нищо',
@@ -191,7 +195,7 @@ test.describe('the «Роли и обхват» panel', () => {
     await expect(drawer.getByRole('button', { name: 'Запази промените' })).toBeEnabled();
 
     // Back to the role the account has: nothing changes, nothing to save.
-    await radio(drawer, 'Домоуправител').click();
+    await radio(drawer, 'Жител').click();
     await expect(drawer.getByText('Какво се променя при запис')).toHaveCount(0);
     await expect(drawer.getByText('Няма промени')).toBeVisible();
   });
@@ -211,7 +215,7 @@ test.describe('the «Роли и обхват» panel', () => {
 
     await expect(drawer.getByText('Прилагане на 1 промяна…')).toBeVisible();
     await expect(drawer.getByRole('button', { name: 'Запазване…' })).toBeDisabled();
-    await expect(radio(drawer, 'Жител')).toBeDisabled();
+    await expect(radio(drawer, 'Домоуправител')).toBeDisabled();
     await expect(drawer.getByRole('button', { name: 'Отказ' })).toBeDisabled();
 
     release();
