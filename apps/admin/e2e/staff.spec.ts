@@ -259,9 +259,34 @@ test.describe('the «Роли и обхват» panel', () => {
     expect(saves.calls).toBe(2);
   });
 
-  test('closing with an unsaved change asks «Да се откажа ли?»; without one it just closes', async ({
+  test('the buttons sit at the end of the content: at the bottom of a tall panel, below the fold of a short one', async ({
     page,
   }) => {
+    const drawer = await openPanel(page);
+    const save = drawer.getByRole('button', { name: 'Запази промените' });
+    // 1117 high: the form is shorter than the panel, the buttons rest at its bottom.
+    const [footer, aside] = await Promise.all([
+      save.evaluate((el) => el.closest('[data-drawer-footer]')!.getBoundingClientRect().bottom),
+      drawer.evaluate((el) => el.getBoundingClientRect().bottom),
+    ]);
+    expect(Math.abs(footer - aside)).toBeLessThanOrEqual(1);
+
+    // 700 high, with the change block unfolded: the buttons wait below the
+    // fold, the fade says so, the body scrolls to them.
+    await radio(drawer, 'Домоуправител').click();
+    await page.setViewportSize({ width: 1728, height: 700 });
+    await expect(save).not.toBeInViewport();
+    const body = drawer.locator('[data-drawer-body]');
+    await expect(body).toHaveCSS('mask-image', /gradient/);
+    await save.scrollIntoViewIfNeeded();
+    await expect(save).toBeInViewport();
+    await expect(body).toHaveCSS('mask-image', 'none');
+  });
+
+  test('closing with an unsaved change asks «Да се запазят ли промените?»; without one it just closes', async ({
+    page,
+  }) => {
+    const saves = await answerSave(page, (route) => route.fulfill({ status: 200, json: {} }));
     const drawer = await openPanel(page);
     await page.keyboard.press('Escape');
     await expect(panel(page)).toHaveCount(0);
@@ -270,25 +295,25 @@ test.describe('the «Роли и обхват» panel', () => {
     await radio(drawer, 'Администратор').click();
     await page.keyboard.press('Escape');
 
-    const question = page.getByRole('alertdialog', { name: 'Да се откажа ли?' });
+    const question = page.getByRole('alertdialog', { name: 'Да се запазят ли промените?' });
     await expect(question).toBeVisible();
-    await expect(question.getByText('Въведеното във формата няма да се запази.')).toBeVisible();
-    await expect(question.getByRole('button', { name: 'Остани' })).toBeFocused();
+    await expect(question.getByText('Промените още не са запазени.')).toBeVisible();
+    await expect(question.getByRole('button', { name: 'Запази' })).toBeFocused();
 
-    // Esc means «Остани»: the edit is still there.
+    // Esc, the question's × and its scrim return to the form with the edit intact.
     await page.keyboard.press('Escape');
     await expect(question).toHaveCount(0);
     await expect(radio(drawer, 'Администратор')).toHaveAttribute('aria-checked', 'true');
-
     await drawer.getByLabel('Затвори').click();
-    await question.getByRole('button', { name: 'Остани' }).click();
+    await question.getByLabel('Затвори').click();
     await expect(question).toHaveCount(0);
     await expect(drawer).toBeVisible();
 
     await drawer.getByRole('button', { name: 'Отказ' }).click();
-    await question.getByRole('button', { name: 'Откажи' }).click();
+    await question.getByRole('button', { name: 'Не запазвай' }).click();
     await expect(question).toHaveCount(0);
     await expect(panel(page)).toHaveCount(0);
+    expect(saves.calls).toBe(0);
     // Both closed at once: the page under them scrolls and hears the keyboard again.
     await expect
       .poll(() =>
@@ -299,5 +324,29 @@ test.describe('the «Роли и обхват» panel', () => {
       )
       .toEqual(['', false]);
     await expect(page.getByRole('button', { name: 'Роли и обхват — Елена Петрова' })).toBeFocused();
+  });
+
+  test('«Запази» in the question saves and closes; a failed save closes the question and the panel says why', async ({
+    page,
+  }) => {
+    const saves = await answerSave(page, (route, calls) =>
+      calls === 1
+        ? route.fulfill({ status: 400, json: { message: 'Membership not found' } })
+        : route.fulfill({ status: 200, json: {} }),
+    );
+    const drawer = await openPanel(page);
+    await radio(drawer, 'Администратор').click();
+    await drawer.getByLabel('Затвори').click();
+    const question = page.getByRole('alertdialog', { name: 'Да се запазят ли промените?' });
+    await question.getByRole('button', { name: 'Запази' }).click();
+
+    await expect(question).toHaveCount(0);
+    await expect(drawer.getByText('Не се запази — Membership not found')).toBeVisible();
+    await expect(radio(drawer, 'Администратор')).toHaveAttribute('aria-checked', 'true');
+
+    await drawer.getByLabel('Затвори').click();
+    await question.getByRole('button', { name: 'Запази' }).click();
+    await expect(panel(page)).toHaveCount(0);
+    expect(saves.calls).toBe(2);
   });
 });

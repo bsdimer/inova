@@ -50,7 +50,7 @@ interface Notice {
 }
 
 type Update =
-  | { member: StaffMember; action: 'change-role'; roleKey: string }
+  | { member: StaffMember; action: 'change-role'; roleKey: string; then: 'stay' | 'close' }
   | { member: StaffMember; action: Exclude<RowAction, 'change-role'> };
 
 const IDLE: SaveState = { kind: 'idle' };
@@ -105,10 +105,15 @@ export function StaffPage() {
         tone: 'success',
         text: `${input.member.fullName} ${ACTION_DONE[input.action]}.`,
       });
-      // A saved role stays on screen with its confirmation (1607:37346); an
-      // account action returns to the list, where the strip names it.
-      if (input.action === 'change-role') setDrawerSave({ kind: 'saved', roleKey: input.roleKey });
-      else setDrawerFor(null);
+      // A role saved from the footer stays on screen with its confirmation
+      // (1607:37346); one saved from «Да се запазят ли промените?» closes,
+      // and so does an account action — the list's strip names it.
+      if (input.action === 'change-role' && input.then === 'stay') {
+        setDrawerSave({ kind: 'saved', roleKey: input.roleKey });
+      } else {
+        setDrawerFor(null);
+        setDrawerSave(IDLE);
+      }
       void queryClient.invalidateQueries({ queryKey: ['staff', tenantId] });
       void queryClient.invalidateQueries({ queryKey: ['roles', tenantId] });
     },
@@ -269,8 +274,10 @@ export function StaffPage() {
           setDrawerFor(null);
           setDrawerSave(IDLE);
         }}
-        onSave={(roleKey) => {
-          if (drawerMember) update.mutate({ member: drawerMember, action: 'change-role', roleKey });
+        onSave={(roleKey, then) => {
+          if (drawerMember) {
+            update.mutate({ member: drawerMember, action: 'change-role', roleKey, then });
+          }
         }}
         onAccountAction={(action) => {
           if (drawerMember) update.mutate({ member: drawerMember, action });

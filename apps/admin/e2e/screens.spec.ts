@@ -135,13 +135,17 @@ test('Роли и обхват', async ({ page }) => {
   await page.screenshot(shot('roli-i-obhvat'));
 });
 
-/** The panel's states (1607:36771) and the question over it (1925:2, 1925:86). */
+/**
+ * The panel's states (1607:36771, buttons at the end as in 2621:66328) and
+ * the question over it (1925:2, 1925:86); 700 high is the design rule's
+ * second height, where the panel scrolls and shows its fade.
+ */
 for (const { name, width, height } of [
   { name: '1728', width: 1728, height: 1117 },
-  { name: '1024-600', width: 1024, height: 600 },
+  { name: '1024-700', width: 1024, height: 700 },
   { name: '402', width: 402, height: 874 },
 ] as const) {
-  test(`Роли и обхват — промени и «Да се откажа ли?» at ${name}`, async ({ page }) => {
+  test(`Роли и обхват — промени и «Да се запазят ли промените?» at ${name}`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await openSignedIn(page, ORG_ADMIN, '/staff');
     await page.getByRole('button', { name: 'Роли и обхват — Елена Петрова' }).click();
@@ -151,9 +155,11 @@ for (const { name, width, height } of [
     await page.screenshot(shot(`roli-i-obhvat-promeni-${name}`));
 
     await page.keyboard.press('Escape');
-    await expect(page.getByRole('alertdialog', { name: 'Да се откажа ли?' })).toBeVisible();
+    await expect(
+      page.getByRole('alertdialog', { name: 'Да се запазят ли промените?' }),
+    ).toBeVisible();
     await page.waitForTimeout(400);
-    await page.screenshot(shot(`da-se-otkazha-li-${name}`));
+    await page.screenshot(shot(`da-se-zapazyat-li-promenite-${name}`));
   });
 }
 

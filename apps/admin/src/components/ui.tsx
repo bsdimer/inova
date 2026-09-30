@@ -758,9 +758,13 @@ function useDialog<T extends HTMLElement>(open: boolean, onClose: () => void): R
 }
 
 /**
- * Side panel with a pinned header and footer; only the middle scrolls, so the
- * save button never slides under the fold. On a narrow screen it becomes a
- * bottom sheet.
+ * Side panel (design.md → Windows and navigation, WHI-105): only the header
+ * is pinned; the body scrolls with the action buttons at its end, so the
+ * user sees every option before saving, and when the form is short the
+ * buttons rest at the panel's bottom. While there is more below, a thin
+ * scrollbar and a 48px fade at the bottom edge say so; the fade is a mask,
+ * so it holds in both themes. On a narrow screen it becomes a bottom sheet
+ * with the browser's own scrollbar.
  */
 export function Drawer({
   open,
@@ -778,6 +782,27 @@ export function Drawer({
   label: string;
 }) {
   const dialog = useDialog<HTMLElement>(open, onClose);
+  const body = useRef<HTMLDivElement>(null);
+  const [moreBelow, setMoreBelow] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const el = body.current;
+    if (!el) return;
+    const measure = () => setMoreBelow(el.scrollTop + el.clientHeight < el.scrollHeight - 1);
+    measure();
+    el.addEventListener('scroll', measure, { passive: true });
+    // The content grows and shrinks (a band appears, a block unfolds).
+    const sizes = new ResizeObserver(measure);
+    sizes.observe(el);
+    if (el.firstElementChild) sizes.observe(el.firstElementChild);
+    return () => {
+      el.removeEventListener('scroll', measure);
+      sizes.disconnect();
+    };
+  }, [open]);
+
+  const fade = 'linear-gradient(to bottom, black calc(100% - 3rem), transparent)';
 
   return createPortal(
     <AnimatePresence>
@@ -802,12 +827,24 @@ export function Drawer({
             exit={{ y: 40, opacity: 0 }}
             transition={{ type: 'spring', damping: 30, stiffness: 320 }}
             // 520 wide, as the panel is drawn (1607:36771): its footer holds
-            // the note, «Отказ» and «Запази промените» side by side.
-            className="panel flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl sm:h-full sm:max-h-none sm:w-[32.5rem] sm:rounded-none sm:rounded-l-3xl"
+            // the note, «Отказ» and «Запази промените» side by side. The
+            // sheet's top corners are 28, its bottom ones straight (1764:28895).
+            className="panel flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-[1.75rem] sm:h-full sm:max-h-none sm:w-[32.5rem] sm:rounded-none sm:rounded-l-3xl"
           >
             <div className="shrink-0 border-b border-panel-divider px-5 py-4">{header}</div>
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
-            <div className="shrink-0 border-t border-panel-divider px-5 py-4">{footer}</div>
+            <div
+              ref={body}
+              data-drawer-body
+              className="min-h-0 flex-1 overflow-y-auto sm:[scrollbar-width:thin]"
+              style={moreBelow ? { maskImage: fade, WebkitMaskImage: fade } : { maskImage: 'none' }}
+            >
+              <div className="flex min-h-full flex-col">
+                <div className="px-5 py-4">{children}</div>
+                <div data-drawer-footer className="mt-auto border-t border-panel-divider px-5 py-4">
+                  {footer}
+                </div>
+              </div>
+            </div>
           </motion.aside>
         </motion.div>
       )}
@@ -881,31 +918,31 @@ export function Modal({
 }
 
 /**
- * A question over a form (design.md → Windows and navigation; 1925:2): a
- * small window with its own scrim, the focus on the answer that keeps the
- * form, and Esc or a click outside meaning the same. Above the form's own
- * dialog, so it stacks on a drawer as well as on a modal.
+ * A question over a form (design.md → Windows and navigation; 1925:2,
+ * 1925:86): a small window with its own scrim and two answers — the primary
+ * one (focused first) and the danger one. Esc, the scrim and its × dismiss
+ * it and return to the form. On a phone the answers stack, the primary on
+ * top. Above the form's own dialog, so it stacks on a drawer as well as on
+ * a modal.
  */
 export function ConfirmDialog({
   open,
   title,
   children,
-  stay,
-  leave,
-  onStay,
-  onLeave,
+  primary,
+  danger,
+  onDismiss,
 }: {
   open: boolean;
   title: string;
   children: ReactNode;
-  /** The answer that returns to the form, e.g. «Остани». */
-  stay: string;
-  /** The answer that closes the form without saving, e.g. «Откажи». */
-  leave: string;
-  onStay: () => void;
-  onLeave: () => void;
+  /** The safe answer, e.g. «Запази». */
+  primary: { label: string; onClick: () => void };
+  /** The answer that loses something, e.g. «Не запазвай». */
+  danger: { label: string; onClick: () => void };
+  onDismiss: () => void;
 }) {
-  const dialog = useDialog<HTMLDivElement>(open, onStay);
+  const dialog = useDialog<HTMLDivElement>(open, onDismiss);
   const titleId = useId();
   const textId = useId();
 
@@ -917,7 +954,7 @@ export function ConfirmDialog({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={onStay}
+          onClick={onDismiss}
           style={{ background: 'rgb(0 0 0 / 0.35)' }}
         >
           <motion.div
@@ -934,27 +971,38 @@ export function ConfirmDialog({
             transition={{ type: 'spring', damping: 28, stiffness: 350 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 id={titleId} className="text-lg font-semibold">
-              {title}
-            </h2>
+            <div className="flex items-start justify-between gap-3">
+              <h2 id={titleId} className="text-lg font-semibold">
+                {title}
+              </h2>
+              <button
+                type="button"
+                onClick={onDismiss}
+                data-dialog-close
+                aria-label="Затвори"
+                className="-mt-1 -mr-1.5 rounded-full p-1.5 text-panel-ink-muted transition-colors hover:bg-panel-row hover:text-panel-ink"
+              >
+                <X size="1.125rem" />
+              </button>
+            </div>
             <p id={textId} className="mt-2 text-sm text-panel-ink-muted">
               {children}
             </p>
-            <div className="mt-6 grid grid-cols-2 gap-3">
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row-reverse">
               <button
                 type="button"
                 data-autofocus
-                onClick={onStay}
-                className="h-11 rounded-full bg-panel-row-strong px-5 text-sm font-semibold text-panel-ink transition-colors hover:bg-panel-border"
+                onClick={primary.onClick}
+                className="h-11 flex-1 rounded-full bg-panel-ink px-5 text-sm font-semibold text-panel-ink-inverse transition-opacity hover:opacity-85"
               >
-                {stay}
+                {primary.label}
               </button>
               <button
                 type="button"
-                onClick={onLeave}
-                className="h-11 rounded-full border border-panel-status-urgent px-5 text-sm font-semibold text-panel-status-urgent transition-colors hover:bg-panel-row"
+                onClick={danger.onClick}
+                className="h-11 flex-1 rounded-full border border-panel-status-urgent px-5 text-sm font-semibold text-panel-status-urgent transition-colors hover:bg-panel-row"
               >
-                {leave}
+                {danger.label}
               </button>
             </div>
           </motion.div>

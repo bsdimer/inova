@@ -70,13 +70,23 @@ export function RolesScopeDrawer({
   save: SaveState;
   protection: string | null;
   onClose: () => void;
-  onSave: (roleKey: string) => void;
+  /** `then`: stay open with the confirmation, or close once saved. */
+  onSave: (roleKey: string, then: 'stay' | 'close') => void;
   onAccountAction: (action: Exclude<RowAction, 'change-role'>) => void;
 }) {
-  // The draft remembers whose it is, so opening the panel on another member
-  // starts from that member's own role without an effect to reset it.
-  const [draft, setDraft] = useState<{ userId: string; roleKey: string } | null>(null);
+  const [draft, setDraft] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
+  // The draft belongs to one opening: when the page closes the panel (a save
+  // from the question, an account action) or opens it on someone else, it
+  // starts clean. Reset during render, as React advises for state that
+  // follows a prop, rather than through an effect that would first paint
+  // the stale choice.
+  const [draftFor, setDraftFor] = useState(member?.userId ?? null);
+  if ((member?.userId ?? null) !== draftFor) {
+    setDraftFor(member?.userId ?? null);
+    setDraft(null);
+    setAsking(false);
+  }
 
   if (!member) {
     return (
@@ -84,7 +94,7 @@ export function RolesScopeDrawer({
         <Drawer open={false} onClose={onClose} label="Роли и обхват" header={null} footer={null}>
           {null}
         </Drawer>
-        <DiscardQuestion open={false} onStay={onClose} onLeave={onClose} />
+        <SaveQuestion open={false} onSave={onClose} onDiscard={onClose} onDismiss={onClose} />
       </>
     );
   }
@@ -92,7 +102,7 @@ export function RolesScopeDrawer({
   // Once saved, the panel measures changes against the role it just saved:
   // the list behind it catches up a moment later.
   const base = save.kind === 'saved' ? save.roleKey : member.roleKey;
-  const selected = draft?.userId === member.userId ? draft.roleKey : base;
+  const selected = draft ?? base;
   const dirty = selected !== base;
   const saving = save.kind === 'saving';
 
@@ -105,6 +115,12 @@ export function RolesScopeDrawer({
     if (saving) return;
     if (dirty) setAsking(true);
     else leave();
+  };
+  // «Запази» in the question: the panel closes once saved; a failed save
+  // closes the question and the panel says why.
+  const saveAndClose = () => {
+    setAsking(false);
+    onSave(selected, 'close');
   };
 
   const fromRole = roles.find((role) => role.key === base);
@@ -149,7 +165,7 @@ export function RolesScopeDrawer({
             save={save}
             dirty={dirty}
             onCancel={close}
-            onSave={() => onSave(selected)}
+            onSave={() => onSave(selected, 'stay')}
             onDone={leave}
           />
         }
@@ -177,7 +193,7 @@ export function RolesScopeDrawer({
                     role="radio"
                     aria-checked={checked}
                     data-autofocus={checked ? '' : undefined}
-                    onClick={() => setDraft({ userId: member.userId, roleKey: role.key })}
+                    onClick={() => setDraft(role.key)}
                     className={`flex w-full items-start gap-3 rounded-2xl px-3.5 py-3 text-left transition-colors ${
                       checked ? 'bg-panel-row-strong' : 'bg-panel-row hover:bg-panel-row-strong'
                     }`}
@@ -270,35 +286,42 @@ export function RolesScopeDrawer({
           </section>
         </fieldset>
       </Drawer>
-      <DiscardQuestion open={asking} onStay={() => setAsking(false)} onLeave={leave} />
+      <SaveQuestion
+        open={asking}
+        onSave={saveAndClose}
+        onDiscard={leave}
+        onDismiss={() => setAsking(false)}
+      />
     </>
   );
 }
 
 /**
- * The question stands beside the drawer, not inside it: a child of the
- * closing drawer would leave with it, frozen open through the exit
- * animation — visible over the departing panel, the page inert meanwhile.
+ * «Да се запазят ли промените?» (design.md → Windows and navigation, 1925:2).
+ * It stands beside the drawer, not inside it: a child of the closing drawer
+ * would leave with it, frozen open through the exit animation — visible over
+ * the departing panel, the page inert meanwhile.
  */
-function DiscardQuestion({
+function SaveQuestion({
   open,
-  onStay,
-  onLeave,
+  onSave,
+  onDiscard,
+  onDismiss,
 }: {
   open: boolean;
-  onStay: () => void;
-  onLeave: () => void;
+  onSave: () => void;
+  onDiscard: () => void;
+  onDismiss: () => void;
 }) {
   return (
     <ConfirmDialog
       open={open}
-      title="Да се откажа ли?"
-      stay="Остани"
-      leave="Откажи"
-      onStay={onStay}
-      onLeave={onLeave}
+      title="Да се запазят ли промените?"
+      primary={{ label: 'Запази', onClick: onSave }}
+      danger={{ label: 'Не запазвай', onClick: onDiscard }}
+      onDismiss={onDismiss}
     >
-      Въведеното във формата няма да се запази.
+      Промените още не са запазени.
     </ConfirmDialog>
   );
 }
