@@ -964,7 +964,9 @@ export function ConfirmDialog({
             aria-labelledby={titleId}
             aria-describedby={textId}
             tabIndex={-1}
-            className="panel-strong w-full max-w-sm rounded-3xl p-6"
+            // 1925:78: 400 wide, 24 padding and radius; title 16, text 13;
+            // the answers 44 tall, 12 apart, 8 apart when stacked (1925:129).
+            className="panel-strong w-full max-w-[25rem] rounded-3xl p-6"
             initial={{ opacity: 0, y: 16, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.98 }}
@@ -972,7 +974,7 @@ export function ConfirmDialog({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3">
-              <h2 id={titleId} className="text-lg font-semibold">
+              <h2 id={titleId} className="text-title-16 font-semibold">
                 {title}
               </h2>
               <button
@@ -985,22 +987,22 @@ export function ConfirmDialog({
                 <X size="1.125rem" />
               </button>
             </div>
-            <p id={textId} className="mt-2 text-sm text-panel-ink-muted">
+            <p id={textId} className="text-body-13 mt-2 text-panel-ink-muted">
               {children}
             </p>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row-reverse">
+            <div className="mt-6 flex flex-col gap-2 sm:flex-row-reverse sm:gap-3">
               <button
                 type="button"
                 data-autofocus
                 onClick={primary.onClick}
-                className="h-11 flex-1 rounded-full bg-panel-ink px-5 text-sm font-semibold text-panel-ink-inverse transition-opacity hover:opacity-85"
+                className="text-body-14 h-11 w-full rounded-full bg-panel-ink px-6 font-semibold text-panel-ink-inverse transition-opacity hover:opacity-85 sm:w-auto sm:flex-1"
               >
                 {primary.label}
               </button>
               <button
                 type="button"
                 onClick={danger.onClick}
-                className="h-11 flex-1 rounded-full border border-panel-status-urgent px-5 text-sm font-semibold text-panel-status-urgent transition-colors hover:bg-panel-row"
+                className="text-body-14 h-11 w-full rounded-full border border-panel-status-urgent px-6 font-semibold text-panel-status-urgent transition-colors hover:bg-panel-row sm:w-auto sm:flex-1"
               >
                 {danger.label}
               </button>
