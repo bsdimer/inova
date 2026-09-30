@@ -89,6 +89,9 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   (`V2/Drawer · Fade`), where the text dissolves into the panel. The fade
   goes when the body is scrolled to the end. Build it with a mask or opacity,
   not a solid colour, so it works in both themes.
+  On 402 there is only the fade, no drawn scrollbar: the mobile browser's own
+  scrollbar shows while the user scrolls (Figma
+  `V2 · Служители 402 · лист с филтри`, node `1126:10849`).
 - A form's fields go in this order: what → for whom and where → what follows
   (the notice to residents, the SMS count) → optional fields. A «notify
   residents» checkbox never comes after an optional «Бележка».
