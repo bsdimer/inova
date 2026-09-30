@@ -10,7 +10,7 @@ Inova live in production on the shared app.
 
 ## Dependencies
 
-M5, M5b (mobile issues/notices), M7, M9, M-Ops, and — since D23 — the surveys module (from the P1 wave), the Community forum (milestone to be cut), M11 with the resident-visible contractor calendar, and the tenant-named menu item in the brand config — one item in the pilot, the same content read-only in the app; if it is an external site, the app opens it inside, never in the browser; what it opens is Still open 13 (stakeholder, WHI-29 29.09).
+M5, M5b (mobile issues/notices), M7, M9, M-Ops, and — since D23 — the surveys module (from the P1 wave), the Community forum (milestone to be cut), M11 with the resident-visible contractor calendar. The tenant-named menu item left the pilot on 30.09 (D35: a listings module in the P1 wave; the item stays hidden until then).
 
 ## Work
 
@@ -28,8 +28,8 @@ stored in BGN.
 
 Each can block go-live on its own, and each takes weeks of someone else's time.
 
-- [ ] SMS/Viber gateway chosen (Twilio vs Infobip), contract signed, **sender
-      ID / Viber business sender registered** for Bulgaria.
+- [ ] SMS/Viber gateway: **Infobip** (team lead, 30.09, D36); contract signed,
+      **sender ID / Viber business sender registered** for Bulgaria.
 - [ ] Apple Developer organisation account (D-U-N-S) and Google Play
       organisation account for the shared app; bundle id `bg.inova.resident`
       reserved.

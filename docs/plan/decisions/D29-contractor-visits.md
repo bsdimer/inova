@@ -34,7 +34,7 @@ a trip to Известия when a visit needs action (cars out for garage cleani
 ## Lands in
 
 - `docs/plan/data-model.md` → `task` kind `contractor_visit`, `contractor`, `staff_membership.contractor_id`
-- `docs/plan/api.md` → `tasks` row: `/v1/visits`, `GET /v1/me/visits`
+- `docs/plan/api.md` → `tasks` row: `/v1/visits`, `GET /v1/me/calendar` (since D33 also events)
 - `docs/milestones/M11-tasks-calendar.md` → tables, backend, admin, mobile, tests, acceptance
 - `docs/plan/security.md` → `visits.manage`
 - `docs/plan/backlog.md` → 40d

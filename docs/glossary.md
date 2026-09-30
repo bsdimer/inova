@@ -51,7 +51,7 @@ does not take the entry for the current UI.
   (`invoice_purpose`: `maintenance` / `consumables` / `extra_service`). The
   field is «За какво е», not «Вид» or «Категория»: «Вид разход» is fixed /
   temporary, and «категория» stays the word wherever things are sorted by
-  kind — an issue's category, a listing's category in «Маркетплейс» (WHI-29,
+  kind — an issue's category, a listing's category in «Каталог» (WHI-29,
   P1). The kind follows from the
   choice: «Поддръжка» is a «Фиксиран разход», «Консуматив» and «Допълнителна
   услуга» a «Временен разход»; the firm does not pick it. A free note stays
@@ -156,6 +156,20 @@ does not take the entry for the current UI.
 
 ## Account and settings
 
+- **Каталог** — the module behind the menu item the tenant names
+  (`catalog`; its system name and the default name of the item, whatever
+  the tenant calls it), P1 with Privileges. Avoid: «Маркетплейс» as the
+  module's name — it was only the sample. Source: WHI-29 (30.09 07:08), D35.
+- **Обява** — one entry of «Каталог» (`listing`): a card with a photo, a
+  category and a scope («Кой я вижда»); the manager adds, edits and withdraws
+  («Спряна»). Source: WHI-29 (29.09 14:55, 30.09 06:29), D35.
+- **До кого** — the audience field of a notice or a bulk message («Всички»,
+  buildings, entrances, chosen residents; `notice.audience`). Avoid: «Кому».
+  Source: WHI-30 (29.09 12:12), D36.
+- **Известие** — a notice from the manager to residents (`notice`), in one of
+  six categories: «Общо», «Ремонт», «Събрание», «Плащания», «Анкети», «Важно»
+  (`general` / `repair` / `assembly` / `payments` / `surveys` /
+  `important`). Source: WHI-30 (29.09 12:12), D36.
 - **Връзка** — a link sent by e-mail or SMS (password recovery, invitation);
   the button is «Изпрати връзка». Avoid: «линк». Source: WHI-20 (23.09).
 - **Тема** — the theme setting, in this order: «Динамична» (the default:
