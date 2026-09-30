@@ -52,14 +52,11 @@ const ACCESS: { label: string; keys: string[] }[] = [
   },
 ];
 
-/**
- * TODO(M1): «Динамична» follows the time of day (design.md, Glass); until
- * that lands it keeps following the device, which is what 'system' does.
- */
-const THEMES: { value: ThemeChoice; label: string }[] = [
-  { value: 'light', label: 'Светла' },
-  { value: 'dark', label: 'Тъмна' },
-  { value: 'system', label: 'Динамична' },
+/** Order and captions as drawn (2354:286, WHI-86): «Динамична» first, the default. */
+const THEMES: { value: ThemeChoice; label: string; hint: string }[] = [
+  { value: 'dynamic', label: 'Динамична', hint: 'светла денем, тъмна вечер' },
+  { value: 'light', label: 'Светла', hint: 'винаги светла' },
+  { value: 'dark', label: 'Тъмна', hint: 'винаги тъмна' },
 ];
 
 /**
@@ -353,7 +350,7 @@ function RadioGroup<T extends string>({
   onChange,
 }: {
   label: string;
-  options: { value: T; label: string }[];
+  options: { value: T; label: string; hint?: string }[];
   value: T | null;
   onChange: (value: T) => void;
 }) {
@@ -410,7 +407,10 @@ function RadioGroup<T extends string>({
             >
               {checked && <span className="size-1.5 rounded-full bg-panel-ink-inverse" />}
             </span>
-            <span className="flex-1">{option.label}</span>
+            <span className="flex-1">
+              {option.label}
+              {option.hint && <span className="text-panel-ink-muted"> — {option.hint}</span>}
+            </span>
           </button>
         );
       })}
