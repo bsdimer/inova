@@ -5,3 +5,4 @@ export * from './runtime-env';
 export * from './login-form';
 export * from './dashboard-format';
 export * from './daylight';
+export * from './tenant';

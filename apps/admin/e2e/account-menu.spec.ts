@@ -273,25 +273,27 @@ test.describe('desktop, keyboard and data', () => {
     expect(await page.evaluate(() => localStorage.getItem('inova.tenantId'))).toBe(SECOND);
   });
 
-  test('a custom role is named from the organisation roles, fetched only with roles.read', async ({
-    page,
-  }) => {
+  test('a custom role is named by /tenant, without asking for the roles list', async ({ page }) => {
+    // WHI-101: the role's own name comes with the context, so a role without
+    // roles.read is named too, and the menu never needs the roles list.
     let rolesAsked = 0;
     await page.route('**/v1/tenant', async (route) => {
       const response = await route.fetch();
       const body = await response.json();
-      await route.fulfill({ response, json: { ...body, role: 'cashier' } });
+      await route.fulfill({
+        response,
+        json: { ...body, role: 'cashier', roleName: 'Касиер', permissions: ['tenant.read'] },
+      });
     });
     await page.route('**/v1/tenant/roles', async (route) => {
       rolesAsked += 1;
-      await route.fulfill({
-        json: [{ key: 'cashier', name: 'Касиер', isSystem: false, permissions: [], members: 1 }],
-      });
+      await route.fallback();
     });
     await openSignedIn(page, ORG_ADMIN, '/');
+    await expect(page.getByRole('button', { name: /, акаунт$/ })).toContainText('Касиер');
     const menu = await openMenu(page);
     await expect(menu.getByRole('list', { name: 'Вашите роли' })).toHaveText('Касиер');
-    expect(rolesAsked).toBeGreaterThan(0);
+    expect(rolesAsked).toBe(0);
   });
 
   test('a platform administrator inside an organisation sees it, with its audit trail', async ({
