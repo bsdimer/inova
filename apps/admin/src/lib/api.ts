@@ -59,13 +59,10 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
 // ---------------------------------------------------------------------------
 // API response types (mirror apps/api controllers)
 
-export interface TenantSummary {
-  id: string;
-  key: string;
-  name: string;
-  status: 'trial' | 'active' | 'suspended' | 'offboarded';
-  createdAt: string;
-}
+import type { TenantSummary } from '@inova/shared';
+
+// The /tenant contract lives in packages/shared, shared with core-api.
+export type { TenantContext, TenantSummary } from '@inova/shared';
 
 export interface StaffMember {
   userId: string;
@@ -78,12 +75,6 @@ export interface StaffMember {
 }
 
 /** `GET /tenant` — the caller's own role and effective permissions. */
-export interface TenantContext {
-  tenant: TenantSummary;
-  role: string;
-  permissions: string[];
-}
-
 export interface Role {
   key: string;
   name: string;

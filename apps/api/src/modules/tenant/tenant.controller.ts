@@ -17,7 +17,14 @@ import { JwtGuard, type AuthedRequest } from '../../auth/jwt.guard';
 import { PermissionsGuard, RequirePermissions } from '../../auth/permissions.guard';
 import { TenantContextGuard } from '../../auth/tenant-context.guard';
 import { DbService } from '../../db/db.service';
-import { auditRecords, rolePermissions, staffMemberships, tenants, users } from '../../db/schema';
+import {
+  auditRecords,
+  rolePermissions,
+  roles,
+  staffMemberships,
+  tenants,
+  users,
+} from '../../db/schema';
 import { TenantService } from './tenant.service';
 
 class CreateRoleDto {
@@ -99,24 +106,32 @@ export class TenantController {
 
   @Get()
   @RequirePermissions('tenant.read')
-  @ApiOperation({ summary: 'Current tenant profile, caller role and permissions' })
+  @ApiOperation({ summary: 'Current tenant profile, caller role (key and name) and permissions' })
   async current(@Req() req: AuthedRequest) {
     const tenantId = req.tenantId!;
     const [tenant] = await this.dbService.db.select().from(tenants).where(eq(tenants.id, tenantId));
     if (!tenant) throw new NotFoundException('Tenant not found');
 
-    const permissions = await this.dbService.withTenant(tenantId, (tx) =>
-      tx
+    // The caller's own role name travels with the context: a role without
+    // roles.read cannot list roles, yet the portal names it (WHI-101).
+    const { permissions, role } = await this.dbService.withTenant(tenantId, async (tx) => {
+      const permissions = await tx
         .select({ key: rolePermissions.permissionKey })
         .from(rolePermissions)
         .where(
           and(eq(rolePermissions.tenantId, tenantId), eq(rolePermissions.roleKey, req.roleKey!)),
-        ),
-    );
+        );
+      const [role] = await tx
+        .select({ name: roles.name })
+        .from(roles)
+        .where(and(eq(roles.tenantId, tenantId), eq(roles.key, req.roleKey!)));
+      return { permissions, role };
+    });
 
     return {
       tenant,
       role: req.roleKey,
+      roleName: role?.name ?? req.roleKey,
       permissions: permissions.map((p) => p.key),
     };
   }
