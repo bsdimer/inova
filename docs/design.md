@@ -81,17 +81,23 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   they were.
 - When a page is shorter than the window, its footer with the actions sits at
   the bottom of the window, not in the middle.
-- Panels and windows keep the header and footer fixed; only the body
-  scrolls. On 402, the main action of a view screen is pinned full width at
-  the bottom.
-- While a panel body has more below, it shows two cues: a thin scrollbar on
-  the right (`V2/Drawer · Scrollbar`) and a 48px fade above the footer
-  (`V2/Drawer · Fade`), where the text dissolves into the panel. The fade
-  goes when the body is scrolled to the end. Build it with a mask or opacity,
-  not a solid colour, so it works in both themes.
-  On 402 there is only the fade, no drawn scrollbar: the mobile browser's own
-  scrollbar shows while the user scrolls (Figma
-  `V2 · Служители 402 · лист с филтри`, node `1126:10849`).
+- A panel keeps only its header fixed (sticky); the body scrolls. The action
+  buttons («Отказ», «Запази» and the like) are not pinned: they sit at the end
+  of the content and scroll with it, so the user sees every option before
+  saving; × in the header closes the panel. When the form is shorter than the
+  panel, the buttons sit at the bottom of the panel.
+- Buttons stay pinned at the bottom only in: the filter sheet («Изчисти» /
+  «Покажи N»), a window with a long table («Пробно начисляване» —
+  «Начисли»), and, on 402, the main action of a view screen, full width (e.g.
+  «Обади се» in a listing).
+- While a panel has more below, it shows two cues: a thin scrollbar on the
+  right (`V2/Drawer · Scrollbar`) and a 48px fade at the bottom edge of the
+  panel (`V2/Drawer · Fade`), where the text dissolves into the panel. The
+  fade goes when the body is scrolled to the end. Build it with a mask or
+  opacity, not a solid colour, so it works in both themes. On 402 there is
+  only the fade, no drawn scrollbar: the mobile browser's own scrollbar shows
+  while the user scrolls (Figma `V2 · Служители 402 · лист с филтри`, node
+  `1126:10849`).
 - A form's fields go in this order: what → for whom and where → what follows
   (the notice to residents, the SMS count) → optional fields. A «notify
   residents» checkbox never comes after an optional «Бележка».
