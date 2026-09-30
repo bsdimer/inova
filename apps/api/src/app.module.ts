@@ -4,6 +4,7 @@ import { DbModule } from './db/db.module';
 import { DeliveryModule } from './delivery/delivery.module';
 import { HealthController } from './health/health.controller';
 import { BrandsModule } from './modules/brands/brands.module';
+import { InvitesModule } from './modules/invites/invites.module';
 import { PlatformModule } from './modules/platform/platform.module';
 import { TenantModule } from './modules/tenant/tenant.module';
 
@@ -12,6 +13,7 @@ import { TenantModule } from './modules/tenant/tenant.module';
     ConfigModule.forRoot({ isGlobal: true }),
     DbModule,
     DeliveryModule,
+    InvitesModule,
     BrandsModule,
     PlatformModule,
     TenantModule,

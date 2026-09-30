@@ -1,7 +1,8 @@
 /**
- * Migration 0004 on a database that already holds data of the global-user
- * model: what becomes of a person with memberships in two tenants, of a
- * platform operator, and of the sessions that were open (decision B8).
+ * Migrations 0004 and 0005 on a database that already holds data of the
+ * global-user model: what becomes of a person with memberships in two tenants,
+ * of a platform operator, of the sessions that were open (decision B8), and of
+ * invite codes written before a code had a status (B14).
  */
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -109,6 +110,24 @@ beforeAll(async () => {
      VALUES ($1, $2, 'code-hash', '+359880000002', now() + interval '30 days', $3)`,
     [tenantB, resident, operator],
   );
+  // Codes of one account from before B14: used, lapsed, and two still open.
+  const legacyCode = (hash: string, expires: string, age: string, consumed = false) =>
+    db.query(
+      `INSERT INTO invite_codes (tenant_id, user_id, code_hash, expires_at, created_at, consumed_at)
+       VALUES ($1, $2, $3, now() + $4::interval, now() - $5::interval, $6)`,
+      [tenantA, shared, hash, expires, age, consumed ? new Date() : null],
+    );
+  await legacyCode('used', '30 days', '4 days', true);
+  await legacyCode('lapsed', '-1 day', '3 days');
+  await legacyCode('open-older', '30 days', '2 days');
+  await legacyCode('open-newer', '30 days', '1 day');
+  // The same digits still open for another account of the tenant, issued later.
+  await db.query(
+    `INSERT INTO invite_codes (tenant_id, user_id, code_hash, expires_at)
+     VALUES ($1, $2, 'open-newer', now() + interval '30 days')`,
+    [tenantA, operatorWithTenant],
+  );
+
   await db.query(
     `INSERT INTO refresh_tokens (user_id, family_id, token_hash, expires_at)
      VALUES ($1, gen_random_uuid(), 'legacy-token', now() + interval '30 days')`,
@@ -172,8 +191,11 @@ describe('0004 on a database of the global-user model', () => {
         status: 'pending',
       },
     ]);
-    const invite = await db.query(`SELECT user_id, created_by FROM invite_codes`);
-    expect(invite.rows).toEqual([{ user_id: resident, created_by: operator }]);
+    const invite = await db.query(
+      `SELECT user_id, created_by, status FROM invite_codes WHERE tenant_id = $1`,
+      [tenantB],
+    );
+    expect(invite.rows).toEqual([{ user_id: resident, created_by: operator, status: 'active' }]);
   });
 
   it('moves platform operators to platform_users and out of every tenant', async () => {
@@ -210,6 +232,21 @@ describe('0004 on a database of the global-user model', () => {
     expect((await db.query(`SELECT 1 FROM users WHERE id = $1`, [orphan])).rows).toHaveLength(0);
     expect((await db.query(`SELECT 1 FROM refresh_tokens`)).rows).toHaveLength(0);
     expect((await db.query(`SELECT 1 FROM platform_refresh_tokens`)).rows).toHaveLength(0);
+  });
+
+  it('gives every old invite code a status and keeps one open code per account and per hash', async () => {
+    const { rows } = await db.query(
+      `SELECT user_id, code_hash, status FROM invite_codes WHERE tenant_id = $1 ORDER BY created_at`,
+      [tenantA],
+    );
+    expect(rows).toEqual([
+      { user_id: shared, code_hash: 'used', status: 'consumed' },
+      { user_id: shared, code_hash: 'lapsed', status: 'expired' },
+      { user_id: shared, code_hash: 'open-older', status: 'voided' },
+      // Newest of its account, but the same digits were issued again later.
+      { user_id: shared, code_hash: 'open-newer', status: 'voided' },
+      { user_id: operatorWithTenant, code_hash: 'open-newer', status: 'active' },
+    ]);
   });
 
   it('leaves no global user behind: every account has a tenant', async () => {

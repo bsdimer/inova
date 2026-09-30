@@ -1,10 +1,8 @@
 import { MockCodeDelivery, splitFullName } from '@inova/shared';
 import { ConflictException, Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
-import { createHash, randomInt } from 'node:crypto';
 import { DbService } from '../../db/db.service';
 import {
-  inviteCodes,
   permissions,
   roles,
   rolePermissions,
@@ -13,8 +11,7 @@ import {
   users,
 } from '../../db/schema';
 import { AuditService } from '../audit/audit.service';
-
-const sha256 = (value: string): string => createHash('sha256').update(value).digest('hex');
+import { InviteCodeIssuer } from '../invites/invite-code-issuer';
 
 /**
  * Starter role set, mirrored in db/seed.mjs. Roles are PER TENANT: each tenant
@@ -45,6 +42,7 @@ export class PlatformService {
     private readonly dbService: DbService,
     private readonly audit: AuditService,
     private readonly codeDelivery: MockCodeDelivery,
+    private readonly inviteCodes: InviteCodeIssuer,
   ) {}
 
   async listTenants() {
@@ -113,14 +111,10 @@ export class PlatformService {
           status: 'invited',
         });
 
-        inviteCode = String(randomInt(0, 1_000_000)).padStart(6, '0');
-        await tx.insert(inviteCodes).values({
+        inviteCode = await this.inviteCodes.issue(tx, {
           tenantId: tenant.id,
-          userId: admin.id,
-          codeHash: sha256(inviteCode),
-          channel: 'sms',
+          accountId: admin.id,
           phone: input.adminPhone,
-          expiresAt: new Date(Date.now() + 30 * 24 * 3600 * 1000),
           createdBy: actorUserId,
         });
         // TODO(M1): deliver via SMS/Viber gateway through the worker. MOCK: log only.

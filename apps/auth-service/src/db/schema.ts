@@ -91,6 +91,9 @@ export const inviteCodes = pgTable(
     phone: text('phone'),
     attempts: integer('attempts').notNull().default(0),
     maxAttempts: integer('max_attempts').notNull().default(5),
+    status: text('status', { enum: ['active', 'consumed', 'expired', 'voided'] })
+      .notNull()
+      .default('active'),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     consumedAt: timestamp('consumed_at', { withTimezone: true }),
     createdBy: uuid('created_by'),

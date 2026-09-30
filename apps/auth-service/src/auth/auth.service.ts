@@ -1,15 +1,13 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { MockCodeDelivery, type AccessTokenClaims } from '@inova/shared';
-import { and, eq, gt, inArray, isNull, sql } from 'drizzle-orm';
-import { createHash, randomInt } from 'node:crypto';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { DbService, type AuthTx } from '../db/db.service';
-import { inviteCodes, platformUsers, staffMemberships, users } from '../db/schema';
+import { platformUsers, staffMemberships, users } from '../db/schema';
+import { InviteCodes } from './invite-codes';
 import { PasswordHasher } from './password-hasher';
 import { RealmResolver, type Realm, type RealmHint } from './realm-resolver';
 import { RefreshTokens, type RefreshOwner } from './refresh-tokens';
 import { ACCESS_TTL_SECONDS, TokenService, type TokenPair } from './token.service';
-
-const sha256 = (value: string): string => createHash('sha256').update(value).digest('hex');
 
 type Account = typeof users.$inferSelect;
 type PlatformUser = typeof platformUsers.$inferSelect;
@@ -50,6 +48,7 @@ export class AuthService {
     private readonly realms: RealmResolver,
     private readonly tokens: TokenService,
     private readonly refreshTokens: RefreshTokens,
+    private readonly inviteCodes: InviteCodes,
     private readonly codeDelivery: MockCodeDelivery,
     private readonly passwords: PasswordHasher,
   ) {}
@@ -98,104 +97,77 @@ export class AuthService {
   }
 
   /**
-   * Invite-code activation (decision B7): manager pre-created the account.
-   * The code is looked up inside the resolved realm only.
+   * Invite-code activation (decisions B7, B15): the manager pre-created the
+   * account; the resident names it — phone or e-mail — together with the code.
+   * An unknown realm, an unknown account, a wrong, voided or expired code all
+   * get the same answer, and none says how many tries are left.
    */
-  async activate(code: string, hint: RealmHint = {}): Promise<SessionResult> {
+  async activate(identifier: string, code: string, hint: RealmHint = {}): Promise<SessionResult> {
     const realm = await this.realms.resolve(hint);
-    if (!realm) {
+    // A failed try is committed (the attempt counts), then answered.
+    const session = realm
+      ? await this.dbService.tenantTx(realm.id, async (tx) => {
+          const [pending] = await tx
+            .select()
+            .from(users)
+            .where(
+              and(
+                eq(users.tenantId, realm.id),
+                identifier.startsWith('+')
+                  ? eq(users.phone, identifier)
+                  : sql`lower(${users.email}) = lower(${identifier})`,
+                inArray(users.status, ['pending', 'active']),
+              ),
+            );
+          if (!pending || !(await this.inviteCodes.redeem(tx, realm.id, pending.id, code))) {
+            return null;
+          }
+
+          const [account] = await tx
+            .update(users)
+            .set({ status: 'active', updatedAt: new Date() })
+            .where(and(eq(users.tenantId, realm.id), eq(users.id, pending.id)))
+            .returning();
+          await tx
+            .update(staffMemberships)
+            .set({ status: 'active', updatedAt: new Date() })
+            .where(
+              and(
+                eq(staffMemberships.tenantId, realm.id),
+                eq(staffMemberships.userId, account.id),
+                eq(staffMemberships.status, 'invited'),
+              ),
+            );
+          return this.tenantSession(tx, realm, account);
+        })
+      : null;
+    if (!session) {
       throw new UnauthorizedException('Invalid or expired code');
     }
-    return this.dbService.tenantTx(realm.id, async (tx) => {
-      const [invite] = await tx
-        .select()
-        .from(inviteCodes)
-        .where(
-          and(
-            eq(inviteCodes.tenantId, realm.id),
-            eq(inviteCodes.codeHash, sha256(code)),
-            isNull(inviteCodes.consumedAt),
-            gt(inviteCodes.expiresAt, new Date()),
-          ),
-        );
-      if (!invite) {
-        throw new UnauthorizedException('Invalid or expired code');
-      }
-
-      await tx
-        .update(inviteCodes)
-        .set({ consumedAt: new Date() })
-        .where(and(eq(inviteCodes.tenantId, realm.id), eq(inviteCodes.id, invite.id)));
-
-      const [account] = await tx
-        .update(users)
-        .set({ status: 'active', updatedAt: new Date() })
-        .where(
-          and(
-            eq(users.tenantId, realm.id),
-            eq(users.id, invite.userId),
-            inArray(users.status, ['pending', 'active']),
-          ),
-        )
-        .returning();
-      if (!account) {
-        throw new UnauthorizedException('Account unavailable');
-      }
-
-      await tx
-        .update(staffMemberships)
-        .set({ status: 'active', updatedAt: new Date() })
-        .where(
-          and(
-            eq(staffMemberships.tenantId, realm.id),
-            eq(staffMemberships.userId, account.id),
-            eq(staffMemberships.status, 'invited'),
-          ),
-        );
-
-      return this.tenantSession(tx, realm, account);
-    });
+    return session;
   }
 
-  /** Always responds generically — no account enumeration by phone number. */
+  /**
+   * Voids the pending account's code and sends a new one (B14). Always
+   * responds generically — no account enumeration by phone number.
+   */
   async resendCode(phone: string, hint: RealmHint = {}): Promise<void> {
     const realm = await this.realms.resolve(hint);
     if (!realm) return;
 
-    await this.dbService.tenantTx(realm.id, async (tx) => {
+    const code = await this.dbService.tenantTx(realm.id, async (tx) => {
       const [account] = await tx
         .select()
         .from(users)
         .where(
           and(eq(users.tenantId, realm.id), eq(users.phone, phone), eq(users.status, 'pending')),
         );
-      if (!account) return;
-
-      const [existing] = await tx
-        .select()
-        .from(inviteCodes)
-        .where(
-          and(
-            eq(inviteCodes.tenantId, realm.id),
-            eq(inviteCodes.userId, account.id),
-            isNull(inviteCodes.consumedAt),
-          ),
-        );
-      if (!existing) return;
-
-      const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
-      await tx
-        .update(inviteCodes)
-        .set({
-          codeHash: sha256(code),
-          attempts: 0,
-          expiresAt: new Date(Date.now() + 30 * 24 * 3600 * 1000),
-        })
-        .where(and(eq(inviteCodes.tenantId, realm.id), eq(inviteCodes.id, existing.id)));
-
+      return account ? this.inviteCodes.reissue(tx, realm.id, account.id) : null;
+    });
+    if (code) {
       // TODO(M1): deliver via SMS/Viber gateway through the worker. MOCK: log only.
       this.codeDelivery.deliver('invite code', phone, code);
-    });
+    }
   }
 
   async refresh(rawToken: string): Promise<SessionResult> {

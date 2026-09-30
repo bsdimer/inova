@@ -17,6 +17,18 @@ export class RuntimeEnv {
     return this.int(name, fallback, 0);
   }
 
+  /**
+   * An integer that must stay inside hard bounds — a lifetime, a limit. A value
+   * outside them stops the process instead of being clamped silently.
+   */
+  boundedInt(name: string, fallback: number, min: number, max: number): number {
+    const value = this.int(name, fallback, min);
+    if (value > max) {
+      throw new Error(`${name} must be an integer <= ${max}, got "${value}"`);
+    }
+    return value;
+  }
+
   /** A setting that may be absent: an empty value counts as not set. */
   optionalString(name: string): string | undefined {
     const raw = this.source[name]?.trim();
@@ -59,5 +71,34 @@ export class MockCodeDelivery {
 
   deliver(purpose: string, recipient: string, code: string): void {
     this.log(`MOCK delivery — ${purpose} for ${recipient}: ${code}`);
+  }
+}
+
+/**
+ * How long an invite code stays valid (decision B14): a setting, not a
+ * constant. 30 days unless INVITE_CODE_TTL_DAYS says otherwise, and never
+ * outside 1–90 days — an out-of-bounds value stops the service at start-up.
+ * auth-service (resend) and core-api (staff and resident invites) read the
+ * same setting, so a code lives equally long whichever of them issued it.
+ */
+export class InviteCodePolicy {
+  static readonly MIN_TTL_DAYS = 1;
+  static readonly MAX_TTL_DAYS = 90;
+  /** Wrong codes an account may try before its code is voided (B15). */
+  static readonly MAX_ATTEMPTS = 5;
+
+  readonly ttlDays: number;
+
+  constructor(source: EnvSource) {
+    this.ttlDays = new RuntimeEnv(source).boundedInt(
+      'INVITE_CODE_TTL_DAYS',
+      30,
+      InviteCodePolicy.MIN_TTL_DAYS,
+      InviteCodePolicy.MAX_TTL_DAYS,
+    );
+  }
+
+  expiresAt(now: Date): Date {
+    return new Date(now.getTime() + this.ttlDays * 24 * 3600 * 1000);
   }
 }

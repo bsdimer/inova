@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { DbService } from '../db/db.service';
 import { platformUsers, users } from '../db/schema';
 import { AuthService } from './auth.service';
+import type { InviteCodes } from './invite-codes';
 import { PasswordHasher } from './password-hasher';
 import type { Realm, RealmResolver } from './realm-resolver';
 import type { RefreshTokens } from './refresh-tokens';
@@ -47,6 +48,7 @@ function serviceWith({ realm = INOVA, account, platformUser }: Fixture) {
     realms,
     {} as TokenService,
     {} as RefreshTokens,
+    {} as InviteCodes,
     {} as MockCodeDelivery,
     passwords,
   );

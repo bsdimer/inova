@@ -106,6 +106,8 @@ services:
       # request then fails like a wrong password. provision-env.sh sets the
       # seeded `inova` for test.
       AUTH_DEFAULT_REALM: ${AUTH_DEFAULT_REALM:-}
+      # Days an invite code stays valid (1–90). Same value for core-api below.
+      INVITE_CODE_TTL_DAYS: ${INVITE_CODE_TTL_DAYS:-30}
     volumes:
       # Relative to the stack directory, never absolute: this file is shared by
       # every environment, and an absolute path would make them all sign with
@@ -136,6 +138,7 @@ services:
       REDIS_URL: redis://redis:6379
       TRUST_PROXY_HOPS: '1'
       CODE_DELIVERY: ${CODE_DELIVERY:-}
+      INVITE_CODE_TTL_DAYS: ${INVITE_CODE_TTL_DAYS:-30}
       # JWKS is fetched over the internal network — no public round trip, and
       # core-api still verifies tokens locally after the first fetch.
       #

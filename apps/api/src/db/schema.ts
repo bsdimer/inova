@@ -1,5 +1,14 @@
 import { sql } from 'drizzle-orm';
-import { boolean, jsonb, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  integer,
+  jsonb,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 /** Domain tables owned by core-api (see db/migrations/0001). */
 
@@ -112,6 +121,10 @@ export const inviteCodes = pgTable(
     codeHash: text('code_hash').notNull(),
     channel: text('channel', { enum: ['sms', 'viber'] }).notNull(),
     phone: text('phone'),
+    maxAttempts: integer('max_attempts').notNull().default(5),
+    status: text('status', { enum: ['active', 'consumed', 'expired', 'voided'] })
+      .notNull()
+      .default('active'),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     consumedAt: timestamp('consumed_at', { withTimezone: true }),
     createdBy: uuid('created_by'),

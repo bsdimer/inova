@@ -41,16 +41,21 @@ export class AuthController {
   @Post('activate')
   @HttpCode(200)
   @Throttle(STRICT)
-  @ApiOperation({ summary: 'Activate a manager-created account with an invite code (B7)' })
+  @ApiOperation({
+    summary:
+      'Activate a manager-created account: its phone or e-mail plus the invite code (B7, B15)',
+  })
   activate(@Body() dto: ActivateDto) {
-    return this.auth.activate(dto.code, realmHint(dto));
+    return this.auth.activate(dto.identifier, dto.code, realmHint(dto));
   }
 
   @Public()
   @Post('resend-code')
   @HttpCode(202)
   @Throttle(STRICT)
-  @ApiOperation({ summary: 'Resend the invite code via SMS/Viber (generic response)' })
+  @ApiOperation({
+    summary: 'Void the invite code and send a new one via SMS/Viber (generic response)',
+  })
   async resendCode(@Body() dto: ResendCodeDto) {
     await this.auth.resendCode(dto.phone, realmHint(dto));
     return { status: 'ok' };

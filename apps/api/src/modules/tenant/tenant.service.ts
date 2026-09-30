@@ -6,19 +6,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { and, eq, sql } from 'drizzle-orm';
-import { createHash, randomInt } from 'node:crypto';
 import { DbService, type TenantTx } from '../../db/db.service';
-import {
-  inviteCodes,
-  permissions,
-  rolePermissions,
-  roles,
-  staffMemberships,
-  users,
-} from '../../db/schema';
+import { permissions, rolePermissions, roles, staffMemberships, users } from '../../db/schema';
 import { AuditService } from '../audit/audit.service';
-
-const sha256 = (value: string): string => createHash('sha256').update(value).digest('hex');
+import { InviteCodeIssuer } from '../invites/invite-code-issuer';
 
 interface Actor {
   userId: string;
@@ -61,6 +52,7 @@ export class TenantService {
     private readonly dbService: DbService,
     private readonly audit: AuditService,
     private readonly codeDelivery: MockCodeDelivery,
+    private readonly inviteCodes: InviteCodeIssuer,
   ) {}
 
   listPermissions() {
@@ -284,14 +276,10 @@ export class TenantService {
       }
 
       if (user.status !== 'active') {
-        const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
-        await tx.insert(inviteCodes).values({
+        const code = await this.inviteCodes.issue(tx, {
           tenantId,
-          userId: user.id,
-          codeHash: sha256(code),
-          channel: 'sms',
+          accountId: user.id,
           phone: input.phone,
-          expiresAt: new Date(Date.now() + 30 * 24 * 3600 * 1000),
           createdBy: actor.userId,
         });
         // TODO(M1): deliver via SMS/Viber gateway through the worker. MOCK: log only.

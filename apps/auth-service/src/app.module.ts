@@ -1,10 +1,11 @@
-import { MockCodeDelivery } from '@inova/shared';
+import { InviteCodePolicy, MockCodeDelivery } from '@inova/shared';
 import { Logger, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
+import { InviteCodes } from './auth/invite-codes';
 import { JwtGuard } from './auth/jwt.guard';
 import { PasswordHasher } from './auth/password-hasher';
 import { RealmResolver } from './auth/realm-resolver';
@@ -35,6 +36,7 @@ import { KeysService } from './keys/keys.service';
     },
     AuthService,
     JwtGuard,
+    { provide: InviteCodes, useFactory: () => new InviteCodes(new InviteCodePolicy(process.env)) },
     {
       provide: MockCodeDelivery,
       useFactory: () =>
