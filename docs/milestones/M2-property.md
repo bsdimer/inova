@@ -33,7 +33,14 @@ The schema contract test must pass on the new tables without being rewritten.
 
 - Draft-building CRUD + bulk import (CSV/XLSX) for buildings/apartments;
   dry-run + row errors. Apartments may be freely added/removed until building
-  activation; active-building removal uses the approval flow.
+  activation; active-building removal uses the approval flow — so in an
+  active building the edit form adds an entrance but never removes one (an
+  entrance holds apartments, which leave only through a removal request);
+  apartments are added after the building exists, one by one or by import.
+  A building takes an optional photo (an `attachment` owned by the building,
+  through the shared `files` module) on creation and on edit, where it can be
+  replaced or removed; without one the «Сгради» list shows the icon
+  (stakeholder, WHI-37 29.09 15:11; frames «V2 · Сгради»).
 - Create-resident-on-apartment: tenant-local account + effective-dated
   occupancy + invite code. Normalized email/phone is unique within the tenant,
   not globally.
