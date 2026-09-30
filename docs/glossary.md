@@ -151,9 +151,8 @@ does not take the entry for the current UI.
   Source: D30, WHI-27 (28.09 14:46, approved 15:14).
 - **Отмени** — the secondary button of a delete or end confirmation («Да се
   изтрие ли…?», «Да се прекрати ли…?»): closes the dialog, nothing changes;
-  the text says «се изтрива», not «изчезва». Avoid: «Остани» there —
-  «Остани» belongs to «Да се откажа ли?», which keeps the user in the form
-  (`docs/design.md` → forms). Source: WHI-79 (29.09 10:15).
+  the text says «се изтрива», not «изчезва». Avoid: «Остани». Source: WHI-79
+  (29.09 10:15).
 
 ## Account and settings
 
