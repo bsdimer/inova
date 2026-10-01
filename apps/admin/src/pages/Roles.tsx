@@ -14,7 +14,7 @@ import {
   panelInputClass,
 } from '../components/ui';
 import { api, ApiError, type Permission, type Role } from '../lib/api';
-import { useSelectedTenantId } from '../lib/tenant';
+import { useSelectedTenantId, useTenantContext } from '../lib/tenant';
 import { AccessNote } from './Staff';
 import { groupPermissions, permissionLabel, sortPermissions } from './roles/permissions';
 import { ROLE_NAMES } from './staff/model';
@@ -57,6 +57,9 @@ export function RolesPage() {
   const queryClient = useQueryClient();
   const [editorRole, setEditorRole] = useState<Role | 'new' | null>(null);
   const [pageError, setPageError] = useState<string | null>(null);
+  // Without roles.manage every write ends in 403, so the buttons are not
+  // offered; while the rights load, nothing is offered either.
+  const canManage = useTenantContext().data?.permissions.includes('roles.manage') === true;
 
   const roles = useQuery({
     queryKey: ['roles', tenantId],
@@ -86,6 +89,7 @@ export function RolesPage() {
       role={role}
       index={i}
       catalogue={permissions.data ?? []}
+      canManage={canManage}
       onEdit={() => setEditorRole(role)}
       onDelete={() => remove.mutate(role.key)}
       deleting={remove.isPending}
@@ -106,7 +110,7 @@ export function RolesPage() {
             назначаване, в Служители.
           </p>
         </div>
-        <PrimaryButton onClick={() => setEditorRole('new')}>Нова роля</PrimaryButton>
+        {canManage && <PrimaryButton onClick={() => setEditorRole('new')}>Нова роля</PrimaryButton>}
       </div>
 
       <ErrorNote message={pageError} />
@@ -173,6 +177,7 @@ function RoleCard({
   role,
   index,
   catalogue,
+  canManage,
   onEdit,
   onDelete,
   deleting,
@@ -180,6 +185,7 @@ function RoleCard({
   role: Role;
   index: number;
   catalogue: Permission[];
+  canManage: boolean;
   onEdit: () => void;
   onDelete: () => void;
   deleting: boolean;
@@ -220,30 +226,35 @@ function RoleCard({
         </ul>
       )}
 
-      <hr className="border-[var(--glass-edge-soft)]" />
-      <div className="flex items-center gap-2">
-        {locked ? (
-          <span className="text-body-13-tight flex items-center gap-2 text-ink-soft">
-            <Lock size="1rem" /> Системна роля — правата не се променят
-          </span>
-        ) : (
-          <>
-            <SecondaryButton size="sm" onClick={onEdit}>
-              <span className="flex items-center gap-1.5">
-                <PencilSimple size="0.875rem" /> Редактирай
+      {/* A role that only reads gets no action line; the locked role still says why. */}
+      {(locked || canManage) && (
+        <>
+          <hr className="border-[var(--glass-edge-soft)]" />
+          <div className="flex items-center gap-2">
+            {locked ? (
+              <span className="text-body-13-tight flex items-center gap-2 text-ink-soft">
+                <Lock size="1rem" /> Системна роля — правата не се променят
               </span>
-            </SecondaryButton>
-            {/* Not drawn: a custom role nobody holds any more can go. */}
-            {!role.isSystem && role.members === 0 && (
-              <GhostButton danger disabled={deleting} onClick={onDelete}>
-                <span className="flex items-center gap-1.5">
-                  <Trash size="0.8125rem" /> Изтрий
-                </span>
-              </GhostButton>
+            ) : (
+              <>
+                <SecondaryButton size="sm" onClick={onEdit}>
+                  <span className="flex items-center gap-1.5">
+                    <PencilSimple size="0.875rem" /> Редактирай
+                  </span>
+                </SecondaryButton>
+                {/* Not drawn: a custom role nobody holds any more can go. */}
+                {!role.isSystem && role.members === 0 && (
+                  <GhostButton danger disabled={deleting} onClick={onDelete}>
+                    <span className="flex items-center gap-1.5">
+                      <Trash size="0.8125rem" /> Изтрий
+                    </span>
+                  </GhostButton>
+                )}
+              </>
             )}
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      )}
     </motion.article>
   );
 }
