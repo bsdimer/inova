@@ -791,3 +791,21 @@ describe('Requests and manager assignments (M2) stay inside their tenant', () =>
     }
   });
 });
+
+describe('Property import (WHI-99) stays inside its tenant', () => {
+  it("refuses a token of tenant B on tenant A's import and template (403)", async () => {
+    const inB = await tenantToken(demoMariaId, tenantB, ['manager']);
+    const sheet = Buffer.from('Сграда;Град\nX;Y\n');
+    const imported = await request(app.getHttpServer())
+      .post('/imports/properties?dryRun=false')
+      .set('Authorization', `Bearer ${inB}`)
+      .set('X-Tenant-Id', tenantA)
+      .attach('file', sheet, 'properties.csv');
+    expect(imported.status).toBe(403);
+    const template = await request(app.getHttpServer())
+      .get('/imports/properties/template')
+      .set('Authorization', `Bearer ${inB}`)
+      .set('X-Tenant-Id', tenantA);
+    expect(template.status).toBe(403);
+  });
+});
