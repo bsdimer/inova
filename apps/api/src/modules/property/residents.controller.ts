@@ -14,6 +14,7 @@ import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger
 import { JwtGuard, type AuthedRequest } from '../../auth/jwt.guard';
 import { PermissionsGuard, RequirePermissions } from '../../auth/permissions.guard';
 import { TenantContextGuard } from '../../auth/tenant-context.guard';
+import { actorOf } from './buildings.controller';
 import { AddOccupantDto, AddPetDto, AddResidentDto, ResidentsQuery } from './residents.dto';
 import { ResidentsService } from './residents.service';
 
@@ -34,7 +35,13 @@ export class ResidentsController {
     @Param('propertyId', ParseUUIDPipe) propertyId: string,
     @Query() query: ResidentsQuery,
   ) {
-    return this.service.listResidents(req.tenantId!, buildingId, propertyId, query.at);
+    return this.service.listResidents(
+      req.tenantId!,
+      actorOf(req),
+      buildingId,
+      propertyId,
+      query.at,
+    );
   }
 
   @Post()
@@ -48,13 +55,7 @@ export class ResidentsController {
     @Param('propertyId', ParseUUIDPipe) propertyId: string,
     @Body() dto: AddResidentDto,
   ) {
-    return this.service.addResident(
-      req.tenantId!,
-      { userId: req.auth.sub, type: req.auth.kind === 'platform' ? 'platform' : 'user' },
-      buildingId,
-      propertyId,
-      dto,
-    );
+    return this.service.addResident(req.tenantId!, actorOf(req), buildingId, propertyId, dto);
   }
 }
 
