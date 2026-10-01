@@ -203,6 +203,10 @@ Which glass goes where — `docs/design.md` → Surfaces.
 - `rotation` on a frame inside auto-layout may render mirrored.
 - Text after `rescale` gets a fractional `fontSize` — round it.
 - An instance made with `createInstance` loses `rotation`.
+- **`setTextStyleIdAsync` with a wrong id does nothing and says nothing.** A
+  local style id ends with a comma (`S:…,`); an id copied without it is
+  silently ignored. Take the style by name from `getLocalTextStylesAsync()`
+  and read `textStyleId` back after setting it.
 
 ## 8. Numbers and text on a mockup
 
@@ -222,7 +226,11 @@ not proofreading.
 1. Build the code: `build-lint.py <frame id> …` (in this folder) — list every
    frame that will be shown and every frame the edit touched. The script
    takes the Avoid words from `docs/glossary.md` on `origin/develop` and the
-   exceptions from `allow.json`.
+   exceptions from `allow.json`. An Avoid list the glossary marks «for this
+   one field only» (e.g. «категория» in «За какво е») is not linted: the word
+   is right everywhere else. A word that is itself part of a glossary term
+   («Изтрий достъпа», «входна такса») gets an `allow.json` entry naming the
+   term.
 2. Pass the printed code to `use_figma` as is. It only reads.
 3. **The list must be empty.** Fix each finding, or — if it is a deliberate
    decision — add it to `allow.json` with a `why` (which decision and when,
@@ -242,6 +250,19 @@ What `lint-frame.js` checks:
 | `circle-button`  | an overridden fill on `V2/Button · Circle`; a «+» outside a button                                                                                                    |
 | `series`         | siblings of the same width have a dark twin or a 402 and this frame has none (twins are matched by frame name without width and theme — name frames as a pair)        |
 | `series-glass`   | a card with the same name in a sibling frame sits on a different glass                                                                                                |
+| `panel-text`     | text bound to a glass `text/*` variable (white) on a light panel surface (`panel/fill`, `panel/row`, `panel/control`…) — it takes `panel/text` or `panel/text-muted`  |
+| `overflow`       | a clipped vertical container whose content is more than 4 px taller than itself, with no `Fade` / `Scrollbar` next to it (docs/design.md → panels: cue or tighten)    |
+| `past-edge`      | a direct child of the frame (panel, sheet, card) that runs more than 2 px below the frame's bottom edge                                                               |
+
+To look at the result, put the screenshots side by side with `shots.py`
+(in this folder) instead of downloading and cropping them one by one:
+
+```
+shots.py OUT.png "<get_screenshot URL>@x0,y0,x1,y1=Label" "<URL or file>=Label" …
+```
+
+`@…` crops, `=…` captions, all images are scaled to one height (`--vertical`
+stacks them). A fresh screenshot URL renders for a second; the script waits.
 
 What the lint does **not** catch — check by eye:
 
@@ -253,6 +274,36 @@ What the lint does **not** catch — check by eye:
   below), and the formal address «ви» in lower case, as in the rest of the
   file;
 - effect colours: there are no effect tokens yet.
+
+## 8b. After the merge — accept the screen once
+
+E2E tests check behaviour and words, not that the panel is 520 wide, that a
+caption sits on `panel/text-muted` and not `panel/text-faint`, or that the type
+scale and spacing are the frame's. That check is this session's, once per
+screen, after the PR that first builds it is merged (rule of 30.09).
+
+1. The code session sends: the PR number, the screen and its route, the
+   frame ids, and the PR's «Kept from the code, not the frame, on purpose»
+   list in full. If that session is no longer running, the reply goes to the
+   session that owns the admin code now.
+2. Open the admin **locally** (`preview_start admin` with `api` and
+   `auth-service` running on the seeded database; the test account is in
+   `apps/admin/e2e/session.ts` — never type a password on an external host)
+   at 1728 and 402, light and dark, and at about 700 high as well — at 1117 a
+   panel often fits, and the scroll cue and the buttons at the end only show
+   on a short window. The dark theme: set `inova.theme` to `dark` in
+   localStorage and reload — «Динамична» follows the time of day; remove the
+   key afterwards. Put the **latest approved** frame beside it (`shots.py`).
+   Compare only what is measurable: block sizes and spacing, the type scale,
+   surface and text tokens, the words, the states (empty, error, loading).
+3. Reply to the code session in one message: «Расходится: …» with frame ids
+   and numbers, or one line «расхождений нет». Mechanical differences go
+   back as a small PR; a deliberate difference from the frame («radio, not
+   check boxes») is a product decision — list it for Helga, do not argue it
+   in chat.
+4. Once per screen. Later state, wording, contrast or refactoring PRs get
+   no second pass — their screenshots in the PR are enough. No repeat full
+   audits (§12).
 
 ## 9. Before calling something a gap — read the contract
 
