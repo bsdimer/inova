@@ -7,8 +7,15 @@ import {
 } from '@nestjs/common';
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import { DbService, type TenantTx } from '../../db/db.service';
-import { apartments, buildings, entrances, PROPERTY_TYPES } from '../../db/schema';
+import {
+  apartments,
+  buildingManagerAssignments,
+  buildings,
+  entrances,
+  PROPERTY_TYPES,
+} from '../../db/schema';
 import { AuditService } from '../audit/audit.service';
+import { BuildingScope, type ScopedActor } from './building-scope';
 import type {
   CreateBuildingDto,
   CreatePropertyDto,
@@ -19,11 +26,7 @@ import type {
   UpdatePropertyDto,
 } from './buildings.dto';
 
-export interface Actor {
-  userId: string;
-  /** A tenant account, or a platform operator acting inside the tenant. */
-  type: 'user' | 'platform';
-}
+export type Actor = ScopedActor;
 
 type Building = typeof buildings.$inferSelect;
 type PropertyCounts = Record<PropertyType, number>;
@@ -52,10 +55,13 @@ export class BuildingsService {
   constructor(
     private readonly dbService: DbService,
     private readonly audit: AuditService,
+    private readonly scope: BuildingScope,
   ) {}
 
-  async list(tenantId: string, filter: ListBuildingsQuery) {
+  async list(tenantId: string, actor: Actor, filter: ListBuildingsQuery) {
     return this.dbService.withTenant(tenantId, async (tx) => {
+      const scope = await this.scope.of(tx, tenantId, actor);
+      if (!scope.all && scope.buildingIds.size === 0) return [];
       const rows = await tx
         .select()
         .from(buildings)
@@ -65,6 +71,7 @@ export class BuildingsService {
             filter.city ? eq(buildings.city, filter.city) : undefined,
             filter.district ? eq(buildings.district, filter.district) : undefined,
             filter.status ? eq(buildings.status, filter.status) : undefined,
+            scope.all ? undefined : inArray(buildings.id, [...scope.buildingIds]),
           ),
         )
         .orderBy(asc(buildings.name), asc(buildings.id));
@@ -79,9 +86,9 @@ export class BuildingsService {
     });
   }
 
-  async get(tenantId: string, buildingId: string) {
+  async get(tenantId: string, actor: Actor, buildingId: string) {
     return this.dbService.withTenant(tenantId, async (tx) => {
-      const building = await this.building(tx, tenantId, buildingId);
+      const building = await this.building(tx, tenantId, buildingId, actor);
       const entranceRows = await tx
         .select({
           id: entrances.id,
@@ -131,6 +138,16 @@ export class BuildingsService {
               .returning({ id: entrances.id, name: entrances.name })
           : [];
 
+      // A building-scoped manager who sets a building up manages it.
+      const scope = await this.scope.of(tx, tenantId, actor);
+      if (!scope.all) {
+        await tx.insert(buildingManagerAssignments).values({
+          tenantId,
+          buildingId: building.id,
+          userId: actor.userId,
+          assignedBy: actor.userId,
+        });
+      }
       await this.record(tx, tenantId, actor, 'building.created', 'building', building.id, {
         name: building.name,
         entrances: entranceNames,
@@ -141,7 +158,7 @@ export class BuildingsService {
 
   async update(tenantId: string, actor: Actor, buildingId: string, input: UpdateBuildingDto) {
     return this.dbService.withTenant(tenantId, async (tx) => {
-      const before = await this.editableBuilding(tx, tenantId, buildingId);
+      const before = await this.editableBuilding(tx, tenantId, buildingId, actor);
       const changes: Partial<Building> = {
         ...(input.name !== undefined ? { name: input.name.trim() } : {}),
         ...(input.city !== undefined ? { city: input.city.trim() } : {}),
@@ -174,7 +191,7 @@ export class BuildingsService {
   /** Draft → active. A building goes live with at least one entrance and one property. */
   async activate(tenantId: string, actor: Actor, buildingId: string) {
     return this.dbService.withTenant(tenantId, async (tx) => {
-      const building = await this.building(tx, tenantId, buildingId);
+      const building = await this.building(tx, tenantId, buildingId, actor);
       if (building.status !== 'draft') {
         throw new ConflictException('Only a draft building can be activated');
       }
@@ -199,7 +216,7 @@ export class BuildingsService {
   }
 
   async addEntrance(tenantId: string, actor: Actor, buildingId: string, name: string) {
-    return this.inBuilding(tenantId, buildingId, 'entrance', async (tx) => {
+    return this.inBuilding(tenantId, actor, buildingId, 'entrance', async (tx) => {
       const [entrance] = await tx
         .insert(entrances)
         .values({ tenantId, buildingId, name: name.trim() })
@@ -219,7 +236,7 @@ export class BuildingsService {
     entranceId: string,
     name: string,
   ) {
-    return this.inBuilding(tenantId, buildingId, 'entrance', async (tx) => {
+    return this.inBuilding(tenantId, actor, buildingId, 'entrance', async (tx) => {
       const [entrance] = await tx
         .update(entrances)
         .set({ name: name.trim() })
@@ -236,7 +253,7 @@ export class BuildingsService {
 
   /** Only while the building is a draft, and only an entrance that holds no property. */
   async removeEntrance(tenantId: string, actor: Actor, buildingId: string, entranceId: string) {
-    return this.inBuilding(tenantId, buildingId, 'entrance', async (tx, building) => {
+    return this.inBuilding(tenantId, actor, buildingId, 'entrance', async (tx, building) => {
       if (building.status !== 'draft') {
         throw new ConflictException('An entrance of an active building cannot be removed');
       }
@@ -261,9 +278,14 @@ export class BuildingsService {
     });
   }
 
-  async listProperties(tenantId: string, buildingId: string, filter: ListPropertiesQuery) {
+  async listProperties(
+    tenantId: string,
+    actor: Actor,
+    buildingId: string,
+    filter: ListPropertiesQuery,
+  ) {
     return this.dbService.withTenant(tenantId, async (tx) => {
-      await this.building(tx, tenantId, buildingId);
+      await this.building(tx, tenantId, buildingId, actor);
       return tx
         .select({
           id: apartments.id,
@@ -296,7 +318,7 @@ export class BuildingsService {
   }
 
   async addProperty(tenantId: string, actor: Actor, buildingId: string, input: CreatePropertyDto) {
-    return this.inBuilding(tenantId, buildingId, 'property', async (tx) => {
+    return this.inBuilding(tenantId, actor, buildingId, 'property', async (tx) => {
       await this.entrance(tx, tenantId, buildingId, input.entranceId);
       const [property] = await tx
         .insert(apartments)
@@ -331,7 +353,7 @@ export class BuildingsService {
     propertyId: string,
     input: UpdatePropertyDto,
   ) {
-    return this.inBuilding(tenantId, buildingId, 'property', async (tx) => {
+    return this.inBuilding(tenantId, actor, buildingId, 'property', async (tx) => {
       const row = and(
         eq(apartments.tenantId, tenantId),
         eq(apartments.buildingId, buildingId),
@@ -373,7 +395,7 @@ export class BuildingsService {
 
   /** Free while the building is a draft; afterwards only a removal request ends a property. */
   async removeProperty(tenantId: string, actor: Actor, buildingId: string, propertyId: string) {
-    return this.inBuilding(tenantId, buildingId, 'property', async (tx, building) => {
+    return this.inBuilding(tenantId, actor, buildingId, 'property', async (tx, building) => {
       if (building.status !== 'draft') {
         throw new ConflictException(
           'A property of an active building is removed through a removal request',
@@ -406,13 +428,14 @@ export class BuildingsService {
    */
   private async inBuilding<T>(
     tenantId: string,
+    actor: Actor,
     buildingId: string,
     subject: 'entrance' | 'property',
     change: (tx: TenantTx, building: Building) => Promise<T>,
   ): Promise<T> {
     try {
       return await this.dbService.withTenant(tenantId, async (tx) =>
-        change(tx, await this.editableBuilding(tx, tenantId, buildingId)),
+        change(tx, await this.editableBuilding(tx, tenantId, buildingId, actor)),
       );
     } catch (error) {
       const constraint = violatedConstraint(error);
@@ -428,12 +451,20 @@ export class BuildingsService {
     }
   }
 
-  private async building(tx: TenantTx, tenantId: string, buildingId: string): Promise<Building> {
+  /** The building, or 404 — also when it is outside the actor's building scope. */
+  private async building(
+    tx: TenantTx,
+    tenantId: string,
+    buildingId: string,
+    actor: Actor,
+  ): Promise<Building> {
     const [building] = await tx
       .select()
       .from(buildings)
       .where(and(eq(buildings.tenantId, tenantId), eq(buildings.id, buildingId)));
-    if (!building) throw new NotFoundException('Building not found');
+    if (!building || !BuildingScope.covers(await this.scope.of(tx, tenantId, actor), buildingId)) {
+      throw new NotFoundException('Building not found');
+    }
     return building;
   }
 
@@ -441,8 +472,9 @@ export class BuildingsService {
     tx: TenantTx,
     tenantId: string,
     buildingId: string,
+    actor: Actor,
   ): Promise<Building> {
-    const building = await this.building(tx, tenantId, buildingId);
+    const building = await this.building(tx, tenantId, buildingId, actor);
     if (building.status === 'archived') {
       throw new ConflictException('An archived building cannot be changed');
     }
