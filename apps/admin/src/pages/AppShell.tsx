@@ -451,6 +451,7 @@ function PlatformBadge() {
  * The wordmark at the head of the sidebar. Where the sidebar is the rail
  * opened up, the wordmark is also what folds it back.
  */
+/** The wordmark; as a button it closes the menu it heads, which is open. */
 function Brand({ label, onClick }: { label?: string; onClick?: () => void }) {
   const mark = <InovaWordmark size={22} />;
   return onClick ? (
@@ -458,6 +459,7 @@ function Brand({ label, onClick }: { label?: string; onClick?: () => void }) {
       type="button"
       onClick={onClick}
       aria-label={label}
+      aria-expanded
       className="self-start rounded-[var(--radius-row)] pt-2 pb-3 pl-2 text-left text-ink"
     >
       {mark}
@@ -767,36 +769,42 @@ function Topbar({
   session: Session;
 }) {
   const compact = mode === 'drawer';
-  return compact ? (
-    // V2/Topbar tablet (850:360) and phone (850:382): the menu button and the
-    // wordmark lead; on a tablet the search fills the middle, on a phone it
-    // drops to its own row under the bar.
-    <header className="flex h-14 items-center gap-3 md:gap-5">
-      <button
-        ref={menuButton}
-        type="button"
-        onClick={onOpenNav}
-        aria-label="Отвори менюто"
-        aria-expanded={menuOpen}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink"
+  // One tree for both bars: every element keeps its place, so crossing 1024
+  // never remounts the account menu — an open menu and its focus survive.
+  return (
+    // Below 1024, V2/Topbar tablet (850:360) and phone (850:382): the menu
+    // button and the wordmark lead; on a tablet the search fills the middle,
+    // on a phone it drops to its own row under the bar. From 1024, V2/Topbar
+    // (850:312): search 380 wide, a spacer, the bell and the account, 20 apart.
+    <header className={`flex h-14 items-center ${compact ? 'gap-3 md:gap-5' : 'gap-5'}`}>
+      {compact && (
+        <button
+          ref={menuButton}
+          type="button"
+          onClick={onOpenNav}
+          aria-label="Отвори менюто"
+          aria-expanded={menuOpen}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink"
+        >
+          <MenuBars />
+        </button>
+      )}
+      {compact && (
+        <span className="shrink-0 text-ink">
+          <InovaWordmark size={22} />
+        </span>
+      )}
+      <GlobalSearch className={compact ? 'hidden flex-1 md:flex' : 'flex-1 max-w-[23.75rem]'} />
+      {/* On a phone the group takes the room the hidden search leaves and stands right. */}
+      <div
+        className={
+          compact
+            ? 'flex flex-1 items-center justify-end gap-3 md:flex-none md:gap-5'
+            : 'ml-auto flex shrink-0 items-center gap-5'
+        }
       >
-        <MenuBars />
-      </button>
-      <span className="shrink-0 text-ink">
-        <InovaWordmark size={22} />
-      </span>
-      <GlobalSearch className="hidden flex-1 md:flex" />
-      <span className="flex-1 md:hidden" />
-      <NoticesBell />
-      <AccountMenu session={session} compact />
-    </header>
-  ) : (
-    // V2/Topbar (850:312): search 380 wide, a spacer, the bell and the account, 20 apart.
-    <header className="flex h-14 items-center gap-5">
-      <GlobalSearch className="flex-1 max-w-[23.75rem]" />
-      <div className="ml-auto flex shrink-0 items-center gap-5">
         <NoticesBell />
-        <AccountMenu session={session} />
+        <AccountMenu session={session} compact={compact} />
       </div>
     </header>
   );

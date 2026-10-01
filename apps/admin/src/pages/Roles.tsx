@@ -14,7 +14,7 @@ import {
   panelInputClass,
 } from '../components/ui';
 import { api, ApiError, type Permission, type Role } from '../lib/api';
-import { useSelectedTenantId } from '../lib/tenant';
+import { useSelectedTenantId, useTenantContext } from '../lib/tenant';
 import { AccessNote } from './Staff';
 import { groupPermissions, permissionLabel, sortPermissions } from './roles/permissions';
 import { ROLE_NAMES } from './staff/model';
@@ -57,6 +57,9 @@ export function RolesPage() {
   const queryClient = useQueryClient();
   const [editorRole, setEditorRole] = useState<Role | 'new' | null>(null);
   const [pageError, setPageError] = useState<string | null>(null);
+  // Without roles.manage every write ends in 403, so the buttons are not
+  // offered; while the rights load, nothing is offered either.
+  const canManage = useTenantContext().data?.permissions.includes('roles.manage') === true;
 
   const roles = useQuery({
     queryKey: ['roles', tenantId],
@@ -86,6 +89,7 @@ export function RolesPage() {
       role={role}
       index={i}
       catalogue={permissions.data ?? []}
+      canManage={canManage}
       onEdit={() => setEditorRole(role)}
       onDelete={() => remove.mutate(role.key)}
       deleting={remove.isPending}
@@ -97,7 +101,8 @@ export function RolesPage() {
   }
 
   return (
-    <div className="space-y-5">
+    // Head, grid and catalogue 16 apart, as on the other pages (1091:10390).
+    <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="text-title-22 font-medium">Роли</h1>
@@ -106,7 +111,7 @@ export function RolesPage() {
             назначаване, в Служители.
           </p>
         </div>
-        <PrimaryButton onClick={() => setEditorRole('new')}>Нова роля</PrimaryButton>
+        {canManage && <PrimaryButton onClick={() => setEditorRole('new')}>Нова роля</PrimaryButton>}
       </div>
 
       <ErrorNote message={pageError} />
@@ -122,7 +127,10 @@ export function RolesPage() {
       ) : roles.isPending ? (
         <div aria-hidden className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           {[0, 1].map((i) => (
-            <div key={i} className="glass-data flex flex-col gap-3 rounded-3xl px-6 py-4">
+            <div
+              key={i}
+              className="glass-data flex flex-col gap-3 rounded-3xl px-[1.5625rem] py-[1.0625rem]"
+            >
               <SkeletonBar className="h-5 w-2/5" />
               <SkeletonBar className="h-4 w-4/5" />
               <SkeletonBar className="h-6 w-3/5" />
@@ -162,7 +170,7 @@ export function RolesPage() {
 /** A right on glass: glass/chip, Label/12 Regular (1092:210). */
 function RightChip({ children }: { children: string }) {
   return (
-    <li className="text-label-12 rounded-full bg-glass-chip px-2.5 py-1 whitespace-nowrap text-ink shadow-[inset_0_0_0_0.0625rem_var(--glass-edge-soft)]">
+    <li className="text-label-12 rounded-full bg-glass-chip px-2.5 py-[0.3125rem] whitespace-nowrap text-ink shadow-[inset_0_0_0_0.0625rem_var(--glass-edge-soft)]">
       {children}
     </li>
   );
@@ -173,6 +181,7 @@ function RoleCard({
   role,
   index,
   catalogue,
+  canManage,
   onEdit,
   onDelete,
   deleting,
@@ -180,6 +189,7 @@ function RoleCard({
   role: Role;
   index: number;
   catalogue: Permission[];
+  canManage: boolean;
   onEdit: () => void;
   onDelete: () => void;
   deleting: boolean;
@@ -191,7 +201,8 @@ function RoleCard({
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: Math.min(index, 6) * 0.05 }}
-      className="glass-data flex flex-col gap-2.5 rounded-3xl px-6 py-4"
+      // 25 in and 17 down: 24 and 16 inside the 1 px edge (1092:201).
+      className="glass-data flex flex-col gap-2.5 rounded-3xl px-[1.5625rem] py-[1.0625rem]"
     >
       <div className="flex flex-wrap items-center gap-2.5">
         <h2 className="text-title-16 font-medium">{ROLE_NAMES[role.key] ?? role.name}</h2>
@@ -220,30 +231,35 @@ function RoleCard({
         </ul>
       )}
 
-      <hr className="border-[var(--glass-edge-soft)]" />
-      <div className="flex items-center gap-2">
-        {locked ? (
-          <span className="text-body-13-tight flex items-center gap-2 text-ink-soft">
-            <Lock size="1rem" /> Системна роля — правата не се променят
-          </span>
-        ) : (
-          <>
-            <SecondaryButton size="sm" onClick={onEdit}>
-              <span className="flex items-center gap-1.5">
-                <PencilSimple size="0.875rem" /> Редактирай
+      {/* A role that only reads gets no action line; the locked role still says why. */}
+      {(locked || canManage) && (
+        <>
+          <hr className="border-[var(--glass-edge-soft)]" />
+          <div className="flex items-center gap-2">
+            {locked ? (
+              <span className="text-body-13-tight flex items-center gap-2 text-ink-soft">
+                <Lock size="1rem" /> Системна роля — правата не се променят
               </span>
-            </SecondaryButton>
-            {/* Not drawn: a custom role nobody holds any more can go. */}
-            {!role.isSystem && role.members === 0 && (
-              <GhostButton danger disabled={deleting} onClick={onDelete}>
-                <span className="flex items-center gap-1.5">
-                  <Trash size="0.8125rem" /> Изтрий
-                </span>
-              </GhostButton>
+            ) : (
+              <>
+                <SecondaryButton size="sm" onClick={onEdit}>
+                  <span className="flex items-center gap-1.5">
+                    <PencilSimple size="0.875rem" /> Редактирай
+                  </span>
+                </SecondaryButton>
+                {/* Not drawn: a custom role nobody holds any more can go. */}
+                {!role.isSystem && role.members === 0 && (
+                  <GhostButton danger disabled={deleting} onClick={onDelete}>
+                    <span className="flex items-center gap-1.5">
+                      <Trash size="0.8125rem" /> Изтрий
+                    </span>
+                  </GhostButton>
+                )}
+              </>
             )}
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      )}
     </motion.article>
   );
 }
@@ -254,7 +270,7 @@ function PermissionCatalogue({ catalogue }: { catalogue: Permission[] }) {
   return (
     <section
       aria-labelledby="catalogue-title"
-      className="glass-data flex flex-col gap-2 rounded-3xl px-6 py-4"
+      className="glass-data flex flex-col gap-2 rounded-3xl px-[1.5625rem] py-[1.0625rem]"
     >
       <h2 id="catalogue-title" className="text-body-15 font-medium">
         Каталог на правата
