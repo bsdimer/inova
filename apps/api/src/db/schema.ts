@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import {
   boolean,
+  date,
   integer,
   jsonb,
   numeric,
@@ -203,6 +204,47 @@ export const apartments = pgTable(
       .default('active'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
+);
+
+/** Who lives in a property, and pets (db/migrations/0007). Dates are `YYYY-MM-DD`. */
+
+export const OCCUPANCY_ROLES = ['owner', 'tenant', 'occupant'] as const;
+export const PET_SPECIES = ['dog', 'cat', 'other'] as const;
+
+export const occupancies = pgTable(
+  'occupancies',
+  {
+    tenantId: uuid('tenant_id').notNull(),
+    id: uuid('id').notNull().defaultRandom(),
+    apartmentId: uuid('apartment_id').notNull(),
+    /** Null for a household member recorded by name only. */
+    userId: uuid('user_id'),
+    role: text('role', { enum: OCCUPANCY_ROLES }).notNull(),
+    firstName: text('first_name'),
+    lastName: text('last_name'),
+    validFrom: date('valid_from').notNull(),
+    /** The last day it counts, inclusive; null while it lasts. */
+    validTo: date('valid_to'),
+    createdBy: uuid('created_by').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
+);
+
+export const pets = pgTable(
+  'pets',
+  {
+    tenantId: uuid('tenant_id').notNull(),
+    id: uuid('id').notNull().defaultRandom(),
+    apartmentId: uuid('apartment_id').notNull(),
+    name: text('name').notNull(),
+    species: text('species', { enum: PET_SPECIES }).notNull(),
+    validFrom: date('valid_from').notNull(),
+    validTo: date('valid_to'),
+    createdBy: uuid('created_by').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
 );
