@@ -31,6 +31,7 @@ const ROLE_TEMPLATES = [
       'audit.read',
       'property.read',
       'property.write',
+      'residents.read',
     ],
   },
   { key: 'resident', name: 'Resident', permissions: ['tenant.read'] },

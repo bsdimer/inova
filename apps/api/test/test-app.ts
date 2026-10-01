@@ -15,6 +15,8 @@ export interface TestApp {
   tenants: Record<string, string>;
   /** A tenant account's access token (decision B8: one tenant per token). */
   tenantToken(accountId: string, tenantId: string, role: string): Promise<string>;
+  /** A platform super_admin's access token. */
+  platformToken(platformUserId: string): Promise<string>;
   /** Requests as that token, with `X-Tenant-Id` set. */
   as(token: string, tenantId: string): Client;
   /** An active account with a membership, planted directly in the database. */
@@ -79,6 +81,15 @@ export async function bootTestApp(dbPrefix: string): Promise<TestApp> {
     adminPool,
     tenants,
     as: client,
+    platformToken: (platformUserId) =>
+      new SignJWT({ kind: 'platform', name: 'Platform', platform_role: 'super_admin' })
+        .setProtectedHeader({ alg: 'RS256', kid })
+        .setSubject(platformUserId)
+        .setIssuer(JWT_ISSUER)
+        .setAudience(JWT_AUDIENCE)
+        .setIssuedAt()
+        .setExpirationTime('5m')
+        .sign(pair.privateKey),
     tenantToken: (accountId, tenantId, role) =>
       new SignJWT({ kind: 'tenant', name: 'Test User', tid: tenantId, roles: [role] })
         .setProtectedHeader({ alg: 'RS256', kid })

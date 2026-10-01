@@ -518,8 +518,10 @@ describe('Property hierarchy (M2) stays inside its tenant', () => {
     try {
       await client.query('BEGIN');
       await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [tenantB]);
+      // Tenant B has its own seeded building; none of tenant A's rows may show.
       for (const table of ['buildings', 'entrances', 'apartments']) {
-        expect((await client.query(`SELECT 1 FROM ${table}`)).rows, table).toHaveLength(0);
+        const { rows } = await client.query(`SELECT DISTINCT tenant_id FROM ${table}`);
+        expect(rows, table).toEqual([{ tenant_id: tenantB }]);
       }
       const renamed = await client.query(
         `UPDATE buildings SET name = 'Hijacked' WHERE id = $1 RETURNING id`,
@@ -601,5 +603,129 @@ describe('Property hierarchy (M2) stays inside its tenant', () => {
       [buildingA],
     );
     expect(intact.rows).toEqual([{ name: 'Isolation Tower', status: 'draft', properties: 1 }]);
+  });
+});
+
+describe('Residents and pets (M2) stay inside their tenant', () => {
+  let buildingA: string;
+  let propertyA: string;
+  let occupancyA: string;
+
+  beforeAll(async () => {
+    buildingA = (
+      await adminPool.query(
+        `INSERT INTO buildings (tenant_id, name, city, district, address, floors, assessment_basis)
+         VALUES ($1, 'Resident Tower', 'София', 'Център', 'ул. Проба 3', 5, 'fixed') RETURNING id`,
+        [tenantA],
+      )
+    ).rows[0].id;
+    const entrance = (
+      await adminPool.query(
+        `INSERT INTO entrances (tenant_id, building_id, name) VALUES ($1, $2, 'А') RETURNING id`,
+        [tenantA, buildingA],
+      )
+    ).rows[0].id;
+    propertyA = (
+      await adminPool.query(
+        `INSERT INTO apartments (tenant_id, building_id, entrance_id, floor, number)
+         VALUES ($1, $2, $3, 1, '1') RETURNING id`,
+        [tenantA, buildingA, entrance],
+      )
+    ).rows[0].id;
+    occupancyA = (
+      await adminPool.query(
+        `INSERT INTO occupancies (tenant_id, apartment_id, user_id, role, valid_from, created_by)
+         VALUES ($1, $2, $3, 'owner', '2026-01-01', $3) RETURNING id`,
+        [tenantA, propertyA, elenaId],
+      )
+    ).rows[0].id;
+    await adminPool.query(
+      `INSERT INTO pets (tenant_id, apartment_id, name, species, valid_from, created_by)
+       VALUES ($1, $2, 'Рекс', 'dog', '2026-01-01', $3)`,
+      [tenantA, propertyA, elenaId],
+    );
+  });
+
+  it('RLS: another tenant reads and changes neither table; the app role cannot delete history', async () => {
+    const client = await appPool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [tenantB]);
+      // Tenant B has its own seeded occupancy; none of tenant A's rows may show.
+      const seen = await client.query('SELECT DISTINCT tenant_id FROM occupancies');
+      expect(seen.rows).toEqual([{ tenant_id: tenantB }]);
+      const own = await client.query('SELECT 1 FROM occupancies WHERE id = $1', [occupancyA]);
+      expect(own.rows).toHaveLength(0);
+      expect((await client.query('SELECT 1 FROM pets')).rows).toHaveLength(0);
+      const ended = await client.query(
+        `UPDATE occupancies SET valid_to = '2026-01-02' WHERE id = $1 RETURNING id`,
+        [occupancyA],
+      );
+      expect(ended.rows).toHaveLength(0);
+      await expect(
+        client.query(
+          `INSERT INTO pets (tenant_id, apartment_id, name, species, valid_from, created_by)
+           VALUES ($1, $2, 'Мац', 'cat', '2026-01-01', $3)`,
+          [tenantA, propertyA, demoMariaId],
+        ),
+      ).rejects.toMatchObject({ code: '42501' });
+      await client.query('ROLLBACK');
+    } finally {
+      client.release();
+    }
+    await expect(appPool.query('DELETE FROM occupancies')).rejects.toMatchObject({ code: '42501' });
+    await expect(appPool.query('DELETE FROM pets')).rejects.toMatchObject({ code: '42501' });
+  });
+
+  it("an occupancy cannot point at another tenant's account or property", async () => {
+    await expect(
+      adminPool.query(
+        `INSERT INTO occupancies (tenant_id, apartment_id, user_id, role, valid_from, created_by)
+         VALUES ($1, $2, $3, 'owner', '2026-01-01', $3)`,
+        [tenantA, propertyA, demoMariaId],
+      ),
+    ).rejects.toMatchObject({ code: '23503' });
+  });
+
+  it('API: tenant B reaches neither the residents of A nor A-residents’ own routes', async () => {
+    const inB = await tenantToken(demoMariaId, tenantB, ['manager']);
+    const call = (method: 'get' | 'post', url: string, tenantId: string) => {
+      const agent = request(app.getHttpServer());
+      return agent[method](url)
+        .set('Authorization', `Bearer ${inB}`)
+        .set('X-Tenant-Id', tenantId)
+        .send(
+          method === 'post'
+            ? {
+                role: 'occupant',
+                firstName: 'X',
+                name: 'X',
+                species: 'cat',
+                validFrom: '2026-01-01',
+              }
+            : undefined,
+        );
+    };
+    const routes: Array<['get' | 'post', string]> = [
+      ['get', `/buildings/${buildingA}/properties/${propertyA}/residents`],
+      ['post', `/buildings/${buildingA}/properties/${propertyA}/residents`],
+      ['get', `/me/properties/${propertyA}`],
+      ['post', `/me/properties/${propertyA}/occupants`],
+      ['post', `/me/properties/${propertyA}/pets`],
+    ];
+    for (const [method, url] of routes) {
+      expect((await call(method, url, tenantB)).status, `${method} ${url}`).toBe(404);
+      expect((await call(method, url, tenantA)).status, `${method} ${url} as A`).toBe(403);
+    }
+    const mine = await call('get', '/me/properties', tenantB);
+    expect(mine.status).toBe(200);
+    expect(mine.body).toEqual([]);
+
+    const untouched = await adminPool.query(
+      `SELECT (SELECT count(*) FROM occupancies WHERE apartment_id = $1)::int AS people,
+              (SELECT count(*) FROM pets WHERE apartment_id = $1)::int AS pets`,
+      [propertyA],
+    );
+    expect(untouched.rows).toEqual([{ people: 1, pets: 1 }]);
   });
 });
