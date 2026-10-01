@@ -173,8 +173,13 @@ describe('RLS at the SQL layer (inova_app role)', () => {
     }
   });
 
-  it('has no access to refresh tokens or to platform identities', async () => {
-    for (const table of ['refresh_tokens', 'platform_refresh_tokens', 'platform_users']) {
+  it('has no access to refresh tokens, platform identities or password resets', async () => {
+    for (const table of [
+      'refresh_tokens',
+      'platform_refresh_tokens',
+      'platform_users',
+      'password_resets',
+    ]) {
       await expect(appPool.query(`SELECT 1 FROM ${table}`), table).rejects.toMatchObject({
         code: '42501',
       });

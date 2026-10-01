@@ -8,7 +8,10 @@ import { AuthService } from './auth/auth.service';
 import { InviteCodes } from './auth/invite-codes';
 import { JwtGuard } from './auth/jwt.guard';
 import { PasswordHasher } from './auth/password-hasher';
+import { PasswordResets } from './auth/password-resets';
 import { RealmResolver } from './auth/realm-resolver';
+import { RecoveryPolicy } from './auth/recovery-policy';
+import { RecoveryService } from './auth/recovery.service';
 import { RefreshTokens } from './auth/refresh-tokens';
 import { TokenService } from './auth/token.service';
 import { DbService } from './db/db.service';
@@ -36,6 +39,13 @@ import { KeysService } from './keys/keys.service';
     },
     AuthService,
     JwtGuard,
+    RecoveryService,
+    { provide: RecoveryPolicy, useFactory: () => new RecoveryPolicy(process.env) },
+    {
+      provide: PasswordResets,
+      inject: [RecoveryPolicy],
+      useFactory: (policy: RecoveryPolicy) => new PasswordResets(policy),
+    },
     { provide: InviteCodes, useFactory: () => new InviteCodes(new InviteCodePolicy(process.env)) },
     {
       provide: MockCodeDelivery,
