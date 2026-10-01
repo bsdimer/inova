@@ -128,6 +128,10 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
 - A resident's record is the «Детайли на жител» panel: a row click in «Жители»
   opens it, and a resident hit in search opens their property page with that
   panel already open.
+- A notice's panel and screen (Figma `2703:338` at 1728, `2703:676` at 402)
+  give every resident under «Не са получили» a «Обади се» action: on a phone it
+  calls at once (`tel:`), on a computer it shows the phone number. E-mail as a
+  fallback channel is open (Still open 15) and not drawn.
 
 ## Responsive
 
