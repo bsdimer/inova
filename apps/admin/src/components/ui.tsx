@@ -808,7 +808,9 @@ export function Drawer({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-end justify-end sm:items-stretch"
+          // Beside the page the panel floats: 12 from the right, 11 from the
+          // top, 21 from the bottom (875:2088, 929:3895, 1489:29877).
+          className="fixed inset-0 z-50 flex items-end justify-end sm:items-stretch sm:pt-[0.6875rem] sm:pr-3 sm:pb-[1.3125rem]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -828,8 +830,9 @@ export function Drawer({
             transition={{ type: 'spring', damping: 30, stiffness: 320 }}
             // 520 wide, as the panel is drawn (1607:36771): its footer holds
             // the note, «Отказ» and «Запази промените» side by side. The
-            // sheet's top corners are 28, its bottom ones straight (1764:28895).
-            className="panel flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-[1.75rem] sm:h-full sm:max-h-none sm:w-[32.5rem] sm:rounded-none sm:rounded-l-3xl"
+            // sheet's top corners are 28, its bottom ones straight (1764:28895);
+            // the floating panel is 28 round on every corner.
+            className="panel flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-[1.75rem] sm:h-full sm:max-h-none sm:w-[32.5rem] sm:rounded-[1.75rem]"
           >
             <div className="shrink-0 border-b border-panel-divider px-5 py-4">{header}</div>
             <div
@@ -950,7 +953,8 @@ export function ConfirmDialog({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          // On a phone 40 from each side: 322 wide at 402 (1925:86).
+          className="fixed inset-0 z-[60] flex items-center justify-center px-10 py-4 sm:p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -964,17 +968,18 @@ export function ConfirmDialog({
             aria-labelledby={titleId}
             aria-describedby={textId}
             tabIndex={-1}
-            // 1925:78: 400 wide, 24 padding and radius; title 16, text 13;
-            // the answers 44 tall, 12 apart, 8 apart when stacked (1925:129).
-            className="panel-strong w-full max-w-[25rem] rounded-3xl p-6"
+            // 1925:78: 400 wide, radius 24, padding 25 (24 inside the 1 px
+            // edge); title 16/22 beside a 32 close, centred; text 13; the
+            // answers 44 tall, 12 apart, 8 apart when stacked (1925:129).
+            className="panel-strong w-full max-w-[25rem] rounded-3xl p-[1.5625rem]"
             initial={{ opacity: 0, y: 16, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.98 }}
             transition={{ type: 'spring', damping: 28, stiffness: 350 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between gap-3">
-              <h2 id={titleId} className="text-title-16 font-semibold">
+            <div className="flex items-center justify-between gap-3">
+              <h2 id={titleId} className="text-title-16-tight font-semibold">
                 {title}
               </h2>
               <button
@@ -982,7 +987,7 @@ export function ConfirmDialog({
                 onClick={onDismiss}
                 data-dialog-close
                 aria-label="Затвори"
-                className="-mt-1 -mr-1.5 rounded-full p-1.5 text-panel-ink-muted transition-colors hover:bg-panel-row hover:text-panel-ink"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-panel-ink-muted transition-colors hover:bg-panel-row hover:text-panel-ink"
               >
                 <X size="1.125rem" />
               </button>
