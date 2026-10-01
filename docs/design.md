@@ -53,9 +53,10 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   with a caption: «светла денем, тъмна вечер» / «винаги светла» / «винаги
   тъмна». «Динамична» is the default for everyone who has not chosen; it is
   light by day and dark in the evening by the time of day, never the device
-  setting (stakeholder, WHI-86 29.09 12:37). When exactly it switches
-  (sunrise and sunset for Sofia, or fixed hours) is the team lead's call in
-  WHI-86.
+  setting (stakeholder, WHI-86 29.09 12:37). It switches at sunrise and sunset
+  for the browser's time zone (a zone → approximate coordinates table), with a
+  fixed 07:00–19:00 fallback for a zone not in the table; no location
+  permission, no tenant setting (team lead, WHI-86 30.09; built in #53).
 - Only the card clips its content. Wrappers of glowing buttons never use
   `overflow: hidden`, or the halo is cut in a straight line. A glow around a
   thin stroke (the progress arc) is a blurred copy of the stroke underneath,
@@ -72,6 +73,11 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   | Too wide for a panel (e.g. «Пробно начисляване»)                           | centred window, about 16:9 and smaller than the screen, over the dimmed screen, × | as the view row above                                               |
   | A work place (Апартамент, search results) or a multi-step process (import) | its own page                                                                      | its own page                                                        |
 
+- From 640px up the right panel floats as on 1728: 12px from the right, 11
+  from the top, 21 from the bottom, radius 28 on every corner, 520 wide but
+  never wider than the screen minus 24px. Below 640 it is a bottom sheet
+  rounded only at the top (28). No separate tablet frame (design session
+  01.10, PR #66 question).
 - × or back on a panel or form with unsaved changes asks «Да се запазят ли
   промените?» — «Промените още не са запазени.» — with «Не запазвай» /
   «Запази». The confirmation opens over the form with its own scrim; Esc, a
@@ -116,9 +122,10 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
   search result opens a normal page. The search dropdown has no scrim (it
   already sits on a panel with a shadow); its bottom row with keyboard hints
   is always visible.
-- A menu item whose module is not built yet (Документи, Справки, Анкети,
-  Общност, the tenant-named item) is not shown — no empty pages behind the
-  rail.
+- A pilot module that is not built yet (Задачи, Известия, Финанси, Сгради,
+  Жители, Сигнали) shows its menu item with the placeholder «Разделът още не е
+  наличен.». Items without a built module and outside the current build —
+  Документи, Справки, Анкети, Общност and «Каталог» (P1, D35) — are not shown.
 - Platform scope has no global search: the header search is hidden and the
   filter search finds organisations by name and key. The organisation key
   never appears inside a tenant.
@@ -226,7 +233,8 @@ V2 Glass and V2 Layout, and nobody edits them by hand.
 - One concept, one name (see AGENTS.md): the words are in
   [glossary.md](glossary.md), with the words to avoid and the source of each.
 - A count label names what is counted: «4 реда с грешки», not «4 грешки».
-- Plan codes (B9, D16) never appear inside UI sentences; a milestone marker
-  («M3») may only be a separate badge on a deferred element.
+- Plan codes (M3, B9, D16, P1) never appear in the interface — not in
+  sentences, titles, aria-labels or badges; a section that is not built yet
+  says «Разделът още не е наличен.» (#45, WHI-87).
 - Lifetimes of links and codes shown on screen come from the endpoint
   response, never hard-coded (B13 in [plan/decisions.md](plan/decisions.md)).
