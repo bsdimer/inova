@@ -1,12 +1,30 @@
-import { Body, Controller, Get, HttpCode, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { RuntimeEnv } from '@inova/shared';
 import { Throttle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { ActivateDto, LoginDto, RefreshDto, ResendCodeDto, SetPasswordDto } from './dto';
+import {
+  ActivateDto,
+  LoginDto,
+  RecoveryConfirmDto,
+  RecoveryRequestDto,
+  RefreshDto,
+  ResendCodeDto,
+  SetPasswordDto,
+} from './dto';
 import type { RealmHint } from './realm-resolver';
 import { JwtGuard, type AuthedRequest } from './jwt.guard';
 import { Public } from './public.decorator';
+import { RecoveryService } from './recovery.service';
 
 // Brute-force protection on credential/code endpoints: attempts per minute per
 // client address (tunable for tests). Parsed strictly — a non-numeric value
@@ -26,7 +44,10 @@ const realmHint = (dto: { realm?: string; brand?: string }): RealmHint => ({
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly auth: AuthService) {}
+  constructor(
+    private readonly auth: AuthService,
+    private readonly recovery: RecoveryService,
+  ) {}
 
   @Public()
   @Post('login')
@@ -59,6 +80,36 @@ export class AuthController {
   async resendCode(@Body() dto: ResendCodeDto) {
     await this.auth.resendCode(dto.phone, realmHint(dto));
     return { status: 'ok' };
+  }
+
+  @Public()
+  @Post('recovery')
+  @HttpCode(202)
+  @Throttle(STRICT)
+  @ApiOperation({
+    summary: 'Send a recovery link by e-mail or a code by SMS (B13); the same answer either way',
+  })
+  requestRecovery(@Body() dto: RecoveryRequestDto) {
+    if (Boolean(dto.email) === Boolean(dto.phone)) {
+      throw new BadRequestException('Give an e-mail or a phone, not both');
+    }
+    const contact = dto.email ? { email: dto.email } : { phone: dto.phone! };
+    return this.recovery.request(contact, realmHint(dto));
+  }
+
+  @Public()
+  @Post('recovery/confirm')
+  @HttpCode(204)
+  @Throttle(STRICT)
+  @ApiOperation({ summary: 'Set a new password with the link token, or the phone and the code' })
+  async confirmRecovery(@Body() dto: RecoveryConfirmDto) {
+    const byLink = dto.token !== undefined;
+    const byCode = dto.phone !== undefined && dto.code !== undefined;
+    if (byLink === byCode || (byLink && (dto.phone || dto.code))) {
+      throw new BadRequestException('Give the link token, or the phone and the code');
+    }
+    const proof = byLink ? { token: dto.token! } : { phone: dto.phone!, code: dto.code! };
+    await this.recovery.confirm(proof, dto.password, realmHint(dto));
   }
 
   @Public()

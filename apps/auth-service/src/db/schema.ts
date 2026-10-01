@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { integer, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { integer, jsonb, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 /**
  * Identity tables owned by auth-service (db/migrations/0001, reshaped by 0004).
@@ -98,6 +98,43 @@ export const inviteCodes = pgTable(
     consumedAt: timestamp('consumed_at', { withTimezone: true }),
     createdBy: uuid('created_by'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
+);
+
+/** Password recovery by e-mail link or phone code (B13, db/migrations/0008). */
+export const passwordResets = pgTable(
+  'password_resets',
+  {
+    tenantId: uuid('tenant_id').notNull(),
+    id: uuid('id').notNull().defaultRandom(),
+    userId: uuid('user_id').notNull(),
+    channel: text('channel', { enum: ['email', 'phone'] }).notNull(),
+    secretHash: text('secret_hash').notNull(),
+    status: text('status', { enum: ['active', 'consumed', 'expired', 'voided'] })
+      .notNull()
+      .default('active'),
+    attempts: integer('attempts').notNull().default(0),
+    maxAttempts: integer('max_attempts').notNull().default(5),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    consumedAt: timestamp('consumed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
+);
+
+/** Insert-only: auth-service writes the record of a password reset (B13). */
+export const auditRecords = pgTable(
+  'audit_records',
+  {
+    tenantId: uuid('tenant_id').notNull(),
+    id: uuid('id').notNull().defaultRandom(),
+    actorUserId: uuid('actor_user_id'),
+    actorType: text('actor_type', { enum: ['user', 'system', 'platform'] }).notNull(),
+    action: text('action').notNull(),
+    entityType: text('entity_type').notNull(),
+    entityId: text('entity_id'),
+    payload: jsonb('payload').notNull(),
   },
   (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
 );
