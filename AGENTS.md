@@ -22,8 +22,7 @@ platform's own "inova" brand.
 ## Architecture invariants (do not violate)
 
 - **Tenant isolation:** every tenant-owned table has `tenant_id` as the _leading_
-  column of its primary key and tenant-scoped indexes; audited identity-scope
-  lookup indexes may lead with their global lookup key. RLS on all such tables;
+  column of its primary key and tenant-scoped indexes. RLS on all such tables;
   the app DB role never bypasses RLS. Client-supplied brand/bundle/tenant config
   is **never** an authorization input — only authenticated membership (JWT
   verified server-side, DB re-check for sensitive operations).
