@@ -717,6 +717,7 @@ describe('Residents and pets (M2) stay inside their tenant', () => {
       ['get', `/me/properties/${propertyA}`],
       ['post', `/me/properties/${propertyA}/occupants`],
       ['post', `/me/properties/${propertyA}/pets`],
+      ['get', `/me/properties/${propertyA}/contacts`],
     ];
     for (const [method, url] of routes) {
       expect((await call(method, url, tenantB)).status, `${method} ${url}`).toBe(404);

@@ -521,3 +521,100 @@ describe('invalid input (400) and unknown ids (404)', () => {
     ).toBe(404);
   });
 });
+
+describe('«Контакти» and the building details (WHI-123)', () => {
+  it('shows a resident the organisation and the house managers of their building, and its bank account', async () => {
+    await manager.patch(`/buildings/${buildingId}`, { bankAccount: 'BG80BNBG96611020345678' });
+    const resident = await activated(
+      (
+        await addResident(flat['1'], {
+          role: 'tenant',
+          firstName: 'Контакт',
+          phone: '+359881200071',
+        })
+      ).accountId!,
+    );
+
+    const contacts = await resident.get(`/me/properties/${flat['1']}/contacts`);
+    expect(contacts.status).toBe(200);
+    // The manager who set the building up manages it (building scope, #75).
+    expect(contacts.body).toEqual({
+      organisation: { name: 'WhiteNova Technology' },
+      managers: [{ name: 'Test manager', phone: null, email: 'manager@inova.bg' }],
+    });
+
+    const detail = await resident.get(`/me/properties/${flat['1']}`);
+    expect(detail.body.building).toMatchObject({
+      name: 'бл. 3',
+      bankAccount: 'BG80BNBG96611020345678',
+    });
+  });
+
+  it('follows assignments: a new manager appears, an ended or suspended one disappears', async () => {
+    const resident = await activated(
+      (
+        await addResident(flat['1'], {
+          role: 'occupant',
+          firstName: 'Следящ',
+          phone: '+359881200072',
+        })
+      ).accountId!,
+    );
+    const names = async () =>
+      (await resident.get(`/me/properties/${flat['1']}/contacts`)).body.managers.map(
+        (m: { name: string }) => m.name,
+      );
+
+    const second = await t.account(tenantA, 'second-manager@inova.bg', 'manager');
+    const admin = t.as(
+      await t.tenantToken(
+        await t.account(tenantA, 'contacts-admin@inova.bg', 'admin'),
+        tenantA,
+        'admin',
+      ),
+      tenantA,
+    );
+    expect(
+      (await admin.post(`/buildings/${buildingId}/managers`, { accountId: second })).status,
+    ).toBe(201);
+    expect(await names()).toEqual(['Test manager', 'Test manager']);
+
+    await t.adminPool.query(`UPDATE users SET status = 'suspended' WHERE id = $1`, [second]);
+    expect(await names()).toEqual(['Test manager']);
+    expect((await admin.delete(`/buildings/${buildingId}/managers/${managerId}`)).status).toBe(200);
+    expect(await names()).toEqual([]);
+    // Back as it was: the suite's manager manages the building again.
+    expect(
+      (await admin.post(`/buildings/${buildingId}/managers`, { accountId: managerId })).status,
+    ).toBe(201);
+  });
+
+  it('shows nothing of a building the resident does not live in (404)', async () => {
+    const other = await manager.post('/buildings', {
+      name: 'Чужда',
+      city: 'София',
+      district: 'Център',
+      address: 'ул. Чужда 1',
+      floors: 2,
+      hasElevator: false,
+      assessmentBasis: 'fixed',
+      entrances: ['А'],
+    });
+    const otherFlat = await manager.post(`/buildings/${other.body.id}/properties`, {
+      entranceId: other.body.entrances[0].id,
+      floor: 1,
+      number: '1',
+      propertyType: 'apartment',
+    });
+    const resident = await activated(
+      (
+        await addResident(flat['1'], {
+          role: 'occupant',
+          firstName: 'Любопитен',
+          phone: '+359881200073',
+        })
+      ).accountId!,
+    );
+    expect((await resident.get(`/me/properties/${otherFlat.body.id}/contacts`)).status).toBe(404);
+  });
+});

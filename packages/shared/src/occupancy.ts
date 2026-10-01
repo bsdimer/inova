@@ -48,6 +48,10 @@ export interface MyProperty {
 
 /** `GET /v1/me/properties/:id` — the property with the people and pets living there today. */
 export interface MyPropertyDetail extends MyProperty {
+  building: MyProperty['building'] & {
+    /** The account residents pay into (D36); null until the organisation enters it. */
+    bankAccount: string | null;
+  };
   household: Array<{
     id: string;
     role: OccupancyRole;
@@ -64,4 +68,11 @@ export interface MyPropertyDetail extends MyProperty {
     validFrom: IsoDate;
     validTo: IsoDate | null;
   }>;
+}
+
+/** `GET /v1/me/properties/:id/contacts` — who to call about the building («Контакти»). */
+export interface BuildingContacts {
+  organisation: { name: string };
+  /** The building's current house managers, longest-serving first. */
+  managers: Array<{ name: string; phone: string | null; email: string | null }>;
 }
