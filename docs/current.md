@@ -83,23 +83,23 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
 
 209 integration tests against real Postgres + RLS + the non-privileged `inova_app` / `inova_auth` roles, plus 148 unit tests (counts of #74 and #77, 2026-10-01):
 
-| Suite                                                                                                             | Count | Job                           |
-| ----------------------------------------------------------------------------------------------------------------- | ----- | ----------------------------- |
-| `apps/api/test/tenant-isolation.e2e.test.ts`                                                                      | 32    | `tenant-isolation`            |
-| `apps/api/test/tenant-schema.contract.test.ts`                                                                    | 7     | `tenant-isolation`            |
-| `apps/api/test/staff-roles.e2e.test.ts`                                                                           | 16    | `auth` (RBAC)                 |
-| `apps/api/test/buildings.e2e.test.ts`                                                                             | 32    | none yet — `pnpm verify` only |
-| `apps/api/test/residents.e2e.test.ts`                                                                             | 24    | none yet — `pnpm verify` only |
-| `apps/api/test/requests.e2e.test.ts`                                                                              | 20    | none yet — `pnpm verify` only |
-| `apps/api/test/import.e2e.test.ts`                                                                                | 13    | none yet — `pnpm verify` only |
-| `apps/auth-service/test/auth-flows.e2e.test.ts`                                                                   | 37    | `auth`                        |
-| `apps/auth-service/test/rate-limit.e2e.test.ts`                                                                   | 3     | `auth`                        |
-| `apps/auth-service/test/db-helper.e2e.test.ts`                                                                    | 2     | `auth`                        |
-| `apps/auth-service/test/realm-migration.e2e.test.ts`                                                              | 6     | `auth`                        |
-| `apps/auth-service/test/recovery.e2e.test.ts`                                                                     | 17    | `auth`                        |
-| `packages/shared` unit (Money, runtime env, sign-in, dashboard, theme, names, auth claims, IBAN, occupancy dates) | 100   | `unit`                        |
-| `apps/auth-service` unit (hasher, login failures, realms, refresh tokens, lifetimes)                              | 37    | `unit`                        |
-| `apps/api` unit (property sheet parser)                                                                           | 11    | `unit`                        |
+| Suite                                                                                                             | Count | Job                |
+| ----------------------------------------------------------------------------------------------------------------- | ----- | ------------------ |
+| `apps/api/test/tenant-isolation.e2e.test.ts`                                                                      | 32    | `tenant-isolation` |
+| `apps/api/test/tenant-schema.contract.test.ts`                                                                    | 7     | `tenant-isolation` |
+| `apps/api/test/staff-roles.e2e.test.ts`                                                                           | 16    | `auth` (RBAC)      |
+| `apps/api/test/buildings.e2e.test.ts`                                                                             | 32    | `auth`             |
+| `apps/api/test/residents.e2e.test.ts`                                                                             | 24    | `auth`             |
+| `apps/api/test/requests.e2e.test.ts`                                                                              | 20    | `auth`             |
+| `apps/api/test/import.e2e.test.ts`                                                                                | 13    | `auth`             |
+| `apps/auth-service/test/auth-flows.e2e.test.ts`                                                                   | 37    | `auth`             |
+| `apps/auth-service/test/rate-limit.e2e.test.ts`                                                                   | 3     | `auth`             |
+| `apps/auth-service/test/db-helper.e2e.test.ts`                                                                    | 2     | `auth`             |
+| `apps/auth-service/test/realm-migration.e2e.test.ts`                                                              | 6     | `auth`             |
+| `apps/auth-service/test/recovery.e2e.test.ts`                                                                     | 17    | `auth`             |
+| `packages/shared` unit (Money, runtime env, sign-in, dashboard, theme, names, auth claims, IBAN, occupancy dates) | 100   | `unit`             |
+| `apps/auth-service` unit (hasher, login failures, realms, refresh tokens, lifetimes)                              | 37    | `unit`             |
+| `apps/api` unit (property sheet parser)                                                                           | 11    | `unit`             |
 
 Browser (Playwright, `apps/admin/e2e`, CI job `e2e`): 163 passed on 2026-09-30 (the #57 run).
 
@@ -111,7 +111,7 @@ Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migr
 | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | M0 Foundations                       | Done for _local_ foundations; test environment now deployed                                                                                                                                                          | Container deploy to the test host exists (GHCR images, compose, nginx, Let's Encrypt). Still no Terraform/OIDC, no generated OpenAPI clients, no “one command” full stack. Those belong to M-Ops / later. Lint and format are now real gates. |
 | M1 Identity                          | In progress: backend + admin screens; B8 (#57), B14–B15 (#58) and B13 recovery (#74) done — nothing left before M2                                                                                                   | Multi-role context needs M2 occupancies; then Redis denylist, worker, real delivery, silent refresh, audit viewer.                                                                                                                            |
-| M2 Property                          | In progress: backend done 2026-10-01 — buildings (#59), residents (#61), requests, manager assignments and building scope (#75), import (#77)                                                                        | The admin screens and the mobile «Добави моя имот» form; the pilot's data into the template; the building photo is in M6. Four API suites run in no CI job yet (#80 adds them).                                                               |
+| M2 Property                          | In progress: backend done 2026-10-01 — buildings (#59), residents (#61), requests, manager assignments and building scope (#75), import (#77)                                                                        | The admin screens and the mobile «Добави моя имот» form; the pilot's data into the template; the building photo is in M6.                                                                                                                     |
 | M5 Mobile / M9 Dashboard / M10 Brand | Mobile: UI shells on `MOCK` data; the surveys screens were built ahead of the plan — surveys come before the pilot (D23), their milestone is still to be cut. Admin Табло: shell on live APIs, empty slots until M2+ | Mock data until M2+ APIs exist.                                                                                                                                                                                                               |
 
 ## Temporary mocks (greppable)
