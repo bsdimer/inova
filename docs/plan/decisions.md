@@ -124,6 +124,7 @@ until they are next changed.
 | D34 | [A building's document can be marked visible to its residents — before the pilot, narrow](decisions/D34-resident-visible-documents.md) (WHI-79)                   | Decided; M9, M5      |
 | D35 | [The tenant-named menu item opens a listings module — after the pilot, with Privileges](decisions/D35-listings-after-pilot.md) (WHI-29)                           | Decided; P1 wave     |
 | D36 | [Bulk messages — the placeholders, the categories, the Infobip channel and who is «без приложението»](decisions/D36-bulk-messages-fields-and-channel.md) (WHI-30) | Decided; M7          |
+| D37 | [After the pilot the portal names the organisation by a sign-in link per organisation](decisions/D37-portal-sign-in-link.md)                                      | Decided; M10         |
 
 ## Remaining decisions requiring stakeholder confirmation
 

@@ -1,6 +1,6 @@
 # M2 — Property hierarchy and resident linking
 
-**Status:** In progress — backend in review: buildings, entrances, properties and activation (#59, WHI-96), residents on a property (#61). Admin screens and import follow.
+**Status:** In progress — backend merged 2026-10-01: buildings, entrances, properties and activation (#59, WHI-96), residents, occupancies and pets on a property and `GET /v1/me/properties` (#61, WHI-97). Left: removals and manager assignments (WHI-98), import (WHI-99), admin screens.
 
 ## Goal
 
