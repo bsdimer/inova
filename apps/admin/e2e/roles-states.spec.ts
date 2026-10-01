@@ -113,3 +113,28 @@ test('the administrator still creates, edits and deletes roles', async ({ page }
   ).toBeVisible();
   await expect(card(page, 'Одитор').getByRole('button', { name: 'Изтрий' })).toBeVisible();
 });
+
+test('the roles stand where 1091:10390 draws them: 16 under the head, cards 157 tall', async ({
+  page,
+}) => {
+  await openSignedIn(page, ORG_ADMIN, '/roles');
+  const admin = card(page, 'Администратор');
+  await expect(page.getByRole('region', { name: 'Каталог на правата' })).toBeVisible();
+  // The cards rise into place; measure once they rest.
+  await expect.poll(async () => Math.round((await admin.boundingBox())!.y)).toBe(202);
+  expect(Math.round((await admin.boundingBox())!.height)).toBe(157);
+  // A right is a 26 tall chip; the card's content starts 25 in and 17 down.
+  const chip = admin.getByRole('listitem').first();
+  expect(Math.round((await chip.boundingBox())!.height)).toBe(26);
+  const cardBox = (await admin.boundingBox())!;
+  const head = (await admin.getByRole('heading').boundingBox())!;
+  expect([Math.round(head.x - cardBox.x), Math.round(head.y - cardBox.y)]).toEqual([25, 17]);
+  // The catalogue follows the grid 16 below.
+  const columnsBottom = Math.max(
+    ...(await page
+      .locator('main article')
+      .evaluateAll((els) => els.map((el) => el.getBoundingClientRect().bottom))),
+  );
+  const catalogue = (await page.getByRole('region', { name: 'Каталог на правата' }).boundingBox())!;
+  expect(Math.round(catalogue.y - columnsBottom)).toBe(16);
+});

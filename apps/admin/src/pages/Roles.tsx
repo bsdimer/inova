@@ -101,7 +101,8 @@ export function RolesPage() {
   }
 
   return (
-    <div className="space-y-5">
+    // Head, grid and catalogue 16 apart, as on the other pages (1091:10390).
+    <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="text-title-22 font-medium">Роли</h1>
@@ -126,7 +127,10 @@ export function RolesPage() {
       ) : roles.isPending ? (
         <div aria-hidden className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           {[0, 1].map((i) => (
-            <div key={i} className="glass-data flex flex-col gap-3 rounded-3xl px-6 py-4">
+            <div
+              key={i}
+              className="glass-data flex flex-col gap-3 rounded-3xl px-[1.5625rem] py-[1.0625rem]"
+            >
               <SkeletonBar className="h-5 w-2/5" />
               <SkeletonBar className="h-4 w-4/5" />
               <SkeletonBar className="h-6 w-3/5" />
@@ -166,7 +170,7 @@ export function RolesPage() {
 /** A right on glass: glass/chip, Label/12 Regular (1092:210). */
 function RightChip({ children }: { children: string }) {
   return (
-    <li className="text-label-12 rounded-full bg-glass-chip px-2.5 py-1 whitespace-nowrap text-ink shadow-[inset_0_0_0_0.0625rem_var(--glass-edge-soft)]">
+    <li className="text-label-12 rounded-full bg-glass-chip px-2.5 py-[0.3125rem] whitespace-nowrap text-ink shadow-[inset_0_0_0_0.0625rem_var(--glass-edge-soft)]">
       {children}
     </li>
   );
@@ -197,7 +201,8 @@ function RoleCard({
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: Math.min(index, 6) * 0.05 }}
-      className="glass-data flex flex-col gap-2.5 rounded-3xl px-6 py-4"
+      // 25 in and 17 down: 24 and 16 inside the 1 px edge (1092:201).
+      className="glass-data flex flex-col gap-2.5 rounded-3xl px-[1.5625rem] py-[1.0625rem]"
     >
       <div className="flex flex-wrap items-center gap-2.5">
         <h2 className="text-title-16 font-medium">{ROLE_NAMES[role.key] ?? role.name}</h2>
@@ -265,7 +270,7 @@ function PermissionCatalogue({ catalogue }: { catalogue: Permission[] }) {
   return (
     <section
       aria-labelledby="catalogue-title"
-      className="glass-data flex flex-col gap-2 rounded-3xl px-6 py-4"
+      className="glass-data flex flex-col gap-2 rounded-3xl px-[1.5625rem] py-[1.0625rem]"
     >
       <h2 id="catalogue-title" className="text-body-15 font-medium">
         Каталог на правата
