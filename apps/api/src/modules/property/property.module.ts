@@ -3,6 +3,8 @@ import { AuditService } from '../audit/audit.service';
 import { BuildingScope } from './building-scope';
 import { BuildingsController } from './buildings.controller';
 import { BuildingsService } from './buildings.service';
+import { PropertyImportController } from './import/import.controller';
+import { PropertyImportService } from './import/property-import.service';
 import { LinkRequestsService } from './link-requests.service';
 import { ManagersService } from './managers.service';
 import { RemovalRequestsService } from './removal-requests.service';
@@ -26,6 +28,7 @@ import { ResidentsService } from './residents.service';
     PlatformRemovalRequestsController,
     LinkRequestsController,
     MyLinkRequestsController,
+    PropertyImportController,
   ],
   providers: [
     BuildingsService,
@@ -33,6 +36,7 @@ import { ResidentsService } from './residents.service';
     ManagersService,
     RemovalRequestsService,
     LinkRequestsService,
+    PropertyImportService,
     BuildingScope,
     AuditService,
   ],

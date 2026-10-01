@@ -173,8 +173,13 @@ describe('RLS at the SQL layer (inova_app role)', () => {
     }
   });
 
-  it('has no access to refresh tokens or to platform identities', async () => {
-    for (const table of ['refresh_tokens', 'platform_refresh_tokens', 'platform_users']) {
+  it('has no access to refresh tokens, platform identities or password resets', async () => {
+    for (const table of [
+      'refresh_tokens',
+      'platform_refresh_tokens',
+      'platform_users',
+      'password_resets',
+    ]) {
       await expect(appPool.query(`SELECT 1 FROM ${table}`), table).rejects.toMatchObject({
         code: '42501',
       });
@@ -789,5 +794,23 @@ describe('Requests and manager assignments (M2) stay inside their tenant', () =>
         code: '42501',
       });
     }
+  });
+});
+
+describe('Property import (WHI-99) stays inside its tenant', () => {
+  it("refuses a token of tenant B on tenant A's import and template (403)", async () => {
+    const inB = await tenantToken(demoMariaId, tenantB, ['manager']);
+    const sheet = Buffer.from('Сграда;Град\nX;Y\n');
+    const imported = await request(app.getHttpServer())
+      .post('/imports/properties?dryRun=false')
+      .set('Authorization', `Bearer ${inB}`)
+      .set('X-Tenant-Id', tenantA)
+      .attach('file', sheet, 'properties.csv');
+    expect(imported.status).toBe(403);
+    const template = await request(app.getHttpServer())
+      .get('/imports/properties/template')
+      .set('Authorization', `Bearer ${inB}`)
+      .set('X-Tenant-Id', tenantA);
+    expect(template.status).toBe(403);
   });
 });
