@@ -138,13 +138,15 @@ export function RolesScopeDrawer({
           <div className="flex items-start gap-3">
             <Avatar name={member.fullName} size={40} />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-base font-semibold">{member.fullName}</p>
-              <p className="truncate text-sm text-panel-ink-muted">
+              <p className="truncate text-base font-medium">{member.fullName}</p>
+              <p className="text-body-13-tight truncate text-panel-ink-muted">
                 {member.email ?? member.phone}
               </p>
-              <p className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-panel-ink-muted">
+              <p className="text-body-13-tight mt-1 flex flex-wrap items-center gap-x-2 text-panel-ink-muted">
                 <StatusDot tone={STATUS_TONES[member.status]} onPanel>
-                  <span className="text-xs">{STATUS_LABELS[member.status]}</span>
+                  <span className="text-body-13-tight font-normal">
+                    {STATUS_LABELS[member.status]}
+                  </span>
                 </StatusDot>
                 <span className="num">· Член от {formatSince(member.since)}</span>
               </p>
@@ -154,7 +156,7 @@ export function RolesScopeDrawer({
               onClick={close}
               data-dialog-close
               aria-label="Затвори"
-              className="rounded-full p-1.5 text-panel-ink-muted transition-colors hover:bg-panel-row hover:text-panel-ink"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-panel-ink-muted transition-colors hover:bg-panel-row hover:text-panel-ink"
             >
               <X size="1.125rem" />
             </button>
@@ -180,7 +182,7 @@ export function RolesScopeDrawer({
             takes one `roleKey`, so this is a single choice — check boxes here
             would let the drawer show a second role the server silently drops.
           */}
-            <p className="mt-0.5 text-xs text-panel-ink-muted">
+            <p className="text-body-13-tight mt-0.5 text-panel-ink-muted">
               Акаунтът има една роля. Няколко роли на един акаунт ще са възможни по-късно.
             </p>
             <div role="radiogroup" aria-label="Роля" className="mt-3 space-y-1.5">
@@ -210,10 +212,10 @@ export function RolesScopeDrawer({
                       )}
                     </span>
                     <span className="min-w-0">
-                      <span className="block text-sm font-medium text-panel-ink">
+                      <span className="block text-sm font-semibold text-panel-ink">
                         {ROLE_NAMES[role.key] ?? roleName(role.key, roles)}
                       </span>
-                      <span className="block text-xs text-panel-ink-muted">
+                      <span className="text-body-13-tight block text-panel-ink-muted">
                         {describeRole(role)}
                       </span>
                     </span>
@@ -225,13 +227,13 @@ export function RolesScopeDrawer({
 
           <section>
             <h3 className="text-sm font-semibold">Обхват</h3>
-            <p className="mt-0.5 text-xs text-panel-ink-muted">
+            <p className="text-body-13-tight mt-0.5 text-panel-ink-muted">
               Къде важат ролите. Стесняването на обхвата никога не разширява правата.
             </p>
             {/* TODO(M2): building scope — assignments arrive with the property hierarchy. */}
             <div className="mt-3 rounded-2xl bg-panel-row px-3.5 py-3 opacity-60">
-              <p className="text-sm font-medium text-panel-ink">Всички сгради в организацията</p>
-              <p className="text-xs text-panel-ink-muted">
+              <p className="text-sm font-semibold text-panel-ink">Всички сгради в организацията</p>
+              <p className="text-body-13-tight text-panel-ink-muted">
                 Избор на отделни сгради идва с йерархията на имотите.
               </p>
             </div>
@@ -242,7 +244,7 @@ export function RolesScopeDrawer({
           <section>
             <h3 className="text-sm font-semibold">Акаунт</h3>
             {!protection && (
-              <p className="mt-0.5 text-xs text-panel-ink-muted">
+              <p className="text-body-13-tight mt-0.5 text-panel-ink-muted">
                 Спирането е обратимо. Изтриването прекратява достъпа завинаги.
               </p>
             )}
@@ -431,14 +433,16 @@ function Footer({
   onDone: () => void;
 }) {
   const secondary =
-    'rounded-full border border-panel-border px-4 py-2 text-sm font-medium text-panel-ink disabled:opacity-40';
+    'h-11 rounded-full border border-panel-border px-4 text-sm font-medium text-panel-ink disabled:opacity-40';
   const primary =
-    'flex items-center gap-2 rounded-full bg-panel-ink px-5 py-2 text-sm font-semibold text-panel-ink-inverse disabled:opacity-40';
+    'flex h-11 items-center gap-2 rounded-full bg-panel-ink px-5 text-sm font-semibold text-panel-ink-inverse disabled:opacity-40';
 
   if (save.kind === 'saved' && !dirty) {
     return (
       <div className="flex items-center gap-3">
-        <span className="min-w-0 flex-1 truncate text-xs text-panel-ink-faint">Няма промени</span>
+        <span className="text-body-13-tight min-w-0 flex-1 truncate text-panel-ink-faint">
+          Няма промени
+        </span>
         <button type="button" onClick={onDone} className={secondary}>
           Затвори
         </button>
@@ -460,7 +464,9 @@ function Footer({
 
   return (
     <div className="flex items-center gap-3">
-      <span className="min-w-0 flex-1 truncate text-xs text-panel-ink-faint">{note}</span>
+      <span className="text-body-13-tight min-w-0 flex-1 truncate text-panel-ink-faint">
+        {note}
+      </span>
       <button type="button" onClick={onCancel} disabled={saving} className={secondary}>
         Отказ
       </button>
