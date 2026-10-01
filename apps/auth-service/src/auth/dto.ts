@@ -20,10 +20,17 @@ export class RealmDto {
   brand?: string;
 }
 
+/** An e-mail or a phone in E.164 — exactly one; the controller checks which. */
 export class LoginDto extends RealmDto {
-  @ApiProperty({ example: 'maria@inova.bg' })
+  @ApiProperty({ required: false, example: 'maria@inova.bg' })
+  @IsOptional()
   @IsEmail()
-  email!: string;
+  email?: string;
+
+  @ApiProperty({ required: false, example: '+359881000001' })
+  @IsOptional()
+  @Matches(/^\+\d{6,15}$/, { message: 'phone must be in E.164 format' })
+  phone?: string;
 
   @ApiProperty({ example: 'inova-owner' })
   @IsString()
