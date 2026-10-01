@@ -108,6 +108,9 @@ services:
       AUTH_DEFAULT_REALM: ${AUTH_DEFAULT_REALM:-}
       # Days an invite code stays valid (1–90). Same value for core-api below.
       INVITE_CODE_TTL_DAYS: ${INVITE_CODE_TTL_DAYS:-30}
+      # Recovery link (15–1440) and SMS code (5–30) lifetimes in minutes (B13).
+      RECOVERY_LINK_TTL_MINUTES: ${RECOVERY_LINK_TTL_MINUTES:-60}
+      RECOVERY_CODE_TTL_MINUTES: ${RECOVERY_CODE_TTL_MINUTES:-10}
     volumes:
       # Relative to the stack directory, never absolute: this file is shared by
       # every environment, and an absolute path would make them all sign with

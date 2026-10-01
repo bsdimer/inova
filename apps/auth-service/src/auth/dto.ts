@@ -65,3 +65,40 @@ export class SetPasswordDto {
   @MinLength(8)
   password!: string;
 }
+
+/** `POST /auth/recovery`: an e-mail (offered first) or a phone — exactly one (B13). */
+export class RecoveryRequestDto extends RealmDto {
+  @ApiProperty({ required: false, example: 'maria@inova.bg' })
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @ApiProperty({ required: false, example: '+359881000001' })
+  @IsOptional()
+  @Matches(/^\+\d{6,15}$/, { message: 'phone must be in E.164 format' })
+  phone?: string;
+}
+
+/** `POST /auth/recovery/confirm`: the link's token, or the phone and its code, and the new password. */
+export class RecoveryConfirmDto extends RealmDto {
+  @ApiProperty({ required: false, description: 'The token from the e-mailed link' })
+  @IsOptional()
+  @IsString()
+  @Length(40, 200)
+  token?: string;
+
+  @ApiProperty({ required: false, example: '+359881000001' })
+  @IsOptional()
+  @Matches(/^\+\d{6,15}$/, { message: 'phone must be in E.164 format' })
+  phone?: string;
+
+  @ApiProperty({ required: false, example: '482913', description: 'The code sent by SMS' })
+  @IsOptional()
+  @Matches(/^\d{6}$/, { message: 'code must be 6 digits' })
+  code?: string;
+
+  @ApiProperty({ minLength: 8 })
+  @IsString()
+  @MinLength(8)
+  password!: string;
+}
