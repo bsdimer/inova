@@ -1,6 +1,6 @@
 # M2 — Property hierarchy and resident linking
 
-**Status:** Not started. Next after the M1 B8 refactor (mobile-first).
+**Status:** In progress — backend in review: buildings, entrances, properties and activation (#59, WHI-96), residents on a property (#61). Admin screens and import follow.
 
 ## Goal
 
@@ -37,10 +37,8 @@ The schema contract test must pass on the new tables without being rewritten.
   active building the edit form adds an entrance but never removes one (an
   entrance holds apartments, which leave only through a removal request);
   apartments are added after the building exists, one by one or by import.
-  A building takes an optional photo (an `attachment` owned by the building,
-  through the shared `files` module) on creation and on edit, where it can be
-  replaced or removed; without one the «Сгради» list shows the icon
-  (stakeholder, WHI-37 29.09 15:11; frames «V2 · Сгради»).
+  The building photo is not part of M2: it needs the shared `files` module,
+  built in M6, and lands there; until then the «Сгради» list shows the icon.
 - Create-resident-on-apartment: tenant-local account + effective-dated
   occupancy + invite code. Normalized email/phone is unique within the tenant,
   not globally.

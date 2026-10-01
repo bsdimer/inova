@@ -14,13 +14,15 @@ M2; attachment infra.
 
 ## Tables
 
-`issues` (with `priority`: `normal` / `urgent`, default `normal`; index `(tenant_id, building_id, status, priority)`), `issue_events`, `attachments` + AV-scan status. `attachments` belongs to the shared `files` module so later owners (stored documents, expenses) reuse it.
+`issues` (with `priority`: `normal` / `urgent`, default `normal`; index `(tenant_id, building_id, status, priority)`), `issue_events`, `attachments` + AV-scan status. `attachments` belongs to the shared `files` module so later owners (stored documents, expenses, the building photo) reuse it.
 
 ## Backend
 
 Issue CRUD, status transitions with history — a transition takes an optional `note` (short text on the `issue_event`) for the reporter; **contractor roles hold `issues.progress`**: own categories only, to `planned` / `in_progress` / `resolved`, while close, reject, recategorise and priority need `issues.manage` (D22) — **priority set/changed by staff with an `issue_event` per change**, presigned uploads, ClamAV worker, image re-encode/thumbnail job. **`GET /v1/issues/summary`** for the dashboard: open count, counters (pending, planned, urgent, resolved-in-period) and the urgent-open list, scoped to the caller's buildings — contract in [features/admin-dashboard.md](../features/admin-dashboard.md).
 
 ## Admin
+
+**Building photo** (moved from M2, team lead's review of #51): a building takes an optional photo — an `attachment` with `owner_type = 'building'` — on creation and on edit, where it can be replaced or removed; without one the «Сгради» list shows the icon (stakeholder, WHI-37 29.09 15:11; frames «V2 · Сгради»). The `buildings` table gets no column for it.
 
 Issue queue with filters (building, status, **priority**, category, date), detail with photo gallery, status timeline and a priority control. **Category is also a visibility boundary (D22):** the Cleaning Contractor and Technician roles see only issues of their category; the house manager sees everything, including urgent and uncategorised ones, and is the one who sets or changes a category — recategorising is what routes an issue to a contractor. The contractor's dashboard opens an issue of its category in a panel with «Смени статус» (Планиран / В процес / Решен) and an optional note to the reporter (WHI-27 frames `2019:36105`, `2019:36253`).
 
@@ -30,7 +32,7 @@ Report flow (camera/gallery), my-issues list with statuses. Residents do not set
 
 ## Tests
 
-State-machine tests; priority is independent of status and audited; summary counters vs a seeded oracle incl. building-scope narrowing; malicious upload tests (polyglot file, oversized, wrong MIME); `issues.progress` moves an own-category issue to `planned` and is refused `closed`, `rejected`, a category or priority change and any issue of another category; a note is stored on the event and returned in the reporter's history.
+State-machine tests; priority is independent of status and audited; summary counters vs a seeded oracle incl. building-scope narrowing; malicious upload tests (polyglot file, oversized, wrong MIME); `issues.progress` moves an own-category issue to `planned` and is refused `closed`, `rejected`, a category or priority change and any issue of another category; a note is stored on the event and returned in the reporter's history. The building photo: upload, replace and remove through the edit form; another tenant's building is refused; a failed scan leaves the icon.
 
 ## Acceptance
 
