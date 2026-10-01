@@ -369,3 +369,33 @@ for (const [from, to] of [
     await expect(page.getByRole('button', { name: /, акаунт$/ })).toBeFocused();
   });
 }
+
+test.describe('across 1024, where the side menu turns into a button', () => {
+  for (const [from, to] of [
+    [1100, 900],
+    [900, 1100],
+  ] as const) {
+    test(`from ${from} to ${to} the open menu stays open, the focus stays in it`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: from, height: 800 });
+      await openSignedIn(page, ORG_ADMIN, '/');
+      const menu = await openMenu(page);
+      await expect.poll(() => menu.evaluate((el) => el === document.activeElement)).toBe(true);
+      const dark = menu.getByRole('radio', { name: /^Тъмна/ });
+      await dark.focus();
+
+      await page.setViewportSize({ width: to, height: 800 });
+      // Below 1024 the top bar leads with the menu button; wait for the new bar.
+      await expect(
+        page.locator('header').getByRole('button', { name: 'Отвори менюто' }),
+      ).toHaveCount(to < 1024 ? 1 : 0);
+      await expect(menu).toBeVisible();
+      await expect(dark).toBeFocused();
+      // Still placed under its avatar, inside the window.
+      const box = (await menu.boundingBox())!;
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(to);
+    });
+  }
+});
