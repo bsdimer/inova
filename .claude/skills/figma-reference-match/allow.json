@@ -21,5 +21,31 @@
     "rule": "series",
     "detail": "no dark twin",
     "why": "the contractor cabinet has a dark theme only on the building page (design plan of 28.09)"
+  },
+  {
+    "text": "Фактури 1728 · меню на реда",
+    "rule": "series",
+    "detail": "no 402",
+    "why": "a row-menu state drawn on desktop only; the phone card opens «Редактирай фактура» instead (WHI-27, 28.09 11:46)"
+  },
+  {
+    "text": "входна такса",
+    "rule": "avoid-word",
+    "why": "the glossary names a resident's charge «входна такса» (Входни такси; D26, D28) — «такса» is avoided only for a rule"
+  },
+  {
+    "text": "Входна такса",
+    "rule": "avoid-word",
+    "why": "same as «входна такса»: the notice placeholder «[Входна такса]» (D28)"
+  },
+  {
+    "text": "Няма записани живущи",
+    "rule": "avoid-word",
+    "why": "the glossary entry Живущи lists this exact wording — «живущи» is avoided only for the audience of a visit or a notice"
+  },
+  {
+    "text": "Изтрий достъпа",
+    "rule": "avoid-word",
+    "why": "a glossary term itself (WHI-47, 25.09) — «Изтрий» is avoided only as the action that ends an assignment (Прекрати)"
   }
 ]
