@@ -40,7 +40,8 @@ The schema contract test must pass on the new tables without being rewritten.
   The building photo is not part of M2: it needs the shared `files` module,
   built in M6, and lands there; until then the «Сгради» list shows the icon.
 - Create-resident-on-apartment: tenant-local account + effective-dated
-  occupancy + invite code. Normalized email/phone is unique within the tenant,
+  occupancy + invite code. Residents may be added while the building is still
+  a draft (#61). Normalized email/phone is unique within the tenant,
   not globally.
 - Separate owner/tenant/occupant app capabilities; multiple simultaneous owner
   occupancies are valid and owner-only permissions are server-enforced.
