@@ -27,9 +27,10 @@ import {
 } from './buildings.dto';
 import { BuildingsService, type Actor } from './buildings.service';
 
-const actorOf = (req: AuthedRequest): Actor => ({
+export const actorOf = (req: AuthedRequest): Actor => ({
   userId: req.auth.sub,
   type: req.auth.kind === 'platform' ? 'platform' : 'user',
+  roleKey: req.roleKey!,
 });
 
 @ApiTags('property')
@@ -46,7 +47,7 @@ export class BuildingsController {
     summary: 'Buildings with entrance and property counts; filter by city, district, status',
   })
   list(@Req() req: AuthedRequest, @Query() query: ListBuildingsQuery) {
-    return this.service.list(req.tenantId!, query);
+    return this.service.list(req.tenantId!, actorOf(req), query);
   }
 
   @Post()
@@ -60,7 +61,7 @@ export class BuildingsController {
   @RequirePermissions('property.read')
   @ApiOperation({ summary: 'One building with its entrances and property counts' })
   get(@Req() req: AuthedRequest, @Param('buildingId', ParseUUIDPipe) buildingId: string) {
-    return this.service.get(req.tenantId!, buildingId);
+    return this.service.get(req.tenantId!, actorOf(req), buildingId);
   }
 
   @Patch(':buildingId')
@@ -130,7 +131,7 @@ export class BuildingsController {
     @Param('buildingId', ParseUUIDPipe) buildingId: string,
     @Query() query: ListPropertiesQuery,
   ) {
-    return this.service.listProperties(req.tenantId!, buildingId, query);
+    return this.service.listProperties(req.tenantId!, actorOf(req), buildingId, query);
   }
 
   @Post(':buildingId/properties')

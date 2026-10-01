@@ -20,6 +20,7 @@ import {
 } from '../../db/schema';
 import { AuditService } from '../audit/audit.service';
 import { InviteCodeIssuer } from '../invites/invite-code-issuer';
+import { BuildingScope } from './building-scope';
 import type { Actor } from './buildings.service';
 import type { AddOccupantDto, AddPetDto, AddResidentDto } from './residents.dto';
 
@@ -50,6 +51,7 @@ export class ResidentsService {
     private readonly audit: AuditService,
     private readonly inviteCodes: InviteCodeIssuer,
     private readonly codeDelivery: MockCodeDelivery,
+    private readonly scope: BuildingScope,
   ) {}
 
   async addResident(
@@ -67,7 +69,7 @@ export class ResidentsService {
     let code: string | null = null;
     const result = await this.dbService
       .withTenant(tenantId, async (tx) => {
-        await this.property(tx, tenantId, buildingId, propertyId);
+        await this.property(tx, tenantId, actor, buildingId, propertyId);
         const account = hasContact ? await this.accountFor(tx, tenantId, input) : null;
 
         const [occupancy] = await tx
@@ -136,9 +138,15 @@ export class ResidentsService {
   }
 
   /** The property's people and pets — all of them, or those that count on `at`. */
-  async listResidents(tenantId: string, buildingId: string, propertyId: string, at?: string) {
+  async listResidents(
+    tenantId: string,
+    actor: Actor,
+    buildingId: string,
+    propertyId: string,
+    at?: string,
+  ) {
     return this.dbService.withTenant(tenantId, async (tx) => {
-      await this.property(tx, tenantId, buildingId, propertyId);
+      await this.property(tx, tenantId, actor, buildingId, propertyId);
       const people = await tx
         .select({
           occupancy: occupancies,
@@ -407,9 +415,11 @@ export class ResidentsService {
     return account;
   }
 
+  /** The property, or 404 — also when its building is outside the actor's scope. */
   private async property(
     tx: TenantTx,
     tenantId: string,
+    actor: Actor,
     buildingId: string,
     propertyId: string,
   ): Promise<void> {
@@ -428,7 +438,9 @@ export class ResidentsService {
           ne(apartments.status, 'archived'),
         ),
       );
-    if (!row) throw new NotFoundException('Property not found');
+    if (!row || !BuildingScope.covers(await this.scope.of(tx, tenantId, actor), buildingId)) {
+      throw new NotFoundException('Property not found');
+    }
   }
 
   /** Today in the organisation's time zone — the day occupancies are judged on. */
