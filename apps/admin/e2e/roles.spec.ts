@@ -38,7 +38,10 @@ test('each role shows its kind, its people and its rights in words', async ({ pa
     manager.getByText('Ежедневните операции за сградите, в които е назначен.'),
   ).toBeVisible();
   await expect(manager.getByRole('list', { name: 'Права' }).getByRole('listitem')).toHaveText([
-    // In the catalogue's order: Служители, Настройки, Одит.
+    // In the catalogue's order: Имоти, Жители, Служители, Настройки, Одит.
+    'Преглед на сгради и имоти',
+    'Управление на сгради и имоти',
+    'Преглед на жителите',
     'Преглед на служителите',
     'Покани и управление на служители',
     'Преглед на организацията',
@@ -62,6 +65,8 @@ test('the catalogue groups the rights by area, in words', async ({ page }) => {
     ]);
   }
   expect(read).toEqual([
+    ['Имоти', 'Преглед на сгради и имоти', 'Управление на сгради и имоти'],
+    ['Жители', 'Преглед на жителите'],
     ['Служители', 'Преглед на служителите', 'Покани и управление на служители'],
     [
       'Настройки',
