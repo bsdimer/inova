@@ -70,7 +70,7 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
   what it lets you do, and returns the keyboard to its button on close (#44,
   #48); «Роли» names every right in Bulgarian words as drawn (#49); no plan
   codes reach the screen (#45); Табло fits a phone (#43); the route tree and
-  its guards live in `apps/admin/src/router.tsx` (#47); «Роли и обхват» shows what a role change does and asks before closing unsaved changes (#54). The portal signs in to the default organisation only: staff of another organisation need a `realm` on the sign-in form, not designed yet (#57).
+  its guards live in `apps/admin/src/router.tsx` (#47); «Роли и обхват» shows what a role change does and asks before closing unsaved changes (#54) and matches the approved frames (#66); staff who may only view roles see no create, edit or delete buttons (#62); the account menu survives a resize across the tablet width (#64); «Роли» sits where drawn and an open side menu says it is open (#68). The portal signs in to the default organisation only: staff of another organisation need a `realm` on the sign-in form, not designed yet (#57).
   Contract for the full Табло: [features/admin-dashboard.md](features/admin-dashboard.md);
   it added M2b (unified search) and M11 (staff tasks/calendar) to the plan and
   extended M6 (issue priority), M7 (debtors audience, unread count) and M9.
