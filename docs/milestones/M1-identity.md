@@ -1,10 +1,11 @@
 # M1 — Identity, tenancy, RBAC
 
-**Status:** Original global-user backend + admin staff/roles/wizard implemented,
-but the stakeholder's B8 tenant-scoped account-realm decision requires an M1
-schema/auth refactor **before M2**. Also deferred to pre-pilot: Redis revocation
-denylist, worker, real SMS/Viber delivery, admin silent refresh, audit-trail
-viewer.
+**Status:** In progress. Backend + admin staff/roles/wizard implemented; the
+B8 tenant-account realms landed 2026-09-30 (#57, migration `0004`) and
+activation by identifier + code with one active code (B14–B15) the same day
+(#58, migration `0005`). Left before M2: password recovery (B13, WHI-95). Also
+deferred to pre-pilot: Redis revocation denylist, worker, real SMS/Viber
+delivery, admin silent refresh, audit-trail viewer.
 
 ## Goal
 
@@ -43,6 +44,9 @@ migration, not edited after application.
 
 ## Required B8 refactor acceptance (before M2)
 
+**Met 2026-09-30 (#57)** except the multi-role item, which needs M2
+occupancies, and the shared-app realm item (M10).
+
 - The same normalized email and phone can register independently in two
   tenants, but cannot be duplicated inside one tenant.
 - Dedicated/shared app realm selection is mapped server-side before credential
@@ -65,6 +69,12 @@ migration, not edited after application.
 - Existing isolation, roles, refresh rotation, and audit tests remain green.
 
 ## Account recovery and invite-code hardening (B13–B15)
+
+**Done 2026-09-30 (#58):** the `invite_codes` migration, `activate` with
+identifier + code, `resend-code`, the invite lifetime setting
+(`INVITE_CODE_TTL_DAYS`, 1–90 days). **Left:** recovery (B13, WHI-95), the
+daily voiding job (worker), the identifier field on the mobile activation
+screen.
 
 - Forward migration on `invite_codes`: `status` column, partial unique indexes
   `(tenant_id, code_hash)` and `(tenant_id, user_id)` on active rows; a
@@ -95,12 +105,7 @@ reset revokes existing sessions; out-of-bounds lifetime settings fail start-up.
 
 ## Remaining before M2
 
-- B13–B15 above: they change `activate` / `resend-code` contracts and the
-  `invite_codes` schema, so they land with the B8 refactor, not after it.
-- Forward migration and auth/API refactor from global users + membership arrays
-  to tenant-scoped account realms and one-tenant-per-token claims (B8). The
-  client-side session portfolio and tenant switcher are M10 (moved
-  2026-09-21, see above).
+- Password recovery (B13, WHI-95). B8 (#57) and B14–B15 (#58) are done.
 
 ## Remaining before M3
 
@@ -117,7 +122,6 @@ reset revokes existing sessions; out-of-bounds lifetime settings fail start-up.
   contract and the sender registration are long-lead items, see M-Pilot). Until then `MockCodeDelivery` logs
   codes and refuses to start in production without `CODE_DELIVERY=log`.
 - Admin silent refresh; audit-trail page (before the pilot — the platform rail already shows «Одитен дневник»). One screen for both scopes: the platform administrator sees every organisation with an organisation filter (Figma «V2 · Одитен дневник» `2343:54613`); an organisation account with `audit.read` (the seeded Administrator role) sees its own trail through `GET /v1/tenant/audit`, reached from the organisation's settings, not a tenth rail item — the nine-item menu stands (WHI-24).
-- The audit record on a platform user's entry into a tenant (§6.2, `platform_access`): the guard admits `super_admin` and writes nothing yet; what it changes inside the tenant is audited as an ordinary actor. Lands with the B8 refactor (team lead, 28.09), not as a separate fix.
 
 ## Hardening done outside the phase scope (2026-09-21)
 
