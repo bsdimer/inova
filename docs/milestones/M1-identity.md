@@ -3,8 +3,8 @@
 **Status:** In progress. Backend + admin staff/roles/wizard implemented; the
 B8 tenant-account realms landed 2026-09-30 (#57, migration `0004`) and
 activation by identifier + code with one active code (B14–B15) the same day
-(#58, migration `0005`). Left before M2: password recovery (B13, WHI-95). Also
-deferred to pre-pilot: Redis revocation denylist, worker, real SMS/Viber
+(#58, migration `0005`), password recovery (B13) on 2026-10-01 (#74, migration
+`0008`). Nothing is left before M2. Also deferred to pre-pilot: Redis revocation denylist, worker, real SMS/Viber
 delivery, admin silent refresh, audit-trail viewer.
 
 ## Goal
@@ -72,9 +72,11 @@ occupancies, and the shared-app realm item (M10).
 
 **Done 2026-09-30 (#58):** the `invite_codes` migration, `activate` with
 identifier + code, `resend-code`, the invite lifetime setting
-(`INVITE_CODE_TTL_DAYS`, 1–90 days). **Left:** recovery (B13, WHI-95), the
-daily voiding job (worker), the identifier field on the mobile activation
-screen.
+(`INVITE_CODE_TTL_DAYS`, 1–90 days). **Done 2026-10-01 (#74):** recovery by e-mail link or phone code
+(`RECOVERY_LINK_TTL_MINUTES` 60, 15–1440; `RECOVERY_CODE_TTL_MINUTES` 10, 5–30),
+single use, five tries, every session revoked, audited. **Left:** the
+daily voiding job (worker), real delivery, the recovery and activation
+screens (mobile identifier field).
 
 - Forward migration on `invite_codes`: `status` column, partial unique indexes
   `(tenant_id, code_hash)` and `(tenant_id, user_id)` on active rows; a
@@ -105,7 +107,7 @@ reset revokes existing sessions; out-of-bounds lifetime settings fail start-up.
 
 ## Remaining before M2
 
-- Password recovery (B13, WHI-95). B8 (#57) and B14–B15 (#58) are done.
+- Nothing: B8 (#57), B14–B15 (#58) and B13 (#74) are done.
 
 ## Remaining before M3
 
