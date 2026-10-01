@@ -734,3 +734,83 @@ describe('Residents and pets (M2) stay inside their tenant', () => {
     expect(untouched.rows).toEqual([{ people: 1, pets: 1 }]);
   });
 });
+
+describe('Requests and manager assignments (M2) stay inside their tenant', () => {
+  it('RLS: another tenant reads and changes none of the three tables; nothing is deleted', async () => {
+    const buildingA = (
+      await adminPool.query(
+        `INSERT INTO buildings (tenant_id, name, city, district, address, floors, assessment_basis, status)
+         VALUES ($1, 'Request Tower', 'София', 'Център', 'ул. Проба 4', 5, 'fixed', 'active') RETURNING id`,
+        [tenantA],
+      )
+    ).rows[0].id;
+    const request = (
+      await adminPool.query(
+        `INSERT INTO removal_requests (tenant_id, subject_type, subject_id, building_id, reason, effective_date, requested_by)
+         VALUES ($1, 'account', $2, $3, 'Причина достатъчно дълга', '2026-06-30', $4) RETURNING id`,
+        [tenantA, elenaId, buildingA, mariaId],
+      )
+    ).rows[0].id;
+    await adminPool.query(
+      `INSERT INTO link_requests (tenant_id, user_id, role, valid_from, address, number)
+       VALUES ($1, $2, 'owner', '2026-09-01', 'адрес', '1')`,
+      [tenantA, elenaId],
+    );
+    await adminPool.query(
+      `INSERT INTO building_manager_assignments (tenant_id, building_id, user_id, assigned_by)
+       VALUES ($1, $2, $3, $3)`,
+      [tenantA, buildingA, mariaId],
+    );
+
+    const tables = ['removal_requests', 'link_requests', 'building_manager_assignments'];
+    const client = await appPool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [tenantB]);
+      for (const table of tables) {
+        const { rows } = await client.query(`SELECT 1 FROM ${table} WHERE tenant_id = $1`, [
+          tenantA,
+        ]);
+        expect(rows, table).toHaveLength(0);
+      }
+      const decided = await client.query(
+        `UPDATE removal_requests SET status = 'applied' WHERE id = $1 RETURNING id`,
+        [request],
+      );
+      expect(decided.rows).toHaveLength(0);
+      await expect(
+        client.query(
+          `INSERT INTO building_manager_assignments (tenant_id, building_id, user_id, assigned_by)
+           VALUES ($1, $2, $3, $3)`,
+          [tenantA, buildingA, demoMariaId],
+        ),
+      ).rejects.toMatchObject({ code: '42501' });
+      await client.query('ROLLBACK');
+    } finally {
+      client.release();
+    }
+    for (const table of tables) {
+      await expect(appPool.query(`DELETE FROM ${table}`), table).rejects.toMatchObject({
+        code: '42501',
+      });
+    }
+  });
+});
+
+describe('Property import (WHI-99) stays inside its tenant', () => {
+  it("refuses a token of tenant B on tenant A's import and template (403)", async () => {
+    const inB = await tenantToken(demoMariaId, tenantB, ['manager']);
+    const sheet = Buffer.from('Сграда;Град\nX;Y\n');
+    const imported = await request(app.getHttpServer())
+      .post('/imports/properties?dryRun=false')
+      .set('Authorization', `Bearer ${inB}`)
+      .set('X-Tenant-Id', tenantA)
+      .attach('file', sheet, 'properties.csv');
+    expect(imported.status).toBe(403);
+    const template = await request(app.getHttpServer())
+      .get('/imports/properties/template')
+      .set('Authorization', `Bearer ${inB}`)
+      .set('X-Tenant-Id', tenantA);
+    expect(template.status).toBe(403);
+  });
+});

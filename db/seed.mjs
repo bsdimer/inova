@@ -48,7 +48,9 @@ const ROLE_TEMPLATES = [
       'property.read',
       'property.write',
       'residents.read',
+      'property.removal.request',
     ],
+    buildingScoped: true,
   },
   // TODO(M2): residents move to occupancy-based linking; until then a system
   // 'resident' role gives them a tenant membership for JWT claims.
@@ -98,9 +100,10 @@ export async function seed(url = databaseUrl, { quiet = false } = {}) {
     for (const tenantId of Object.values(tenantIds)) {
       for (const tpl of ROLE_TEMPLATES) {
         await client.query(
-          `INSERT INTO roles (tenant_id, key, name, is_system) VALUES ($1, $2, $3, true)
-           ON CONFLICT (tenant_id, key) DO NOTHING`,
-          [tenantId, tpl.key, tpl.name],
+          `INSERT INTO roles (tenant_id, key, name, is_system, building_scoped)
+           VALUES ($1, $2, $3, true, $4)
+           ON CONFLICT (tenant_id, key) DO UPDATE SET building_scoped = EXCLUDED.building_scoped`,
+          [tenantId, tpl.key, tpl.name, tpl.buildingScoped === true],
         );
         const perms = tpl.permissions === '*' ? allPermissions : tpl.permissions;
         for (const perm of perms) {
@@ -328,6 +331,16 @@ export async function seed(url = databaseUrl, { quiet = false } = {}) {
           b.resident,
         ])
       ).rows[0].id;
+      // The building-scoped House managers of the tenant manage its seeded building.
+      await client.query(
+        `INSERT INTO building_manager_assignments (tenant_id, building_id, user_id, assigned_by)
+         SELECT m.tenant_id, $2, m.user_id, m.user_id
+         FROM staff_memberships m
+         JOIN roles r ON r.tenant_id = m.tenant_id AND r.key = m.role_key AND r.building_scoped
+         WHERE m.tenant_id = $1
+         ON CONFLICT DO NOTHING`,
+        [tenantId, buildingId],
+      );
       await client.query(
         `INSERT INTO occupancies (tenant_id, apartment_id, user_id, role, valid_from, created_by)
          SELECT $1, $2, $3, $4, '2026-01-01', $3

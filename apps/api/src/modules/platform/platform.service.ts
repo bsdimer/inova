@@ -32,7 +32,9 @@ const ROLE_TEMPLATES = [
       'property.read',
       'property.write',
       'residents.read',
+      'property.removal.request',
     ],
+    buildingScoped: true,
   },
   { key: 'resident', name: 'Resident', permissions: ['tenant.read'] },
 ];
@@ -86,9 +88,13 @@ export class PlatformService {
 
     await this.dbService.withTenant(tenant.id, async (tx) => {
       for (const tpl of ROLE_TEMPLATES) {
-        await tx
-          .insert(roles)
-          .values({ tenantId: tenant.id, key: tpl.key, name: tpl.name, isSystem: true });
+        await tx.insert(roles).values({
+          tenantId: tenant.id,
+          key: tpl.key,
+          name: tpl.name,
+          isSystem: true,
+          buildingScoped: 'buildingScoped' in tpl && tpl.buildingScoped,
+        });
         const perms = tpl.permissions === '*' ? permissionKeys : tpl.permissions;
         await tx.insert(rolePermissions).values(
           perms.map((permissionKey) => ({
