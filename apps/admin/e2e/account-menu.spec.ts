@@ -156,44 +156,32 @@ test.describe('402', () => {
     await menu.getByRole('button', { name: 'Затвори' }).click();
     await expect(menu).toBeHidden();
   });
-
-  test('choosing an organisation keeps the focus on the choice', async ({ page }) => {
-    await openSignedIn(page, ORG_ADMIN, '/');
-    // A second membership, so the sheet offers a choice; switching re-renders
-    // the whole menu, which is what used to throw the focus back to ×.
-    await page.evaluate(() => {
-      const session = JSON.parse(localStorage.getItem('inova.session')!);
-      session.memberships.push({
-        t: '00000000-0000-4000-8000-000000000001',
-        r: 'admin',
-        tenantKey: 'second',
-        tenantName: 'Втора организация',
-      });
-      localStorage.setItem('inova.session', JSON.stringify(session));
-    });
-    await page.reload();
-    const menu = await openMenu(page);
-    const second = menu
-      .getByRole('radiogroup', { name: 'Организация' })
-      .getByRole('radio', { name: 'Втора организация' });
-    await second.focus();
-    await page.keyboard.press('Enter');
-    await expect(second).toBeChecked();
-    await page.waitForTimeout(300);
-    await expect(second).toBeFocused();
-  });
 });
 
-/** A second membership in the stored session, so there is a choice to make. */
-const SECOND = '00000000-0000-4000-8000-000000000002';
-async function addSecondOrganisation(page: Page) {
-  await page.evaluate((id) => {
+/**
+ * A staff account belongs to one organisation (B8), and the menu names it —
+ * there is no switcher in 2354:286 / 1763:28546. Even a stored session from
+ * before B8 that lists two organisations gets no choice.
+ */
+test('staff see their organisation by name, with nothing to choose', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openSignedIn(page, ORG_ADMIN, '/');
+  await page.evaluate(() => {
     const session = JSON.parse(localStorage.getItem('inova.session')!);
-    session.memberships.push({ t: id, r: 'manager', tenantKey: 'second', tenantName: 'Втора' });
+    session.memberships.push({
+      t: '00000000-0000-4000-8000-000000000002',
+      r: 'manager',
+      tenantKey: 'second',
+      tenantName: 'Втора',
+    });
     localStorage.setItem('inova.session', JSON.stringify(session));
-  }, SECOND);
+  });
   await page.reload();
-}
+  const menu = await openMenu(page);
+  await expect(menu.getByRole('radiogroup', { name: 'Организация' })).toHaveCount(0);
+  await expect(menu.getByText('WhiteNova Technology', { exact: true })).toBeVisible();
+  await expect(menu.getByText('Втора', { exact: true })).toHaveCount(0);
+});
 
 test.describe('desktop, keyboard and data', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
@@ -242,35 +230,6 @@ test.describe('desktop, keyboard and data', () => {
     });
     await expect(menu.getByText('Служители, роли и настройки на организацията')).toHaveCount(0);
     await expect(menu.getByText(/няма достъп/)).toHaveCount(0);
-  });
-
-  test('choosing another organisation switches the requests, the role and the caption', async ({
-    page,
-  }) => {
-    const asked: (string | null)[] = [];
-    await page.route('**/v1/tenant', async (route) => {
-      const id = route.request().headers()['x-tenant-id'] ?? null;
-      asked.push(id);
-      if (id !== SECOND) return route.fallback();
-      await route.fulfill({
-        json: {
-          tenant: { id: SECOND, key: 'second', name: 'Втора', status: 'active' },
-          role: 'manager',
-          permissions: ['tenant.read', 'staff.read'],
-        },
-      });
-    });
-    await openSignedIn(page, ORG_ADMIN, '/');
-    await addSecondOrganisation(page);
-    const menu = await openMenu(page);
-    await menu.getByRole('radio', { name: 'Втора' }).click();
-
-    await expect(page.getByRole('button', { name: /, акаунт$/ })).toContainText(
-      'Домоуправител · Втора',
-    );
-    await expect(menu.getByRole('list', { name: 'Вашите роли' })).toHaveText('Домоуправител');
-    expect(asked).toContain(SECOND);
-    expect(await page.evaluate(() => localStorage.getItem('inova.tenantId'))).toBe(SECOND);
   });
 
   test('a custom role is named by /tenant, without asking for the roles list', async ({ page }) => {
