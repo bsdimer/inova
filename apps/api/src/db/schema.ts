@@ -3,6 +3,7 @@ import {
   boolean,
   integer,
   jsonb,
+  numeric,
   pgTable,
   primaryKey,
   text,
@@ -129,6 +130,79 @@ export const inviteCodes = pgTable(
     consumedAt: timestamp('consumed_at', { withTimezone: true }),
     createdBy: uuid('created_by'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
+);
+
+/** Property hierarchy, owned by the property module (db/migrations/0006). */
+
+export const ASSESSMENT_BASES = [
+  'fixed',
+  'per_area',
+  'per_occupant',
+  'per_ideal_part',
+  'per_room',
+] as const;
+
+export const PROPERTY_TYPES = ['apartment', 'garage', 'shop', 'storage', 'parking_spot'] as const;
+
+export const buildings = pgTable(
+  'buildings',
+  {
+    tenantId: uuid('tenant_id').notNull(),
+    id: uuid('id').notNull().defaultRandom(),
+    name: text('name').notNull(),
+    city: text('city').notNull(),
+    district: text('district').notNull(),
+    address: text('address').notNull(),
+    floors: integer('floors').notNull(),
+    hasElevator: boolean('has_elevator').notNull().default(false),
+    assessmentBasis: text('assessment_basis', { enum: ASSESSMENT_BASES }).notNull(),
+    bankAccount: text('bank_account'),
+    signatureName: text('signature_name'),
+    status: text('status', { enum: ['draft', 'active', 'archived'] })
+      .notNull()
+      .default('draft'),
+    activatedAt: timestamp('activated_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
+);
+
+export const entrances = pgTable(
+  'entrances',
+  {
+    tenantId: uuid('tenant_id').notNull(),
+    id: uuid('id').notNull().defaultRandom(),
+    buildingId: uuid('building_id').notNull(),
+    name: text('name').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
+);
+
+/** A property of any type (D26); the table keeps the plan's name. */
+export const apartments = pgTable(
+  'apartments',
+  {
+    tenantId: uuid('tenant_id').notNull(),
+    id: uuid('id').notNull().defaultRandom(),
+    buildingId: uuid('building_id').notNull(),
+    entranceId: uuid('entrance_id').notNull(),
+    floor: integer('floor').notNull(),
+    number: text('number').notNull(),
+    propertyType: text('property_type', { enum: PROPERTY_TYPES }).notNull().default('apartment'),
+    rooms: integer('rooms'),
+    /** Decimal string, two places — never a float. */
+    areaM2: numeric('area_m2', { precision: 8, scale: 2 }),
+    /** Share of the common parts in percent; decimal string, four places. */
+    idealParts: numeric('ideal_parts', { precision: 7, scale: 4 }),
+    status: text('status', { enum: ['active', 'archived'] })
+      .notNull()
+      .default('active'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
 );

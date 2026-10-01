@@ -38,7 +38,15 @@ const ROLE_TEMPLATES = [
   {
     key: 'manager',
     name: 'House manager',
-    permissions: ['tenant.read', 'staff.read', 'staff.manage', 'roles.read', 'audit.read'],
+    permissions: [
+      'tenant.read',
+      'staff.read',
+      'staff.manage',
+      'roles.read',
+      'audit.read',
+      'property.read',
+      'property.write',
+    ],
   },
   // TODO(M2): residents move to occupancy-based linking; until then a system
   // 'resident' role gives them a tenant membership for JWT claims.
