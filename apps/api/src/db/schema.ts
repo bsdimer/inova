@@ -42,6 +42,8 @@ export const roles = pgTable(
     key: text('key').notNull(),
     name: text('name').notNull(),
     isSystem: boolean('is_system').notNull().default(false),
+    /** Holders see and change only the buildings assigned to them (M2). */
+    buildingScoped: boolean('building_scoped').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.tenantId, t.key] })],
@@ -245,6 +247,80 @@ export const pets = pgTable(
     validTo: date('valid_to'),
     createdBy: uuid('created_by').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
+);
+
+/** Removal and link requests, building managers (db/migrations/0009). */
+
+export const REMOVAL_SUBJECTS = ['occupancy', 'account', 'property'] as const;
+export const REMOVAL_STATUSES = [
+  'pending',
+  'approved',
+  'rejected',
+  'applied',
+  'withdrawn',
+] as const;
+export const LINK_STATUSES = ['pending', 'approved', 'rejected', 'withdrawn'] as const;
+
+export const removalRequests = pgTable(
+  'removal_requests',
+  {
+    tenantId: uuid('tenant_id').notNull(),
+    id: uuid('id').notNull().defaultRandom(),
+    subjectType: text('subject_type', { enum: REMOVAL_SUBJECTS }).notNull(),
+    subjectId: uuid('subject_id').notNull(),
+    buildingId: uuid('building_id').notNull(),
+    reason: text('reason').notNull(),
+    /** The last day the occupancies count. */
+    effectiveDate: date('effective_date').notNull(),
+    status: text('status', { enum: REMOVAL_STATUSES }).notNull().default('pending'),
+    requestedBy: uuid('requested_by').notNull(),
+    decidedBy: uuid('decided_by'),
+    decidedAt: timestamp('decided_at', { withTimezone: true }),
+    decisionNote: text('decision_note'),
+    appliedAt: timestamp('applied_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
+);
+
+export const linkRequests = pgTable(
+  'link_requests',
+  {
+    tenantId: uuid('tenant_id').notNull(),
+    id: uuid('id').notNull().defaultRandom(),
+    userId: uuid('user_id').notNull(),
+    role: text('role', { enum: ['owner', 'tenant'] }).notNull(),
+    validFrom: date('valid_from').notNull(),
+    address: text('address').notNull(),
+    entrance: text('entrance'),
+    floor: text('floor'),
+    number: text('number').notNull(),
+    note: text('note'),
+    status: text('status', { enum: LINK_STATUSES }).notNull().default('pending'),
+    apartmentId: uuid('apartment_id'),
+    occupancyId: uuid('occupancy_id'),
+    decidedBy: uuid('decided_by'),
+    decidedAt: timestamp('decided_at', { withTimezone: true }),
+    decisionNote: text('decision_note'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
+);
+
+export const buildingManagerAssignments = pgTable(
+  'building_manager_assignments',
+  {
+    tenantId: uuid('tenant_id').notNull(),
+    id: uuid('id').notNull().defaultRandom(),
+    buildingId: uuid('building_id').notNull(),
+    userId: uuid('user_id').notNull(),
+    assignedBy: uuid('assigned_by').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    endedAt: timestamp('ended_at', { withTimezone: true }),
   },
   (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
 );

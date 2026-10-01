@@ -86,8 +86,10 @@ describe('who may touch buildings', () => {
     );
     expect(rows).toEqual([
       { role_key: 'admin', permission_key: 'property.read' },
+      { role_key: 'admin', permission_key: 'property.removal.request' },
       { role_key: 'admin', permission_key: 'property.write' },
       { role_key: 'manager', permission_key: 'property.read' },
+      { role_key: 'manager', permission_key: 'property.removal.request' },
       { role_key: 'manager', permission_key: 'property.write' },
     ]);
   });
@@ -449,11 +451,7 @@ describe("another organisation's buildings", () => {
 
     const list = await demo.get('/buildings');
     expect(list.status).toBe(200);
-    // Only its own buildings (the seed gives it one), never this one.
     expect(list.body.map((b: { id: string }) => b.id)).not.toContain(id);
-    expect(new Set(list.body.map((b: { tenantId: string }) => b.tenantId))).toEqual(
-      new Set([tenantB]),
-    );
     expect((await demo.get(`/buildings/${id}`)).status).toBe(404);
     expect((await demo.patch(`/buildings/${id}`, { name: 'Превзета' })).status).toBe(404);
     expect((await demo.post(`/buildings/${id}/properties`, property(a, 1, '1'))).status).toBe(404);
@@ -463,6 +461,9 @@ describe("another organisation's buildings", () => {
     expect(own.status).toBe(201);
     const borrowed = await demo.post(`/buildings/${own.body.id}/properties`, property(a, 1, '1'));
     expect(borrowed.status).toBe(400);
+    // Its list now holds its own building — and only that.
+    const after = await demo.get('/buildings');
+    expect(after.body.map((b: { id: string }) => b.id)).toEqual([own.body.id]);
 
     const untouched = await manager.get(`/buildings/${id}`);
     expect(untouched.body.name).toBe('Само на inova');
