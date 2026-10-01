@@ -92,3 +92,37 @@ test('when the session cannot be renewed, the sign-in page opens', async ({ page
   await expect(page).toHaveURL(/\/login$/);
   expect(await page.evaluate(() => localStorage.getItem('inova.session'))).toBeNull();
 });
+
+test('when auth-service is briefly down, the session is kept and renewed on the next try', async ({
+  page,
+}) => {
+  await openSignedIn(page, ORG_ADMIN, '/login');
+  const refreshes = countRefreshes(page);
+  // The token stays expired until a renewal succeeds; the first renewal meets
+  // a restarting auth-service (a deploy) and gets 503.
+  let renewed = false;
+  let down = true;
+  await page.context().route('**/auth/refresh', async (route) => {
+    if (down) {
+      down = false;
+      return route.fulfill({ status: 503, body: 'Service Unavailable' });
+    }
+    const response = await route.fetch();
+    renewed = response.ok();
+    return route.fulfill({ response });
+  });
+  await page
+    .context()
+    .route('**/v1/tenant/staff', (route) =>
+      renewed
+        ? route.fallback()
+        : route.fulfill({ status: 401, json: { message: 'Unauthorized' } }),
+    );
+  await page.goto('/staff');
+  // The query retries on its own; the second try renews and loads the list.
+  await expect(page.getByRole('button', { name: 'Роли и обхват — Елена Петрова' })).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(page).toHaveURL(/\/staff$/);
+  expect(refreshes.n).toBe(2);
+});

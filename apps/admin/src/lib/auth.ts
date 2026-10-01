@@ -72,10 +72,15 @@ export async function renewSession(stale: Session): Promise<Session | null> {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ refreshToken: current.refreshToken }),
     });
-    if (!res.ok) {
+    // Only auth-service refusing the token ends the session: 401 (expired,
+    // revoked, reused) or 400 (malformed). A restart during a deploy (502,
+    // 503) or the rate limit (429) says nothing about the token, so the
+    // session is kept and the request fails like a network error would.
+    if (res.status === 401 || res.status === 400) {
       clearSession();
       return null;
     }
+    if (!res.ok) throw new Error(`Session renewal failed (${res.status})`);
     const next = (await res.json()) as Session;
     saveSession(next);
     return next;
