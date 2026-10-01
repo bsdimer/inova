@@ -103,12 +103,13 @@ test.describe('at 1728', () => {
   test('the close buttons of the panel and of the question are 32, as drawn', async ({ page }) => {
     await page.setViewportSize({ width: 1728, height: 1117 });
     const drawer = await openPanel(page);
-    const panelClose = await drawer.getByLabel('Затвори').boundingBox();
-    expect([panelClose!.width, panelClose!.height]).toEqual([32, 32]);
+    // The layout size, not the box on screen: the window springs in from a
+    // 0.98 scale, and a slow runner can measure it mid-way (31.36).
+    const size = (el: Locator) =>
+      el.evaluate((node: HTMLElement) => [node.offsetWidth, node.offsetHeight]);
+    expect(await size(drawer.getByLabel('Затвори'))).toEqual([32, 32]);
     const window = await ask(page, drawer);
-    await settledBox(window);
-    const close = await window.getByLabel('Затвори').boundingBox();
-    expect([close!.width, close!.height]).toEqual([32, 32]);
+    expect(await size(window.getByLabel('Затвори'))).toEqual([32, 32]);
   });
 });
 
@@ -118,11 +119,13 @@ test('at 402 the question is 322 wide, 40 from each side, its title on two lines
   await page.setViewportSize({ width: 402, height: 874 });
   const drawer = await openPanel(page);
   const window = await ask(page, drawer);
-  const box = await settledBox(window);
-  expect([box.x, box.width]).toEqual([40, 322]);
+  // Layout values: the window springs in from a 0.98 scale.
+  expect(await window.evaluate((el: HTMLElement) => [el.offsetLeft, el.offsetWidth])).toEqual([
+    40, 322,
+  ]);
   const title = await window.getByRole('heading', { name: 'Да се запазят ли промените?' });
   const lines = await title.evaluate(
-    (el) => el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight),
+    (el: HTMLElement) => el.offsetHeight / parseFloat(getComputedStyle(el).lineHeight),
   );
   expect(Math.round(lines)).toBe(2);
 });
@@ -135,6 +138,6 @@ test('the question stands as drawn: 176 tall at 1728, 240 at 402', async ({ page
     await page.setViewportSize({ width, height });
     const drawer = await openPanel(page);
     const window = await ask(page, drawer);
-    expect((await settledBox(window)).height).toBe(tall);
+    expect(await window.evaluate((el: HTMLElement) => el.offsetHeight)).toBe(tall);
   }
 });
