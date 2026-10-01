@@ -70,7 +70,7 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
   what it lets you do, and returns the keyboard to its button on close (#44,
   #48); «Роли» names every right in Bulgarian words as drawn (#49); no plan
   codes reach the screen (#45); Табло fits a phone (#43); the route tree and
-  its guards live in `apps/admin/src/router.tsx` (#47); «Роли и обхват» shows what a role change does and asks before closing unsaved changes (#54) and matches the approved frames (#66); staff who may only view roles see no create, edit or delete buttons (#62); the account menu survives a resize across the tablet width (#64); «Роли» sits where drawn and an open side menu says it is open (#68). With «reduce motion» turned on in the system, the portal stops its animations (#70). Choosing the organisation on the admin sign-in is after the pilot, with M10 — a link per organisation (`…/inova/login`), not a form field or a subdomain; the default realm covers the pilot (D37). «Роли» names «Преглед на сгради и имоти», «Управление на сгради и имоти» (group «Имоти») and «Преглед на жителите» (#59, #61).
+  its guards live in `apps/admin/src/router.tsx` (#47); «Роли и обхват» shows what a role change does and asks before closing unsaved changes (#54) and matches the approved frames (#66); staff who may only view roles see no create, edit or delete buttons (#62); the account menu survives a resize across the tablet width (#64); «Роли» sits where drawn and an open side menu says it is open (#68). With «reduce motion» turned on in the system, the portal stops its animations (#70). The account menu names the staff member's organisation; the organisation switcher is gone, since an account belongs to one organisation (B8; #76). Choosing the organisation on the admin sign-in is after the pilot, with M10 — a link per organisation (`…/inova/login`), not a form field or a subdomain; the default realm covers the pilot (D37). «Роли» names «Преглед на сгради и имоти», «Управление на сгради и имоти» (group «Имоти») and «Преглед на жителите» (#59, #61).
   Contract for the full Табло: [features/admin-dashboard.md](features/admin-dashboard.md);
   it added M2b (unified search) and M11 (staff tasks/calendar) to the plan and
   extended M6 (issue priority), M7 (debtors audience, unread count) and M9.
@@ -101,7 +101,7 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
 | `apps/auth-service` unit (hasher, login failures, realms, refresh tokens, lifetimes)                              | 37    | `unit`             |
 | `apps/api` unit (property sheet parser)                                                                           | 11    | `unit`             |
 
-Browser (Playwright, `apps/admin/e2e`, CI job `e2e`): 163 passed on 2026-09-30 (the #57 run).
+Browser (Playwright, `apps/admin/e2e`, CI job `e2e`): 181 passed on 2026-10-01 (the #76 run).
 
 Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migrations`, `check:no-design-data`, `check:agent-harness`, `check:worklog`, `check:decisions`.
 
