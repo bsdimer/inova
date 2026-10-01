@@ -5,7 +5,8 @@ Usage:
   build-lint.py 2129:46730 2129:47116 ...   > lint.js
 
 The Avoid words come from docs/glossary.md on origin/develop, the exceptions
-from allow.json next to this file. Prints the finished code; pass it to
+from allow.json next to this file. An Avoid list marked «for this one field
+only» in the glossary is skipped: the word is right everywhere else. Prints the finished code; pass it to
 use_figma as is.
 """
 import json
@@ -25,12 +26,11 @@ def git_show(ref_path):
 
 def glossary_text():
     subprocess.run(["git", "-C", str(REPO), "fetch", "-q", "origin"], capture_output=True)
-    # TODO: drop the chore/glossary fallback once PR #36 is merged into develop.
-    for ref in ("origin/develop:docs/glossary.md", "origin/chore/glossary:docs/glossary.md"):
-        t = git_show(ref)
-        if t:
-            return t, ref
-    return git_show("origin/develop:docs/design.md") or "", "origin/develop:docs/design.md"
+    ref = "origin/develop:docs/glossary.md"
+    t = git_show(ref)
+    if not t:
+        sys.exit("docs/glossary.md on origin/develop is not readable — fetch failed?")
+    return t, ref
 
 
 def avoid_words(text):
@@ -44,6 +44,10 @@ def avoid_words(text):
         for av in re.findall(r"Avoid:(.*?)(?:Source:|$)", flat):
             # the list itself: no parenthesised exceptions, nothing after the first full stop
             av = re.sub(r"\([^)]*\)", "", av).split(". ")[0]
+            # a word avoided «for this one field only» (the glossary's own wording,
+            # e.g. «категория» in «За какво е») is right everywhere else — not linted
+            if "this one field only" in av:
+                continue
             for w in re.findall(r"«([^»]+)»", av):
                 w = w.strip().rstrip("…").strip()
                 if len(w) >= 3:
