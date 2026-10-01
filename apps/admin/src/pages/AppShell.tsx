@@ -451,6 +451,7 @@ function PlatformBadge() {
  * The wordmark at the head of the sidebar. Where the sidebar is the rail
  * opened up, the wordmark is also what folds it back.
  */
+/** The wordmark; as a button it closes the menu it heads, which is open. */
 function Brand({ label, onClick }: { label?: string; onClick?: () => void }) {
   const mark = <InovaWordmark size={22} />;
   return onClick ? (
@@ -458,6 +459,7 @@ function Brand({ label, onClick }: { label?: string; onClick?: () => void }) {
       type="button"
       onClick={onClick}
       aria-label={label}
+      aria-expanded
       className="self-start rounded-[var(--radius-row)] pt-2 pb-3 pl-2 text-left text-ink"
     >
       {mark}
