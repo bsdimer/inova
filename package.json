@@ -21,6 +21,7 @@
     "check:agent-harness": "node scripts/check-agent-harness.mjs",
     "check:worklog": "node scripts/check-worklog.mjs",
     "worklog:resolve": "node scripts/resolve-worklog.mjs",
+    "pr-assets": "node scripts/pr-assets.mjs",
     "check:decisions": "node scripts/check-decisions.mjs",
     "check:no-design-data": "node scripts/check-no-design-data.mjs",
     "check:admin": "pnpm --filter @inova/shared build && pnpm --filter @inova/admin lint && pnpm --filter @inova/admin typecheck && pnpm --filter @inova/admin build",

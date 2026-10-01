@@ -235,3 +235,24 @@ test('1728 × 1050: the dashboard fits as drawn, centred between smaller margins
   await expect(card(page, 'Предстоящи').getByText('Проверка на асансьор')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(1050);
 });
+
+for (const [width, open, close] of [
+  [1536, 'Отвори менюто', 'Свий менюто'],
+  [1280, 'Отвори менюто', 'Затвори менюто'],
+] as const) {
+  test(`${width}: the menu button tells a screen reader whether the rail is open`, async ({
+    page,
+  }) => {
+    await openAt(page, width, 780);
+    const opener = page.getByRole('button', { name: open });
+    await expect(opener).toHaveAttribute('aria-expanded', 'false');
+    await opener.click();
+    const closer = page.getByRole('button', { name: close });
+    await expect(closer).toHaveAttribute('aria-expanded', 'true');
+    await closer.click();
+    await expect(page.getByRole('button', { name: open })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+  });
+}
