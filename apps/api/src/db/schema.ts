@@ -1,8 +1,10 @@
 import { sql } from 'drizzle-orm';
 import {
   boolean,
+  date,
   integer,
   jsonb,
+  numeric,
   pgTable,
   primaryKey,
   text,
@@ -128,6 +130,120 @@ export const inviteCodes = pgTable(
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     consumedAt: timestamp('consumed_at', { withTimezone: true }),
     createdBy: uuid('created_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
+);
+
+/** Property hierarchy, owned by the property module (db/migrations/0006). */
+
+export const ASSESSMENT_BASES = [
+  'fixed',
+  'per_area',
+  'per_occupant',
+  'per_ideal_part',
+  'per_room',
+] as const;
+
+export const PROPERTY_TYPES = ['apartment', 'garage', 'shop', 'storage', 'parking_spot'] as const;
+
+export const buildings = pgTable(
+  'buildings',
+  {
+    tenantId: uuid('tenant_id').notNull(),
+    id: uuid('id').notNull().defaultRandom(),
+    name: text('name').notNull(),
+    city: text('city').notNull(),
+    district: text('district').notNull(),
+    address: text('address').notNull(),
+    floors: integer('floors').notNull(),
+    hasElevator: boolean('has_elevator').notNull().default(false),
+    assessmentBasis: text('assessment_basis', { enum: ASSESSMENT_BASES }).notNull(),
+    bankAccount: text('bank_account'),
+    signatureName: text('signature_name'),
+    status: text('status', { enum: ['draft', 'active', 'archived'] })
+      .notNull()
+      .default('draft'),
+    activatedAt: timestamp('activated_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
+);
+
+export const entrances = pgTable(
+  'entrances',
+  {
+    tenantId: uuid('tenant_id').notNull(),
+    id: uuid('id').notNull().defaultRandom(),
+    buildingId: uuid('building_id').notNull(),
+    name: text('name').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
+);
+
+/** A property of any type (D26); the table keeps the plan's name. */
+export const apartments = pgTable(
+  'apartments',
+  {
+    tenantId: uuid('tenant_id').notNull(),
+    id: uuid('id').notNull().defaultRandom(),
+    buildingId: uuid('building_id').notNull(),
+    entranceId: uuid('entrance_id').notNull(),
+    floor: integer('floor').notNull(),
+    number: text('number').notNull(),
+    propertyType: text('property_type', { enum: PROPERTY_TYPES }).notNull().default('apartment'),
+    rooms: integer('rooms'),
+    /** Decimal string, two places — never a float. */
+    areaM2: numeric('area_m2', { precision: 8, scale: 2 }),
+    /** Share of the common parts in percent; decimal string, four places. */
+    idealParts: numeric('ideal_parts', { precision: 7, scale: 4 }),
+    status: text('status', { enum: ['active', 'archived'] })
+      .notNull()
+      .default('active'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
+);
+
+/** Who lives in a property, and pets (db/migrations/0007). Dates are `YYYY-MM-DD`. */
+
+export const OCCUPANCY_ROLES = ['owner', 'tenant', 'occupant'] as const;
+export const PET_SPECIES = ['dog', 'cat', 'other'] as const;
+
+export const occupancies = pgTable(
+  'occupancies',
+  {
+    tenantId: uuid('tenant_id').notNull(),
+    id: uuid('id').notNull().defaultRandom(),
+    apartmentId: uuid('apartment_id').notNull(),
+    /** Null for a household member recorded by name only. */
+    userId: uuid('user_id'),
+    role: text('role', { enum: OCCUPANCY_ROLES }).notNull(),
+    firstName: text('first_name'),
+    lastName: text('last_name'),
+    validFrom: date('valid_from').notNull(),
+    /** The last day it counts, inclusive; null while it lasts. */
+    validTo: date('valid_to'),
+    createdBy: uuid('created_by').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
+);
+
+export const pets = pgTable(
+  'pets',
+  {
+    tenantId: uuid('tenant_id').notNull(),
+    id: uuid('id').notNull().defaultRandom(),
+    apartmentId: uuid('apartment_id').notNull(),
+    name: text('name').notNull(),
+    species: text('species', { enum: PET_SPECIES }).notNull(),
+    validFrom: date('valid_from').notNull(),
+    validTo: date('valid_to'),
+    createdBy: uuid('created_by').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.tenantId, t.id] })],

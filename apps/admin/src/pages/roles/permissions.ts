@@ -16,6 +16,8 @@ const LABELS: Record<string, string> = {
   'audit.read': 'Одитен дневник',
   // Later milestones, as drawn
   'property.read': 'Преглед на сгради и имоти',
+  // Not drawn; named by the team lead on 01.10 (WHI-96).
+  'property.write': 'Управление на сгради и имоти',
   'property.removal.request': 'Заявка за премахване на имот или жител',
   'residents.read': 'Преглед на жителите',
   'billing.read': 'Преглед на входни такси и задължения',
