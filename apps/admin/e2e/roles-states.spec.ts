@@ -65,3 +65,51 @@ test('a role without rights says so, with no empty list', async ({ page }) => {
   await expect(guest.getByText('Без права')).toBeVisible();
   await expect(guest.getByRole('list')).toHaveCount(0);
 });
+
+/** The organisation's answer with the caller's rights replaced. */
+async function withPermissions(page: Page, permissions: string[]) {
+  await page.route('**/v1/tenant', async (route) => {
+    const response = await route.fetch();
+    await route.fulfill({ response, json: { ...(await response.json()), permissions } });
+  });
+}
+
+for (const size of [
+  { width: 402, height: 874 },
+  { width: 1024, height: 600 },
+  { width: 1728, height: 1117 },
+]) {
+  test(`a role that only reads roles sees them, but nothing to create, edit or delete, at ${size.width}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(size);
+    await withPermissions(page, ['tenant.read', 'staff.read', 'roles.read']);
+    await withRoles(page, [
+      { key: 'auditor', name: 'Одитор', isSystem: false, permissions: ['audit.read'], members: 0 },
+    ]);
+    await openSignedIn(page, ORG_ADMIN, '/roles');
+    await expect(page.locator('main article')).toHaveCount(4);
+    await expect(page.getByRole('region', { name: 'Каталог на правата' })).toBeVisible();
+    await expect(card(page, 'Домоуправител').getByRole('list', { name: 'Права' })).toBeVisible();
+    for (const name of ['Нова роля', 'Редактирай', 'Изтрий']) {
+      await expect(page.locator('main').getByRole('button', { name })).toHaveCount(0);
+    }
+    // The locked role still says why it cannot change: that is information, not an action.
+    await expect(
+      card(page, 'Администратор').getByText('Системна роля — правата не се променят'),
+    ).toBeVisible();
+  });
+}
+
+test('the administrator still creates, edits and deletes roles', async ({ page }) => {
+  await withRoles(page, [
+    { key: 'auditor', name: 'Одитор', isSystem: false, permissions: ['audit.read'], members: 0 },
+  ]);
+  await openSignedIn(page, ORG_ADMIN, '/roles');
+  await expect(page.locator('main article')).toHaveCount(4);
+  await expect(page.getByRole('button', { name: 'Нова роля' })).toBeVisible();
+  await expect(
+    card(page, 'Домоуправител').getByRole('button', { name: 'Редактирай' }),
+  ).toBeVisible();
+  await expect(card(page, 'Одитор').getByRole('button', { name: 'Изтрий' })).toBeVisible();
+});
