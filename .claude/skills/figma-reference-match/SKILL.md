@@ -284,14 +284,18 @@ screen, after the PR that first builds it is merged (rule of 30.09).
 
 1. The code session sends: the PR number, the screen and its route, the
    frame ids, and the PR's «Kept from the code, not the frame, on purpose»
-   list in full.
+   list in full. If that session is no longer running, the reply goes to the
+   session that owns the admin code now.
 2. Open the admin **locally** (`preview_start admin` with `api` and
    `auth-service` running on the seeded database; the test account is in
    `apps/admin/e2e/session.ts` — never type a password on an external host)
-   at 1728 and 402, light and dark, with the **latest approved** frame beside
-   it (`shots.py`). Compare only what is measurable: block sizes and spacing,
-   the type scale, surface and text tokens, the words, the states (empty,
-   error, loading).
+   at 1728 and 402, light and dark, and at about 700 high as well — at 1117 a
+   panel often fits, and the scroll cue and the buttons at the end only show
+   on a short window. The dark theme: set `inova.theme` to `dark` in
+   localStorage and reload — «Динамична» follows the time of day; remove the
+   key afterwards. Put the **latest approved** frame beside it (`shots.py`).
+   Compare only what is measurable: block sizes and spacing, the type scale,
+   surface and text tokens, the words, the states (empty, error, loading).
 3. Reply to the code session in one message: «Расходится: …» with frame ids
    and numbers, or one line «расхождений нет». Mechanical differences go
    back as a small PR; a deliberate difference from the frame («radio, not
