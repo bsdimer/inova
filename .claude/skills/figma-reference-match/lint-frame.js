@@ -53,6 +53,56 @@ async function checkPaints(node, key, label) {
 
 // Effect colours are not checked: there are no effect tokens yet.
 
+// Glass text (text/*, white on the photo) is unreadable on a light panel
+// surface; text there takes panel/text or panel/text-muted. The surface is the
+// nearest ancestor with a fill bound to a variable.
+const LIGHT_PANEL = /^panel\/(fill|fill-strong|row|row-strong|control|footer)$/;
+async function surfaceVar(node) {
+  for (let p = node.parent; p && p.type !== 'SECTION' && p.type !== 'PAGE'; p = p.parent) {
+    const f = Array.isArray(p.fills) && p.fills.find((x) => x.visible !== false && x.type === 'SOLID' && x.opacity !== 0);
+    if (!f) continue;
+    return paintVar(f);
+  }
+  return null;
+}
+async function checkPanelText(node) {
+  const fills = Array.isArray(node.fills) ? node.fills : [];
+  for (const p of fills) {
+    if (p.visible === false || p.type !== 'SOLID') continue;
+    const v = await paintVar(p);
+    if (!v || !/^text\//.test(v.name) || v.name === 'text/on-solid') continue;
+    const s = await surfaceVar(node);
+    if (s && LIGHT_PANEL.test(s.name)) add('panel-text', node, `${v.name} on ${s.name} — use panel/text or panel/text-muted`);
+    return;
+  }
+}
+
+// A clipped vertical container whose content is taller than itself hides the
+// rest. It needs a scroll cue next to it (V2/Drawer · Fade, and on desktop
+// V2/Drawer · Scrollbar) — or the content has to be tightened (docs/design.md).
+function contentHeight(n) {
+  const kids = n.children.filter((k) => k.visible && k.layoutPositioning !== 'ABSOLUTE');
+  return (n.paddingTop || 0) + (n.paddingBottom || 0) + kids.reduce((s, k) => s + k.height, 0) + (n.itemSpacing || 0) * Math.max(0, kids.length - 1);
+}
+function checkOverflow(node) {
+  if (!('layoutMode' in node) || node.layoutMode !== 'VERTICAL' || !node.clipsContent || !node.children || !node.children.length) return;
+  const hidden = Math.round(contentHeight(node) - node.height);
+  if (hidden <= 4) return;
+  const around = node.parent && node.parent.children ? node.parent.children : [];
+  const cue = around.some((k) => k.visible && /^(Fade|Scrollbar)$/.test(k.name));
+  if (!cue) add('overflow', node, `${hidden} px hidden below, no Fade / Scrollbar next to it`);
+}
+
+// A panel, sheet or card that runs past the bottom of the frame is cut by it.
+function checkPastEdge(frame) {
+  if (!frame.clipsContent) return;
+  for (const c of frame.children) {
+    if (!c.visible || SKIP_NAMES.test(c.name)) continue;
+    const past = Math.round(c.y + c.height - frame.height);
+    if (past > 2) add('past-edge', c, `${past} px below the frame edge`);
+  }
+}
+
 async function checkDot(node) {
   if (node.type !== 'ELLIPSE' || node.width > 12) return;
   const f = Array.isArray(node.fills) && node.fills.find((p) => p.visible !== false && p.type === 'SOLID');
@@ -106,9 +156,10 @@ async function checkCircle(node) {
       if (p.type !== 'INSTANCE') continue;
       const m = await p.getMainComponentAsync();
       const owner = m && m.parent && m.parent.type === 'COMPONENT_SET' ? m.parent : m;
-      if (owner && (owner.id === CIRCLE_SET || /Button/.test(owner.name))) { inButton = true; break; }
+      // a «+» inside a chip (V2/Chip · panel, Kind=add — the insert fields of «Ново известие») is the chip's own
+      if (owner && (owner.id === CIRCLE_SET || /Button|Chip/.test(owner.name))) { inButton = true; break; }
     }
-    if (!inButton) add('circle-button', node, '«+» outside V2/Button — hand-drawn');
+    if (!inButton) add('circle-button', node, '«+» outside V2/Button or a chip — hand-drawn');
   }
 }
 
@@ -124,6 +175,8 @@ async function walk(node, visible, inInstance, isRoot) {
   }
   await checkDot(node);
   if (node.type === 'TEXT') checkText(node, inInstance);
+  if (node.type === 'TEXT' && !inInstance) await checkPanelText(node);
+  if (!isRoot) checkOverflow(node);
   await checkCircle(node);
   if ('children' in node) for (const c of node.children) await walk(c, vis, inInstance || node.type === 'INSTANCE', false);
 }
@@ -167,6 +220,7 @@ for (const id of FRAME_IDS) {
     await figma.setCurrentPageAsync(p); pageSet = true;
   }
   await walk(f, true, false, true);
+  checkPastEdge(f);
   await checkSeries(f);
 }
 
