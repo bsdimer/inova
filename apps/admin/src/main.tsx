@@ -3,6 +3,7 @@ import { RouterProvider } from '@tanstack/react-router';
 import { IconContext } from '@phosphor-icons/react';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { initReducedMotion } from './lib/motion';
 import { initTheme } from './lib/theme';
 import { router } from './router';
 import './styles.css';
@@ -11,6 +12,7 @@ const queryClient = new QueryClient();
 
 // Before the first paint, so the app never flashes the light theme at night.
 initTheme();
+initReducedMotion();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
