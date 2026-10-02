@@ -117,7 +117,11 @@ does not take the entry for the current UI.
   («Настройки»), `audit.read` «Одитен дневник» («Одит»). Later keys take
   their names from the same frame (`1091:10390`, groups Имоти / Жители /
   Финанси / Сигнали / Комуникация / Анкети / Задачи / Документи / Отчети)
-  when their phase lands. Source: WHI-91 (29.09 13:34), WHI-40.
+  when their phase lands. Source: WHI-91 (29.09 13:34), WHI-40. From M2:
+  `property.write` «Управление на сгради и имоти» (group «Имоти», next to
+  «Преглед на сгради и имоти») — it also adds residents to a property; there
+  is no separate right for residents. Source: team lead, review of #63
+  (01.10).
 - **Период на действие** — how long an assignment holds (house manager,
   document recipient). Avoid: «В сила от» as the heading of an assignment's period; the column
   «В сила от» in the fee rules (the date a rule version applies from)

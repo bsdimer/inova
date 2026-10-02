@@ -1,6 +1,6 @@
 # M2 — Property hierarchy and resident linking
 
-**Status:** In progress — backend in review: buildings, entrances, properties and activation (#59, WHI-96), residents on a property (#61). Admin screens and import follow.
+**Status:** In progress — backend done 2026-10-01: buildings, entrances, properties and activation (#59, WHI-96); residents, occupancies and pets, `GET /v1/me/properties` (#61, WHI-97); removal and link requests, manager assignments and building scope (#75, WHI-98); spreadsheet import to our own template with a dry run (#77, WHI-99). Left: the admin screens (queues and История, manager assignment, «Импорт на имоти», «Сгради»), the mobile «Добави моя имот» form; the pilot's data copied into the template.
 
 ## Goal
 
@@ -18,7 +18,7 @@ currently implemented global-user model to tenant-scoped account realms.
 ## Tables
 
 `buildings`, `entrances`, `apartments`, `occupancies`, `pets`,
-`occupancy_requests`, `building_manager_assignments`, `removal_requests`
+`link_requests`, `building_manager_assignments`, `removal_requests`
 (+ soft-delete/effective-date columns). All tenant-owned: `tenant_id` leading
 PK/indexes, RLS. Apartment rows keep UUID technical ids and enforce the unique
 business key `(tenant_id, building_id, entrance_id, floor, apartment_number)`.
@@ -40,7 +40,8 @@ The schema contract test must pass on the new tables without being rewritten.
   The building photo is not part of M2: it needs the shared `files` module,
   built in M6, and lands there; until then the «Сгради» list shows the icon.
 - Create-resident-on-apartment: tenant-local account + effective-dated
-  occupancy + invite code. Normalized email/phone is unique within the tenant,
+  occupancy + invite code. Residents may be added while the building is still
+  a draft (#61). Normalized email/phone is unique within the tenant,
   not globally.
 - Separate owner/tenant/occupant app capabilities; multiple simultaneous owner
   occupancies are valid and owner-only permissions are server-enforced.
