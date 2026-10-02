@@ -454,3 +454,23 @@ test('402: search across, then «Филтри» 44 high and the short sort, then
   expect(c.y).toBeGreaterThan(f.y + f.height);
   expect(await filters.evaluate((el) => (el as HTMLElement).offsetHeight)).toBe(44);
 });
+
+test('402: «Покани» beside the title, the short line under it (877:2945)', async ({ page }) => {
+  await page.setViewportSize({ width: 402, height: 874 });
+  await openSignedIn(page, ORG_ADMIN, '/staff');
+  await expect(page.getByText('2 акаунта · 1 сграда', { exact: true })).toBeVisible();
+  const title = (await page.getByRole('heading', { level: 1, name: 'Служители' }).boundingBox())!;
+  const invite = (await page.getByRole('button', { name: /^Покани/ }).boundingBox())!;
+  // Same row: the button's middle is within the title's band.
+  expect(invite.y).toBeLessThan(title.y + title.height);
+  expect(invite.x).toBeGreaterThan(title.x + title.width);
+});
+
+test('402: without the right to see buildings the line counts accounts only', async ({ page }) => {
+  await page.route('**/v1/buildings', (route) =>
+    route.fulfill({ status: 403, json: { statusCode: 403 } }),
+  );
+  await page.setViewportSize({ width: 402, height: 874 });
+  await openSignedIn(page, ORG_ADMIN, '/staff');
+  await expect(page.getByText('2 акаунта', { exact: true })).toBeVisible();
+});

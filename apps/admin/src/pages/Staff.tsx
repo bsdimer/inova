@@ -19,7 +19,14 @@ import {
   type FacetOption,
   type StripTone,
 } from '../components/ui';
-import { api, ApiError, type Role, type StaffMember, type TenantContext } from '../lib/api';
+import {
+  api,
+  ApiError,
+  type Building,
+  type Role,
+  type StaffMember,
+  type TenantContext,
+} from '../lib/api';
 import { getSession } from '../lib/auth';
 import { useSelectedTenantId } from '../lib/tenant';
 import { permissionLabel } from './roles/permissions';
@@ -77,6 +84,14 @@ export function StaffPage() {
     queryFn: () => api<StaffMember[]>('/tenant/staff', { tenantId: tenantId! }),
     enabled: Boolean(tenantId),
     // A refusal (403) does not change on a retry; say so at once.
+    retry: (failures, error) => !(error instanceof ApiError && error.status < 500) && failures < 3,
+  });
+  // Only for the phone's head line; a role without `property.read` gets the
+  // accounts alone.
+  const buildings = useQuery({
+    queryKey: ['buildings', tenantId],
+    queryFn: () => api<Building[]>('/buildings', { tenantId: tenantId! }),
+    enabled: Boolean(tenantId),
     retry: (failures, error) => !(error instanceof ApiError && error.status < 500) && failures < 3,
   });
   const roles = useQuery({
@@ -203,12 +218,18 @@ export function StaffPage() {
   return (
     // Page head, toolbar and table stand 16 apart (V2 frames: 72 + 50 → 138, 242 → 258).
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+      {/* On a phone the button stays beside the title (877:2945); from md the row may wrap. */}
+      <div className="flex items-start justify-between gap-4 md:flex-wrap md:items-center md:gap-x-6">
         <div className="min-w-0">
           <h1 className="text-title-22 font-medium">Служители</h1>
-          <p className="text-body-14 mt-1 text-ink-muted">
+          <p className="text-body-14 mt-1 hidden text-ink-muted md:block">
             Акаунти с достъп до {tenantName}, ролите им и къде важат.
           </p>
+          {staff.data && (
+            <p className="num text-body-14 mt-1 text-ink-muted md:hidden">
+              {phoneSummary(members.length, buildings.data?.length)}
+            </p>
+          )}
         </div>
         {canManage && (
           <PrimaryButton onClick={() => setInviteOpen(true)}>
@@ -290,6 +311,13 @@ export function StaffPage() {
       />
     </div>
   );
+}
+
+/** «2 акаунта · 1 сграда»; without the buildings, the accounts alone. */
+function phoneSummary(accounts: number, buildings: number | undefined): string {
+  const head = `${accounts} ${accounts === 1 ? 'акаунт' : 'акаунта'}`;
+  if (buildings === undefined) return head;
+  return `${head} · ${buildings} ${buildings === 1 ? 'сграда' : 'сгради'}`;
 }
 
 const STATUS_FOR_ACTION: Record<Exclude<RowAction, 'change-role'>, StaffMember['status']> = {
