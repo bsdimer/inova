@@ -170,6 +170,33 @@ services:
           memory: 64m
     logging: *logging
 
+  # Background jobs (BullMQ). It serves nothing but its health probe, so it
+  # stays off the `edge` network: nothing outside this stack needs to reach it.
+  worker:
+    image: ${IMAGE_REGISTRY:?set in .env}/inova-worker:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    init: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      # Its own role (D21, db/migrations/0010), never core-api's inova_app.
+      WORKER_DATABASE_URL: postgres://inova_worker:${WORKER_DB_PASSWORD:?set in .env}@postgres:5432/inova
+      # The same Redis as the services that will enqueue its jobs; `noeviction`
+      # above keeps BullMQ's keys from being dropped under memory pressure.
+      REDIS_URL: redis://redis:6379
+    # One job at a time over a pool of four connections; it measured ~45 MB at
+    # rest (2026-10-02), so this leaves room for a job's working set without
+    # taking memory from the two environments sharing the box.
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+    logging: *logging
+
   # One-shot tooling, never started by `docker compose up`:
   #   docker compose run --rm migrator
   #   docker compose run --rm seed
