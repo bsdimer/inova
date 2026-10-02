@@ -4,8 +4,10 @@
 B8 tenant-account realms landed 2026-09-30 (#57, migration `0004`) and
 activation by identifier + code with one active code (B14–B15) the same day
 (#58, migration `0005`), password recovery (B13) on 2026-10-01 (#74, migration
-`0008`). Nothing is left before M2. Also deferred to pre-pilot: Redis revocation denylist, worker, real SMS/Viber
-delivery, admin silent refresh, audit-trail viewer.
+`0008`). Nothing is left before M2. Admin silent refresh landed 2026-10-02 (#72) and the worker
+skeleton the same night (#81, migration `0010`, nightly expiry of lapsed codes).
+Also deferred to pre-pilot: Redis revocation denylist, real SMS/Viber
+delivery, audit-trail viewer.
 
 ## Goal
 
@@ -75,7 +77,7 @@ identifier + code, `resend-code`, the invite lifetime setting
 (`INVITE_CODE_TTL_DAYS`, 1–90 days). **Done 2026-10-01 (#74):** recovery by e-mail link or phone code
 (`RECOVERY_LINK_TTL_MINUTES` 60, 15–1440; `RECOVERY_CODE_TTL_MINUTES` 10, 5–30),
 single use, five tries, every session revoked, audited. **Left:** the
-daily voiding job (worker), real delivery, the recovery and activation
+real delivery, the recovery and activation
 screens (mobile identifier field).
 
 - Forward migration on `invite_codes`: `status` column, partial unique indexes
@@ -111,10 +113,11 @@ reset revokes existing sessions; out-of-bounds lifetime settings fail start-up.
 
 ## Remaining before M3
 
-- **Worker skeleton** (BullMQ consumer deployable, `inova_worker` DB role,
-  per-tenant job iteration — D21). Fee generation in M3 is a worker job, and
-  delivery, PDFs, AV scanning and dashboard rollups all need it, so it cannot
-  wait for the pilot.
+- **Worker skeleton — built 2026-10-02 (#81):** `apps/worker`, BullMQ on
+  Redis, `inova_worker` DB role without BYPASSRLS, `forEachTenant` (one
+  transaction per tenant), first job `expire-lapsed-codes` nightly at 02:15
+  Europe/Sofia. Left: the image in deploy and the `worker` service in the
+  test stack (WHI-130, then the team lead's compose change).
 
 ## Remaining before pilot
 
@@ -123,7 +126,7 @@ reset revokes existing sessions; out-of-bounds lifetime settings fail start-up.
 - Real SMS/Viber delivery through the worker (gateway: Infobip — D36; the
   contract and the sender registration are long-lead items, see M-Pilot). Until then `MockCodeDelivery` logs
   codes and refuses to start in production without `CODE_DELIVERY=log`.
-- Admin silent refresh; audit-trail page (before the pilot — the platform rail already shows «Одитен дневник»). One screen for both scopes: the platform administrator sees every organisation with an organisation filter (Figma «V2 · Одитен дневник» `2343:54613`); an organisation account with `audit.read` (the seeded Administrator role) sees its own trail through `GET /v1/tenant/audit`, reached from the organisation's settings, not a tenth rail item — the nine-item menu stands (WHI-24).
+- Audit-trail page (before the pilot — the platform rail already shows «Одитен дневник»). One screen for both scopes: the platform administrator sees every organisation with an organisation filter (Figma «V2 · Одитен дневник» `2343:54613`); an organisation account with `audit.read` (the seeded Administrator role) sees its own trail through `GET /v1/tenant/audit`, reached from the organisation's settings, not a tenth rail item — the nine-item menu stands (WHI-24).
 
 ## Hardening done outside the phase scope (2026-09-21)
 

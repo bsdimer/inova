@@ -104,7 +104,7 @@ platform's own "inova" brand.
 ```
 apps/auth-service   NestJS identity (port 4001) — JWT + JWKS, memberships
 apps/api            NestJS core API (port 4000) — domain modules under src/modules/
-apps/worker         planned before M3: BullMQ jobs, reuses api modules
+apps/worker         BullMQ jobs (D21) — nightly code expiry first; reuses api modules
 apps/admin          React 19 + Vite + Tailwind 4 + TanStack Router/Query
 apps/mobile         Expo (SDK 57) + expo-router + Reanimated 4
 packages/shared     Money, Zod schemas, shared types (build before dependents)
