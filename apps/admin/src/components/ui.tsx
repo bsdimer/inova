@@ -978,7 +978,7 @@ export function FilterSheet<K extends string>({
         </div>
       }
     >
-      <p className="mb-5 text-xs text-panel-ink-muted">
+      <p className="mb-5 text-xs text-panel-ink">
         При избор на филтри в повече от една група се показват само резултатите, които отговарят на
         всички избрани условия.
       </p>

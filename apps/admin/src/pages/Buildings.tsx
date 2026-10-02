@@ -81,7 +81,7 @@ export function BuildingsPage() {
           Портфолиото на {tenantName} — всяка сграда с входовете, имотите и домоуправителя ѝ.
         </p>
         {hasList && (
-          <p className="num text-body-14 mt-1 text-ink-muted md:hidden">
+          <p className="num text-body-14 mt-1 text-ink-soft md:hidden">
             {counted(buildings.length, 'сграда', 'сгради')} · {counted(properties, 'имот', 'имота')}
           </p>
         )}

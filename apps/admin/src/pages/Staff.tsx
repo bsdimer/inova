@@ -233,7 +233,7 @@ export function StaffPage() {
           {staff.data &&
             context.data &&
             !(buildings.isPending && buildings.fetchStatus !== 'idle') && (
-              <p className="num text-body-14 mt-1 text-ink-muted md:hidden">
+              <p className="num text-body-14 mt-1 text-ink-soft md:hidden">
                 {phoneSummary(members.length, buildings.data?.length)}
               </p>
             )}
