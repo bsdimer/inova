@@ -19,13 +19,16 @@ affects: [D22, D18]
    change to D22, where only staff set the priority. Only the house manager
    and accounts holding the right for «Авария» see it until the manager
    changes the category; then it goes to the contractor of the new category.
-   A **notification** of a new «Авария» goes to every account with that right,
-   each able to turn it off, **in the pilot, by e-mail** through the worker;
+   A **notification** of a new «Авария» goes to every account with that right
+   in the issue's building scope, each able to turn it off (a per-account
+   setting, M6 Tables), **in the pilot, by e-mail** through the worker;
    `MOCK` until there is an e-mail provider.
 3. **Statuses:** `acknowledged` is removed. The path is
    `reported → planned → in_progress`, with three ends: `resolved` («Решен»),
    `closed` («Затворен») and `rejected` («Отхвърлен», only with a note).
-4. **Assignment:** by category the issue goes to the firm with that activity;
+4. **Assignment:** by category the issue goes to the contractor whose
+   assignment holds that category (D22; `contractor.activity` is free text
+   and routes nothing);
    the issue has **one optional «изпълнител»** (a firm or a staff member) the
    house manager may set. The manager always sees everything; every change is
    an `issue_event`. All in M6.

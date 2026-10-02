@@ -27,7 +27,7 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
 - Passwords: argon2id (2026-09-22; the code had used bcrypt while the plan said argon2id). A legacy bcrypt hash is verified once and upgraded on that login. `pnpm install` now needs to build one native module (`argon2`, prebuilt binaries for macOS/Linux/Alpine).
 - Hardening (2026-09-21, defects in running code — not phase work): auth-service connects as its own `inova_auth` DB role and the cross-tenant identity-scope policies are granted to it alone (migration `0003`), so core-api's `inova_app` can no longer read other tenants' memberships or invite codes by setting a session variable; the strict limit on login/activate/resend really applies (the deployed value `'true'` had parsed to `NaN` and disabled it — malformed settings now stop the service); rate limiting is per client behind the edge proxy (`TRUST_PROXY_HOPS=1`); one-time codes are logged only when `CODE_DELIVERY=log` is set on purpose, otherwise a production process refuses to start.
 - Password recovery (B13, #74): e-mail link or phone code, single use, five tries, every session revoked, audited; `RECOVERY_LINK_TTL_MINUTES` / `RECOVERY_CODE_TTL_MINUTES`. Sign-in takes e-mail or phone + password (#78). Still missing: real delivery (worker + Infobip / e-mail) and the mobile activation screen's identifier field — the shipped screen sends the code alone and gets 400.
-- Worker (`apps/worker`, #81): BullMQ on Redis, its own `inova_worker` role without BYPASSRLS, one transaction per tenant; the first job retires lapsed invite codes and password resets every night at 02:15 Europe/Sofia. `develop` builds its image (#86); the `worker` service in the test stack's compose file is the team lead's next step.
+- Worker (`apps/worker`, #81): BullMQ on Redis, its own `inova_worker` role without BYPASSRLS, one transaction per tenant; the first job retires lapsed invite codes and password resets every night at 02:15 Europe/Sofia. `develop` builds its image (#86); #95 (WHI-143) adds the `worker` service to the test stack.
 - Resident app API (#82–#85): profile, password change (current password, ends every session) and e-mail change by code (#84); push-token registration `/v1/me/devices`, ahead of M7 (#85); both OpenAPI documents describe every auth and `/me` answer and error, the types are in `@inova/shared`, and a contract test keeps the committed `openapi.json` in step (#83).
 - Mobile: production-ready auth against live auth-service — activate → set-password,
   login, resend-code (phone → E.164), silent refresh, logout, session gate on tabs;
@@ -87,8 +87,8 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
 
 | Suite                                                                                                             | Count | Job                |
 | ----------------------------------------------------------------------------------------------------------------- | ----- | ------------------ |
-| `apps/api/test/tenant-isolation.e2e.test.ts`                                                                      | 34    | `tenant-isolation` |
-| `apps/api/test/tenant-schema.contract.test.ts`                                                                    | 7     | `tenant-isolation` |
+| `apps/api/test/tenant-isolation.e2e.test.ts`                                                                      | 33    | `tenant-isolation` |
+| `apps/api/test/tenant-schema.contract.test.ts`                                                                    | 8     | `tenant-isolation` |
 | `apps/api/test/staff-roles.e2e.test.ts`                                                                           | 16    | `auth` (RBAC)      |
 | `apps/api/test/buildings.e2e.test.ts`                                                                             | 32    | `auth`             |
 | `apps/api/test/residents.e2e.test.ts`                                                                             | 34    | `auth`             |
@@ -155,7 +155,7 @@ Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migr
 
 1. **M2 admin screens** — «Сгради», the request queues with История, manager assignment («Обхват» in «Роли и обхват»), «Импорт на имоти»; the mobile app reads `GET /v1/me/properties`. See [milestones/M2-property.md](milestones/M2-property.md).
 2. **Mobile activation and recovery screens** — the identifier field on activation, forgot-password by e-mail first, phone second (B13, #74). See [milestones/M1-identity.md](milestones/M1-identity.md).
-3. **Worker in the test stack** — the image is built (#86); the team lead adds the `worker` service to `infra/deploy/docker-compose.yml`. Fee generation in M3 is its next job (D21).
+3. **Worker in the test stack** — the image is built (#86); #95 (WHI-143) adds the `worker` service and the deploy waits for it to be healthy. Fee generation in M3 is its next job (D21).
 4. Rebuild the resident app on the real API (`/auth/docs`, `/api/docs`, types from `@inova/shared`; test accounts of #82).
 5. Deferred M1 (before pilot): Redis denylist, real invite delivery, audit viewer.
 6. Self-contained Testcontainers for integration tests (harness Phase 2 remainder).

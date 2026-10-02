@@ -39,8 +39,9 @@ where it is needed.
 
 ## Lands in
 
-- `docs/milestones/M4-payments.md` → Tables, Backend, Required tests
-- `docs/milestones/M6-issues.md` → Dependencies, Tables (`files` comes from M4)
+- `docs/milestones/M4-payments.md` → Tables, Backend (the `files` module), Required tests (malicious uploads)
+- `docs/milestones/M6-issues.md` → Dependencies, Tables, Backend, Tests, Acceptance (`files` comes from M4)
+- `docs/milestones/M9-dashboard-reports.md`, `docs/features/admin-dashboard.md`, `docs/plan/scope.md` A25, `docs/plan/backlog.md` 34–35 → attachments from M4
 - `docs/milestones/M2-property.md` → the building photo line
 - `docs/plan/data-model.md` → `building` (photo)
 - `docs/plan/security.md` → §6.2 `payments.record`

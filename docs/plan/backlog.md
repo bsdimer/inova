@@ -8,7 +8,7 @@ Small, independently implementable, agent-sized items in build order. A planning
 
 - [ ] **1.** Initialize monorepo: pnpm workspaces + Turborepo, root lint/format/tsconfig, commit hooks
 - [ ] **2.** `infra/docker/docker-compose.yml`: Postgres 16, Redis, MinIO, MailHog; `.env.example`
-- [ ] **3.** Scaffold `apps/auth-service` and `apps/api` NestJS services (shared tooling package) with config service, health endpoints, OpenAPI emit, RFC 7807 error filter
+- [ ] **3.** Scaffold `apps/auth-service` and `apps/api` NestJS services (shared tooling package) with config service, health endpoints, OpenAPI emit, one error shape `ApiError {statusCode, message, error}` (not RFC 7807)
 - [ ] **4.** Plain SQL migrations in `db/migrations` (RLS, triggers, partitioning hand-written) + CI migration check job
 - [ ] **5.** Scaffold `apps/admin` (Vite React, router, typed API client from OpenAPI)
 - [ ] **6.** Scaffold `apps/mobile` (Expo TS, brand-config stub, responsive style helpers, light/dark themes)
@@ -58,12 +58,12 @@ Small, independently implementable, agent-sized items in build order. A planning
 - [ ] **30.** Ledger writer + one-bank-account/logical operational-deposit summaries + configured fund-transfer rules + transaction history APIs
 - [ ] **31.** Designated owner recipient + gapless receipt numbering + PDF render job (Playwright in worker) + S3 storage
 - [ ] **32.** Admin: payment entry, allocation editor, cash dashboards, receipt views
-- [ ] **33.** Mobile: payment history, receipt download, building account summary
+- [ ] **33.** Mobile: payment history, the «Справка за плащания» for a period (D38), building account summary
 
 ## Issues, notices, push
 
-- [ ] **34.** Migration: issues (incl. `priority`), issue_events, attachments (shared `files` module); presigned-upload handshake
-- [ ] **35.** ClamAV scan + image re-encode worker jobs (+abuse tests)
+- [ ] **34.** Migration: issues (incl. `priority`), issue_events; photos are attachments of the shared `files` module, built in M4 (D38)
+- [ ] **35.** Image re-encode worker job; presigned upload, ClamAV scan and the abuse tests are built in M4 with `files` (D38)
 - [ ] **36.** Issue APIs with status machine + history; admin issue queue UI; mobile report flow
 - [ ] **36a.** Issue priority control + audited changes; `GET /v1/issues/summary` (open, pending, planned, urgent, resolved-in-period, urgent list) with building-scope tests
 - [ ] **37.** Migration: notices, notice_targets, devices, notifications

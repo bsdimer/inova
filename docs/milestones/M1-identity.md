@@ -116,8 +116,8 @@ reset revokes existing sessions; out-of-bounds lifetime settings fail start-up.
 - **Worker skeleton — built 2026-10-02 (#81):** `apps/worker`, BullMQ on
   Redis, `inova_worker` DB role without BYPASSRLS, `forEachTenant` (one
   transaction per tenant), first job `expire-lapsed-codes` nightly at 02:15
-  Europe/Sofia. Left: the image in deploy and the `worker` service in the
-  test stack (WHI-130, then the team lead's compose change).
+  Europe/Sofia. The image is built on `develop` (#86); the `worker`
+  service joins the test stack with #95 (WHI-143).
 
 ## Remaining before pilot
 
