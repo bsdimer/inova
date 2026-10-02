@@ -10,6 +10,9 @@ import { RefreshTokens, type RefreshOwner } from './refresh-tokens';
 import { ACCESS_TTL_SECONDS, TokenService, type TokenPair } from './token.service';
 
 type Account = typeof users.$inferSelect;
+
+/** Who signs in: by e-mail (staff, residents) or by phone in E.164 (residents). */
+export type LoginIdentifier = { email: string } | { phone: string };
 type PlatformUser = typeof platformUsers.$inferSelect;
 
 /** Who a sign-in attempt is about, once the realm is known. */
@@ -53,8 +56,12 @@ export class AuthService {
     private readonly passwords: PasswordHasher,
   ) {}
 
-  async login(email: string, password: string, hint: RealmHint = {}): Promise<SessionResult> {
-    const credential = await this.findCredential(email, hint);
+  async login(
+    identifier: LoginIdentifier,
+    password: string,
+    hint: RealmHint = {},
+  ): Promise<SessionResult> {
+    const credential = await this.findCredential(identifier, hint);
     const row = credential?.kind === 'tenant' ? credential.account : credential?.user;
 
     const storedHash = row?.status === 'active' ? row.passwordHash : null;
@@ -245,15 +252,19 @@ export class AuthService {
    * names no realm comes from the portal's sign-in form, which platform
    * operators share with the organisation's staff: a platform identity with
    * that e-mail is tried first, then the default realm. A request that names
-   * a realm is only ever about a tenant account in it.
+   * a realm is only ever about a tenant account in it. A phone identifies a
+   * tenant account only — platform identities have none (security.md §6.1).
    */
-  private async findCredential(email: string, hint: RealmHint): Promise<Credential | null> {
-    if (RealmResolver.isUnspecified(hint)) {
+  private async findCredential(
+    identifier: LoginIdentifier,
+    hint: RealmHint,
+  ): Promise<Credential | null> {
+    if ('email' in identifier && RealmResolver.isUnspecified(hint)) {
       const [user] = await this.dbService.platformTx((tx) =>
         tx
           .select()
           .from(platformUsers)
-          .where(sql`lower(${platformUsers.email}) = lower(${email})`),
+          .where(sql`lower(${platformUsers.email}) = lower(${identifier.email})`),
       );
       if (user) return { kind: 'platform', user };
     }
@@ -264,7 +275,14 @@ export class AuthService {
       tx
         .select()
         .from(users)
-        .where(and(eq(users.tenantId, realm.id), sql`lower(${users.email}) = lower(${email})`)),
+        .where(
+          and(
+            eq(users.tenantId, realm.id),
+            'email' in identifier
+              ? sql`lower(${users.email}) = lower(${identifier.email})`
+              : eq(users.phone, identifier.phone),
+          ),
+        ),
     );
     return account ? { kind: 'tenant', realm, account } : null;
   }
