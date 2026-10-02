@@ -53,6 +53,210 @@
         "tags": ["brands"]
       }
     },
+    "/v1/me/devices": {
+      "put": {
+        "operationId": "MyDevicesController_register",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDeviceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyDeviceDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Register this phone (after sign-in and on every app start); moves it to the caller",
+        "tags": ["me"]
+      },
+      "get": {
+        "operationId": "MyDevicesController_list",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MyDeviceDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The caller's phones, oldest first",
+        "tags": ["me"]
+      }
+    },
+    "/v1/me/devices/{deviceId}": {
+      "delete": {
+        "operationId": "MyDevicesController_remove",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "deviceId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed"
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a phone — call it before signing out",
+        "tags": ["me"]
+      }
+    },
     "/v1/platform/tenants": {
       "get": {
         "operationId": "PlatformController_listTenants",
@@ -2304,7 +2508,7 @@
   },
   "info": {
     "title": "inova Core API",
-    "description": "The core API: buildings, properties, residents and everything built on them.\nThe answers of the resident routes (`/me/*`) and the brand configuration are\nTypeScript types in `@inova/shared` (`MyProperty`, `MyPropertyDetail`,\n`BuildingContacts`, `OccupantRecord`, `PetRecord`, `MyLinkRequest`,\n`BrandConfig`, `ApiError`) — import them rather than copying.\n\n**Test portal:** `https://test-portal.whitenova.tech/api/v1`. Signing in\nhappens at auth-service — its own document at `/auth/docs` explains it and\nlists the test accounts.\n\n## Every call\n\n```\nAuthorization: Bearer <accessToken from auth-service>\nX-Tenant-Id:   <memberships[0].t from the same session>\n```\n\nThe organisation in `X-Tenant-Id` must be the one the token was issued for;\nanything else is 403. On 401 the access token has expired: refresh it at\nauth-service and repeat the call once.\n\n## What the resident app reads\n\n| Screen | Call |\n| --- | --- |\n| Start: the properties to choose from | `GET /me/properties` |\n| «Моята сграда», the profile | `GET /me/properties/{id}` — building, bank account, household, pets |\n| «Контакти» | `GET /me/properties/{id}/contacts` |\n| Add a household member / a pet | `POST /me/properties/{id}/occupants`, `POST /me/properties/{id}/pets` |\n| «Добави моя имот» | `POST /me/link-requests`, `GET /me/link-requests`, `POST /me/link-requests/{id}/withdraw` |\n| Theme, locales, support | `GET /brands/{key}/config` — public, no token |\n\nShow owner-only actions only when `ownerActions` is true; the server refuses\nthem to tenants and occupants anyway. A property the resident does not live in\nanswers 404, exactly like one that does not exist.\n\n## Conventions\n\n- Days are `YYYY-MM-DD` (`validFrom`, `validTo`); `validTo` is the last day\n  that counts, `null` while it lasts. Moments are ISO timestamps in UTC.\n- Ids are UUIDs.\n- Every error has the body `ApiError`: `{ statusCode, message, error }`;\n  `message` lists the broken fields on a 400.\n\nThe staff routes (buildings, imports, requests, roles) are documented here too;\ntheir answers are described as the admin screens need them.",
+    "description": "The core API: buildings, properties, residents and everything built on them.\nThe answers of the resident routes (`/me/*`) and the brand configuration are\nTypeScript types in `@inova/shared` (`MyProperty`, `MyPropertyDetail`,\n`BuildingContacts`, `OccupantRecord`, `PetRecord`, `MyLinkRequest`, `MyDevice`,\n`BrandConfig`, `ApiError`) — import them rather than copying.\n\n**Test portal:** `https://test-portal.whitenova.tech/api/v1`. Signing in\nhappens at auth-service — its own document at `/auth/docs` explains it and\nlists the test accounts.\n\n## Every call\n\n```\nAuthorization: Bearer <accessToken from auth-service>\nX-Tenant-Id:   <memberships[0].t from the same session>\n```\n\nThe organisation in `X-Tenant-Id` must be the one the token was issued for;\nanything else is 403. On 401 the access token has expired: refresh it at\nauth-service and repeat the call once.\n\n## What the resident app reads\n\n| Screen | Call |\n| --- | --- |\n| Start: the properties to choose from | `GET /me/properties` |\n| «Моята сграда», the profile | `GET /me/properties/{id}` — building, bank account, household, pets |\n| «Контакти» | `GET /me/properties/{id}/contacts` |\n| Add a household member / a pet | `POST /me/properties/{id}/occupants`, `POST /me/properties/{id}/pets` |\n| «Добави моя имот» | `POST /me/link-requests`, `GET /me/link-requests`, `POST /me/link-requests/{id}/withdraw` |\n| Notifications later reach this phone | `PUT /me/devices` after sign-in and on every start; `DELETE /me/devices/{id}` before sign-out |\n| Theme, locales, support | `GET /brands/{key}/config` — public, no token |\n\nShow owner-only actions only when `ownerActions` is true; the server refuses\nthem to tenants and occupants anyway. A property the resident does not live in\nanswers 404, exactly like one that does not exist.\n\n## Conventions\n\n- Days are `YYYY-MM-DD` (`validFrom`, `validTo`); `validTo` is the last day\n  that counts, `null` while it lasts. Moments are ISO timestamps in UTC.\n- Ids are UUIDs.\n- Every error has the body `ApiError`: `{ statusCode, message, error }`;\n  `message` lists the broken fields on a 400.\n\nThe staff routes (buildings, imports, requests, roles) are documented here too;\ntheir answers are described as the admin screens need them.",
     "version": "0.1.0",
     "contact": {}
   },
@@ -2640,6 +2844,64 @@
           }
         },
         "required": ["statusCode", "message", "error"]
+      },
+      "RegisterDeviceDto": {
+        "type": "object",
+        "properties": {
+          "pushToken": {
+            "type": "string",
+            "description": "The FCM or APNs token of this app install",
+            "maxLength": 4096
+          },
+          "platform": {
+            "type": "string",
+            "enum": ["ios", "android"]
+          },
+          "appId": {
+            "type": "string",
+            "example": "tech.whitenova.inova",
+            "description": "Bundle id / package"
+          },
+          "locale": {
+            "type": "string",
+            "example": "bg"
+          }
+        },
+        "required": ["pushToken", "platform"]
+      },
+      "MyDeviceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "platform": {
+            "type": "string",
+            "enum": ["ios", "android"],
+            "example": "android"
+          },
+          "appId": {
+            "type": "string",
+            "nullable": true,
+            "example": "tech.whitenova.inova"
+          },
+          "locale": {
+            "type": "string",
+            "nullable": true,
+            "example": "bg"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastSeenAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Refreshed by every registration"
+          }
+        },
+        "required": ["id", "platform", "appId", "locale", "createdAt", "lastSeenAt"]
       },
       "ProvisionTenantDto": {
         "type": "object",
