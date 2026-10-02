@@ -68,6 +68,15 @@ does not take the entry for the current UI.
 - **Плащания** — the name for payments to доставчици when such a section
   appears; none in the mockups yet (the expense ledger is P1). Source: D26,
   WHI-41 (23.09 18:34).
+- **Постъпления** — money coming into the building's account from residents:
+  the section «Постъпления · <месец>» in a building's «Финанси», the buttons
+  «Внеси постъпление» / «Потвърди постъпление», «чакащи постъпления». What one
+  resident paid stays «плащане» in a sentence («Плащането погасява…», «Начин
+  на плащане»), and so do the right «Въвеждане на плащане» and the app's
+  «Справка за плащания». An incoming payment pays a «входна такса», and the
+  screens say so (the column «Входна такса», «погасява входната такса за
+  октомври»). Avoid: «Плащания» for incoming money — it names payments to
+  доставчици. Source: WHI-137 (02.10: 050fe424, c60d100d, fab63dcd).
 
 ## Residents
 
