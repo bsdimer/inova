@@ -324,3 +324,20 @@ export const buildingManagerAssignments = pgTable(
   },
   (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
 );
+
+/** The phones a tenant account uses the app on (db/migrations/0012). */
+export const devices = pgTable(
+  'devices',
+  {
+    tenantId: uuid('tenant_id').notNull(),
+    id: uuid('id').notNull().defaultRandom(),
+    userId: uuid('user_id').notNull(),
+    platform: text('platform', { enum: ['ios', 'android'] }).notNull(),
+    pushToken: text('push_token').notNull(),
+    appId: text('app_id'),
+    locale: text('locale'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
+);
