@@ -93,7 +93,9 @@ export function StaffPage() {
     queryKey: ['buildings', tenantId],
     queryFn: () => api<Building[]>('/buildings', { tenantId: tenantId! }),
     enabled: Boolean(tenantId) && canReadBuildings,
-    retry: retryUnlessRefused,
+    // A count in a head line is not worth ~7 s of retries: on any failure
+    // the line shows the accounts alone.
+    retry: false,
   });
   const roles = useQuery({
     queryKey: ['roles', tenantId],

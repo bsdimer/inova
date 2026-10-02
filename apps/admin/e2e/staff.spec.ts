@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page, type Route } from '@playwright/test';
+import { rectsInOneFrame } from './geometry';
 import { ORG_ADMIN, openSignedIn } from './session';
 
 /**
@@ -451,8 +452,7 @@ test('402: search across, then «Филтри» 44 high and the short sort, then
   const filters = page.getByRole('button', { name: /^Филтри/ });
   const sort = page.getByRole('button', { name: 'За внимание' });
   const count = page.getByText('2 служители', { exact: true });
-  const box = async (l: typeof search) => (await l.boundingBox())!;
-  const [s, f, o, c] = [await box(search), await box(filters), await box(sort), await box(count)];
+  const [s, f, o, c] = await rectsInOneFrame(page, [search, filters, sort, count]);
   expect(f.y).toBeGreaterThan(s.y + s.height);
   expect(Math.abs(o.y - f.y)).toBeLessThanOrEqual(1);
   expect(c.y).toBeGreaterThan(f.y + f.height);
@@ -463,8 +463,10 @@ test('402: «Покани» beside the title, the short line under it (877:2945)
   await page.setViewportSize({ width: 402, height: 874 });
   await openSignedIn(page, ORG_ADMIN, '/staff');
   await expect(page.getByText('2 акаунта · 1 сграда', { exact: true })).toBeVisible();
-  const title = (await page.getByRole('heading', { level: 1, name: 'Служители' }).boundingBox())!;
-  const invite = (await page.getByRole('button', { name: /^Покани/ }).boundingBox())!;
+  const [title, invite] = await rectsInOneFrame(page, [
+    page.getByRole('heading', { level: 1, name: 'Служители' }),
+    page.getByRole('button', { name: /^Покани/ }),
+  ]);
   // Same row: the button's middle is within the title's band.
   expect(invite.y).toBeLessThan(title.y + title.height);
   expect(invite.x).toBeGreaterThan(title.x + title.width);
@@ -536,4 +538,44 @@ test('402: the head line stays while the buildings refresh in the background', a
   await expect.poll(() => calls).toBe(2);
   await expect(page.getByText('2 акаунта · 1 сграда', { exact: true })).toBeVisible();
   release();
+});
+
+test('402 × 600: «Покажи …» stays on screen while the options of the sheet scroll', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 402, height: 600 });
+  await openSignedIn(page, ORG_ADMIN, '/staff');
+  await page.getByRole('button', { name: /^Филтри/ }).click();
+  const sheet = page.getByRole('dialog', { name: 'Филтри' });
+  await expect(sheet.getByRole('heading', { level: 3 }).first()).toBeVisible();
+  // The options are taller than the sheet: the body scrolls, the buttons do not.
+  await expect(sheet.getByRole('button', { name: /^Покажи / })).toBeInViewport();
+  await expect(sheet.getByRole('button', { name: 'Изчисти' })).toBeInViewport();
+});
+
+test('a failed refresh of a loaded list: «Опитай пак» waits as «Зарежда…»', async ({ page }) => {
+  let failing = false;
+  let release: () => void = () => undefined;
+  let held: Promise<void> | null = null;
+  await page.route('**/v1/tenant/staff', async (route) => {
+    if (failing) return route.fulfill({ status: 500, json: { statusCode: 500 } });
+    if (held) await held;
+    await route.continue();
+  });
+  await openSignedIn(page, ORG_ADMIN, '/staff');
+  await expect(rows(page)).toHaveCount(2);
+
+  // A background refresh (the tab comes back into view) fails through its retries.
+  failing = true;
+  await page.evaluate(() => window.dispatchEvent(new Event('visibilitychange')));
+  const table = page.locator('main table');
+  await expect(table.getByText(/^Списъкът не можа да се зареди/)).toBeVisible({ timeout: 15_000 });
+
+  failing = false;
+  held = new Promise<void>((resolve) => (release = resolve));
+  await table.getByRole('button', { name: 'Опитай пак' }).click();
+  await expect(table.getByRole('button', { name: 'Зарежда…' })).toBeDisabled();
+  release();
+  await expect(table.getByText(/^Списъкът не можа да се зареди/)).toHaveCount(0);
+  await expect(rows(page)).toHaveCount(2);
 });

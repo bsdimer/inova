@@ -776,6 +776,7 @@ export function Drawer({
   footer,
   children,
   label,
+  pinFooter = false,
 }: {
   open: boolean;
   onClose: () => void;
@@ -783,6 +784,11 @@ export function Drawer({
   footer: ReactNode;
   children: ReactNode;
   label: string;
+  /**
+   * Keep the footer out of the scrolling body, under the fade — only where
+   * design.md pins the buttons (the filter sheet, a long table's action).
+   */
+  pinFooter?: boolean;
 }) {
   const dialog = useDialog<HTMLElement>(open, onClose);
   const body = useRef<HTMLDivElement>(null);
@@ -846,11 +852,21 @@ export function Drawer({
             >
               <div className="flex min-h-full flex-col">
                 <div className="px-5 py-4">{children}</div>
-                <div data-drawer-footer className="mt-auto border-t border-panel-divider px-5 py-4">
-                  {footer}
-                </div>
+                {!pinFooter && (
+                  <div
+                    data-drawer-footer
+                    className="mt-auto border-t border-panel-divider px-5 py-4"
+                  >
+                    {footer}
+                  </div>
+                )}
               </div>
             </div>
+            {pinFooter && (
+              <div data-drawer-footer className="shrink-0 border-t border-panel-divider px-5 py-4">
+                {footer}
+              </div>
+            )}
           </motion.aside>
         </motion.div>
       )}
@@ -921,6 +937,7 @@ export function FilterSheet<K extends string>({
       open={open}
       onClose={onClose}
       label="Филтри"
+      pinFooter
       header={
         // 1126:10849: × beside the title, the actions at the foot.
         <div className="flex items-center gap-2">

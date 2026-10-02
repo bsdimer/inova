@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { rectsInOneFrame } from './geometry';
 import { ORG_ADMIN, openSignedIn } from './session';
 
 /**
@@ -310,8 +311,7 @@ test('402: search across, then «Филтри» 44 high and the short sort, then
   const search = page.getByRole('searchbox', { name: 'Търсене в сградите' });
   const filters = page.getByRole('button', { name: /^Филтри/ });
   const sort = page.getByRole('button', { name: 'Най-много имоти' });
-  const box = async (l: typeof search) => (await l.boundingBox())!;
-  const [s, f, o, c] = [await box(search), await box(filters), await box(sort), await box(count)];
+  const [s, f, o, c] = await rectsInOneFrame(page, [search, filters, sort, count]);
   expect(f.y).toBeGreaterThan(s.y + s.height);
   expect(Math.abs(o.y - f.y)).toBeLessThanOrEqual(1);
   expect(c.y).toBeGreaterThan(f.y + f.height);
