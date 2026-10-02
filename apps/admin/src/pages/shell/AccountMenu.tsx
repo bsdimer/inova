@@ -24,11 +24,9 @@ import { clearSession, type Session } from '../../lib/auth';
 import { setTheme, useThemeChoice, type ThemeChoice } from '../../lib/theme';
 import {
   clearSelectedTenantId,
-  setSelectedTenantId,
   usePlatformScope,
   useSelectedTenantId,
   useTenantContext,
-  useTenantOptions,
 } from '../../lib/tenant';
 import { ROLE_NAMES } from '../staff/model';
 
@@ -205,17 +203,12 @@ function AccountBody({
   const platform = usePlatformScope();
   const superAdmin = session?.user.platformRole === 'super_admin';
   const context = useTenantContext();
-  const selectedTenantId = useSelectedTenantId();
-  const { options } = useTenantOptions();
   const themeChoice = useThemeChoice();
   const name = session?.user.fullName ?? '—';
   const contacts = [session?.user.email, session?.user.phone && formatPhone(session.user.phone)]
     .filter(Boolean)
     .join(' · ');
   const permissions = context.data?.permissions ?? [];
-  // A member of several organisations switches here; a platform
-  // administrator enters one from «Организации».
-  const switchable = !superAdmin && options.length > 1;
 
   // Until /tenant answers, and when it fails, the permissions are unknown —
   // not empty: the menu must not tell anyone they have no access.
@@ -242,16 +235,9 @@ function AccountBody({
 
       {!platform && (
         <Group title="Организация">
-          {switchable ? (
-            <RadioGroup
-              label="Организация"
-              options={options.map((option) => ({ value: option.id, label: option.name }))}
-              value={selectedTenantId}
-              onChange={setSelectedTenantId}
-            />
-          ) : (
-            <p className="text-body-15-tight text-panel-ink">{context.data?.tenant.name ?? '—'}</p>
-          )}
+          {/* One organisation per staff account (B8): named, not chosen. A
+              platform administrator enters one from «Организации». */}
+          <p className="text-body-15-tight text-panel-ink">{context.data?.tenant.name ?? '—'}</p>
           {permissions.includes('audit.read') && (
             <Link
               to="/audit"
