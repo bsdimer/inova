@@ -53,9 +53,15 @@ export class AuthController {
   @Post('login')
   @HttpCode(200)
   @Throttle(STRICT)
-  @ApiOperation({ summary: 'Password login inside one realm (staff and activated residents)' })
+  @ApiOperation({
+    summary: 'Password login by e-mail or phone inside one realm (staff and activated residents)',
+  })
   login(@Body() dto: LoginDto) {
-    return this.auth.login(dto.email, dto.password, realmHint(dto));
+    if (Boolean(dto.email) === Boolean(dto.phone)) {
+      throw new BadRequestException('Give an e-mail or a phone, not both');
+    }
+    const identifier = dto.email ? { email: dto.email } : { phone: dto.phone! };
+    return this.auth.login(identifier, dto.password, realmHint(dto));
   }
 
   @Public()

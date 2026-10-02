@@ -80,6 +80,14 @@ export class MyPropertiesController {
     return this.service.myProperty(req.tenantId!, this.accountOf(req), propertyId);
   }
 
+  @Get(':propertyId/contacts')
+  @ApiOperation({
+    summary: '«Контакти»: the organisation and the building’s current house managers',
+  })
+  contacts(@Req() req: AuthedRequest, @Param('propertyId', ParseUUIDPipe) propertyId: string) {
+    return this.service.myContacts(req.tenantId!, this.accountOf(req), propertyId);
+  }
+
   @Post(':propertyId/occupants')
   @ApiOperation({ summary: 'An owner or tenant records a household member without an account' })
   addOccupant(
