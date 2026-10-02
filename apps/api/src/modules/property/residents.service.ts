@@ -1,6 +1,8 @@
 import {
   MockCodeDelivery,
   type BuildingContacts,
+  type OccupantRecord,
+  type PetRecord,
   type MyProperty,
   type MyPropertyDetail,
 } from '@inova/shared';
@@ -346,7 +348,7 @@ export class ResidentsService {
     accountId: string,
     propertyId: string,
     input: AddOccupantDto,
-  ) {
+  ): Promise<OccupantRecord> {
     return this.dbService.withTenant(tenantId, async (tx) => {
       await this.householdHead(tx, tenantId, accountId, propertyId);
       const [occupancy] = await tx
@@ -372,7 +374,7 @@ export class ResidentsService {
       });
       return {
         id: occupancy.id,
-        role: occupancy.role,
+        role: 'occupant' as const,
         name: this.nameOf(occupancy),
         validFrom: occupancy.validFrom,
         validTo: occupancy.validTo,
@@ -380,7 +382,12 @@ export class ResidentsService {
     });
   }
 
-  async addPet(tenantId: string, accountId: string, propertyId: string, input: AddPetDto) {
+  async addPet(
+    tenantId: string,
+    accountId: string,
+    propertyId: string,
+    input: AddPetDto,
+  ): Promise<PetRecord> {
     return this.dbService.withTenant(tenantId, async (tx) => {
       await this.householdHead(tx, tenantId, accountId, propertyId);
       const [pet] = await tx

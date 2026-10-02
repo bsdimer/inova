@@ -1,5 +1,10 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { MockCodeDelivery, type AccessTokenClaims } from '@inova/shared';
+import {
+  MockCodeDelivery,
+  type AccessTokenClaims,
+  type AuthProfile,
+  type AuthSession,
+} from '@inova/shared';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { DbService, type AuthTx } from '../db/db.service';
 import { platformUsers, staffMemberships, users } from '../db/schema';
@@ -7,7 +12,7 @@ import { InviteCodes } from './invite-codes';
 import { PasswordHasher } from './password-hasher';
 import { RealmResolver, type Realm, type RealmHint } from './realm-resolver';
 import { RefreshTokens, type RefreshOwner } from './refresh-tokens';
-import { ACCESS_TTL_SECONDS, TokenService, type TokenPair } from './token.service';
+import { ACCESS_TTL_SECONDS, TokenService } from './token.service';
 
 type Account = typeof users.$inferSelect;
 
@@ -19,24 +24,10 @@ type PlatformUser = typeof platformUsers.$inferSelect;
 type Credential =
   { kind: 'tenant'; realm: Realm; account: Account } | { kind: 'platform'; user: PlatformUser };
 
-export interface SessionResult extends TokenPair {
-  user: {
-    id: string;
-    email: string | null;
-    phone: string | null;
-    fullName: string;
-    platformRole: 'super_admin' | null;
-    mustSetPassword: boolean;
-  };
-  /**
-   * The session's own tenant, once per role held there — empty for a platform
-   * user. A session never lists another tenant (decision B8); the name is the
-   * pre-B8 one, kept so the clients read the response unchanged.
-   */
-  memberships: Array<{ t: string; r: string; tenantKey: string; tenantName: string }>;
-}
+/** The session answer — `AuthSession` in packages/shared, the contract with the clients. */
+export type SessionResult = AuthSession;
 
-type Profile = Omit<SessionResult, keyof TokenPair>;
+type Profile = AuthProfile;
 
 /**
  * Sign-in, activation and session upkeep. Tenant accounts are looked up inside
