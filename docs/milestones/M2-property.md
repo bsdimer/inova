@@ -38,7 +38,7 @@ The schema contract test must pass on the new tables without being rewritten.
   entrance holds apartments, which leave only through a removal request);
   apartments are added after the building exists, one by one or by import.
   The building photo is not part of M2: it needs the shared `files` module,
-  built in M6, and lands there; until then the «Сгради» list shows the icon.
+  built in M4 (D38); the photo itself lands with M6; until then the «Сгради» list shows the icon.
 - Create-resident-on-apartment: tenant-local account + effective-dated
   occupancy + invite code. Residents may be added while the building is still
   a draft (#61). Normalized email/phone is unique within the tenant,

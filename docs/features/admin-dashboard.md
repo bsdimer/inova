@@ -113,7 +113,7 @@ Actions:
 `{ openCount, buildingCount, counters: { pending, planned, urgent, resolved }, urgent: [{ id, title, buildingName, entranceName?, createdAt }] }`
 
 - `openCount` = issues not in `resolved`, `closed` or `rejected`.
-- `pending` = `reported` + `acknowledged`; `planned` = `planned` +
+- `pending` = `reported` (no `acknowledged` since D39); `planned` = `planned` +
   `in_progress`; `resolved` = resolved **within the period** (an all-time
   count would only ever grow); `urgent` = open issues with
   `priority = urgent`. Urgent overlaps pending/planned by design — it is a
