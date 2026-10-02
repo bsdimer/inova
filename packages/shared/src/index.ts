@@ -3,6 +3,7 @@ export * from './brand';
 export * from './money';
 export * from './runtime-env';
 export * from './login-form';
+export * from './sign-in-identifier';
 export * from './dashboard-format';
 export * from './daylight';
 export * from './tenant';

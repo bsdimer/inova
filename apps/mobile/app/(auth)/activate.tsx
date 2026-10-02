@@ -1,17 +1,28 @@
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { activate, ApiError, postAuthRoute } from '../../src/api/client';
+import { parseSignInIdentifier } from '@inova/shared';
+import { activate, postAuthRoute } from '../../src/api/client';
+import { activationErrorMessage, IDENTIFIER_HINT } from '../../src/auth/messages';
 import { AppBackground } from '../../src/components/AppBackground';
-import { CodeInput } from '../../src/components/CodeInput';
+import { CodeInput, type CodeInputHandle } from '../../src/components/CodeInput';
 import { GlassCircleButton } from '../../src/components/GlassCircleButton';
 import { GlassView } from '../../src/components/GlassView';
 import { GradientButton } from '../../src/components/GradientButton';
 import { PressableScale } from '../../src/components/PressableScale';
 import { BrandLockup } from '../../src/components/InovaLogo';
+import { TextField } from '../../src/components/TextField';
 import { metrics, rs } from '../../src/theme/responsive';
 import { glass, palette } from '../../src/theme/tokens';
 
@@ -20,26 +31,41 @@ const CODE_LENGTH = 6;
 export default function Activate() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [identifier, setIdentifier] = useState('');
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const codeRef = useRef<CodeInputHandle>(null);
+  const scrollRef = useRef<ScrollView>(null);
+
+  // The code boxes sit at the bottom of the form; the OS only scrolls a focused
+  // input into view on iOS, and here that input is a hidden 1pt field.
+  useEffect(() => {
+    const sub = Keyboard.addListener('keyboardDidShow', () => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    });
+    return () => sub.remove();
+  }, []);
+
+  useEffect(() => {
+    if (error) scrollRef.current?.scrollToEnd({ animated: true });
+  }, [error]);
 
   const submit = async () => {
+    const who = parseSignInIdentifier(identifier);
+    if (!who) {
+      setError(IDENTIFIER_HINT);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
-      const session = await activate(code);
+      const session = await activate(who, code);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace(postAuthRoute(session));
     } catch (e) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      setError(
-        e instanceof ApiError && e.status === 401
-          ? 'Невалиден или изтекъл код. Поискайте нов от домоуправителя си.'
-          : e instanceof Error
-            ? e.message
-            : 'Нещо се обърка',
-      );
+      setError(activationErrorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -53,6 +79,7 @@ export default function Activate() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={[styles.scroll, { paddingTop: insets.top + rs(16, 8) }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
@@ -72,14 +99,33 @@ export default function Activate() {
             <View style={styles.titleDash} />
             <Text style={styles.subtitle}>
               Вашият домоуправител е регистрирал апартамента ви. Изпратихме {CODE_LENGTH}-цифрен код
-              на телефона ви чрез SMS или Viber.
+              чрез SMS или Viber. Въведете телефона или имейла, на който го получихте, и кода.
             </Text>
           </Animated.View>
 
-          <Animated.View entering={FadeInUp.duration(420).delay(200)}>
+          <Animated.View entering={FadeInUp.duration(420).delay(200)} style={styles.form}>
+            <TextField
+              label="Телефон или имейл"
+              icon="person-outline"
+              placeholder="0888 123 456 или you@example.com"
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="username"
+              textContentType="username"
+              keyboardType="email-address"
+              returnKeyType="next"
+              submitBehavior="submit"
+              onSubmitEditing={() => codeRef.current?.focus()}
+              value={identifier}
+              onChangeText={(next) => {
+                setIdentifier(next);
+                if (error) setError(null);
+              }}
+            />
             <GlassView contentStyle={styles.codeCard}>
               <Text style={styles.codeLabel}>Код за покана</Text>
               <CodeInput
+                ref={codeRef}
                 length={CODE_LENGTH}
                 value={code}
                 onChange={(next) => {
@@ -118,7 +164,7 @@ export default function Activate() {
             trailingIcon="arrow-forward"
             onPress={submit}
             loading={loading}
-            disabled={code.length !== CODE_LENGTH}
+            disabled={identifier.trim().length === 0 || code.length !== CODE_LENGTH}
           />
         </Animated.View>
       </KeyboardAvoidingView>
@@ -163,6 +209,9 @@ const styles = StyleSheet.create({
     fontSize: metrics.subtitleSize,
     lineHeight: rs(25, 22),
     color: glass.textSecondary,
+  },
+  form: {
+    gap: rs(18, 14),
   },
   codeCard: {
     padding: rs(18, 15),
