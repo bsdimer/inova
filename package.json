@@ -21,6 +21,7 @@
     "check:agent-harness": "node scripts/check-agent-harness.mjs",
     "check:worklog": "node scripts/check-worklog.mjs",
     "worklog:resolve": "node scripts/resolve-worklog.mjs",
+    "branch:refresh": "node scripts/refresh-branch.mjs",
     "pr-assets": "node scripts/pr-assets.mjs",
     "check:decisions": "node scripts/check-decisions.mjs",
     "check:no-design-data": "node scripts/check-no-design-data.mjs",

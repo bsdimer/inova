@@ -59,6 +59,11 @@ jobs:
             build-args: |
               APP=auth-service
               PORT=4001
+          - image: inova-worker
+            dockerfile: infra/deploy/Dockerfile.service
+            build-args: |
+              APP=worker
+              PORT=4002
           - image: inova-admin
             dockerfile: infra/deploy/Dockerfile.admin
             build-args: |
