@@ -57,7 +57,9 @@ The schema contract test must pass on the new tables without being rewritten.
   may edit or withdraw the request while it is pending; both request lists
   take a status filter, the queues show `pending` only (D27).
 - Building-scoped house-manager assignments independent of employer: tenant
-  staff, a resident owner, or a platform-employed operator may hold the role.
+  staff, a resident owner, or a platform-employed operator may hold the role. A pending
+  (not yet activated) account may be assigned; the admin marks it «поканен»
+  (planner, 02.10).
 
 ## Admin
 
