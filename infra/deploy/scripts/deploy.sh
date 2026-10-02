@@ -76,7 +76,7 @@ docker compose up -d --remove-orphans
 
 log "waiting for health"
 deadline=$((SECONDS + 120))
-for service in auth-service api admin; do
+for service in auth-service api admin worker; do
   until [ "$(docker compose ps --format '{{.Health}}' "$service" 2>/dev/null)" = "healthy" ]; do
     if [ $SECONDS -ge $deadline ]; then
       echo "FAILED: $service did not become healthy" >&2
