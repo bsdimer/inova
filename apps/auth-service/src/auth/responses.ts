@@ -3,6 +3,7 @@ import type {
   Accepted,
   AuthProfile,
   AuthSession,
+  EmailChangeStarted,
   RecoveryStarted,
   SessionMembership,
   SessionUser,
@@ -26,6 +27,15 @@ export class SessionUserDto implements SessionUser {
 
   @ApiProperty({ example: 'Петър Николов' })
   fullName!: string;
+
+  @ApiProperty({ type: String, enum: ['mr', 'mrs'], nullable: true, example: 'mr' })
+  salutation!: 'mr' | 'mrs' | null;
+
+  @ApiProperty({ example: 'Петър' })
+  firstName!: string;
+
+  @ApiProperty({ example: 'Николов', description: 'Empty when only one name was given' })
+  lastName!: string;
 
   @ApiProperty({ type: String, enum: ['super_admin'], nullable: true, example: null })
   platformRole!: 'super_admin' | null;
@@ -92,4 +102,18 @@ export class RecoveryStartedDto implements RecoveryStarted {
 export class AcceptedDto implements Accepted {
   @ApiProperty({ enum: ['ok'], example: 'ok' })
   status!: 'ok';
+}
+
+export class EmailChangeStartedDto implements EmailChangeStarted {
+  @ApiProperty({ enum: ['ok'], example: 'ok' })
+  status!: 'ok';
+
+  @ApiProperty({
+    example: 'petar@example.bg',
+    description: 'The new address, as it will be stored',
+  })
+  email!: string;
+
+  @ApiProperty({ example: 10, description: 'How long the code is valid' })
+  expiresInMinutes!: number;
 }
