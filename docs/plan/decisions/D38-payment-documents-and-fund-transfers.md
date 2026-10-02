@@ -44,5 +44,5 @@ where it is needed.
 - `docs/milestones/M2-property.md` → the building photo line
 - `docs/plan/data-model.md` → `building` (photo)
 - `docs/plan/security.md` → §6.2 `payments.record`
-- `docs/milestones/M5-mobile-pilot.md` → Mobile: credit, receipts and the «Справка за плащания»
+- `docs/milestones/M5-mobile-pilot.md` → Mobile: credit and the «Справка за плащания»
 - `docs/plan/decisions.md` → the card index
