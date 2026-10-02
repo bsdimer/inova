@@ -277,7 +277,15 @@ test.describe('sizes', () => {
     await page.getByRole('button', { name: /^Филтри/ }).click();
     const sheet = page.getByRole('dialog', { name: 'Филтри' });
     await expect(sheet.getByRole('heading', { level: 3 })).toHaveText(['Квартал', 'Статус']);
+    // Each option says how many buildings it would leave with the rest of
+    // the draft (1126:10849); the list is loaded whole, so the count is true.
+    const option = (name: string) => sheet.getByRole('checkbox', { name: new RegExp(`^${name}`) });
+    await expect(option('Активна')).toContainText('2');
+    await expect(option('Чернова')).toContainText('1');
+    await expect(option('Младост')).toContainText('1');
     await sheet.getByRole('checkbox', { name: 'Чернова' }).click();
+    await expect(option('Младост')).toContainText('0');
+    await expect(option('Лозенец')).toContainText('1');
     // Staged: the cards stay as they were until «Покажи»; × drops the choice.
     await expect(cards).toHaveCount(4);
     await sheet.getByRole('button', { name: 'Затвори' }).click();

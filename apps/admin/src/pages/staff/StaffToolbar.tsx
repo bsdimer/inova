@@ -160,6 +160,7 @@ export function StaffToolbar(props: ToolbarProps) {
         ]}
         applied={{ status: filters.status, role: filters.role, invite: filters.invite }}
         onApply={(choice) => onChange(withChoice(filters, choice))}
+        countWith={(choice) => countWith(withChoice(filters, choice))}
         preview={(choice) => {
           const n = countWith(withChoice(filters, choice));
           return `${n} ${n === 1 ? 'служител' : 'служители'}`;

@@ -147,6 +147,7 @@ export function BuildingsToolbar(props: ToolbarProps) {
         groups={facets.map(({ key, options }) => ({ key, title: FACET_TITLES[key], options }))}
         applied={{ district: filters.district, status: filters.status, city: filters.city }}
         onApply={(choice) => onChange(withChoice(filters, choice))}
+        countWith={(choice) => countWith(withChoice(filters, choice))}
         preview={(choice) => counted(countWith(withChoice(filters, choice)), 'сграда', 'сгради')}
       />
     </div>

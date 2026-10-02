@@ -383,6 +383,19 @@ test('402: the filter sheet stages the choice and applies it only on «Пока�
 
   await filters.click();
   await expect(sheet.getByRole('heading', { level: 3 })).toHaveText(['Статус', 'Роля', 'Покана']);
+  // «Филтри» at the left, × against the right edge, 20 in (1126:10849).
+  const [panel, title, close] = await rectsInOneFrame(page, [
+    sheet,
+    sheet.getByRole('heading', { level: 2, name: 'Филтри' }),
+    sheet.getByRole('button', { name: 'Затвори' }),
+  ]);
+  expect(Math.round(title.x - panel.x)).toBe(20);
+  // The × disc (32) sits centred in its 44 target: 20 from the edge to the disc.
+  expect(Math.round(panel.x + panel.width - (close.x + close.width) + 6)).toBe(20);
+  // Option rows are touch targets.
+  expect(await invited.evaluate((el) => (el as HTMLElement).offsetHeight)).toBeGreaterThanOrEqual(
+    44,
+  );
   await invited.click();
   await expect(invited).toHaveAttribute('aria-checked', 'true');
   // The button previews the result; the list behind it has not changed.

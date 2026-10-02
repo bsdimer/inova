@@ -909,6 +909,7 @@ export function FilterSheet<K extends string>({
   applied,
   onApply,
   preview,
+  countWith,
 }: {
   open: boolean;
   onClose: () => void;
@@ -917,6 +918,11 @@ export function FilterSheet<K extends string>({
   onApply: (choice: FilterChoice<K>) => void;
   /** What the draft would leave, as the button says it: «7 сгради». */
   preview: (draft: FilterChoice<K>) => string;
+  /**
+   * How many rows a choice leaves, for the number beside each option. Only
+   * true while the list is loaded whole; a paged list must not pass it.
+   */
+  countWith: (choice: FilterChoice<K>) => number;
 }) {
   const [draft, setDraft] = useState(applied);
   const [wasOpen, setWasOpen] = useState(open);
@@ -940,7 +946,7 @@ export function FilterSheet<K extends string>({
       pinFooter
       header={
         // 1126:10849: × beside the title, the actions at the foot.
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2">
           <h2 className="text-base font-semibold">Филтри</h2>
           <button
             type="button"
@@ -948,7 +954,7 @@ export function FilterSheet<K extends string>({
             data-dialog-close
             aria-label="Затвори"
             // A 44 touch target around the drawn 32 disc.
-            className="group -my-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
+            className="group -my-1.5 -mr-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
           >
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-panel-row text-panel-ink-muted transition-colors group-hover:text-panel-ink">
               <X size="1.125rem" />
@@ -988,7 +994,7 @@ export function FilterSheet<K extends string>({
             <h3 className="mb-2 text-xs font-semibold tracking-wider text-panel-ink-faint uppercase">
               {group.title}
             </h3>
-            <div className="space-y-1.5">
+            <div>
               {group.options.map((option) => {
                 const checked = draft[group.key].includes(option.value);
                 return (
@@ -998,12 +1004,10 @@ export function FilterSheet<K extends string>({
                     role="checkbox"
                     aria-checked={checked}
                     onClick={() => setDraft(toggleChoice(draft, group.key, option.value))}
-                    className={`flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-left text-sm font-medium transition-colors ${
-                      checked ? 'bg-panel-row-strong' : 'bg-panel-row'
-                    }`}
+                    className="flex min-h-11 w-full items-center gap-3 text-left text-sm font-medium text-panel-ink"
                   >
                     <span
-                      className={`flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded ${
+                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md ${
                         checked ? 'bg-panel-ink' : ''
                       }`}
                       style={{
@@ -1011,13 +1015,18 @@ export function FilterSheet<K extends string>({
                       }}
                     >
                       {checked && (
-                        <span
-                          className="h-1.5 w-1.5 rounded-[0.0625rem]"
-                          style={{ background: 'var(--panel-text-inverse)' }}
+                        <Check
+                          size="0.75rem"
+                          strokeWidth={3}
+                          style={{ color: 'var(--panel-text-inverse)' }}
                         />
                       )}
                     </span>
-                    {option.label}
+                    <span className="min-w-0 flex-1 truncate">{option.label}</span>
+                    {/* Facet count: the option alone in its group, the rest of the draft as it is. */}
+                    <span className="num shrink-0 text-panel-ink-muted">
+                      {countWith({ ...draft, [group.key]: [option.value] })}
+                    </span>
                   </button>
                 );
               })}
