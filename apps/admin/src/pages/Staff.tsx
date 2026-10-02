@@ -22,6 +22,7 @@ import {
 import {
   api,
   ApiError,
+  retryUnlessRefused,
   type Building,
   type Role,
   type StaffMember,
@@ -83,16 +84,16 @@ export function StaffPage() {
     queryKey: ['staff', tenantId],
     queryFn: () => api<StaffMember[]>('/tenant/staff', { tenantId: tenantId! }),
     enabled: Boolean(tenantId),
-    // A refusal (403) does not change on a retry; say so at once.
-    retry: (failures, error) => !(error instanceof ApiError && error.status < 500) && failures < 3,
+    retry: retryUnlessRefused,
   });
-  // Only for the phone's head line; a role without `property.read` gets the
-  // accounts alone.
+  // Only for the phone's head line, and only for a role that may read
+  // buildings; the others get the accounts alone.
+  const canReadBuildings = context.data?.permissions.includes('property.read') === true;
   const buildings = useQuery({
     queryKey: ['buildings', tenantId],
     queryFn: () => api<Building[]>('/buildings', { tenantId: tenantId! }),
-    enabled: Boolean(tenantId),
-    retry: (failures, error) => !(error instanceof ApiError && error.status < 500) && failures < 3,
+    enabled: Boolean(tenantId) && canReadBuildings,
+    retry: retryUnlessRefused,
   });
   const roles = useQuery({
     queryKey: ['roles', tenantId],
@@ -225,7 +226,8 @@ export function StaffPage() {
           <p className="text-body-14 mt-1 hidden text-ink-muted md:block">
             Акаунти с достъп до {tenantName}, ролите им и къде важат.
           </p>
-          {staff.data && (
+          {/* Waits for both answers, so the line does not grow after it appears. */}
+          {staff.data && context.data && buildings.fetchStatus === 'idle' && (
             <p className="num text-body-14 mt-1 text-ink-muted md:hidden">
               {phoneSummary(members.length, buildings.data?.length)}
             </p>

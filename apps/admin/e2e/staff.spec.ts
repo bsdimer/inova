@@ -391,9 +391,13 @@ test('402: the filter sheet stages the choice and applies it only on «Пока�
   await expect(invited).toHaveAttribute('aria-checked', 'false');
   await expect(sheet.getByRole('button', { name: 'Покажи 2 служители' })).toBeVisible();
 
-  // Closing drops the choice.
+  // Closing drops the choice — by Escape and by × (1126:10849).
   await invited.click();
   await page.keyboard.press('Escape');
+  await expect(sheet).toHaveCount(0);
+  await filters.click();
+  await invited.click();
+  await sheet.getByRole('button', { name: 'Затвори' }).click();
   await expect(sheet).toHaveCount(0);
   await expect(page.getByText('2 служители', { exact: true })).toBeVisible();
   await filters.click();
@@ -467,10 +471,45 @@ test('402: «Покани» beside the title, the short line under it (877:2945)
 });
 
 test('402: without the right to see buildings the line counts accounts only', async ({ page }) => {
-  await page.route('**/v1/buildings', (route) =>
-    route.fulfill({ status: 403, json: { statusCode: 403 } }),
-  );
+  // The role has no `property.read`: the buildings are never asked for.
+  let asked = 0;
+  await page.route('**/v1/buildings', (route) => {
+    asked += 1;
+    return route.fulfill({ status: 403, json: { statusCode: 403 } });
+  });
+  await page.route('**/v1/tenant', async (route) => {
+    const response = await route.fetch();
+    const context = await response.json();
+    await route.fulfill({
+      response,
+      json: {
+        ...context,
+        permissions: context.permissions.filter((p: string) => p !== 'property.read'),
+      },
+    });
+  });
   await page.setViewportSize({ width: 402, height: 874 });
   await openSignedIn(page, ORG_ADMIN, '/staff');
   await expect(page.getByText('2 акаунта', { exact: true })).toBeVisible();
+  await page.waitForTimeout(500);
+  await expect(page.getByText(/^2 акаунта/)).toHaveText('2 акаунта');
+  expect(asked).toBe(0);
+});
+
+test('402: a refused buildings answer is not retried and leaves the accounts alone', async ({
+  page,
+}) => {
+  let asked = 0;
+  await page.route('**/v1/buildings', (route) => {
+    asked += 1;
+    return route.fulfill({ status: 403, json: { statusCode: 403 } });
+  });
+  await page.setViewportSize({ width: 402, height: 874 });
+  const answered = page.waitForResponse('**/v1/buildings');
+  await openSignedIn(page, ORG_ADMIN, '/staff');
+  await answered;
+  await expect(page.getByText('2 акаунта', { exact: true })).toBeVisible();
+  await page.waitForTimeout(1500); // a retry would come within the first back-off
+  await expect(page.getByText(/^2 акаунта/)).toHaveText('2 акаунта');
+  expect(asked).toBe(1);
 });

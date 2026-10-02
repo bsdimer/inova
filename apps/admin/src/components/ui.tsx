@@ -883,8 +883,8 @@ export function toggleChoice<K extends string>(
  * Phone filters (Служители, Сгради): the facets of the toolbar as checkbox
  * groups in a bottom sheet; pinned header and footer, the groups scroll.
  * The sheet stages (design.md → Windows and navigation): ticks build a
- * draft, «Покажи …» previews and applies it, closing drops it, «Изчисти»
- * clears the draft only.
+ * draft, «Покажи …» previews and applies it, closing (×, Escape, the
+ * backdrop) drops it, «Изчисти» clears the draft only.
  */
 export function FilterSheet<K extends string>({
   open,
@@ -922,30 +922,49 @@ export function FilterSheet<K extends string>({
       onClose={onClose}
       label="Филтри"
       header={
-        <div className="flex items-center justify-between">
+        // 1126:10849: × beside the title, the actions at the foot.
+        <div className="flex items-center gap-2">
           <h2 className="text-base font-semibold">Филтри</h2>
           <button
             type="button"
-            onClick={clear}
-            className="text-sm font-medium text-panel-ink-muted underline underline-offset-4"
+            onClick={onClose}
+            data-dialog-close
+            aria-label="Затвори"
+            // A 44 touch target around the drawn 32 disc.
+            className="group -my-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
           >
-            Изчисти
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-panel-row text-panel-ink-muted transition-colors group-hover:text-panel-ink">
+              <X size="1.125rem" />
+            </span>
           </button>
         </div>
       }
       footer={
-        <button
-          type="button"
-          onClick={() => {
-            onApply(draft);
-            onClose();
-          }}
-          className="w-full rounded-full bg-panel-ink py-3 text-sm font-semibold text-panel-ink-inverse"
-        >
-          Покажи {preview(draft)}
-        </button>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={clear}
+            className="h-11 rounded-full border border-panel-border px-5 text-sm font-medium text-panel-ink"
+          >
+            Изчисти
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onApply(draft);
+              onClose();
+            }}
+            className="h-11 flex-1 rounded-full bg-panel-ink px-5 text-sm font-semibold text-panel-ink-inverse"
+          >
+            Покажи {preview(draft)}
+          </button>
+        </div>
       }
     >
+      <p className="mb-5 text-xs text-panel-ink-muted">
+        При избор на филтри в повече от една група се показват само резултатите, които отговарят на
+        всички избрани условия.
+      </p>
       <div className="space-y-6">
         {groups.map((group) => (
           <section key={group.key}>

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Buildings, Lock, MagnifyingGlass, Warning } from '../components/icons';
 import { EmptyState, GhostButton, PrimaryButton } from '../components/ui';
-import { api, ApiError, type Building, type TenantContext } from '../lib/api';
+import { api, ApiError, retryUnlessRefused, type Building, type TenantContext } from '../lib/api';
 import { useSelectedTenantId } from '../lib/tenant';
 import { permissionLabel } from './roles/permissions';
 import {
@@ -42,8 +42,7 @@ export function BuildingsPage() {
     queryKey: ['buildings', tenantId],
     queryFn: () => api<Building[]>('/buildings', { tenantId: tenantId! }),
     enabled: Boolean(tenantId),
-    // A refusal (403) does not change on a retry; say so at once.
-    retry: (failures, error) => !(error instanceof ApiError && error.status < 500) && failures < 3,
+    retry: retryUnlessRefused,
   });
 
   const buildings = useMemo(() => list.data ?? [], [list.data]);
