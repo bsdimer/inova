@@ -40,6 +40,13 @@ test('Служители', async ({ page }) => {
   await page.screenshot(shot('sluzhiteli'));
 });
 
+test('Сгради', async ({ page }) => {
+  await openSignedIn(page, ORG_ADMIN, '/buildings');
+  await expect(page.locator('main table tbody tr')).toHaveCount(1);
+  await settled(page);
+  await page.screenshot(shot('sgradi'));
+});
+
 test('Организации', async ({ page }) => {
   await openSignedIn(page, PLATFORM_ADMIN, '/tenants');
   await expect(page.locator('main table tbody tr')).toHaveCount(2);
@@ -118,7 +125,7 @@ for (const { name, width, height, theme } of [
 }
 
 test('A section that is not built yet', async ({ page }) => {
-  await openSignedIn(page, ORG_ADMIN, '/buildings');
+  await openSignedIn(page, ORG_ADMIN, '/residents');
   await expect(page.getByText('Разделът още не е наличен.')).toBeVisible();
   await settled(page);
   await page.screenshot(shot('razdel-predstoi'));

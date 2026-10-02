@@ -13,6 +13,7 @@ import {
 import { getSession } from './lib/auth';
 import { getSelectedTenantId } from './lib/tenant';
 import { AppShell } from './pages/AppShell';
+import { BuildingsPage } from './pages/Buildings';
 import { ComingSoonPage } from './pages/ComingSoon';
 import { DashboardPage } from './pages/Dashboard';
 import { LoginPage } from './pages/Login';
@@ -74,8 +75,7 @@ const tasksRoute = createRoute({
 const buildingsRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/buildings',
-  // The section arrives with M2; the placeholder does not name it.
-  component: () => <ComingSoonPage title="Сгради" />,
+  component: BuildingsPage,
 });
 
 const residentsRoute = createRoute({
