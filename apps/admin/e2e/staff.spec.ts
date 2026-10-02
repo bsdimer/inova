@@ -513,3 +513,27 @@ test('402: a refused buildings answer is not retried and leaves the accounts alo
   await expect(page.getByText(/^2 акаунта/)).toHaveText('2 акаунта');
   expect(asked).toBe(1);
 });
+
+test('402: the head line stays while the buildings refresh in the background', async ({ page }) => {
+  let calls = 0;
+  let release: () => void = () => undefined;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route('**/v1/buildings', async (route) => {
+    calls += 1;
+    if (calls > 1) await held;
+    await route.continue();
+  });
+  await page.setViewportSize({ width: 402, height: 874 });
+  await openSignedIn(page, ORG_ADMIN, '/buildings');
+  await expect(page.getByText('1 сграда · 4 имота')).toBeVisible();
+  // Back to Служители through the app: the cached buildings are stale, so
+  // they are fetched again — and that answer is held.
+  await page.evaluate(() => {
+    history.pushState({}, '', '/staff');
+    dispatchEvent(new PopStateEvent('popstate'));
+  });
+  await expect(page.getByRole('heading', { level: 1, name: 'Служители' })).toBeVisible();
+  await expect.poll(() => calls).toBe(2);
+  await expect(page.getByText('2 акаунта · 1 сграда', { exact: true })).toBeVisible();
+  release();
+});

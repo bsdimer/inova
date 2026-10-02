@@ -226,12 +226,15 @@ export function StaffPage() {
           <p className="text-body-14 mt-1 hidden text-ink-muted md:block">
             Акаунти с достъп до {tenantName}, ролите им и къде важат.
           </p>
-          {/* Waits for both answers, so the line does not grow after it appears. */}
-          {staff.data && context.data && buildings.fetchStatus === 'idle' && (
-            <p className="num text-body-14 mt-1 text-ink-muted md:hidden">
-              {phoneSummary(members.length, buildings.data?.length)}
-            </p>
-          )}
+          {/* Waits for the first answer of both, so the line does not grow after it
+              appears; a background refresh keeps it (a switched-off query is idle). */}
+          {staff.data &&
+            context.data &&
+            !(buildings.isPending && buildings.fetchStatus !== 'idle') && (
+              <p className="num text-body-14 mt-1 text-ink-muted md:hidden">
+                {phoneSummary(members.length, buildings.data?.length)}
+              </p>
+            )}
         </div>
         {canManage && (
           <PrimaryButton onClick={() => setInviteOpen(true)}>
