@@ -1,9 +1,9 @@
 import { SlidersHorizontal } from '../../components/icons';
 import { useState } from 'react';
 import {
-  Drawer,
   Facet,
   FilterChip,
+  FilterSheet,
   SearchField,
   SortSelect,
   type FacetOption,
@@ -139,107 +139,23 @@ export function StaffToolbar(props: ToolbarProps) {
       <FilterSheet
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
-        {...props}
-        roleOptions={roleOptions}
+        groups={[
+          { key: 'status', title: 'Статус', options: STATUS_OPTIONS, selected: filters.status },
+          { key: 'role', title: 'Роля', options: roleOptions, selected: filters.role },
+          { key: 'invite', title: 'Покана', options: INVITE_OPTIONS, selected: filters.invite },
+        ]}
+        onToggle={(key, value) => onChange(toggled(filters, key as SheetKey, value))}
+        onClear={clearFacets}
+        shown={shown}
       />
     </div>
   );
 }
 
-/** Phone filters: pinned header and footer, the facet groups scroll between. */
-function FilterSheet({
-  open,
-  onClose,
-  filters,
-  onChange,
-  roleOptions,
-  shown,
-}: ToolbarProps & { open: boolean; onClose: () => void }) {
-  const groups: { key: 'status' | 'role' | 'invite'; title: string; options: FacetOption[] }[] = [
-    { key: 'status', title: 'Статус', options: STATUS_OPTIONS },
-    { key: 'role', title: 'Роля', options: roleOptions },
-    { key: 'invite', title: 'Покана', options: INVITE_OPTIONS },
-  ];
+type SheetKey = 'status' | 'role' | 'invite';
 
-  const toggle = (key: 'status' | 'role' | 'invite', value: string) => {
-    const current = filters[key] as string[];
-    const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
-    onChange({ ...filters, [key]: next });
-  };
-
-  return (
-    <Drawer
-      open={open}
-      onClose={onClose}
-      label="Филтри"
-      header={
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold">Филтри</h2>
-          <button
-            type="button"
-            onClick={() => onChange({ ...filters, status: [], role: [], invite: [] })}
-            className="text-sm font-medium text-panel-ink-muted underline underline-offset-4"
-          >
-            Изчисти
-          </button>
-        </div>
-      }
-      footer={
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-full rounded-full bg-panel-ink py-3 text-sm font-semibold text-panel-ink-inverse"
-        >
-          Покажи {shown}
-        </button>
-      }
-    >
-      <div className="space-y-6">
-        {groups.map((group) => (
-          <section key={group.key}>
-            <h3 className="mb-2 text-xs font-semibold tracking-wider text-panel-ink-faint uppercase">
-              {group.title}
-            </h3>
-            <div className="space-y-1.5">
-              {group.options.map((option) => {
-                const checked = (filters[group.key] as string[]).includes(option.value);
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    role="checkbox"
-                    aria-checked={checked}
-                    onClick={() => toggle(group.key, option.value)}
-                    className={`flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-left text-sm font-medium transition-colors ${
-                      checked ? 'bg-panel-row-strong' : 'bg-panel-row'
-                    }`}
-                  >
-                    <span
-                      className={`flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded ${
-                        checked ? 'bg-panel-ink' : ''
-                      }`}
-                      style={{
-                        boxShadow: checked ? 'none' : 'inset 0 0 0 0.0625rem var(--panel-border)',
-                      }}
-                    >
-                      {checked && (
-                        <span
-                          className="h-1.5 w-1.5 rounded-[0.0625rem]"
-                          style={{ background: 'var(--panel-text-inverse)' }}
-                        />
-                      )}
-                    </span>
-                    {option.label}
-                  </button>
-                );
-              })}
-              {group.options.length === 0 && (
-                <p className="text-sm text-panel-ink-faint">Няма налични стойности.</p>
-              )}
-            </div>
-          </section>
-        ))}
-      </div>
-    </Drawer>
-  );
+function toggled(filters: StaffFilters, key: SheetKey, value: string): StaffFilters {
+  const current = filters[key] as string[];
+  const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
+  return { ...filters, [key]: next };
 }

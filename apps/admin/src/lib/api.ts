@@ -100,3 +100,18 @@ export interface ProvisionResult {
   tenant: TenantSummary;
   adminInviteSent: boolean;
 }
+
+/** One row of `GET /buildings`: the building with its entrance and property counts. */
+export interface Building {
+  id: string;
+  name: string;
+  city: string;
+  district: string;
+  address: string;
+  floors: number;
+  hasElevator: boolean;
+  status: 'draft' | 'active' | 'archived';
+  activatedAt: string | null;
+  entranceCount: number;
+  propertyCounts: Record<'apartment' | 'garage' | 'shop' | 'storage' | 'parking_spot', number>;
+}
