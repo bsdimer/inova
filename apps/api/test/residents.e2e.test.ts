@@ -621,6 +621,85 @@ describe('«Контакти» and the building details (WHI-123)', () => {
   });
 });
 
+describe('the resident’s phones (WHI-129)', () => {
+  let n = 0;
+  const resident = async () => {
+    n += 1;
+    const id = await t.account(tenantA, `phone-owner-${n}@inova.bg`, 'resident');
+    return { id, client: t.as(await t.tenantToken(id, tenantA, 'resident'), tenantA) };
+  };
+  const phone = (pushToken: string, extra: object = {}) => ({
+    pushToken,
+    platform: 'android',
+    appId: 'tech.whitenova.inova',
+    locale: 'bg',
+    ...extra,
+  });
+
+  it('registers a phone after sign-in, lists it, and removes it on sign-out', async () => {
+    const { client } = await resident();
+    const registered = await client.put('/me/devices', phone('fcm-token-1'));
+    expect(registered.status).toBe(200);
+    expect(registered.body).toMatchObject({
+      platform: 'android',
+      appId: 'tech.whitenova.inova',
+      locale: 'bg',
+    });
+    // The token is never read back.
+    expect(JSON.stringify(registered.body)).not.toContain('fcm-token-1');
+
+    expect((await client.get('/me/devices')).body.map((d: { id: string }) => d.id)).toEqual([
+      registered.body.id,
+    ]);
+    expect((await client.delete(`/me/devices/${registered.body.id}`)).status).toBe(204);
+    expect((await client.get('/me/devices')).body).toEqual([]);
+    expect((await client.delete(`/me/devices/${registered.body.id}`)).status).toBe(404);
+  });
+
+  it('keeps one row per phone: registering again updates it and refreshes when it was last seen', async () => {
+    const { client } = await resident();
+    const first = await client.put('/me/devices', phone('fcm-token-2'));
+    await t.adminPool.query(
+      `UPDATE devices SET last_seen_at = now() - interval '30 days' WHERE id = $1`,
+      [first.body.id],
+    );
+    const again = await client.put('/me/devices', phone('fcm-token-2', { locale: 'en' }));
+    expect(again.body.id).toBe(first.body.id);
+    expect(again.body.locale).toBe('en');
+    expect(Date.parse(again.body.lastSeenAt)).toBeGreaterThan(Date.now() - 60_000);
+    expect((await client.get('/me/devices')).body).toHaveLength(1);
+  });
+
+  it('moves a phone to whoever signs in on it next, and never shows or removes another person’s phone', async () => {
+    const first = await resident();
+    const second = await resident();
+    const mine = await first.client.put('/me/devices', phone('fcm-token-shared'));
+    expect((await second.client.delete(`/me/devices/${mine.body.id}`)).status).toBe(404);
+
+    const moved = await second.client.put(
+      '/me/devices',
+      phone('fcm-token-shared', { platform: 'ios' }),
+    );
+    expect(moved.body.id).toBe(mine.body.id);
+    expect((await first.client.get('/me/devices')).body).toEqual([]);
+    expect(
+      (await second.client.get('/me/devices')).body.map((d: { platform: string }) => d.platform),
+    ).toEqual(['ios']);
+  });
+
+  it('refuses bad input (400), and a platform operator (403)', async () => {
+    const { client } = await resident();
+    expect((await client.put('/me/devices', phone('x', { platform: 'windows' }))).status).toBe(400);
+    expect((await client.put('/me/devices', phone(''))).status).toBe(400);
+    expect((await client.put('/me/devices', phone('x', { locale: 'Bulgarian' }))).status).toBe(400);
+    expect((await client.put('/me/devices', phone('x'.repeat(4097)))).status).toBe(400);
+    expect((await client.delete('/me/devices/not-an-id')).status).toBe(400);
+    const { rows } = await t.adminPool.query(`SELECT id FROM platform_users LIMIT 1`);
+    const platform = t.as(await t.platformToken(rows[0].id), tenantA);
+    expect((await platform.put('/me/devices', phone('platform-token'))).status).toBe(403);
+  });
+});
+
 describe('the seeded accounts for the resident app (WHI-126)', () => {
   const flatId = (properties: Array<{ id: string; number: string }>) =>
     properties.find((p) => p.number === '1')!.id;
