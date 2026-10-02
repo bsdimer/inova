@@ -11,6 +11,8 @@ export interface TestApp {
   app: NestExpressApplication;
   /** Privileged connection: fixtures and assertions across tenants. */
   adminPool: pg.Pool;
+  /** The privileged URL of the test database — to rerun the seed against it. */
+  migratorUrl: string;
   /** Tenant ids by key, from the seed (`inova`, `demo`). */
   tenants: Record<string, string>;
   /** A tenant account's access token (decision B8: one tenant per token). */
@@ -28,6 +30,7 @@ export interface Client {
   get(url: string): request.Test;
   post(url: string, body?: object): request.Test;
   patch(url: string, body?: object): request.Test;
+  put(url: string, body?: object): request.Test;
   delete(url: string): request.Test;
 }
 
@@ -61,7 +64,11 @@ export async function bootTestApp(dbPrefix: string): Promise<TestApp> {
   const tenants = Object.fromEntries(tenantRows.rows.map((row) => [row.key, row.id]));
 
   const client = (token: string, tenantId: string): Client => {
-    const send = (method: 'get' | 'post' | 'patch' | 'delete', url: string, body?: object) => {
+    const send = (
+      method: 'get' | 'post' | 'patch' | 'put' | 'delete',
+      url: string,
+      body?: object,
+    ) => {
       const agent = request(app.getHttpServer());
       const req = agent[method](url)
         .set('Authorization', `Bearer ${token}`)
@@ -72,6 +79,7 @@ export async function bootTestApp(dbPrefix: string): Promise<TestApp> {
       get: (url) => send('get', url),
       post: (url, body) => send('post', url, body),
       patch: (url, body) => send('patch', url, body),
+      put: (url, body) => send('put', url, body),
       delete: (url) => send('delete', url),
     };
   };
@@ -79,6 +87,7 @@ export async function bootTestApp(dbPrefix: string): Promise<TestApp> {
   return {
     app,
     adminPool,
+    migratorUrl,
     tenants,
     as: client,
     platformToken: (platformUserId) =>

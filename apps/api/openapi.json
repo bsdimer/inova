@@ -1,0 +1,3783 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/v1/health": {
+      "get": {
+        "operationId": "HealthController_health",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Liveness probe",
+        "tags": ["health"]
+      }
+    },
+    "/v1/brands/{key}/config": {
+      "get": {
+        "operationId": "BrandsController_getConfig",
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Colours, themes, locales and support contacts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandConfigDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Public, non-secret runtime branding for the shared multi-brand app",
+        "tags": ["brands"]
+      }
+    },
+    "/v1/me/devices": {
+      "put": {
+        "operationId": "MyDevicesController_register",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDeviceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyDeviceDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Register this phone (after sign-in and on every app start); moves it to the caller",
+        "tags": ["me"]
+      },
+      "get": {
+        "operationId": "MyDevicesController_list",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MyDeviceDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The caller's phones, oldest first",
+        "tags": ["me"]
+      }
+    },
+    "/v1/me/devices/{deviceId}": {
+      "delete": {
+        "operationId": "MyDevicesController_remove",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "deviceId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed"
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a phone — call it before signing out",
+        "tags": ["me"]
+      }
+    },
+    "/v1/platform/tenants": {
+      "get": {
+        "operationId": "PlatformController_listTenants",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all tenants (super_admin only)",
+        "tags": ["platform"]
+      },
+      "post": {
+        "operationId": "PlatformController_provisionTenant",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProvisionTenantDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Provision a tenant: starter roles + first user with the 'admin' role (invited)",
+        "tags": ["platform"]
+      }
+    },
+    "/v1/buildings": {
+      "get": {
+        "operationId": "BuildingsController_list",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "city",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "district",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["draft", "active", "archived"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Buildings with entrance and property counts; filter by city, district, status",
+        "tags": ["property"]
+      },
+      "post": {
+        "operationId": "BuildingsController_create",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBuildingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a draft building, optionally with its entrances",
+        "tags": ["property"]
+      }
+    },
+    "/v1/buildings/{buildingId}": {
+      "get": {
+        "operationId": "BuildingsController_get",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "buildingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "One building with its entrances and property counts",
+        "tags": ["property"]
+      },
+      "patch": {
+        "operationId": "BuildingsController_update",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "buildingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBuildingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Edit a building's details",
+        "tags": ["property"]
+      }
+    },
+    "/v1/buildings/{buildingId}/activate": {
+      "post": {
+        "operationId": "BuildingsController_activate",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "buildingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Activate a draft building that has at least one property",
+        "tags": ["property"]
+      }
+    },
+    "/v1/buildings/{buildingId}/entrances": {
+      "post": {
+        "operationId": "BuildingsController_addEntrance",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "buildingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntranceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add an entrance",
+        "tags": ["property"]
+      }
+    },
+    "/v1/buildings/{buildingId}/entrances/{entranceId}": {
+      "patch": {
+        "operationId": "BuildingsController_renameEntrance",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "buildingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entranceId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntranceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rename an entrance",
+        "tags": ["property"]
+      },
+      "delete": {
+        "operationId": "BuildingsController_removeEntrance",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "buildingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entranceId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove an empty entrance of a draft building",
+        "tags": ["property"]
+      }
+    },
+    "/v1/buildings/{buildingId}/properties": {
+      "get": {
+        "operationId": "BuildingsController_listProperties",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "buildingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entranceId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "propertyType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["apartment", "garage", "shop", "storage", "parking_spot"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A building's properties; filter by entrance and property type",
+        "tags": ["property"]
+      },
+      "post": {
+        "operationId": "BuildingsController_addProperty",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "buildingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePropertyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a property; entrance, floor and number are unique in the building",
+        "tags": ["property"]
+      }
+    },
+    "/v1/buildings/{buildingId}/properties/{propertyId}": {
+      "patch": {
+        "operationId": "BuildingsController_updateProperty",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "buildingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "propertyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePropertyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Correct a property — audited, no approval (D25)",
+        "tags": ["property"]
+      },
+      "delete": {
+        "operationId": "BuildingsController_removeProperty",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "buildingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "propertyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a property of a draft building",
+        "tags": ["property"]
+      }
+    },
+    "/v1/buildings/{buildingId}/properties/{propertyId}/residents": {
+      "get": {
+        "operationId": "ResidentsController_list",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "buildingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "propertyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "at",
+            "required": false,
+            "in": "query",
+            "description": "Only the people and pets that count on this day",
+            "schema": {
+              "example": "2026-10-01",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A property's residents and pets; `at` keeps those counting that day",
+        "tags": ["property"]
+      },
+      "post": {
+        "operationId": "ResidentsController_add",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "buildingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "propertyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddResidentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add an owner, tenant or occupant from a date; an account and an invite code follow",
+        "tags": ["property"]
+      }
+    },
+    "/v1/me/properties": {
+      "get": {
+        "operationId": "MyPropertiesController_list",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Empty when the caller lives nowhere today",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MyPropertyDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The properties the caller holds an occupancy on today",
+        "tags": ["me"]
+      }
+    },
+    "/v1/me/properties/{propertyId}": {
+      "get": {
+        "operationId": "MyPropertiesController_get",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "propertyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyPropertyDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "One of them, with the people and pets living there today",
+        "tags": ["me"]
+      }
+    },
+    "/v1/me/properties/{propertyId}/contacts": {
+      "get": {
+        "operationId": "MyPropertiesController_contacts",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "propertyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildingContactsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "«Контакти»: the organisation and the building’s current house managers",
+        "tags": ["me"]
+      }
+    },
+    "/v1/me/properties/{propertyId}/occupants": {
+      "post": {
+        "operationId": "MyPropertiesController_addOccupant",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "propertyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddOccupantDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccupantRecordDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "An owner or tenant records a household member without an account",
+        "tags": ["me"]
+      }
+    },
+    "/v1/me/properties/{propertyId}/pets": {
+      "post": {
+        "operationId": "MyPropertiesController_addPet",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "propertyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddPetDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetRecordDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "An owner or tenant records a pet",
+        "tags": ["me"]
+      }
+    },
+    "/v1/buildings/{buildingId}/managers": {
+      "get": {
+        "operationId": "BuildingRequestsController_listManagers",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "buildingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The building's house managers",
+        "tags": ["property"]
+      },
+      "post": {
+        "operationId": "BuildingRequestsController_assignManager",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "buildingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignManagerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Assign an account as house manager of the building",
+        "tags": ["property"]
+      }
+    },
+    "/v1/buildings/{buildingId}/managers/{accountId}": {
+      "delete": {
+        "operationId": "BuildingRequestsController_endManager",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "buildingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "accountId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "End an account's assignment to the building",
+        "tags": ["property"]
+      }
+    },
+    "/v1/buildings/{buildingId}/removal-requests": {
+      "post": {
+        "operationId": "BuildingRequestsController_requestRemoval",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "buildingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRemovalRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask to end an occupancy, remove a resident account or archive a property (B10)",
+        "tags": ["property"]
+      }
+    },
+    "/v1/removal-requests": {
+      "get": {
+        "operationId": "RemovalRequestsController_list",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated; default pending",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Removal requests in the caller’s buildings; `status` filter (D27)",
+        "tags": ["property"]
+      }
+    },
+    "/v1/removal-requests/{requestId}": {
+      "patch": {
+        "operationId": "RemovalRequestsController_update",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "requestId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRemovalRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The author edits a pending request (D27)",
+        "tags": ["property"]
+      }
+    },
+    "/v1/removal-requests/{requestId}/withdraw": {
+      "post": {
+        "operationId": "RemovalRequestsController_withdraw",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "requestId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The author withdraws a pending request (D27)",
+        "tags": ["property"]
+      }
+    },
+    "/v1/platform/removal-requests": {
+      "get": {
+        "operationId": "PlatformRemovalRequestsController_list",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated; default pending",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "tenantId",
+            "required": false,
+            "in": "query",
+            "description": "One organisation; all when omitted",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Removal requests of every organisation, or one; `status` filter (D27)",
+        "tags": ["platform"]
+      }
+    },
+    "/v1/platform/removal-requests/{tenantId}/{requestId}/approve": {
+      "post": {
+        "operationId": "PlatformRemovalRequestsController_approve",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "requestId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve and apply a removal request at once",
+        "tags": ["platform"]
+      }
+    },
+    "/v1/platform/removal-requests/{tenantId}/{requestId}/reject": {
+      "post": {
+        "operationId": "PlatformRemovalRequestsController_reject",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "requestId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reject a removal request, with the reason",
+        "tags": ["platform"]
+      }
+    },
+    "/v1/link-requests": {
+      "get": {
+        "operationId": "LinkRequestsController_list",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated; default pending",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "«Заявки за връзка»; `status` filter, pending by default (D27)",
+        "tags": ["property"]
+      }
+    },
+    "/v1/link-requests/{requestId}/approve": {
+      "post": {
+        "operationId": "LinkRequestsController_approve",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "requestId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveLinkDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Link the resident to the property staff found; creates the occupancy",
+        "tags": ["property"]
+      }
+    },
+    "/v1/link-requests/{requestId}/reject": {
+      "post": {
+        "operationId": "LinkRequestsController_reject",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "requestId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reject a link request, with the reason",
+        "tags": ["property"]
+      }
+    },
+    "/v1/me/link-requests": {
+      "post": {
+        "operationId": "MyLinkRequestsController_create",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLinkRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyLinkRequestDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "«Добави моя имот»: ask to be linked to a property",
+        "tags": ["me"]
+      },
+      "get": {
+        "operationId": "MyLinkRequestsController_list",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Oldest first, every status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MyLinkRequestDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The caller's link requests and their outcome",
+        "tags": ["me"]
+      }
+    },
+    "/v1/me/link-requests/{requestId}/withdraw": {
+      "post": {
+        "operationId": "MyLinkRequestsController_withdraw",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "requestId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyLinkRequestDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw a pending link request",
+        "tags": ["me"]
+      }
+    },
+    "/v1/imports/properties/template": {
+      "get": {
+        "operationId": "PropertyImportController_template",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The template to fill in: one row per property (CSV, opens in Excel)",
+        "tags": ["property"]
+      }
+    },
+    "/v1/imports/properties": {
+      "post": {
+        "operationId": "PropertyImportController_import",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dryRun",
+            "required": false,
+            "in": "query",
+            "description": "A dry run unless `false` is said explicitly",
+            "schema": {
+              "type": "string",
+              "enum": ["true", "false"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Import buildings, entrances and properties from the template; a dry run reports every row error",
+        "tags": ["property"]
+      }
+    },
+    "/v1/tenant": {
+      "get": {
+        "operationId": "TenantController_current",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Current tenant profile, caller role (key and name) and permissions",
+        "tags": ["tenant"]
+      }
+    },
+    "/v1/tenant/staff": {
+      "get": {
+        "operationId": "TenantController_staff",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List staff members with roles",
+        "tags": ["tenant"]
+      },
+      "post": {
+        "operationId": "TenantController_inviteStaff",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteStaffDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Invite a staff member (creates the tenant account if needed)",
+        "tags": ["tenant"]
+      }
+    },
+    "/v1/tenant/staff/{userId}": {
+      "patch": {
+        "operationId": "TenantController_updateStaff",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStaffDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a staff member's role or status",
+        "tags": ["tenant"]
+      }
+    },
+    "/v1/tenant/permissions": {
+      "get": {
+        "operationId": "TenantController_permissions",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Permission catalog (platform-wide, fixed)",
+        "tags": ["tenant"]
+      }
+    },
+    "/v1/tenant/roles": {
+      "get": {
+        "operationId": "TenantController_roles",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List roles with their permissions and member counts",
+        "tags": ["tenant"]
+      },
+      "post": {
+        "operationId": "TenantController_createRole",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRoleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a custom role",
+        "tags": ["tenant"]
+      }
+    },
+    "/v1/tenant/roles/{key}": {
+      "patch": {
+        "operationId": "TenantController_updateRole",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRoleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a role's name and/or permissions",
+        "tags": ["tenant"]
+      },
+      "delete": {
+        "operationId": "TenantController_deleteRole",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete an unused custom role",
+        "tags": ["tenant"]
+      }
+    },
+    "/v1/tenant/audit": {
+      "get": {
+        "operationId": "TenantController_audit",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Recent audit records for the tenant",
+        "tags": ["tenant"]
+      }
+    }
+  },
+  "info": {
+    "title": "inova Core API",
+    "description": "The core API: buildings, properties, residents and everything built on them.\nThe answers of the resident routes (`/me/*`) and the brand configuration are\nTypeScript types in `@inova/shared` (`MyProperty`, `MyPropertyDetail`,\n`BuildingContacts`, `OccupantRecord`, `PetRecord`, `MyLinkRequest`, `MyDevice`,\n`BrandConfig`, `ApiError`) — import them rather than copying.\n\n**Test portal:** `https://test-portal.whitenova.tech/api/v1`. Signing in\nhappens at auth-service — its own document at `/auth/docs` explains it and\nlists the test accounts.\n\n## Every call\n\n```\nAuthorization: Bearer <accessToken from auth-service>\nX-Tenant-Id:   <memberships[0].t from the same session>\n```\n\nThe organisation in `X-Tenant-Id` must be the one the token was issued for;\nanything else is 403. On 401 the access token has expired: refresh it at\nauth-service and repeat the call once.\n\n## What the resident app reads\n\n| Screen | Call |\n| --- | --- |\n| Start: the properties to choose from | `GET /me/properties` |\n| «Моята сграда», the profile | `GET /me/properties/{id}` — building, bank account, household, pets |\n| «Контакти» | `GET /me/properties/{id}/contacts` |\n| Add a household member / a pet | `POST /me/properties/{id}/occupants`, `POST /me/properties/{id}/pets` |\n| «Добави моя имот» | `POST /me/link-requests`, `GET /me/link-requests`, `POST /me/link-requests/{id}/withdraw` |\n| Notifications later reach this phone | `PUT /me/devices` after sign-in and on every start; `DELETE /me/devices/{id}` before sign-out |\n| Theme, locales, support | `GET /brands/{key}/config` — public, no token |\n\nShow owner-only actions only when `ownerActions` is true; the server refuses\nthem to tenants and occupants anyway. A property the resident does not live in\nanswers 404, exactly like one that does not exist.\n\n## Conventions\n\n- Days are `YYYY-MM-DD` (`validFrom`, `validTo`); `validTo` is the last day\n  that counts, `null` while it lasts. Moments are ISO timestamps in UTC.\n- Ids are UUIDs.\n- Every error has the body `ApiError`: `{ statusCode, message, error }`;\n  `message` lists the broken fields on a 400.\n\nThe staff routes (buildings, imports, requests, roles) are documented here too;\ntheir answers are described as the admin screens need them.",
+    "version": "0.1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "BrandCompanyDto": {
+        "type": "object",
+        "properties": {
+          "legalName": {
+            "type": "string",
+            "example": "WhiteNova Technology"
+          }
+        },
+        "required": ["legalName"]
+      },
+      "BrandLocalesDto": {
+        "type": "object",
+        "properties": {
+          "default": {
+            "type": "string",
+            "example": "bg"
+          },
+          "supported": {
+            "example": ["bg", "en"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["default", "supported"]
+      },
+      "BrandThemeDto": {
+        "type": "object",
+        "properties": {
+          "background": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "example": "#EB5E28"
+          },
+          "surface": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "example": "#EB5E28"
+          },
+          "surfaceMuted": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "example": "#EB5E28"
+          },
+          "textPrimary": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "example": "#EB5E28"
+          },
+          "textSecondary": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "example": "#EB5E28"
+          },
+          "border": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "example": "#EB5E28"
+          },
+          "primary": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "example": "#EB5E28"
+          },
+          "success": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "example": "#EB5E28"
+          },
+          "accent": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "example": "#EB5E28"
+          },
+          "warning": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "example": "#EB5E28"
+          },
+          "danger": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "example": "#EB5E28"
+          }
+        },
+        "required": [
+          "background",
+          "surface",
+          "surfaceMuted",
+          "textPrimary",
+          "textSecondary",
+          "border",
+          "primary",
+          "success",
+          "accent",
+          "warning",
+          "danger"
+        ]
+      },
+      "BrandThemesDto": {
+        "type": "object",
+        "properties": {
+          "light": {
+            "$ref": "#/components/schemas/BrandThemeDto"
+          },
+          "dark": {
+            "$ref": "#/components/schemas/BrandThemeDto"
+          }
+        },
+        "required": ["light", "dark"]
+      },
+      "BrandRadiusDto": {
+        "type": "object",
+        "properties": {
+          "sm": {
+            "type": "number",
+            "example": 8
+          },
+          "md": {
+            "type": "number",
+            "example": 14
+          },
+          "lg": {
+            "type": "number",
+            "example": 22
+          },
+          "pill": {
+            "type": "number",
+            "example": 999
+          }
+        },
+        "required": ["sm", "md", "lg", "pill"]
+      },
+      "BrandIosDto": {
+        "type": "object",
+        "properties": {
+          "bundleId": {
+            "type": "string",
+            "example": "tech.whitenova.inova"
+          }
+        },
+        "required": ["bundleId"]
+      },
+      "BrandAndroidDto": {
+        "type": "object",
+        "properties": {
+          "package": {
+            "type": "string",
+            "example": "tech.whitenova.inova"
+          }
+        },
+        "required": ["package"]
+      },
+      "BrandDistributionDto": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": ["shared", "dedicated"],
+            "example": "shared"
+          },
+          "ios": {
+            "$ref": "#/components/schemas/BrandIosDto"
+          },
+          "android": {
+            "$ref": "#/components/schemas/BrandAndroidDto"
+          },
+          "deepLinkDomain": {
+            "type": "string",
+            "example": "app.inova.bg"
+          },
+          "scheme": {
+            "type": "string",
+            "example": "inova"
+          }
+        },
+        "required": ["mode", "ios", "android", "deepLinkDomain", "scheme"]
+      },
+      "BrandSupportDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "support@whitenova.tech"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+359 2 000 0000"
+          }
+        },
+        "required": ["email", "phone"]
+      },
+      "BrandConfigDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "inova"
+          },
+          "name": {
+            "type": "string",
+            "example": "inova"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "inova"
+          },
+          "company": {
+            "$ref": "#/components/schemas/BrandCompanyDto"
+          },
+          "tagline": {
+            "type": "string",
+            "example": "Together. Better. Home."
+          },
+          "description": {
+            "type": "string"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "locales": {
+            "$ref": "#/components/schemas/BrandLocalesDto"
+          },
+          "colors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "pattern": "^#[0-9A-Fa-f]{6}$"
+            },
+            "example": {
+              "orange": "#EB5E28",
+              "foam": "#EFECE3"
+            },
+            "description": "Named brand colours"
+          },
+          "gradients": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "example": {
+              "primary": ["#FF7E47", "#EB5E28"]
+            },
+            "description": "Named gradients, two or more colours each"
+          },
+          "theme": {
+            "$ref": "#/components/schemas/BrandThemesDto"
+          },
+          "radius": {
+            "$ref": "#/components/schemas/BrandRadiusDto"
+          },
+          "distribution": {
+            "$ref": "#/components/schemas/BrandDistributionDto"
+          },
+          "features": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "example": {
+              "surveys": true
+            },
+            "description": "Features the brand switches on"
+          },
+          "support": {
+            "$ref": "#/components/schemas/BrandSupportDto"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "displayName",
+          "company",
+          "tagline",
+          "description",
+          "values",
+          "locales",
+          "colors",
+          "gradients",
+          "theme",
+          "radius",
+          "distribution",
+          "features",
+          "support"
+        ]
+      },
+      "ApiErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 401
+          },
+          "message": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "example": "Invalid credentials",
+            "description": "A list for 400 validation errors, one line per field; a sentence otherwise"
+          },
+          "error": {
+            "type": "string",
+            "example": "Unauthorized"
+          }
+        },
+        "required": ["statusCode", "message", "error"]
+      },
+      "RegisterDeviceDto": {
+        "type": "object",
+        "properties": {
+          "pushToken": {
+            "type": "string",
+            "description": "The FCM or APNs token of this app install",
+            "maxLength": 4096
+          },
+          "platform": {
+            "type": "string",
+            "enum": ["ios", "android"]
+          },
+          "appId": {
+            "type": "string",
+            "example": "tech.whitenova.inova",
+            "description": "Bundle id / package"
+          },
+          "locale": {
+            "type": "string",
+            "example": "bg"
+          }
+        },
+        "required": ["pushToken", "platform"]
+      },
+      "MyDeviceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "platform": {
+            "type": "string",
+            "enum": ["ios", "android"],
+            "example": "android"
+          },
+          "appId": {
+            "type": "string",
+            "nullable": true,
+            "example": "tech.whitenova.inova"
+          },
+          "locale": {
+            "type": "string",
+            "nullable": true,
+            "example": "bg"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastSeenAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Refreshed by every registration"
+          }
+        },
+        "required": ["id", "platform", "appId", "locale", "createdAt", "lastSeenAt"]
+      },
+      "ProvisionTenantDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "blok-sofia"
+          },
+          "name": {
+            "type": "string",
+            "example": "Blok Sofia Management"
+          },
+          "adminEmail": {
+            "type": "string",
+            "example": "admin@bloksofia.bg",
+            "description": "The tenant's first user — assigned the per-tenant 'admin' role"
+          },
+          "adminName": {
+            "type": "string",
+            "example": "Petar Georgiev"
+          },
+          "adminPhone": {
+            "type": "string",
+            "example": "+359881234567"
+          }
+        },
+        "required": ["key", "name"]
+      },
+      "CreateBuildingDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "к-кс Кошер, бл. 3"
+          },
+          "city": {
+            "type": "string",
+            "example": "София"
+          },
+          "district": {
+            "type": "string",
+            "example": "Лозенец"
+          },
+          "address": {
+            "type": "string",
+            "example": "ул. Кораб планина 12"
+          },
+          "floors": {
+            "type": "number",
+            "example": 8
+          },
+          "hasElevator": {
+            "type": "boolean",
+            "example": true
+          },
+          "assessmentBasis": {
+            "type": "string",
+            "enum": ["fixed", "per_area", "per_occupant", "per_ideal_part", "per_room"]
+          },
+          "bankAccount": {
+            "type": "string",
+            "example": "BG80BNBG96611020345678"
+          },
+          "signatureName": {
+            "type": "string",
+            "example": "екипът на к-кс Кошер"
+          },
+          "entrances": {
+            "example": ["А", "Б"],
+            "description": "Entrance names",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "city",
+          "district",
+          "address",
+          "floors",
+          "hasElevator",
+          "assessmentBasis"
+        ]
+      },
+      "UpdateBuildingDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "district": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "floors": {
+            "type": "number"
+          },
+          "hasElevator": {
+            "type": "boolean"
+          },
+          "assessmentBasis": {
+            "type": "string",
+            "enum": ["fixed", "per_area", "per_occupant", "per_ideal_part", "per_room"]
+          },
+          "bankAccount": {
+            "type": "object",
+            "nullable": true,
+            "description": "`null` clears it"
+          },
+          "signatureName": {
+            "type": "object",
+            "nullable": true,
+            "description": "`null` clears it"
+          }
+        }
+      },
+      "EntranceDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "А"
+          }
+        },
+        "required": ["name"]
+      },
+      "CreatePropertyDto": {
+        "type": "object",
+        "properties": {
+          "entranceId": {
+            "type": "string"
+          },
+          "floor": {
+            "type": "number",
+            "example": 3,
+            "description": "0 is the ground floor; below it is negative"
+          },
+          "number": {
+            "type": "string",
+            "example": "12А"
+          },
+          "propertyType": {
+            "type": "string",
+            "enum": ["apartment", "garage", "shop", "storage", "parking_spot"]
+          },
+          "rooms": {
+            "type": "number",
+            "example": 3
+          },
+          "areaM2": {
+            "type": "string",
+            "example": "65.40",
+            "description": "m², a decimal string"
+          },
+          "idealParts": {
+            "type": "string",
+            "example": "2.3456",
+            "description": "Percent, a decimal string"
+          }
+        },
+        "required": ["entranceId", "floor", "number", "propertyType"]
+      },
+      "UpdatePropertyDto": {
+        "type": "object",
+        "properties": {
+          "entranceId": {
+            "type": "string"
+          },
+          "floor": {
+            "type": "number"
+          },
+          "number": {
+            "type": "string"
+          },
+          "propertyType": {
+            "type": "string",
+            "enum": ["apartment", "garage", "shop", "storage", "parking_spot"]
+          },
+          "rooms": {
+            "type": "object",
+            "nullable": true
+          },
+          "areaM2": {
+            "type": "object",
+            "nullable": true
+          },
+          "idealParts": {
+            "type": "object",
+            "nullable": true
+          }
+        }
+      },
+      "AddResidentDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": ["owner", "tenant", "occupant"]
+          },
+          "validFrom": {
+            "type": "string",
+            "example": "2026-10-01",
+            "description": "First day the occupancy counts"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "Елена"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Петрова"
+          },
+          "salutation": {
+            "type": "string",
+            "enum": ["mr", "mrs"],
+            "description": "Г-н / Г-жа (D36)"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+359881000001",
+            "description": "Where the invite code goes. An owner or tenant needs a phone or an e-mail."
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": ["role", "validFrom", "firstName"]
+      },
+      "MyBuildingDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "бл. 12"
+          },
+          "city": {
+            "type": "string",
+            "example": "София"
+          },
+          "district": {
+            "type": "string",
+            "example": "Младост"
+          },
+          "address": {
+            "type": "string",
+            "example": "ул. Проф. Александър Фол 7"
+          }
+        },
+        "required": ["id", "name", "city", "district", "address"]
+      },
+      "MyEntranceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "А"
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "MyPropertyDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "building": {
+            "$ref": "#/components/schemas/MyBuildingDto"
+          },
+          "entrance": {
+            "$ref": "#/components/schemas/MyEntranceDto"
+          },
+          "floor": {
+            "type": "number",
+            "example": 1,
+            "description": "0 is the ground floor; below it is negative"
+          },
+          "number": {
+            "type": "string",
+            "example": "1"
+          },
+          "propertyType": {
+            "type": "string",
+            "enum": ["apartment", "garage", "shop", "storage", "parking_spot"],
+            "example": "apartment"
+          },
+          "roles": {
+            "type": "array",
+            "example": ["owner"],
+            "description": "The caller's roles on it today",
+            "items": {
+              "type": "string",
+              "enum": ["owner", "tenant", "occupant"]
+            }
+          },
+          "ownerActions": {
+            "type": "boolean",
+            "example": true,
+            "description": "Show owner-only actions (surveys, …); the server enforces the same rule"
+          }
+        },
+        "required": [
+          "id",
+          "building",
+          "entrance",
+          "floor",
+          "number",
+          "propertyType",
+          "roles",
+          "ownerActions"
+        ]
+      },
+      "MyBuildingDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "бл. 12"
+          },
+          "city": {
+            "type": "string",
+            "example": "София"
+          },
+          "district": {
+            "type": "string",
+            "example": "Младост"
+          },
+          "address": {
+            "type": "string",
+            "example": "ул. Проф. Александър Фол 7"
+          },
+          "bankAccount": {
+            "type": "string",
+            "nullable": true,
+            "example": "BG80BNBG96611020345678",
+            "description": "The account residents pay into (D36); null until the organisation enters it"
+          }
+        },
+        "required": ["id", "name", "city", "district", "address", "bankAccount"]
+      },
+      "HouseholdMemberDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The occupancy"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["owner", "tenant", "occupant"],
+            "example": "owner"
+          },
+          "name": {
+            "type": "string",
+            "example": "Мила Николова"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-01-01"
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": null,
+            "description": "The last day it counts (inclusive); null while it lasts"
+          },
+          "isMe": {
+            "type": "boolean",
+            "example": false,
+            "description": "True for the caller's own occupancy"
+          }
+        },
+        "required": ["id", "role", "name", "validFrom", "validTo", "isMe"]
+      },
+      "PetRecordDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Бобо"
+          },
+          "species": {
+            "type": "string",
+            "enum": ["dog", "cat", "other"],
+            "example": "dog"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-01-01"
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": null,
+            "description": "The last day it counts (inclusive); null while it lasts"
+          }
+        },
+        "required": ["id", "name", "species", "validFrom", "validTo"]
+      },
+      "MyPropertyDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "building": {
+            "$ref": "#/components/schemas/MyBuildingDetailDto"
+          },
+          "entrance": {
+            "$ref": "#/components/schemas/MyEntranceDto"
+          },
+          "floor": {
+            "type": "number",
+            "example": 1,
+            "description": "0 is the ground floor; below it is negative"
+          },
+          "number": {
+            "type": "string",
+            "example": "1"
+          },
+          "propertyType": {
+            "type": "string",
+            "enum": ["apartment", "garage", "shop", "storage", "parking_spot"],
+            "example": "apartment"
+          },
+          "roles": {
+            "type": "array",
+            "example": ["owner"],
+            "description": "The caller's roles on it today",
+            "items": {
+              "type": "string",
+              "enum": ["owner", "tenant", "occupant"]
+            }
+          },
+          "ownerActions": {
+            "type": "boolean",
+            "example": true,
+            "description": "Show owner-only actions (surveys, …); the server enforces the same rule"
+          },
+          "household": {
+            "description": "Who lives there today: names and roles only, never contacts",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HouseholdMemberDto"
+            }
+          },
+          "pets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PetRecordDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "building",
+          "entrance",
+          "floor",
+          "number",
+          "propertyType",
+          "roles",
+          "ownerActions",
+          "household",
+          "pets"
+        ]
+      },
+      "OrganisationDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Demo Blok Management"
+          }
+        },
+        "required": ["name"]
+      },
+      "ManagerContactDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Мария Стоянова"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+359881000200"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "example": "maria@inova.bg"
+          }
+        },
+        "required": ["name", "phone", "email"]
+      },
+      "BuildingContactsDto": {
+        "type": "object",
+        "properties": {
+          "organisation": {
+            "$ref": "#/components/schemas/OrganisationDto"
+          },
+          "managers": {
+            "description": "The building's current house managers, longest-serving first",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ManagerContactDto"
+            }
+          }
+        },
+        "required": ["organisation", "managers"]
+      },
+      "AddOccupantDto": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "example": "Мартин"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Петров"
+          },
+          "validFrom": {
+            "type": "string",
+            "example": "2026-10-01"
+          }
+        },
+        "required": ["firstName", "validFrom"]
+      },
+      "OccupantRecordDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["occupant"],
+            "example": "occupant"
+          },
+          "name": {
+            "type": "string",
+            "example": "Мила Николова"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-01-01"
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": null,
+            "description": "The last day it counts (inclusive); null while it lasts"
+          }
+        },
+        "required": ["id", "role", "name", "validFrom", "validTo"]
+      },
+      "AddPetDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Рекс"
+          },
+          "species": {
+            "type": "string",
+            "enum": ["dog", "cat", "other"]
+          },
+          "validFrom": {
+            "type": "string",
+            "example": "2026-10-01"
+          }
+        },
+        "required": ["name", "species", "validFrom"]
+      },
+      "AssignManagerDto": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "description": "A tenant account: staff, a resident owner, a platform-employed manager"
+          }
+        },
+        "required": ["accountId"]
+      },
+      "CreateRemovalRequestDto": {
+        "type": "object",
+        "properties": {
+          "subjectType": {
+            "type": "string",
+            "enum": ["occupancy", "account", "property"]
+          },
+          "subjectId": {
+            "type": "string",
+            "description": "The occupancy, the resident account or the property"
+          },
+          "reason": {
+            "type": "string",
+            "example": "Продаден имот — нотариален акт от 12.09.2026"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "example": "2026-09-30",
+            "description": "The last day the occupancies count"
+          }
+        },
+        "required": ["subjectType", "subjectId", "reason", "effectiveDate"]
+      },
+      "UpdateRemovalRequestDto": {
+        "type": "object",
+        "properties": {
+          "subjectType": {
+            "type": "string",
+            "enum": ["occupancy", "account", "property"]
+          },
+          "subjectId": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "effectiveDate": {
+            "type": "string"
+          }
+        }
+      },
+      "DecisionDto": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "string",
+            "example": "Потвърдено с нотариалния акт"
+          }
+        }
+      },
+      "RejectionDto": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "string",
+            "example": "Липсва документ за продажбата"
+          }
+        },
+        "required": ["note"]
+      },
+      "ApproveLinkDto": {
+        "type": "object",
+        "properties": {
+          "buildingId": {
+            "type": "string"
+          },
+          "propertyId": {
+            "type": "string",
+            "description": "The property the request is about, as staff found it"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": ["buildingId", "propertyId"]
+      },
+      "CreateLinkRequestDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": ["owner", "tenant"]
+          },
+          "validFrom": {
+            "type": "string",
+            "example": "2026-10-01"
+          },
+          "address": {
+            "type": "string",
+            "example": "бл. 3, ул. Кораб планина 12"
+          },
+          "entrance": {
+            "type": "string",
+            "example": "А"
+          },
+          "floor": {
+            "type": "string",
+            "example": "4"
+          },
+          "number": {
+            "type": "string",
+            "example": "12"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": ["role", "validFrom", "address", "number"]
+      },
+      "MyLinkRequestDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["owner", "tenant"],
+            "example": "owner"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-01-01"
+          },
+          "address": {
+            "type": "string",
+            "example": "бл. 12, ул. Проф. Александър Фол 7"
+          },
+          "entrance": {
+            "type": "string",
+            "nullable": true,
+            "example": "А"
+          },
+          "floor": {
+            "type": "string",
+            "nullable": true,
+            "example": "2"
+          },
+          "number": {
+            "type": "string",
+            "example": "4"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "approved", "rejected", "withdrawn"],
+            "example": "pending"
+          },
+          "decisionNote": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Why staff rejected it, or their note on approval"
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": null
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T08:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "validFrom",
+          "address",
+          "entrance",
+          "floor",
+          "number",
+          "note",
+          "status",
+          "decisionNote",
+          "decidedAt",
+          "createdAt"
+        ]
+      },
+      "InviteStaffDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "nikol@bloksofia.bg"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Nikol Petrova"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+359881234567"
+          },
+          "roleKey": {
+            "type": "string",
+            "example": "manager"
+          }
+        },
+        "required": ["email", "fullName", "roleKey"]
+      },
+      "UpdateStaffDto": {
+        "type": "object",
+        "properties": {
+          "roleKey": {
+            "type": "string",
+            "example": "manager"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "suspended", "revoked"]
+          }
+        }
+      },
+      "CreateRoleDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "accountant"
+          },
+          "name": {
+            "type": "string",
+            "example": "Accountant"
+          },
+          "permissions": {
+            "example": ["tenant.read", "audit.read"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["key", "name", "permissions"]
+      },
+      "UpdateRoleDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

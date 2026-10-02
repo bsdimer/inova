@@ -661,7 +661,10 @@ describe('Residents and pets (M2) stay inside their tenant', () => {
       expect(seen.rows).toEqual([{ tenant_id: tenantB }]);
       const own = await client.query('SELECT 1 FROM occupancies WHERE id = $1', [occupancyA]);
       expect(own.rows).toHaveLength(0);
-      expect((await client.query('SELECT 1 FROM pets')).rows).toHaveLength(0);
+      // Tenant B has its own seeded pet; tenant A's Рекс stays out of sight.
+      const pets = await client.query('SELECT DISTINCT tenant_id FROM pets');
+      expect(pets.rows).toEqual([{ tenant_id: tenantB }]);
+      expect((await client.query(`SELECT 1 FROM pets WHERE name = 'Рекс'`)).rows).toHaveLength(0);
       const ended = await client.query(
         `UPDATE occupancies SET valid_to = '2026-01-02' WHERE id = $1 RETURNING id`,
         [occupancyA],
@@ -813,5 +816,57 @@ describe('Property import (WHI-99) stays inside its tenant', () => {
       .set('Authorization', `Bearer ${inB}`)
       .set('X-Tenant-Id', tenantA);
     expect(template.status).toBe(403);
+  });
+});
+
+describe('Devices (WHI-129) stay inside their tenant', () => {
+  it('RLS hides and protects another tenant’s phones; the API never reaches them', async () => {
+    const device = (
+      await adminPool.query(
+        `INSERT INTO devices (tenant_id, user_id, platform, push_token) VALUES ($1, $2, 'android', 'iso-token') RETURNING id`,
+        [tenantA, mariaId],
+      )
+    ).rows[0].id;
+
+    const client = await appPool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [tenantB]);
+      expect(
+        (await client.query(`SELECT 1 FROM devices WHERE id = $1`, [device])).rows,
+      ).toHaveLength(0);
+      expect(
+        (await client.query(`DELETE FROM devices WHERE id = $1 RETURNING id`, [device])).rows,
+      ).toHaveLength(0);
+      await expect(
+        client.query(
+          `INSERT INTO devices (tenant_id, user_id, platform, push_token) VALUES ($1, $2, 'ios', 'sneaky')`,
+          [tenantA, mariaId],
+        ),
+      ).rejects.toMatchObject({ code: '42501' });
+      await client.query('ROLLBACK');
+    } finally {
+      client.release();
+    }
+
+    const inB = await tenantToken(demoMariaId, tenantB, ['manager']);
+    const del = (tenantId: string) =>
+      request(app.getHttpServer())
+        .delete(`/me/devices/${device}`)
+        .set('Authorization', `Bearer ${inB}`)
+        .set('X-Tenant-Id', tenantId);
+    expect((await del(tenantB)).status).toBe(404);
+    expect((await del(tenantA)).status).toBe(403);
+    // The same token registered in B is B's own row, not A's.
+    const inBReg = await request(app.getHttpServer())
+      .put('/me/devices')
+      .set('Authorization', `Bearer ${inB}`)
+      .set('X-Tenant-Id', tenantB)
+      .send({ pushToken: 'iso-token', platform: 'android' });
+    expect(inBReg.body.id).not.toBe(device);
+    const { rows } = await adminPool.query(`SELECT tenant_id, user_id FROM devices WHERE id = $1`, [
+      device,
+    ]);
+    expect(rows).toEqual([{ tenant_id: tenantA, user_id: mariaId }]);
   });
 });

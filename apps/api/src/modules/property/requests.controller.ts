@@ -13,7 +13,17 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiHeader,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
+import type { MyLinkRequest } from '@inova/shared';
+import { ApiErrors } from '../../openapi/api-errors';
+import { MyLinkRequestDto } from './me.responses';
 import { JwtGuard, type AuthedRequest } from '../../auth/jwt.guard';
 import { PermissionsGuard, RequirePermissions } from '../../auth/permissions.guard';
 import { PlatformGuard } from '../../auth/platform.guard';
@@ -220,20 +230,29 @@ export class MyLinkRequestsController {
 
   @Post()
   @ApiOperation({ summary: '«Добави моя имот»: ask to be linked to a property' })
-  create(@Req() req: AuthedRequest, @Body() dto: CreateLinkRequestDto) {
+  @ApiCreatedResponse({ type: MyLinkRequestDto })
+  @ApiErrors(400, 401, 403, 409)
+  create(@Req() req: AuthedRequest, @Body() dto: CreateLinkRequestDto): Promise<MyLinkRequest> {
     return this.links.create(req.tenantId!, this.accountOf(req), dto);
   }
 
   @Get()
   @ApiOperation({ summary: "The caller's link requests and their outcome" })
-  list(@Req() req: AuthedRequest) {
+  @ApiOkResponse({ type: [MyLinkRequestDto], description: 'Oldest first, every status' })
+  @ApiErrors(401, 403)
+  list(@Req() req: AuthedRequest): Promise<MyLinkRequest[]> {
     return this.links.mine(req.tenantId!, this.accountOf(req));
   }
 
   @Post(':requestId/withdraw')
   @HttpCode(200)
   @ApiOperation({ summary: 'Withdraw a pending link request' })
-  withdraw(@Req() req: AuthedRequest, @Param('requestId', ParseUUIDPipe) requestId: string) {
+  @ApiOkResponse({ type: MyLinkRequestDto })
+  @ApiErrors(400, 401, 403, 404, 409)
+  withdraw(
+    @Req() req: AuthedRequest,
+    @Param('requestId', ParseUUIDPipe) requestId: string,
+  ): Promise<MyLinkRequest> {
     return this.links.withdraw(req.tenantId!, this.accountOf(req), requestId);
   }
 

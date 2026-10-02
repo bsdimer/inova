@@ -61,13 +61,46 @@ export interface MyPropertyDetail extends MyProperty {
     /** True for the caller's own occupancy. */
     isMe: boolean;
   }>;
-  pets: Array<{
-    id: string;
-    name: string;
-    species: PetSpecies;
-    validFrom: IsoDate;
-    validTo: IsoDate | null;
-  }>;
+  pets: PetRecord[];
+}
+
+/** A pet living in a property, from `validFrom` through `validTo` (null while it lasts). */
+export interface PetRecord {
+  id: string;
+  name: string;
+  species: PetSpecies;
+  validFrom: IsoDate;
+  validTo: IsoDate | null;
+}
+
+/** `POST /v1/me/properties/:id/occupants` — a household member recorded by name. */
+export interface OccupantRecord {
+  id: string;
+  role: 'occupant';
+  name: string;
+  validFrom: IsoDate;
+  validTo: IsoDate | null;
+}
+
+export type LinkRequestStatus = 'pending' | 'approved' | 'rejected' | 'withdrawn';
+
+/** `/v1/me/link-requests` — «Добави моя имот», as the resident filed it and what came of it. */
+export interface MyLinkRequest {
+  id: string;
+  role: 'owner' | 'tenant';
+  validFrom: IsoDate;
+  address: string;
+  entrance: string | null;
+  floor: string | null;
+  number: string;
+  note: string | null;
+  status: LinkRequestStatus;
+  /** Why staff rejected it, or their note on approval. */
+  decisionNote: string | null;
+  /** ISO timestamp; null while pending. */
+  decidedAt: string | null;
+  /** ISO timestamp. */
+  createdAt: string;
 }
 
 /** `GET /v1/me/properties/:id/contacts` — who to call about the building («Контакти»). */

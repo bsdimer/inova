@@ -16,6 +16,11 @@
  *   demo manager: maria@inova.bg  / demo-maria   (same e-mail, another account)
  *   invite codes: 482913 (Elena, inova) · 735026 (Georgi, demo)
  *   residents:    Elena owns бл. 3 ап. 4 (inova) · Georgi rents бл. 12 ап. 2 (demo)
+ *   for the resident app (demo, бл. 12; password demo-resident, sign in by phone):
+ *     +359881000101 Петър Николов — owner of ап. 1 and garage Г1; household Мила, dog Бобо
+ *     +359881000102 Ралица Николова — co-owner of ап. 1
+ *     +359881000103 Калин Тодоров — tenant of ап. 3 (no owner-only actions)
+ *     house manager on «Контакти»: Мария Стоянова (maria@inova.bg / demo-maria)
  */
 import argon2 from 'argon2';
 import { createHash } from 'node:crypto';
@@ -359,6 +364,148 @@ export async function seed(url = databaseUrl, { quiet = false } = {}) {
       );
     }
 
+    // Resident accounts for building the resident app against the test portal
+    // (WHI-126). In demo, not inova: the admin's browser tests are written
+    // against inova's exact staff list. Every run puts them back as they were —
+    // active, with these passwords — so a developer's experiments never stick.
+    // Sign in with the phone and `realm: "demo"`.
+    const demoId = tenantIds.demo;
+    const bl12 = (
+      await client.query(`SELECT id FROM buildings WHERE tenant_id = $1 AND name = 'бл. 12'`, [
+        demoId,
+      ])
+    ).rows[0].id;
+    await client.query(
+      `UPDATE buildings SET bank_account = 'BG80BNBG96611020345678' WHERE tenant_id = $1 AND id = $2`,
+      [demoId, bl12],
+    );
+    const entranceA = (
+      await client.query(
+        `SELECT id FROM entrances WHERE tenant_id = $1 AND building_id = $2 AND name = 'А'`,
+        [demoId, bl12],
+      )
+    ).rows[0].id;
+    await client.query(
+      `INSERT INTO apartments (tenant_id, building_id, entrance_id, floor, number, property_type, area_m2, ideal_parts)
+       VALUES ($1, $2, $3, -1, 'Г1', 'garage', '18.00', '0.5000')
+       ON CONFLICT (tenant_id, building_id, entrance_id, floor, lower(number)) DO NOTHING`,
+      [demoId, bl12, entranceA],
+    );
+    const property = async (number) =>
+      (
+        await client.query(
+          `SELECT id FROM apartments WHERE tenant_id = $1 AND building_id = $2 AND number = $3`,
+          [demoId, bl12, number],
+        )
+      ).rows[0].id;
+
+    const mobileResidents = [
+      // Owner of ап. 1 and garage Г1, with a household member and a dog.
+      {
+        phone: '+359881000101',
+        salutation: 'mr',
+        firstName: 'Петър',
+        lastName: 'Николов',
+        holds: [
+          ['1', 'owner'],
+          ['Г1', 'owner'],
+        ],
+      },
+      // Co-owner of ап. 1: two owners, both see it.
+      {
+        phone: '+359881000102',
+        salutation: 'mrs',
+        firstName: 'Ралица',
+        lastName: 'Николова',
+        holds: [['1', 'owner']],
+      },
+      // Tenant of ап. 3: sees the flat, no owner-only actions.
+      {
+        phone: '+359881000103',
+        salutation: 'mr',
+        firstName: 'Калин',
+        lastName: 'Тодоров',
+        holds: [['3', 'tenant']],
+      },
+    ];
+    const residentPassword = await hashPassword('demo-resident');
+    for (const r of mobileResidents) {
+      const userId = (
+        await client.query(
+          `INSERT INTO users (tenant_id, phone, salutation, first_name, last_name, password_hash, status)
+           VALUES ($1, $2, $3, $4, $5, $6, 'active')
+           ON CONFLICT (tenant_id, phone) WHERE phone IS NOT NULL
+           DO UPDATE SET salutation = EXCLUDED.salutation,
+                         first_name = EXCLUDED.first_name,
+                         last_name = EXCLUDED.last_name,
+                         email = NULL,
+                         password_hash = EXCLUDED.password_hash,
+                         status = 'active',
+                         updated_at = now()
+           RETURNING id`,
+          [demoId, r.phone, r.salutation, r.firstName, r.lastName, residentPassword],
+        )
+      ).rows[0].id;
+      await client.query(
+        `INSERT INTO staff_memberships (tenant_id, user_id, role_key, status)
+         VALUES ($1, $2, 'resident', 'active')
+         ON CONFLICT (tenant_id, user_id) DO UPDATE SET role_key = 'resident', status = 'active'`,
+        [demoId, userId],
+      );
+      // A removal applied during testing ends occupancies; open them again.
+      await client.query(
+        `UPDATE occupancies SET valid_to = NULL WHERE tenant_id = $1 AND user_id = $2`,
+        [demoId, userId],
+      );
+      for (const [number, role] of r.holds) {
+        const apartmentId = await property(number);
+        await client.query(
+          `UPDATE apartments SET status = 'active' WHERE tenant_id = $1 AND id = $2`,
+          [demoId, apartmentId],
+        );
+        await client.query(
+          `INSERT INTO occupancies (tenant_id, apartment_id, user_id, role, valid_from, created_by)
+           SELECT $1, $2, $3, $4, '2026-01-01', $3
+           WHERE NOT EXISTS (
+             SELECT 1 FROM occupancies
+             WHERE tenant_id = $1 AND apartment_id = $2 AND user_id = $3 AND role = $4 AND valid_to IS NULL
+           )`,
+          [demoId, apartmentId, userId, role],
+        );
+      }
+    }
+    const flat1 = await property('1');
+    const owner = (
+      await client.query(`SELECT id FROM users WHERE tenant_id = $1 AND phone = '+359881000101'`, [
+        demoId,
+      ])
+    ).rows[0].id;
+    await client.query(
+      `INSERT INTO occupancies (tenant_id, apartment_id, role, first_name, last_name, valid_from, created_by)
+       SELECT $1, $2, 'occupant', 'Мила', 'Николова', '2026-01-01', $3
+       WHERE NOT EXISTS (
+         SELECT 1 FROM occupancies
+         WHERE tenant_id = $1 AND apartment_id = $2 AND user_id IS NULL AND first_name = 'Мила'
+       )`,
+      [demoId, flat1, owner],
+    );
+    await client.query(
+      `INSERT INTO pets (tenant_id, apartment_id, name, species, valid_from, created_by)
+       SELECT $1, $2, 'Бобо', 'dog', '2026-03-01', $3
+       WHERE NOT EXISTS (SELECT 1 FROM pets WHERE tenant_id = $1 AND apartment_id = $2 AND name = 'Бобо')`,
+      [demoId, flat1, owner],
+    );
+    // Keep the seeded household as seeded: open again what testing ended.
+    await client.query(
+      `UPDATE occupancies SET valid_to = NULL
+       WHERE tenant_id = $1 AND apartment_id = $2 AND user_id IS NULL AND first_name = 'Мила'`,
+      [demoId, flat1],
+    );
+    await client.query(
+      `UPDATE pets SET valid_to = NULL WHERE tenant_id = $1 AND apartment_id = $2 AND name = 'Бобо'`,
+      [demoId, flat1],
+    );
+
     await client.query('COMMIT');
     log('seed complete.');
     log('  super admin : admin@inova.bg / inova-admin');
@@ -366,6 +513,7 @@ export async function seed(url = databaseUrl, { quiet = false } = {}) {
     log('  demo admin  : ivan@demo.bg / demo-owner');
     log('  demo manager: maria@inova.bg / demo-maria (same e-mail, another account)');
     log('  invite codes: 482913 (Elena, inova) · 735026 (Georgi, demo)');
+    log('  residents   : +359881000101 / 102 / 103, password demo-resident, realm demo');
     return tenantIds;
   } catch (err) {
     await client.query('ROLLBACK');

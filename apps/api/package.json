@@ -11,7 +11,8 @@
     "test:unit": "vitest run --config vitest.unit.config.ts",
     "test:integration": "vitest run",
     "test:isolation": "vitest run test/tenant-isolation.e2e.test.ts test/tenant-schema.contract.test.ts",
-    "start": "node dist/main.js"
+    "start": "node dist/main.js",
+    "openapi": "UPDATE_OPENAPI=1 vitest run --config vitest.unit.config.ts src/openapi && prettier --write openapi.json"
   },
   "dependencies": {
     "@inova/shared": "workspace:*",

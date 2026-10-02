@@ -545,6 +545,21 @@ describe('link requests (B7 fallback)', () => {
     const filed = await file(asker.client);
     expect(filed.status).toBe(201);
     expect(filed.body).toMatchObject({ status: 'pending', role: 'owner', number: '2' });
+    // The resident's view (MyLinkRequest): no tenant, account or staff ids.
+    expect(Object.keys(filed.body).sort()).toEqual([
+      'address',
+      'createdAt',
+      'decidedAt',
+      'decisionNote',
+      'entrance',
+      'floor',
+      'id',
+      'note',
+      'number',
+      'role',
+      'status',
+      'validFrom',
+    ]);
 
     const queue = await viewer.get('/link-requests');
     const mine = queue.body.find((r: { id: string }) => r.id === filed.body.id);
