@@ -56,14 +56,15 @@ docker compose up -d postgres redis
 log "running migrations"
 docker compose run --rm migrator
 
-# Migrations create inova_app and inova_auth with well-known development
+# Migrations create inova_app, inova_auth and inova_worker with well-known development
 # passwords. Re-set them to this environment's generated ones on every deploy:
 # cheap, idempotent, and a freshly restored database never sits with a default.
 log "syncing the runtime role passwords"
 docker compose exec -T -e PGPASSWORD="$POSTGRES_PASSWORD" postgres \
   psql -v ON_ERROR_STOP=1 -U inova -d inova \
   -c "ALTER ROLE inova_app WITH PASSWORD '$APP_DB_PASSWORD'" \
-  -c "ALTER ROLE inova_auth WITH PASSWORD '$AUTH_DB_PASSWORD'" >/dev/null
+  -c "ALTER ROLE inova_auth WITH PASSWORD '$AUTH_DB_PASSWORD'" \
+  -c "ALTER ROLE inova_worker WITH PASSWORD '$WORKER_DB_PASSWORD'" >/dev/null
 
 if [ "$SEED" = "true" ]; then
   log "seeding demo data"
