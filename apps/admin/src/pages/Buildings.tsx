@@ -54,8 +54,11 @@ export function BuildingsPage() {
   const tenantName = context.data?.tenant.name ?? 'организацията';
   const denied = list.error instanceof ApiError && list.error.status === 403;
   const properties = buildings.reduce((sum, b) => sum + propertyTotal(b), 0);
-  // The toolbar has something to act on only once there are buildings.
+  const loading = list.isPending;
   const hasList = buildings.length > 0;
+  // The toolbar stays from the first frame so the rows do not jump down when
+  // they arrive; it goes only where there is nothing to search.
+  const showToolbar = !list.error && (loading || hasList);
 
   const message = bodyMessage({
     denied,
@@ -65,6 +68,7 @@ export function BuildingsPage() {
     total: buildings.length,
     shown: visible.length,
     filters,
+    retrying: list.isFetching,
     onRetry: () => void list.refetch(),
     onReset: () => setFilters({ ...EMPTY_FILTERS, sort: filters.sort }),
   });
@@ -84,7 +88,7 @@ export function BuildingsPage() {
         )}
       </div>
 
-      {hasList && (
+      {showToolbar && (
         <BuildingsToolbar
           filters={filters}
           onChange={setFilters}
@@ -92,6 +96,7 @@ export function BuildingsPage() {
           cities={valuesOf(buildings, 'city')}
           shown={visible.length}
           total={buildings.length}
+          loading={loading}
         />
       )}
 
@@ -142,6 +147,8 @@ function bodyMessage(input: {
   total: number;
   shown: number;
   filters: BuildingFilters;
+  /** A retry runs its own back-off; the button waits for it. */
+  retrying: boolean;
   onRetry: () => void;
   onReset: () => void;
 }): Message {
@@ -163,7 +170,11 @@ function bodyMessage(input: {
         <EmptyState
           icon={<Warning size="1.375rem" />}
           title="Списъкът не се зареди"
-          action={<PrimaryButton onClick={input.onRetry}>Опитай отново</PrimaryButton>}
+          action={
+            <PrimaryButton onClick={input.onRetry} disabled={input.retrying}>
+              {input.retrying ? 'Зарежда…' : 'Опитай отново'}
+            </PrimaryButton>
+          }
         >
           Проверете връзката и опитайте отново.
         </EmptyState>

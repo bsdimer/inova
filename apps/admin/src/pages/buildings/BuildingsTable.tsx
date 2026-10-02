@@ -8,7 +8,8 @@ import { STATUS_LABELS, STATUS_TONES, addressLine, counted, propertyTotal } from
 /**
  * Column widths are the Figma contract of `V2/Table · Header · Сгради`
  * (945:5497) for inner width 1096: 300/100/116/200/120/208/52, as
- * percentages so the rhythm holds at any width. «Живущи» folds away first.
+ * percentages so the rhythm holds at any width. «Живущи» folds away below
+ * 896 px of table width (`@4xl`).
  */
 const COLUMNS = [
   { label: 'Сграда', width: '27.37%', className: '', col: '', bar: 'w-3/4' },
@@ -118,8 +119,12 @@ export function BuildingRow({ building }: { building: Building }) {
         <div className="flex items-center gap-3">
           <Tile />
           <div className="min-w-0">
-            <p className="text-body-14 truncate font-semibold">{building.name}</p>
-            <p className="text-body-13-tight truncate text-ink-soft">{addressLine(building)}</p>
+            <p className="text-body-14 truncate font-semibold" title={building.name}>
+              {building.name}
+            </p>
+            <p className="text-body-13-tight truncate text-ink-soft" title={addressLine(building)}>
+              {addressLine(building)}
+            </p>
           </div>
         </div>
       </td>
@@ -150,8 +155,12 @@ export function BuildingCard({ building }: { building: Building }) {
       <div className="flex items-center gap-3">
         <Tile />
         <div className="min-w-0">
-          <p className="text-body-14 truncate font-semibold">{building.name}</p>
-          <p className="text-body-13-tight truncate text-ink-soft">{addressLine(building)}</p>
+          <p className="text-body-14 truncate font-semibold" title={building.name}>
+            {building.name}
+          </p>
+          <p className="text-body-13-tight truncate text-ink-soft" title={addressLine(building)}>
+            {addressLine(building)}
+          </p>
         </div>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">

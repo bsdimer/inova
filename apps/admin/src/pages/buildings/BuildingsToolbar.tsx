@@ -5,6 +5,7 @@ import {
   FilterChip,
   FilterSheet,
   SearchField,
+  SkeletonBar,
   SortSelect,
   type FacetOption,
 } from '../../components/ui';
@@ -39,11 +40,13 @@ interface ToolbarProps {
   cities: string[];
   shown: number;
   total: number;
+  /** The list is on its way: the count line holds its place with a bar. */
+  loading: boolean;
 }
 
 // TODO(M2): the «Домоуправител» facet (945:5119) once the list carries the manager (WHI-96).
 export function BuildingsToolbar(props: ToolbarProps) {
-  const { filters, onChange, districts, cities, shown, total } = props;
+  const { filters, onChange, districts, cities, shown, total, loading } = props;
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const set = <K extends keyof BuildingFilters>(key: K, value: BuildingFilters[K]) =>
@@ -94,9 +97,13 @@ export function BuildingsToolbar(props: ToolbarProps) {
       </div>
 
       <div className="flex min-h-11 flex-wrap items-center gap-3 px-1">
-        <span className="num text-body-14 font-medium text-ink" aria-live="polite">
-          {count}
-        </span>
+        {loading ? (
+          <SkeletonBar className="w-20" />
+        ) : (
+          <span className="num text-body-14 font-medium text-ink" aria-live="polite">
+            {count}
+          </span>
+        )}
         {active.map(({ key }) => (
           <FilterChip key={key} onClear={() => set(key, [])}>
             {FACET_TITLES[key]}: {filters[key].map((v) => facetValueLabel(key, v)).join(', ')}

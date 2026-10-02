@@ -89,6 +89,8 @@ test('the seeded building is listed with what the list knows about it', async ({
   const cells = rows(page).first().locator('td');
   await expect(cells.nth(0)).toContainText('бл. 3');
   await expect(cells.nth(0)).toContainText('ул. Кораб планина 12, София');
+  // Name and address may be cut short; the full text is in the tooltip.
+  await expect(cells.nth(0).getByText('бл. 3')).toHaveAttribute('title', 'бл. 3');
   await expect(cells.nth(1)).toHaveText('1');
   await expect(cells.nth(2)).toContainText('4');
   await expect(cells.nth(2)).toContainText('4 етажа');
@@ -109,6 +111,8 @@ test('while the list loads it shows skeleton rows, never «no buildings yet»', 
   await openSignedIn(page, ORG_ADMIN, '/buildings');
   await expect(page.locator('main table tbody tr .animate-pulse').first()).toBeVisible();
   await expect(page.getByText('Още няма сгради')).toHaveCount(0);
+  // The toolbar is there before the rows, so nothing jumps when they come.
+  await expect(page.getByRole('searchbox', { name: 'Търсене в сградите' })).toBeVisible();
   release();
   await expect(rows(page)).toHaveCount(1);
 });
@@ -200,6 +204,7 @@ test('an organisation without buildings is told how to start', async ({ page }) 
   await openSignedIn(page, ORG_ADMIN, '/buildings');
   await expect(page.getByText('Още няма сгради')).toBeVisible();
   await expect(page.locator('main table')).toHaveCount(0);
+  await expect(page.getByRole('searchbox', { name: 'Търсене в сградите' })).toHaveCount(0);
 });
 
 test('a failed list says so and loads again on «Опитай отново»', async ({ page }) => {
@@ -246,7 +251,7 @@ test.describe('sizes', () => {
       );
       expect(overflow).toBe(0);
       // With every column shown, the name keeps the drawn share (300 of 1096);
-      // below 1024 of table width «Живущи» folds away and the rest widen.
+      // below 896 px of table width (@4xl) «Живущи» folds away and the rest widen.
       if (width < 1728) return;
       const share = await page.evaluate(() => {
         const table = document.querySelector('main table') as HTMLElement;
