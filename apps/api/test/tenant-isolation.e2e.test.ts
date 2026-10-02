@@ -661,7 +661,10 @@ describe('Residents and pets (M2) stay inside their tenant', () => {
       expect(seen.rows).toEqual([{ tenant_id: tenantB }]);
       const own = await client.query('SELECT 1 FROM occupancies WHERE id = $1', [occupancyA]);
       expect(own.rows).toHaveLength(0);
-      expect((await client.query('SELECT 1 FROM pets')).rows).toHaveLength(0);
+      // Tenant B has its own seeded pet; tenant A's Рекс stays out of sight.
+      const pets = await client.query('SELECT DISTINCT tenant_id FROM pets');
+      expect(pets.rows).toEqual([{ tenant_id: tenantB }]);
+      expect((await client.query(`SELECT 1 FROM pets WHERE name = 'Рекс'`)).rows).toHaveLength(0);
       const ended = await client.query(
         `UPDATE occupancies SET valid_to = '2026-01-02' WHERE id = $1 RETURNING id`,
         [occupancyA],
