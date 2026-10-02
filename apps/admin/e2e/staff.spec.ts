@@ -354,3 +354,25 @@ test.describe('the «Роли и обхват» panel', () => {
     expect(saves.calls).toBe(2);
   });
 });
+
+test('402: the filter sheet narrows the list, «Изчисти» clears it, «Покажи» closes', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 402, height: 874 });
+  await openSignedIn(page, ORG_ADMIN, '/staff');
+  await page.getByRole('button', { name: /^Филтри/ }).click();
+  const sheet = page.getByRole('dialog', { name: 'Филтри' });
+  await expect(sheet.getByRole('heading', { level: 3 })).toHaveText(['Статус', 'Роля', 'Покана']);
+  await sheet.getByRole('checkbox', { name: 'Поканен' }).click();
+  await expect(sheet.getByRole('checkbox', { name: 'Поканен' })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  await expect(sheet.getByRole('button', { name: 'Покажи 1' })).toBeVisible();
+  await sheet.getByRole('button', { name: 'Изчисти' }).click();
+  await expect(sheet.getByRole('button', { name: 'Покажи 2' })).toBeVisible();
+  await sheet.getByRole('checkbox', { name: 'Поканен' }).click();
+  await sheet.getByRole('button', { name: 'Покажи 1' }).click();
+  await expect(sheet).toHaveCount(0);
+  await expect(page.getByText('1 от 2 служители')).toBeVisible();
+});
