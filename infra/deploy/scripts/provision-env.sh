@@ -37,6 +37,7 @@ PG_SHARED_BUFFERS=$PG_SHARED_BUFFERS
 POSTGRES_PASSWORD=$(openssl rand -hex 24)
 APP_DB_PASSWORD=$(openssl rand -hex 24)
 AUTH_DB_PASSWORD=$(openssl rand -hex 24)
+WORKER_DB_PASSWORD=$(openssl rand -hex 24)
 ENV
   chmod 600 "$STACK_DIR/.env"
 else
@@ -50,6 +51,7 @@ else
   ensure_key COMPOSE_PROJECT_NAME "$(basename "$STACK_DIR")"
   ensure_key PG_SHARED_BUFFERS "$PG_SHARED_BUFFERS"
   ensure_key AUTH_DB_PASSWORD "$(openssl rand -hex 24)"
+  ensure_key WORKER_DB_PASSWORD "$(openssl rand -hex 24)"
 fi
 
 # One-time codes are only ever written to the log in the seeded test
