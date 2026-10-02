@@ -10,3 +10,4 @@ export * from './person-name';
 export * from './iban';
 export * from './occupancy';
 export * from './session';
+export * from './device';
