@@ -141,6 +141,8 @@ jobs:
         run: pnpm --filter @inova/api exec vitest run test/staff-roles.e2e.test.ts
       - name: Property (M2) — buildings, residents, requests, import
         run: pnpm --filter @inova/api exec vitest run test/buildings.e2e.test.ts test/residents.e2e.test.ts test/requests.e2e.test.ts test/import.e2e.test.ts
+      - name: Worker — nightly code expiry
+        run: pnpm --filter @inova/worker test
 
   tenant-isolation:
     name: tenant-isolation
