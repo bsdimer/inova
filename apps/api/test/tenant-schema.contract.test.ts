@@ -40,6 +40,13 @@ describe('tenant schema contract', () => {
     expect(rows[0].rolbypassrls).toBe(false);
   });
 
+  it('inova_worker cannot bypass RLS either (D21)', async () => {
+    const { rows } = await pool.query(
+      `SELECT rolbypassrls, rolsuper FROM pg_roles WHERE rolname = 'inova_worker'`,
+    );
+    expect(rows).toEqual([{ rolbypassrls: false, rolsuper: false }]);
+  });
+
   it('inova_auth cannot bypass RLS either', async () => {
     const { rows } = await pool.query(
       `SELECT rolbypassrls, rolsuper FROM pg_roles WHERE rolname = 'inova_auth'`,
