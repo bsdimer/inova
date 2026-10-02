@@ -5,6 +5,8 @@
  * owner (B9); owners and tenants record household members and pets with dates
  * (A-OCCUPANCY). Runs against a real Postgres with RLS.
  */
+import { execFileSync } from 'node:child_process';
+import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { bootTestApp, type Client, type TestApp } from './test-app';
 
@@ -616,5 +618,99 @@ describe('«Контакти» and the building details (WHI-123)', () => {
       ).accountId!,
     );
     expect((await resident.get(`/me/properties/${otherFlat.body.id}/contacts`)).status).toBe(404);
+  });
+});
+
+describe('the seeded accounts for the resident app (WHI-126)', () => {
+  const flatId = (properties: Array<{ id: string; number: string }>) =>
+    properties.find((p) => p.number === '1')!.id;
+
+  const asSeeded = async (phone: string) => {
+    const { rows } = await t.adminPool.query(
+      `SELECT id FROM users WHERE tenant_id = $1 AND phone = $2 AND status = 'active'`,
+      [t.tenants.demo, phone],
+    );
+    expect(rows, phone).toHaveLength(1);
+    return t.as(await t.tenantToken(rows[0].id, t.tenants.demo, 'resident'), t.tenants.demo);
+  };
+
+  it('gives the owner two properties, the household, the dog, a manager and the bank account', async () => {
+    const owner = await asSeeded('+359881000101');
+    const mine = await owner.get('/me/properties');
+    expect(
+      mine.body.map((p: { number: string; propertyType: string; roles: string[] }) => [
+        p.number,
+        p.propertyType,
+        p.roles,
+      ]),
+    ).toEqual([
+      // By floor: the garage on -1 first.
+      ['Г1', 'garage', ['owner']],
+      ['1', 'apartment', ['owner']],
+    ]);
+    const flat = await owner.get(`/me/properties/${flatId(mine.body)}`);
+    expect(flat.body.building).toMatchObject({
+      name: 'бл. 12',
+      bankAccount: 'BG80BNBG96611020345678',
+    });
+    expect(
+      flat.body.household.map((h: { name: string; role: string }) => [h.name, h.role]),
+    ).toEqual([
+      ['Петър Николов', 'owner'],
+      ['Ралица Николова', 'owner'],
+      ['Мила Николова', 'occupant'],
+    ]);
+    expect(flat.body.pets.map((p: { name: string }) => p.name)).toEqual(['Бобо']);
+    const contacts = await owner.get(`/me/properties/${flatId(mine.body)}/contacts`);
+    expect(contacts.body.managers.map((m: { name: string }) => m.name)).toEqual(['Мария Стоянова']);
+  });
+
+  it('shows the tenant the flat without owner-only actions', async () => {
+    const tenant = await asSeeded('+359881000103');
+    const mine = await tenant.get('/me/properties');
+    expect(mine.body).toEqual([
+      expect.objectContaining({ number: '3', roles: ['tenant'], ownerActions: false }),
+    ]);
+  });
+
+  it('puts every account back as it was when the seed runs again', async () => {
+    const demo = t.tenants.demo;
+    const owner = (
+      await t.adminPool.query(
+        `SELECT id FROM users WHERE tenant_id = $1 AND phone = '+359881000101'`,
+        [demo],
+      )
+    ).rows[0].id;
+    // What a developer might do on the test portal: suspend, end everything, rename, archive.
+    await t.adminPool.query(
+      `UPDATE users SET status = 'suspended', first_name = 'Друг', password_hash = NULL WHERE id = $1`,
+      [owner],
+    );
+    await t.adminPool.query(
+      `UPDATE occupancies SET valid_to = '2026-01-31' WHERE tenant_id = $1 AND apartment_id IN (SELECT apartment_id FROM occupancies WHERE user_id = $2)`,
+      [demo, owner],
+    );
+    await t.adminPool.query(`UPDATE pets SET valid_to = '2026-03-31' WHERE tenant_id = $1`, [demo]);
+    await t.adminPool.query(
+      `UPDATE apartments SET status = 'archived' WHERE tenant_id = $1 AND number = 'Г1'`,
+      [demo],
+    );
+
+    const repoRoot = path.resolve(__dirname, '..', '..', '..');
+    execFileSync('node', [path.join(repoRoot, 'db', 'seed.mjs'), '--url', t.migratorUrl], {
+      stdio: 'pipe',
+    });
+
+    const { rows } = await t.adminPool.query(
+      `SELECT status, first_name, password_hash IS NOT NULL AS has_password FROM users WHERE id = $1`,
+      [owner],
+    );
+    expect(rows).toEqual([{ status: 'active', first_name: 'Петър', has_password: true }]);
+    const owner2 = await asSeeded('+359881000101');
+    const mine = await owner2.get('/me/properties');
+    expect(mine.body.map((p: { number: string }) => p.number)).toEqual(['Г1', '1']);
+    const flat = await owner2.get(`/me/properties/${flatId(mine.body)}`);
+    expect(flat.body.household).toHaveLength(3);
+    expect(flat.body.pets).toHaveLength(1);
   });
 });
