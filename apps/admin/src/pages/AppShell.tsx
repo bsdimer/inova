@@ -119,7 +119,7 @@ export function AppShell() {
 
   return (
     <>
-      <AppBackground />
+      <AppBackground headScrim />
       {/*
         The page's margins, per 1074:9754 and the design README (Адаптив):
         16 on a phone, 24 on a tablet; from 1024 the column is centred — the
@@ -186,7 +186,9 @@ export function AppShell() {
             onOpenNav={() => setOverlay(true)}
             session={session}
           />
-          {mode === 'drawer' && <GlobalSearch className="md:hidden" />}
+          {/* On a phone the general search lives on Табло only (818:11596);
+              the other pages search their own list. */}
+          {mode === 'drawer' && pathname === '/' && <GlobalSearch className="md:hidden" />}
           {!platform && <PlatformVisitNote session={session} />}
           <motion.main
             key={pathname}
