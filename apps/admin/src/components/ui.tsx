@@ -856,6 +856,110 @@ export function Drawer({
   );
 }
 
+export interface FilterGroup {
+  key: string;
+  title: string;
+  options: FacetOption[];
+  selected: string[];
+}
+
+/**
+ * Phone filters (Служители, Сгради): the facets of the toolbar as checkbox
+ * groups in a bottom sheet; pinned header and footer, the groups scroll.
+ */
+export function FilterSheet({
+  open,
+  onClose,
+  groups,
+  onToggle,
+  onClear,
+  shown,
+}: {
+  open: boolean;
+  onClose: () => void;
+  groups: FilterGroup[];
+  onToggle: (key: string, value: string) => void;
+  onClear: () => void;
+  /** How many rows the current choice leaves, for «Покажи N». */
+  shown: number;
+}) {
+  return (
+    <Drawer
+      open={open}
+      onClose={onClose}
+      label="Филтри"
+      header={
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold">Филтри</h2>
+          <button
+            type="button"
+            onClick={onClear}
+            className="text-sm font-medium text-panel-ink-muted underline underline-offset-4"
+          >
+            Изчисти
+          </button>
+        </div>
+      }
+      footer={
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-full rounded-full bg-panel-ink py-3 text-sm font-semibold text-panel-ink-inverse"
+        >
+          Покажи {shown}
+        </button>
+      }
+    >
+      <div className="space-y-6">
+        {groups.map((group) => (
+          <section key={group.key}>
+            <h3 className="mb-2 text-xs font-semibold tracking-wider text-panel-ink-faint uppercase">
+              {group.title}
+            </h3>
+            <div className="space-y-1.5">
+              {group.options.map((option) => {
+                const checked = group.selected.includes(option.value);
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="checkbox"
+                    aria-checked={checked}
+                    onClick={() => onToggle(group.key, option.value)}
+                    className={`flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-left text-sm font-medium transition-colors ${
+                      checked ? 'bg-panel-row-strong' : 'bg-panel-row'
+                    }`}
+                  >
+                    <span
+                      className={`flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded ${
+                        checked ? 'bg-panel-ink' : ''
+                      }`}
+                      style={{
+                        boxShadow: checked ? 'none' : 'inset 0 0 0 0.0625rem var(--panel-border)',
+                      }}
+                    >
+                      {checked && (
+                        <span
+                          className="h-1.5 w-1.5 rounded-[0.0625rem]"
+                          style={{ background: 'var(--panel-text-inverse)' }}
+                        />
+                      )}
+                    </span>
+                    {option.label}
+                  </button>
+                );
+              })}
+              {group.options.length === 0 && (
+                <p className="text-sm text-panel-ink-faint">Няма налични стойности.</p>
+              )}
+            </div>
+          </section>
+        ))}
+      </div>
+    </Drawer>
+  );
+}
+
 /** Centered dialog on the light panel surface. */
 export function Modal({
   open,

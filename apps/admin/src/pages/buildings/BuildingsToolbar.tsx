@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { SlidersHorizontal } from '../../components/icons';
 import {
-  Drawer,
   Facet,
   FilterChip,
+  FilterSheet,
   SearchField,
   SortSelect,
   type FacetOption,
@@ -48,6 +48,7 @@ export function BuildingsToolbar(props: ToolbarProps) {
 
   const set = <K extends keyof BuildingFilters>(key: K, value: BuildingFilters[K]) =>
     onChange({ ...filters, [key]: value });
+  const clearFacets = () => onChange({ ...filters, district: [], status: [], city: [] });
   const facets = facetGroups(districts, cities);
   const active = facets.filter(({ key }) => filters[key].length > 0);
   const count = hasAnyFilter(filters)
@@ -104,7 +105,7 @@ export function BuildingsToolbar(props: ToolbarProps) {
         {hasActiveFacets(filters) && (
           <button
             type="button"
-            onClick={() => onChange({ ...filters, district: [], status: [], city: [] })}
+            onClick={clearFacets}
             className="text-body-14 font-medium text-ink underline transition-opacity hover:opacity-80"
           >
             Изчисти
@@ -122,9 +123,14 @@ export function BuildingsToolbar(props: ToolbarProps) {
       <FilterSheet
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
-        facets={facets}
-        filters={filters}
-        onChange={onChange}
+        groups={facets.map(({ key, options }) => ({
+          key,
+          title: FACET_TITLES[key],
+          options,
+          selected: filters[key],
+        }))}
+        onToggle={(key, value) => onChange(toggled(filters, key as FacetKey, value))}
+        onClear={clearFacets}
         shown={shown}
       />
     </div>
@@ -145,98 +151,8 @@ function facetGroups(districts: string[], cities: string[]): FacetGroup[] {
   return groups;
 }
 
-/** Phone filters: pinned header and footer, the facet groups scroll between. */
-function FilterSheet({
-  open,
-  onClose,
-  facets,
-  filters,
-  onChange,
-  shown,
-}: {
-  open: boolean;
-  onClose: () => void;
-  facets: FacetGroup[];
-  filters: BuildingFilters;
-  onChange: (next: BuildingFilters) => void;
-  shown: number;
-}) {
-  const toggle = (key: FacetKey, value: string) => {
-    const current = filters[key] as string[];
-    const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
-    onChange({ ...filters, [key]: next });
-  };
-
-  return (
-    <Drawer
-      open={open}
-      onClose={onClose}
-      label="Филтри"
-      header={
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold">Филтри</h2>
-          <button
-            type="button"
-            onClick={() => onChange({ ...filters, district: [], status: [], city: [] })}
-            className="text-sm font-medium text-panel-ink-muted underline underline-offset-4"
-          >
-            Изчисти
-          </button>
-        </div>
-      }
-      footer={
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-full rounded-full bg-panel-ink py-3 text-sm font-semibold text-panel-ink-inverse"
-        >
-          Покажи {shown}
-        </button>
-      }
-    >
-      <div className="space-y-6">
-        {facets.map(({ key, options }) => (
-          <section key={key}>
-            <h3 className="mb-2 text-xs font-semibold tracking-wider text-panel-ink-faint uppercase">
-              {FACET_TITLES[key]}
-            </h3>
-            <div className="space-y-1.5">
-              {options.map((option) => {
-                const checked = (filters[key] as string[]).includes(option.value);
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    role="checkbox"
-                    aria-checked={checked}
-                    onClick={() => toggle(key, option.value)}
-                    className={`flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-left text-sm font-medium transition-colors ${
-                      checked ? 'bg-panel-row-strong' : 'bg-panel-row'
-                    }`}
-                  >
-                    <span
-                      className={`flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded ${
-                        checked ? 'bg-panel-ink' : ''
-                      }`}
-                      style={{
-                        boxShadow: checked ? 'none' : 'inset 0 0 0 0.0625rem var(--panel-border)',
-                      }}
-                    >
-                      {checked && (
-                        <span
-                          className="h-1.5 w-1.5 rounded-[0.0625rem]"
-                          style={{ background: 'var(--panel-text-inverse)' }}
-                        />
-                      )}
-                    </span>
-                    {option.label}
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-        ))}
-      </div>
-    </Drawer>
-  );
+function toggled(filters: BuildingFilters, key: FacetKey, value: string): BuildingFilters {
+  const current = filters[key] as string[];
+  const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
+  return { ...filters, [key]: next };
 }
