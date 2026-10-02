@@ -77,7 +77,7 @@ identifier + code, `resend-code`, the invite lifetime setting
 (`INVITE_CODE_TTL_DAYS`, 1–90 days). **Done 2026-10-01 (#74):** recovery by e-mail link or phone code
 (`RECOVERY_LINK_TTL_MINUTES` 60, 15–1440; `RECOVERY_CODE_TTL_MINUTES` 10, 5–30),
 single use, five tries, every session revoked, audited. **Left:** the
-real delivery, the recovery and activation
+real delivery, the URL the e-mailed recovery link opens (decided with the screens, #74), the recovery and activation
 screens (mobile identifier field).
 
 - Forward migration on `invite_codes`: `status` column, partial unique indexes
