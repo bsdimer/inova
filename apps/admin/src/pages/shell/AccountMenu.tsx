@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { AnimatePresence, motion } from 'framer-motion';
+import type { AuthSession } from '@inova/shared';
 import {
   useCallback,
   useEffect,
@@ -20,7 +21,7 @@ import {
   XCircle,
 } from '../../components/icons';
 import { Avatar, Popover, SkeletonBar } from '../../components/ui';
-import { clearSession, type Session } from '../../lib/auth';
+import { clearSession } from '../../lib/auth';
 import { setTheme, useThemeChoice, type ThemeChoice } from '../../lib/theme';
 import {
   clearSelectedTenantId,
@@ -60,7 +61,7 @@ const THEMES: { value: ThemeChoice; label: string; hint: string }[] = [
  * names are English), any other role by the name /tenant sends with the
  * context — never a key.
  */
-export function useRoleName(session: Session | null): string {
+export function useRoleName(session: AuthSession | null): string {
   const tenantId = useSelectedTenantId();
   const context = useTenantContext();
   if (session?.user.platformRole === 'super_admin') return PLATFORM_ROLE;
@@ -99,7 +100,7 @@ export function AccountMenu({
   session,
   compact = false,
 }: {
-  session: Session | null;
+  session: AuthSession | null;
   compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -196,7 +197,7 @@ function AccountBody({
   role,
   onNavigate,
 }: {
-  session: Session | null;
+  session: AuthSession | null;
   role: string;
   onNavigate: () => void;
 }) {
