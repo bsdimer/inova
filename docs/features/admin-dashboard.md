@@ -84,7 +84,7 @@ Caption: "Портфолио · N сгради · <month>".
 
 Actions:
 
-- "Виж детайли" → Finance section.
+- "Виж финанси" → the «Финанси» section (WHI-137, 02.10).
 - "Изпрати известия" → bulk notice to debtors (M7 `debtors` audience over the
   M9 debtor query). Flow: `POST /v1/notices/debtor-reminders/preview` returns
   the recipient and apartment counts for the account's scope → confirmation

@@ -3,7 +3,7 @@ id: D39
 title: Issues — four required categories with «Авария», which is urgent by itself; no «acknowledged»; one optional assignee; staff photos in the pilot
 status: decided
 decided: 2026-10-02 (team lead; stakeholder's answers 2026-10-01 and 2026-10-02)
-source: WHI-116 — the stakeholder 2026-10-01 10:58 (1b7020b4), 15:59 (bfc8df5b), 16:01 (e46db63b), 16:23 (fae8b07f), 2026-10-02 06:05 (c1e9e350); the questions 2026-10-01 16:57 (ee2abe36); the team lead's answer 2026-10-02 07:09 (236947fc)
+source: WHI-146 c8c50d4a (the stakeholder 2026-10-02 16:40, meaning of the three ends); WHI-116 — the stakeholder 2026-10-01 10:58 (1b7020b4), 15:59 (bfc8df5b), 16:01 (e46db63b), 16:23 (fae8b07f), 2026-10-02 06:05 (c1e9e350); the questions 2026-10-01 16:57 (ee2abe36); the team lead's answer 2026-10-02 07:09 (236947fc)
 pr: '#91'
 affects: [D22, D18]
 ---
@@ -26,6 +26,10 @@ affects: [D22, D18]
 3. **Statuses:** `acknowledged` is removed. The path is
    `reported → planned → in_progress`, with three ends: `resolved` («Решен»),
    `closed` («Затворен») and `rejected` («Отхвърлен», only with a note).
+   What each end means (the stakeholder, WHI-146 c8c50d4a): «Решен» — there
+   is a solution; «Затворен» — handling is over without a promised solution;
+   «Отхвърлен» — there is no ground for handling. All three make the issue
+   inactive. No `resolved → closed` step.
 4. **Assignment:** by category the issue goes to the contractor whose
    assignment holds that category (D22; `contractor.activity` is free text
    and routes nothing);
