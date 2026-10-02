@@ -289,3 +289,22 @@ test.describe('sizes', () => {
     expect(overflow).toBe(0);
   });
 });
+
+test('402: search across, then «Филтри» 44 high and the short sort, then the count (952:5831)', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 402, height: 874 });
+  await answerList(page, PORTFOLIO);
+  await openSignedIn(page, ORG_ADMIN, '/buildings');
+  const count = page.getByText('4 сгради', { exact: true });
+  await expect(count).toBeVisible();
+  const search = page.getByRole('searchbox', { name: 'Търсене в сградите' });
+  const filters = page.getByRole('button', { name: /^Филтри/ });
+  const sort = page.getByRole('button', { name: 'Най-много имоти' });
+  const box = async (l: typeof search) => (await l.boundingBox())!;
+  const [s, f, o, c] = [await box(search), await box(filters), await box(sort), await box(count)];
+  expect(f.y).toBeGreaterThan(s.y + s.height);
+  expect(Math.abs(o.y - f.y)).toBeLessThanOrEqual(1);
+  expect(c.y).toBeGreaterThan(f.y + f.height);
+  expect(await filters.evaluate((el) => (el as HTMLElement).offsetHeight)).toBe(44);
+});

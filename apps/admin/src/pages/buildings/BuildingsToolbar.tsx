@@ -13,6 +13,7 @@ import {
 import {
   FACET_TITLES,
   SORT_LABELS,
+  SORT_SHORT_LABELS,
   STATUS_LABELS,
   STATUS_ORDER,
   counted,
@@ -71,7 +72,7 @@ export function BuildingsToolbar(props: ToolbarProps) {
           onChange={(next) => set('search', next)}
           placeholder="Търси сграда или адрес"
           label="Търсене в сградите"
-          className="flex-1"
+          className="w-full md:w-auto md:flex-1"
         />
 
         {/* Facets have room of their own only from md up; below that they live in the sheet. */}
@@ -86,18 +87,27 @@ export function BuildingsToolbar(props: ToolbarProps) {
             />
           ))}
         </div>
+      </div>
 
+      {/* On a phone: «Филтри» and the sort share the row under the search (952:5831). */}
+      <div className="flex items-center gap-3 md:hidden">
         <button
           type="button"
           onClick={() => setSheetOpen(true)}
-          className={`text-body-14 flex h-12 items-center gap-2 rounded-full px-4 font-medium md:hidden ${
+          className={`text-body-14 flex h-11 items-center gap-2 rounded-full px-4 font-medium ${
             facetCount(filters) > 0 ? 'glass-control-active' : 'glass-control text-ink'
           }`}
         >
-          <SlidersHorizontal size="0.9375rem" />
           Филтри
           {facetCount(filters) > 0 && <span className="num">· {facetCount(filters)}</span>}
+          <SlidersHorizontal size="0.9375rem" />
         </button>
+        <SortSelect
+          value={filters.sort}
+          options={SORT_LABELS}
+          buttonLabels={SORT_SHORT_LABELS}
+          onChange={(next) => set('sort', next)}
+        />
       </div>
 
       <div className="flex min-h-11 flex-wrap items-center gap-3 px-1">
@@ -122,7 +132,7 @@ export function BuildingsToolbar(props: ToolbarProps) {
             Изчисти
           </button>
         )}
-        <div className="ml-auto">
+        <div className="ml-auto hidden md:block">
           <SortSelect
             value={filters.sort}
             options={SORT_LABELS}

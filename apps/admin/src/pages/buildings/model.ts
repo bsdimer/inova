@@ -25,6 +25,12 @@ export const SORT_LABELS: Record<SortPreset, string> = {
   name: 'Име А–Я',
 };
 
+/** The sort button's words on a phone, where it shares a row with «Филтри» (952:5831). */
+export const SORT_SHORT_LABELS: Record<SortPreset, string> = {
+  properties: 'Най-много имоти',
+  name: 'Име А–Я',
+};
+
 export interface BuildingFilters {
   search: string;
   district: string[];

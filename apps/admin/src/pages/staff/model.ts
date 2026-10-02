@@ -104,6 +104,13 @@ export const SORT_LABELS: Record<SortPreset, string> = {
   newest: 'Първо най-новите',
 };
 
+/** The sort button's words on a phone, where it shares a row with «Филтри». */
+export const SORT_SHORT_LABELS: Record<SortPreset, string> = {
+  attention: 'За внимание',
+  name: 'Име А–Я',
+  newest: 'Най-новите',
+};
+
 export interface StaffFilters {
   search: string;
   status: MemberStatus[];

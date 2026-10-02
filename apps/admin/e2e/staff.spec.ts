@@ -436,3 +436,21 @@ test('«Опитай пак» shows the list loading at once, then the rows', as
   release();
   await expect(rows(page)).toHaveCount(2);
 });
+
+test('402: search across, then «Филтри» 44 high and the short sort, then the count (877:2945)', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 402, height: 874 });
+  await openSignedIn(page, ORG_ADMIN, '/staff');
+  await expect(page.getByText('2 служители', { exact: true })).toBeVisible();
+  const search = page.getByRole('searchbox', { name: 'Търсене в служителите' });
+  const filters = page.getByRole('button', { name: /^Филтри/ });
+  const sort = page.getByRole('button', { name: 'За внимание' });
+  const count = page.getByText('2 служители', { exact: true });
+  const box = async (l: typeof search) => (await l.boundingBox())!;
+  const [s, f, o, c] = [await box(search), await box(filters), await box(sort), await box(count)];
+  expect(f.y).toBeGreaterThan(s.y + s.height);
+  expect(Math.abs(o.y - f.y)).toBeLessThanOrEqual(1);
+  expect(c.y).toBeGreaterThan(f.y + f.height);
+  expect(await filters.evaluate((el) => (el as HTMLElement).offsetHeight)).toBe(44);
+});

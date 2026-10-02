@@ -244,10 +244,13 @@ export function SortSelect<T extends string>({
   value,
   options,
   onChange,
+  buttonLabels,
 }: {
   value: T;
   options: Record<T, string>;
   onChange: (next: T) => void;
+  /** Shorter words for the button where it shares a row on a phone (877:2945). */
+  buttonLabels?: Record<T, string>;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -264,7 +267,7 @@ export function SortSelect<T extends string>({
           className="glass-control text-body-14 flex h-11 items-center gap-2 rounded-full px-3.5 font-medium text-ink"
         >
           <ArrowsDownUp size="1rem" className="shrink-0" />
-          <span className="truncate">{options[value]}</span>
+          <span className="truncate">{buttonLabels?.[value] ?? options[value]}</span>
           <CaretDown size="1rem" className="shrink-0" />
         </button>
       }
