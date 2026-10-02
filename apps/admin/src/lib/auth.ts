@@ -3,37 +3,16 @@
  * shared by every tab of the portal.
  */
 
-import { loginFailure, type LoginFailure } from '@inova/shared';
+import { loginFailure, type AuthSession, type LoginFailure } from '@inova/shared';
 
 const AUTH_URL = import.meta.env.VITE_AUTH_URL ?? 'http://localhost:4001/v1';
 const STORAGE_KEY = 'inova.session';
 
-interface Membership {
-  t: string;
-  r: string;
-  tenantKey: string;
-  tenantName: string;
-}
-
-export interface Session {
-  accessToken: string;
-  refreshToken: string;
-  user: {
-    id: string;
-    email: string | null;
-    /** E.164; sessions stored before the field was read may lack it. */
-    phone?: string | null;
-    fullName: string;
-    platformRole: 'super_admin' | null;
-  };
-  memberships: Membership[];
-}
-
-export function getSession(): Session | null {
+export function getSession(): AuthSession | null {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as Session;
+    return JSON.parse(raw) as AuthSession;
   } catch {
     return null;
   }
@@ -43,7 +22,7 @@ export function clearSession(): void {
   localStorage.removeItem(STORAGE_KEY);
 }
 
-function saveSession(session: Session): void {
+function saveSession(session: AuthSession): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
 }
 
@@ -60,7 +39,7 @@ const REFRESH_LOCK = 'inova.session.refresh';
  * simply uses the new session. The refresh token is the sign, not the access
  * token: a JWT issued in the same second as the last one can be identical.
  */
-export async function renewSession(stale: Session): Promise<Session | null> {
+export async function renewSession(stale: AuthSession): Promise<AuthSession | null> {
   return navigator.locks.request(REFRESH_LOCK, async () => {
     const current = getSession();
     if (!current) return null;
@@ -81,7 +60,7 @@ export async function renewSession(stale: Session): Promise<Session | null> {
       return null;
     }
     if (!res.ok) throw new Error(`Session renewal failed (${res.status})`);
-    const next = (await res.json()) as Session;
+    const next = (await res.json()) as AuthSession;
     saveSession(next);
     return next;
   });
@@ -94,7 +73,7 @@ export class LoginError extends Error {
   }
 }
 
-export async function login(email: string, password: string): Promise<Session> {
+export async function login(email: string, password: string): Promise<AuthSession> {
   let res: Response;
   try {
     res = await fetch(`${AUTH_URL}/auth/login`, {
@@ -106,7 +85,7 @@ export async function login(email: string, password: string): Promise<Session> {
     throw new LoginError(loginFailure(null));
   }
   if (!res.ok) throw new LoginError(loginFailure(res.status));
-  const session = (await res.json()) as Session;
+  const session = (await res.json()) as AuthSession;
   saveSession(session);
   return session;
 }

@@ -3,7 +3,8 @@
  * An expired access token is renewed once and the request repeated; only a
  * session that cannot be renewed returns the user to the login screen.
  */
-import { clearSession, getSession, renewSession, type Session } from './auth';
+import type { AuthSession } from '@inova/shared';
+import { clearSession, getSession, renewSession } from './auth';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/v1';
 
@@ -22,7 +23,7 @@ interface RequestOptions {
   tenantId?: string;
 }
 
-function send(path: string, options: RequestOptions, session: Session | null) {
+function send(path: string, options: RequestOptions, session: AuthSession | null) {
   const headers: Record<string, string> = {};
   if (session) headers.Authorization = `Bearer ${session.accessToken}`;
   if (options.tenantId) headers['X-Tenant-Id'] = options.tenantId;
