@@ -1,5 +1,6 @@
 import { Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
 import { AnimatePresence, animate, motion, useMotionValue } from 'framer-motion';
+import type { AuthSession } from '@inova/shared';
 import {
   Bell,
   Buildings,
@@ -225,7 +226,7 @@ export function AppShell() {
  * (`AuditService.record`, actorType 'platform'). The banner says so, and
  * carries the way back out.
  */
-function PlatformVisitNote({ session }: { session: Session }) {
+function PlatformVisitNote({ session }: { session: AuthSession | null }) {
   const navigate = useNavigate();
   const context = useTenantContext();
 
@@ -259,8 +260,7 @@ function PlatformVisitNote({ session }: { session: Session }) {
 }
 
 type NavGroups = readonly (readonly { to: string; label: string; icon: typeof Bell }[])[];
-type Session = ReturnType<typeof getSession>;
-type Shared = { nav: NavGroups; pathname: string; session: Session; platform: boolean };
+type Shared = { nav: NavGroups; pathname: string; session: AuthSession | null; platform: boolean };
 
 const isActive = (to: string, pathname: string) =>
   to === '/' ? pathname === '/' : pathname.startsWith(to);
@@ -413,7 +413,7 @@ function NavList({ nav, pathname }: { nav: NavGroups; pathname: string }) {
 }
 
 /** The sidebar's foot: a 100 px rule, then who is signed in. */
-function SidebarFooter({ session }: { session: Session }) {
+function SidebarFooter({ session }: { session: AuthSession | null }) {
   const role = useRoleName(session);
   const name = session?.user.fullName ?? '—';
   return (
@@ -768,7 +768,7 @@ function Topbar({
   menuButton: RefObject<HTMLButtonElement | null>;
   menuOpen: boolean;
   onOpenNav: () => void;
-  session: Session;
+  session: AuthSession | null;
 }) {
   const compact = mode === 'drawer';
   // One tree for both bars: every element keeps its place, so crossing 1024
