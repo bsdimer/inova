@@ -239,9 +239,16 @@ export async function seed(url = databaseUrl, { quiet = false } = {}) {
       ).rows[0].id;
 
       await client.query(
+        // A re-run restores the seed's role and invitation, as for the
+        // administrators above, so a local database never keeps a role a
+        // test or a hand edit left and silently differs from CI's fresh one.
+        // A suspended membership stays suspended, like its account.
         `INSERT INTO staff_memberships (tenant_id, user_id, role_key, status)
          VALUES ($1, $2, 'resident', 'invited')
-         ON CONFLICT (tenant_id, user_id) DO NOTHING`,
+         ON CONFLICT (tenant_id, user_id) DO UPDATE
+           SET role_key = EXCLUDED.role_key,
+               status = CASE WHEN staff_memberships.status = 'suspended'
+                             THEN staff_memberships.status ELSE EXCLUDED.status END`,
         [tenantId, userId],
       );
 
