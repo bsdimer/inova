@@ -13,7 +13,7 @@ const GUIDE = `
 The core API: buildings, properties, residents and everything built on them.
 The answers of the resident routes (\`/me/*\`) and the brand configuration are
 TypeScript types in \`@inova/shared\` (\`MyProperty\`, \`MyPropertyDetail\`,
-\`BuildingContacts\`, \`OccupantRecord\`, \`PetRecord\`, \`MyLinkRequest\`,
+\`BuildingContacts\`, \`OccupantRecord\`, \`PetRecord\`, \`MyLinkRequest\`, \`MyDevice\`,
 \`BrandConfig\`, \`ApiError\`) — import them rather than copying.
 
 **Test portal:** \`https://test-portal.whitenova.tech/api/v1\`. Signing in
@@ -40,6 +40,7 @@ auth-service and repeat the call once.
 | «Контакти» | \`GET /me/properties/{id}/contacts\` |
 | Add a household member / a pet | \`POST /me/properties/{id}/occupants\`, \`POST /me/properties/{id}/pets\` |
 | «Добави моя имот» | \`POST /me/link-requests\`, \`GET /me/link-requests\`, \`POST /me/link-requests/{id}/withdraw\` |
+| Notifications later reach this phone | \`PUT /me/devices\` after sign-in and on every start; \`DELETE /me/devices/{id}\` before sign-out |
 | Theme, locales, support | \`GET /brands/{key}/config\` — public, no token |
 
 Show owner-only actions only when \`ownerActions\` is true; the server refuses
