@@ -1,5 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsOptional, IsString, Length, Matches, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsIn,
+  IsOptional,
+  IsString,
+  Length,
+  Matches,
+  MinLength,
+  ValidateIf,
+} from 'class-validator';
 
 const KEY = /^[a-z0-9][a-z0-9-]{1,30}$/;
 
@@ -66,11 +75,60 @@ export class RefreshDto {
   refreshToken!: string;
 }
 
-export class SetPasswordDto {
-  @ApiProperty({ minLength: 8 })
+export class ChangePasswordDto {
+  @ApiProperty({ minLength: 8, description: 'The new password' })
   @IsString()
   @MinLength(8)
   password!: string;
+
+  @ApiProperty({
+    required: false,
+    description: 'Required once the account has a password; not right after activation',
+  })
+  @IsOptional()
+  @IsString()
+  currentPassword?: string;
+}
+
+export class UpdateProfileDto {
+  @ApiProperty({
+    required: false,
+    enum: ['mr', 'mrs'],
+    nullable: true,
+    description: 'Г-н / Г-жа; `null` removes it',
+  })
+  @ValidateIf((dto: UpdateProfileDto) => dto.salutation !== undefined && dto.salutation !== null)
+  @IsIn(['mr', 'mrs'])
+  salutation?: 'mr' | 'mrs' | null;
+
+  @ApiProperty({ required: false, example: 'Петър' })
+  @IsOptional()
+  @IsString()
+  @Length(1, 80)
+  firstName?: string;
+
+  @ApiProperty({ required: false, example: 'Николов', description: 'May be empty' })
+  @IsOptional()
+  @IsString()
+  @Length(0, 80)
+  lastName?: string;
+}
+
+export class EmailChangeDto {
+  @ApiProperty({ example: 'petar@example.bg' })
+  @IsEmail()
+  email!: string;
+
+  @ApiProperty({ description: 'The current password' })
+  @IsString()
+  @MinLength(1)
+  password!: string;
+}
+
+export class EmailChangeConfirmDto {
+  @ApiProperty({ example: '482913', description: 'The code sent to the new address' })
+  @Matches(/^\d{6}$/, { message: 'code must be 6 digits' })
+  code!: string;
 }
 
 /** `POST /auth/recovery`: an e-mail (offered first) or a phone — exactly one (B13). */

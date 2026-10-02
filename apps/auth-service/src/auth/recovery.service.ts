@@ -1,5 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { MockCodeDelivery } from '@inova/shared';
+import { MockCodeDelivery, type RecoveryStarted } from '@inova/shared';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { DbService, type AuthTx } from '../db/db.service';
 import { auditRecords, refreshTokens, users } from '../db/schema';
@@ -13,13 +13,6 @@ export type RecoveryContact = { email: string } | { phone: string };
 
 /** What to prove: the link's token, or the phone and the code sent to it. */
 export type RecoveryProof = { token: string } | { phone: string; code: string };
-
-export interface RecoveryStarted {
-  status: 'ok';
-  channel: RecoveryChannel;
-  /** How long the link or code is valid — the screen says so (B13). */
-  expiresInMinutes: number;
-}
 
 const INVALID = 'Invalid or expired link or code';
 

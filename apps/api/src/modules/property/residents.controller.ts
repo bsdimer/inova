@@ -10,7 +10,29 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiHeader,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
+import type {
+  BuildingContacts,
+  MyProperty,
+  MyPropertyDetail,
+  OccupantRecord,
+  PetRecord,
+} from '@inova/shared';
+import { ApiErrors } from '../../openapi/api-errors';
+import {
+  BuildingContactsDto,
+  MyPropertyDetailDto,
+  MyPropertyDto,
+  OccupantRecordDto,
+  PetRecordDto,
+} from './me.responses';
 import { JwtGuard, type AuthedRequest } from '../../auth/jwt.guard';
 import { PermissionsGuard, RequirePermissions } from '../../auth/permissions.guard';
 import { TenantContextGuard } from '../../auth/tenant-context.guard';
@@ -70,13 +92,23 @@ export class MyPropertiesController {
 
   @Get()
   @ApiOperation({ summary: 'The properties the caller holds an occupancy on today' })
-  list(@Req() req: AuthedRequest) {
+  @ApiOkResponse({
+    type: [MyPropertyDto],
+    description: 'Empty when the caller lives nowhere today',
+  })
+  @ApiErrors(401, 403)
+  list(@Req() req: AuthedRequest): Promise<MyProperty[]> {
     return this.service.myProperties(req.tenantId!, this.accountOf(req));
   }
 
   @Get(':propertyId')
   @ApiOperation({ summary: 'One of them, with the people and pets living there today' })
-  get(@Req() req: AuthedRequest, @Param('propertyId', ParseUUIDPipe) propertyId: string) {
+  @ApiOkResponse({ type: MyPropertyDetailDto })
+  @ApiErrors(400, 401, 403, 404)
+  get(
+    @Req() req: AuthedRequest,
+    @Param('propertyId', ParseUUIDPipe) propertyId: string,
+  ): Promise<MyPropertyDetail> {
     return this.service.myProperty(req.tenantId!, this.accountOf(req), propertyId);
   }
 
@@ -84,27 +116,36 @@ export class MyPropertiesController {
   @ApiOperation({
     summary: '«Контакти»: the organisation and the building’s current house managers',
   })
-  contacts(@Req() req: AuthedRequest, @Param('propertyId', ParseUUIDPipe) propertyId: string) {
+  @ApiOkResponse({ type: BuildingContactsDto })
+  @ApiErrors(400, 401, 403, 404)
+  contacts(
+    @Req() req: AuthedRequest,
+    @Param('propertyId', ParseUUIDPipe) propertyId: string,
+  ): Promise<BuildingContacts> {
     return this.service.myContacts(req.tenantId!, this.accountOf(req), propertyId);
   }
 
   @Post(':propertyId/occupants')
   @ApiOperation({ summary: 'An owner or tenant records a household member without an account' })
+  @ApiCreatedResponse({ type: OccupantRecordDto })
+  @ApiErrors(400, 401, 403, 404)
   addOccupant(
     @Req() req: AuthedRequest,
     @Param('propertyId', ParseUUIDPipe) propertyId: string,
     @Body() dto: AddOccupantDto,
-  ) {
+  ): Promise<OccupantRecord> {
     return this.service.addOccupant(req.tenantId!, this.accountOf(req), propertyId, dto);
   }
 
   @Post(':propertyId/pets')
   @ApiOperation({ summary: 'An owner or tenant records a pet' })
+  @ApiCreatedResponse({ type: PetRecordDto })
+  @ApiErrors(400, 401, 403, 404)
   addPet(
     @Req() req: AuthedRequest,
     @Param('propertyId', ParseUUIDPipe) propertyId: string,
     @Body() dto: AddPetDto,
-  ) {
+  ): Promise<PetRecord> {
     return this.service.addPet(req.tenantId!, this.accountOf(req), propertyId, dto);
   }
 

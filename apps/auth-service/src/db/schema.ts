@@ -123,7 +123,28 @@ export const passwordResets = pgTable(
   (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
 );
 
-/** Insert-only: auth-service writes the record of a password reset (B13). */
+/** A pending change of a tenant account's e-mail (WHI-128, db/migrations/0011). */
+export const emailChanges = pgTable(
+  'email_changes',
+  {
+    tenantId: uuid('tenant_id').notNull(),
+    id: uuid('id').notNull().defaultRandom(),
+    userId: uuid('user_id').notNull(),
+    newEmail: text('new_email').notNull(),
+    codeHash: text('code_hash').notNull(),
+    status: text('status', { enum: ['active', 'consumed', 'expired', 'voided'] })
+      .notNull()
+      .default('active'),
+    attempts: integer('attempts').notNull().default(0),
+    maxAttempts: integer('max_attempts').notNull().default(5),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    consumedAt: timestamp('consumed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
+);
+
+/** Insert-only: auth-service writes the records of resets and account changes. */
 export const auditRecords = pgTable(
   'audit_records',
   {

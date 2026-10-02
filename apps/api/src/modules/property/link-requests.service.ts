@@ -1,4 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import type { MyLinkRequest } from '@inova/shared';
 import { and, asc, eq, inArray, ne, sql } from 'drizzle-orm';
 import { DbService, type TenantTx } from '../../db/db.service';
 import { apartments, buildings, linkRequests, occupancies, users } from '../../db/schema';
@@ -31,7 +32,11 @@ export class LinkRequestsService {
     private readonly scope: BuildingScope,
   ) {}
 
-  async create(tenantId: string, accountId: string, input: CreateLinkRequestDto) {
+  async create(
+    tenantId: string,
+    accountId: string,
+    input: CreateLinkRequestDto,
+  ): Promise<MyLinkRequest> {
     return this.dbService.withTenant(tenantId, async (tx) => {
       const [{ pending }] = await tx
         .select({ pending: sql<number>`count(*)::int` })
@@ -63,21 +68,22 @@ export class LinkRequestsService {
       await this.record(tx, tenantId, accountId, 'user', 'link_request.created', request.id, {
         role: request.role,
       });
-      return request;
+      return this.residentView(request);
     });
   }
 
-  async mine(tenantId: string, accountId: string) {
-    return this.dbService.withTenant(tenantId, (tx) =>
+  async mine(tenantId: string, accountId: string): Promise<MyLinkRequest[]> {
+    const rows = await this.dbService.withTenant(tenantId, (tx) =>
       tx
         .select()
         .from(linkRequests)
         .where(and(eq(linkRequests.tenantId, tenantId), eq(linkRequests.userId, accountId)))
         .orderBy(asc(linkRequests.createdAt)),
     );
+    return rows.map((row) => this.residentView(row));
   }
 
-  async withdraw(tenantId: string, accountId: string, requestId: string) {
+  async withdraw(tenantId: string, accountId: string, requestId: string): Promise<MyLinkRequest> {
     return this.dbService.withTenant(tenantId, async (tx) => {
       const request = await this.find(tx, tenantId, requestId);
       // Another resident's request is not there for this one.
@@ -89,7 +95,7 @@ export class LinkRequestsService {
         .where(and(eq(linkRequests.tenantId, tenantId), eq(linkRequests.id, requestId)))
         .returning();
       await this.record(tx, tenantId, accountId, 'user', 'link_request.withdrawn', requestId, {});
-      return withdrawn;
+      return this.residentView(withdrawn);
     });
   }
 
@@ -222,6 +228,24 @@ export class LinkRequestsService {
     if (!property || !BuildingScope.covers(await this.scope.of(tx, tenantId, actor), buildingId)) {
       throw new NotFoundException('Property not found');
     }
+  }
+
+  /** What a resident sees of their request: no staff ids, no other accounts. */
+  private residentView(row: typeof linkRequests.$inferSelect): MyLinkRequest {
+    return {
+      id: row.id,
+      role: row.role,
+      validFrom: row.validFrom,
+      address: row.address,
+      entrance: row.entrance,
+      floor: row.floor,
+      number: row.number,
+      note: row.note,
+      status: row.status,
+      decisionNote: row.decisionNote,
+      decidedAt: row.decidedAt?.toISOString() ?? null,
+      createdAt: row.createdAt.toISOString(),
+    };
   }
 
   private assertPending(status: LinkStatus): void {

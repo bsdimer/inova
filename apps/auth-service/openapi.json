@@ -1,0 +1,1163 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/v1/health": {
+      "get": {
+        "operationId": "HealthController_health",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Liveness probe",
+        "tags": ["health"]
+      }
+    },
+    "/.well-known/jwks.json": {
+      "get": {
+        "operationId": "JwksController_jwks",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "JWKS for offline JWT verification by core-api",
+        "tags": ["keys"]
+      }
+    },
+    "/v1/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthSessionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many attempts from this address; wait a minute.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Password login by e-mail or phone inside one realm (staff and activated residents)",
+        "tags": ["auth"]
+      }
+    },
+    "/v1/auth/activate": {
+      "post": {
+        "operationId": "AuthController_activate",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Activated and signed in; `user.mustSetPassword` is true — ask for a password next",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthSessionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many attempts from this address; wait a minute.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Activate a manager-created account: its phone or e-mail plus the invite code (B7, B15)",
+        "tags": ["auth"]
+      }
+    },
+    "/v1/auth/resend-code": {
+      "post": {
+        "operationId": "AuthController_resendCode",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendCodeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Always, whether or not a code was sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many attempts from this address; wait a minute.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Void the invite code and send a new one via SMS/Viber (generic response)",
+        "tags": ["auth"]
+      }
+    },
+    "/v1/auth/recovery": {
+      "post": {
+        "operationId": "AuthController_requestRecovery",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoveryRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Always the same answer, whether or not the account exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryStartedDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many attempts from this address; wait a minute.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Send a recovery link by e-mail or a code by SMS (B13); the same answer either way",
+        "tags": ["auth"]
+      }
+    },
+    "/v1/auth/recovery/confirm": {
+      "post": {
+        "operationId": "AuthController_confirmRecovery",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoveryConfirmDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Password set; every session of the account has ended"
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many attempts from this address; wait a minute.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Set a new password with the link token, or the phone and the code",
+        "tags": ["auth"]
+      }
+    },
+    "/v1/auth/refresh": {
+      "post": {
+        "operationId": "AuthController_refresh",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A new access token and a new refresh token; store both, the old refresh token is spent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthSessionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Rotate a refresh token (reuse revokes the token family)",
+        "tags": ["auth"]
+      }
+    },
+    "/v1/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "The session is ended; an unknown token is ignored"
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Revoke a refresh token family",
+        "tags": ["auth"]
+      }
+    },
+    "/v1/auth/me": {
+      "get": {
+        "operationId": "AuthController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthProfileDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Current account profile and its roles in the session's tenant",
+        "tags": ["auth"]
+      },
+      "patch": {
+        "operationId": "ProfileController_update",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The profile as it is now",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthProfileDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change salutation, first and last name (tenant accounts)",
+        "tags": ["profile"]
+      }
+    },
+    "/v1/auth/password": {
+      "post": {
+        "operationId": "ProfileController_changePassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Store both new tokens: the old refresh token no longer works, nor does any other device",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthSessionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many attempts from this address; wait a minute.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set or change the password; every session ends and a new one is returned",
+        "tags": ["profile"]
+      }
+    },
+    "/v1/auth/me/email": {
+      "post": {
+        "operationId": "ProfileController_requestEmailChange",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailChangeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailChangeStartedDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many attempts from this address; wait a minute.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Start changing the e-mail: a code goes to the new address",
+        "tags": ["profile"]
+      }
+    },
+    "/v1/auth/me/email/confirm": {
+      "post": {
+        "operationId": "ProfileController_confirmEmailChange",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailChangeConfirmDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthProfileDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many attempts from this address; wait a minute.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Enter the code from the new address; the e-mail changes",
+        "tags": ["profile"]
+      }
+    }
+  },
+  "info": {
+    "title": "inova Auth Service",
+    "description": "Signing in for the inova apps. The shapes of every answer below are also\nTypeScript types in `@inova/shared` (`AuthSession`, `AuthProfile`,\n`RecoveryStarted`, `ApiError`) — import them rather than copying.\n\n**Test portal:** auth `https://test-portal.whitenova.tech/auth/v1`, core API\n`https://test-portal.whitenova.tech/api/v1` (its own document at `/api/docs`).\n\n## The organisation (realm)\n\nEvery account belongs to one organisation; the same phone in two organisations\nis two unrelated accounts. Name it on every sign-in call — `login`,\n`activate`, `resend-code`, `recovery`, `recovery/confirm` — with\n`realm` (the organisation key, e.g. `demo`) or `brand` (the app's brand key,\nenough while the brand has one organisation). Without either, the server's\ndefault organisation is used.\n\n## Signing in and staying signed in\n\n1. `POST /auth/login` with `{ phone, password, realm }` (or `email`). The\n   answer is an `AuthSession`: an access token valid `expiresIn` seconds\n   (15 minutes) and a refresh token.\n2. Call the core API with `Authorization: Bearer <accessToken>` and\n   `X-Tenant-Id: <memberships[0].t>`.\n3. When the access token is about to expire, or a call answers 401, send\n   `POST /auth/refresh` with the refresh token and **store both new tokens**.\n   A refresh token works once: sending a spent one ends the whole session\n   everywhere. Refresh once at a time — let parallel calls wait for it.\n4. `POST /auth/logout` with the refresh token ends the session.\n\n## The first time: activation\n\nA manager creates the resident and an invite code goes out by SMS.\n`POST /auth/activate` with `{ identifier: <phone>, code, realm }` signs the\nresident in with `user.mustSetPassword: true`; then `POST /auth/password`.\nFive wrong codes cancel the code; `POST /auth/resend-code` sends a new one.\nThe screen never says how many tries are left.\n\n## Forgotten password\n\n`POST /auth/recovery` with `{ email }` (offered first) or `{ phone }` answers\n`202` with `expiresInMinutes` — always, whether or not the account exists.\nThen `POST /auth/recovery/confirm` with `{ token }` (from the e-mailed link)\nor `{ phone, code }`, plus the new password. Every session of the account\nends; sign in again.\n\n## Errors\n\nEvery error has the body `ApiError`: `{ statusCode, message, error }`.\n`message` lists the broken fields on a 400. A wrong password, an unknown\nphone and an account of another organisation all get the same 401 — show\none message for all. 429: too many tries from this address, wait a minute.\n\n## Test accounts (test portal)\n\nOrganisation `demo` (`realm: \"demo\"`), password `demo-resident`, sign in by phone:\n\n| Phone | Who |\n| --- | --- |\n| `+359881000101` | Петър Николов — owner of бл. 12 ап. 1 and garage Г1, with a household member and a dog |\n| `+359881000102` | Ралица Николова — co-owner of ап. 1 |\n| `+359881000103` | Калин Тодоров — tenant of ап. 3: no owner-only actions |\n| `+359881000002` | Георги Димитров — not activated: code `735026` (once; a reset of the test portal restores it) |\n\nA reset of the test portal puts these accounts back as listed. SMS and e-mail\nare not sent on the test portal yet: the activation code above is fixed, and\nfor recovery ask the backend team for the code.",
+    "version": "0.1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "realm": {
+            "type": "string",
+            "example": "inova",
+            "description": "Organisation key"
+          },
+          "brand": {
+            "type": "string",
+            "example": "inova",
+            "description": "Brand key of the app"
+          },
+          "email": {
+            "type": "string",
+            "example": "maria@inova.bg"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+359881000001"
+          },
+          "password": {
+            "type": "string",
+            "example": "inova-owner"
+          }
+        },
+        "required": ["password"]
+      },
+      "SessionUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "8d5e6c1e-3b0f-4c1a-9a51-5f0d6b7e2c11"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+359881000101"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Петър Николов"
+          },
+          "salutation": {
+            "type": "string",
+            "enum": ["mr", "mrs"],
+            "nullable": true,
+            "example": "mr"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "Петър"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Николов",
+            "description": "Empty when only one name was given"
+          },
+          "platformRole": {
+            "type": "string",
+            "enum": ["super_admin"],
+            "nullable": true,
+            "example": null
+          },
+          "mustSetPassword": {
+            "type": "boolean",
+            "example": false,
+            "description": "True right after activation: ask for a password"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "phone",
+          "fullName",
+          "salutation",
+          "firstName",
+          "lastName",
+          "platformRole",
+          "mustSetPassword"
+        ]
+      },
+      "SessionMembershipDto": {
+        "type": "object",
+        "properties": {
+          "t": {
+            "type": "string",
+            "format": "uuid",
+            "example": "2dd2d761-0b81-4cfd-9a30-0327933f188c",
+            "description": "The organisation's id — send it as `X-Tenant-Id` to core-api"
+          },
+          "r": {
+            "type": "string",
+            "example": "resident",
+            "description": "Role key in the organisation"
+          },
+          "tenantKey": {
+            "type": "string",
+            "example": "demo"
+          },
+          "tenantName": {
+            "type": "string",
+            "example": "Demo Blok Management"
+          }
+        },
+        "required": ["t", "r", "tenantKey", "tenantName"]
+      },
+      "AuthSessionDto": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/SessionUserDto"
+          },
+          "memberships": {
+            "description": "The session's own organisation, once per role; empty for a platform operator",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionMembershipDto"
+            }
+          },
+          "accessToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJSUzI1NiIsImtpZCI6Ii4uLiJ9…",
+            "description": "Bearer token"
+          },
+          "refreshToken": {
+            "type": "string",
+            "example": "t.2dd2d761-0b81-4cfd-9a30-0327933f188c.r8Q…",
+            "description": "Single use: `refresh` returns a new one; reusing an old one ends the whole session"
+          },
+          "expiresIn": {
+            "type": "number",
+            "example": 900,
+            "description": "Seconds the access token is valid"
+          }
+        },
+        "required": ["user", "memberships", "accessToken", "refreshToken", "expiresIn"]
+      },
+      "ApiErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 401
+          },
+          "message": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "example": "Invalid credentials",
+            "description": "A list for 400 validation errors, one line per field; a sentence otherwise"
+          },
+          "error": {
+            "type": "string",
+            "example": "Unauthorized"
+          }
+        },
+        "required": ["statusCode", "message", "error"]
+      },
+      "ActivateDto": {
+        "type": "object",
+        "properties": {
+          "realm": {
+            "type": "string",
+            "example": "inova",
+            "description": "Organisation key"
+          },
+          "brand": {
+            "type": "string",
+            "example": "inova",
+            "description": "Brand key of the app"
+          },
+          "identifier": {
+            "type": "string",
+            "example": "+359881000001",
+            "description": "The account the code was sent to: its phone (E.164) or e-mail (B15)"
+          },
+          "code": {
+            "type": "string",
+            "example": "482913",
+            "description": "6-digit invite code from SMS/Viber"
+          }
+        },
+        "required": ["identifier", "code"]
+      },
+      "ResendCodeDto": {
+        "type": "object",
+        "properties": {
+          "realm": {
+            "type": "string",
+            "example": "inova",
+            "description": "Organisation key"
+          },
+          "brand": {
+            "type": "string",
+            "example": "inova",
+            "description": "Brand key of the app"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+359881000001"
+          }
+        },
+        "required": ["phone"]
+      },
+      "AcceptedDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["ok"],
+            "example": "ok"
+          }
+        },
+        "required": ["status"]
+      },
+      "RecoveryRequestDto": {
+        "type": "object",
+        "properties": {
+          "realm": {
+            "type": "string",
+            "example": "inova",
+            "description": "Organisation key"
+          },
+          "brand": {
+            "type": "string",
+            "example": "inova",
+            "description": "Brand key of the app"
+          },
+          "email": {
+            "type": "string",
+            "example": "maria@inova.bg"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+359881000001"
+          }
+        }
+      },
+      "RecoveryStartedDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["ok"],
+            "example": "ok"
+          },
+          "channel": {
+            "type": "string",
+            "enum": ["email", "phone"],
+            "example": "phone"
+          },
+          "expiresInMinutes": {
+            "type": "number",
+            "example": 10,
+            "description": "How long the link or code is valid"
+          }
+        },
+        "required": ["status", "channel", "expiresInMinutes"]
+      },
+      "RecoveryConfirmDto": {
+        "type": "object",
+        "properties": {
+          "realm": {
+            "type": "string",
+            "example": "inova",
+            "description": "Organisation key"
+          },
+          "brand": {
+            "type": "string",
+            "example": "inova",
+            "description": "Brand key of the app"
+          },
+          "token": {
+            "type": "string",
+            "description": "The token from the e-mailed link"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+359881000001"
+          },
+          "code": {
+            "type": "string",
+            "example": "482913",
+            "description": "The code sent by SMS"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8
+          }
+        },
+        "required": ["password"]
+      },
+      "RefreshDto": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string"
+          }
+        },
+        "required": ["refreshToken"]
+      },
+      "AuthProfileDto": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/SessionUserDto"
+          },
+          "memberships": {
+            "description": "The session's own organisation, once per role; empty for a platform operator",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionMembershipDto"
+            }
+          }
+        },
+        "required": ["user", "memberships"]
+      },
+      "UpdateProfileDto": {
+        "type": "object",
+        "properties": {
+          "salutation": {
+            "type": "string",
+            "enum": ["mr", "mrs"],
+            "nullable": true,
+            "description": "Г-н / Г-жа; `null` removes it"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "Петър"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Николов",
+            "description": "May be empty"
+          }
+        }
+      },
+      "ChangePasswordDto": {
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "description": "The new password"
+          },
+          "currentPassword": {
+            "type": "string",
+            "description": "Required once the account has a password; not right after activation"
+          }
+        },
+        "required": ["password"]
+      },
+      "EmailChangeDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "petar@example.bg"
+          },
+          "password": {
+            "type": "string",
+            "description": "The current password"
+          }
+        },
+        "required": ["email", "password"]
+      },
+      "EmailChangeStartedDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["ok"],
+            "example": "ok"
+          },
+          "email": {
+            "type": "string",
+            "example": "petar@example.bg",
+            "description": "The new address, as it will be stored"
+          },
+          "expiresInMinutes": {
+            "type": "number",
+            "example": 10,
+            "description": "How long the code is valid"
+          }
+        },
+        "required": ["status", "email", "expiresInMinutes"]
+      },
+      "EmailChangeConfirmDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "482913",
+            "description": "The code sent to the new address"
+          }
+        },
+        "required": ["code"]
+      }
+    }
+  }
+}

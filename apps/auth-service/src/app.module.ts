@@ -4,6 +4,8 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthController } from './auth/auth.controller';
+import { EmailChangeService } from './auth/email-change.service';
+import { ProfileController } from './auth/profile.controller';
 import { AuthService } from './auth/auth.service';
 import { InviteCodes } from './auth/invite-codes';
 import { JwtGuard } from './auth/jwt.guard';
@@ -24,7 +26,7 @@ import { KeysService } from './keys/keys.service';
     ConfigModule.forRoot({ isGlobal: true }),
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 30 }]),
   ],
-  controllers: [HealthController, JwksController, AuthController],
+  controllers: [HealthController, JwksController, AuthController, ProfileController],
   providers: [
     DbService,
     KeysService,
@@ -40,6 +42,7 @@ import { KeysService } from './keys/keys.service';
     AuthService,
     JwtGuard,
     RecoveryService,
+    EmailChangeService,
     { provide: RecoveryPolicy, useFactory: () => new RecoveryPolicy(process.env) },
     {
       provide: PasswordResets,
