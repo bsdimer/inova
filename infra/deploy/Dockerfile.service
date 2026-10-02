@@ -1,11 +1,12 @@
 # syntax=docker/dockerfile:1.7
 #
-# Shared image for both NestJS services. Built from the repository root:
+# Shared image for the NestJS services. Built from the repository root:
 #   docker build -f infra/deploy/Dockerfile.service --build-arg APP=api --build-arg PORT=4000 .
 #   docker build -f infra/deploy/Dockerfile.service --build-arg APP=auth-service --build-arg PORT=4001 .
+#   docker build -f infra/deploy/Dockerfile.service --build-arg APP=worker --build-arg PORT=4002 .
 #
-# One file rather than two near-identical ones: the two services differ only in
-# workspace name and port.
+# One file rather than near-identical ones: the services differ only in
+# workspace name and port (the worker's port serves its health probe only).
 ARG NODE_VERSION=22-alpine
 
 FROM node:${NODE_VERSION} AS base
@@ -24,6 +25,7 @@ COPY apps/admin/package.json apps/admin/
 COPY apps/api/package.json apps/api/
 COPY apps/auth-service/package.json apps/auth-service/
 COPY apps/mobile/package.json apps/mobile/
+COPY apps/worker/package.json apps/worker/
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile --filter "@inova/${APP}..."
 
