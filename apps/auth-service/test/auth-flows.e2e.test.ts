@@ -146,6 +146,73 @@ describe('password login', () => {
   });
 });
 
+describe('sign-in by phone (WHI-122)', () => {
+  const PHONE = '+359881500001';
+
+  beforeAll(async () => {
+    const argon2 = await import('argon2');
+    const hash = await argon2.hash('phone-password', { type: argon2.argon2id });
+    // A resident invited by SMS: a phone, no e-mail. And the same phone in demo.
+    await db.query(
+      `INSERT INTO users (tenant_id, phone, first_name, password_hash, status)
+       VALUES ($1, $3, 'Само', $4, 'active'), ($2, $3, 'Друг', $4, 'active')`,
+      [inovaId, demoId, PHONE, hash],
+    );
+    await db.query(`UPDATE users SET password_hash = $2 WHERE tenant_id = $1 AND phone = $3`, [
+      demoId,
+      await argon2.hash('demo-phone-password', { type: argon2.argon2id }),
+      PHONE,
+    ]);
+  });
+
+  it('signs a resident without an e-mail in with the phone and password', async () => {
+    const res = await post('/auth/login', {
+      phone: PHONE,
+      password: 'phone-password',
+      realm: 'inova',
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.user).toMatchObject({ fullName: 'Само', email: null, phone: PHONE });
+    expect(decodeJwt(res.body.accessToken)).toMatchObject({ kind: 'tenant', tid: inovaId });
+    // The default realm works for the phone as for an e-mail.
+    expect((await post('/auth/login', { phone: PHONE, password: 'phone-password' })).status).toBe(
+      200,
+    );
+  });
+
+  it('answers a wrong password, an unknown phone and another realm’s phone alike', async () => {
+    const attempts = await Promise.all([
+      post('/auth/login', { phone: PHONE, password: 'nope', realm: 'inova' }),
+      post('/auth/login', { phone: '+359881599999', password: 'phone-password', realm: 'inova' }),
+      // The demo account's password, asked in inova.
+      post('/auth/login', { phone: PHONE, password: 'demo-phone-password', realm: 'inova' }),
+    ]);
+    for (const res of attempts) {
+      expect(res.status).toBe(401);
+      expect(res.body).toEqual(INVALID_CREDENTIALS);
+    }
+    // In demo the same phone is demo's own account.
+    const demo = await post('/auth/login', {
+      phone: PHONE,
+      password: 'demo-phone-password',
+      realm: 'demo',
+    });
+    expect(demo.status).toBe(200);
+    expect(demo.body.user.fullName).toBe('Друг');
+  });
+
+  it('wants an e-mail or a phone, not both and not neither (400)', async () => {
+    const both = await post('/auth/login', {
+      email: 'maria@inova.bg',
+      phone: PHONE,
+      password: 'x',
+    });
+    const neither = await post('/auth/login', { password: 'x' });
+    const malformed = await post('/auth/login', { phone: '0881500001', password: 'x' });
+    expect([both.status, neither.status, malformed.status]).toEqual([400, 400, 400]);
+  });
+});
+
 describe('tenant-scoped account realms (B8)', () => {
   it('treats the same e-mail in two tenants as two unrelated accounts', async () => {
     const inova = await post('/auth/login', {
