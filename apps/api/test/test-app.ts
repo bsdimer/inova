@@ -11,6 +11,8 @@ export interface TestApp {
   app: NestExpressApplication;
   /** Privileged connection: fixtures and assertions across tenants. */
   adminPool: pg.Pool;
+  /** The privileged URL of the test database — to rerun the seed against it. */
+  migratorUrl: string;
   /** Tenant ids by key, from the seed (`inova`, `demo`). */
   tenants: Record<string, string>;
   /** A tenant account's access token (decision B8: one tenant per token). */
@@ -79,6 +81,7 @@ export async function bootTestApp(dbPrefix: string): Promise<TestApp> {
   return {
     app,
     adminPool,
+    migratorUrl,
     tenants,
     as: client,
     platformToken: (platformUserId) =>
