@@ -34,6 +34,11 @@
   and 1728 wide and a 600 px tall window, light and dark; the PR's
   «Sizes» line names what was run. Twice a screen shipped that broke at a
   width or height nobody opened.
+- Measure an element that animates with `transform` (scale, slide) by
+  `offsetWidth`, `offsetHeight` and `offsetLeft`/`offsetTop`, not by
+  `boundingBox()`: the box includes the transform, so a check that runs
+  mid-animation reads a scaled size and fails on CI only. Twice on 01.10 a
+  dialog's close button was measured while it was still scaling in.
 - Prefer a small unit test for pure display math (money formatting, gauge
   geometry) in the owning package.
 - Mark UI that sits on fake data with `TODO(M<n>)` or `MOCK`.
