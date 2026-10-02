@@ -1,4 +1,9 @@
-import { MockCodeDelivery, type MyProperty, type MyPropertyDetail } from '@inova/shared';
+import {
+  MockCodeDelivery,
+  type BuildingContacts,
+  type MyProperty,
+  type MyPropertyDetail,
+} from '@inova/shared';
 import {
   BadRequestException,
   ConflictException,
@@ -10,6 +15,7 @@ import { and, asc, eq, gte, isNull, lte, ne, or, sql, type SQL } from 'drizzle-o
 import { DbService, type TenantTx } from '../../db/db.service';
 import {
   apartments,
+  buildingManagerAssignments,
   buildings,
   entrances,
   occupancies,
@@ -262,8 +268,13 @@ export class ResidentsService {
         )
         .orderBy(asc(pets.validFrom), asc(pets.createdAt));
 
+      const [{ bankAccount }] = await tx
+        .select({ bankAccount: buildings.bankAccount })
+        .from(buildings)
+        .where(and(eq(buildings.tenantId, tenantId), eq(buildings.id, property.building.id)));
       return {
         ...property,
+        building: { ...property.building, bankAccount },
         // Names and roles only: a co-resident's phone and e-mail stay with the staff.
         household: household.map(({ occupancy, accountName }) => ({
           id: occupancy.id,
@@ -281,6 +292,51 @@ export class ResidentsService {
           validTo: pet.validTo,
         })),
       };
+    });
+  }
+
+  /**
+   * «Контакти»: the organisation and the building's current house managers.
+   * Only for a property the caller lives in; an ended assignment or a
+   * suspended account drops out at once.
+   */
+  async myContacts(
+    tenantId: string,
+    accountId: string,
+    propertyId: string,
+  ): Promise<BuildingContacts> {
+    return this.dbService.withTenant(tenantId, async (tx) => {
+      const property = await this.mine(
+        tx,
+        tenantId,
+        accountId,
+        propertyId,
+        await this.today(tx, tenantId),
+      );
+      const [organisation] = await tx
+        .select({ name: tenants.name })
+        .from(tenants)
+        .where(eq(tenants.id, tenantId));
+      const managers = await tx
+        .select({ name: users.fullName, phone: users.phone, email: users.email })
+        .from(buildingManagerAssignments)
+        .innerJoin(
+          users,
+          and(
+            eq(users.tenantId, buildingManagerAssignments.tenantId),
+            eq(users.id, buildingManagerAssignments.userId),
+          ),
+        )
+        .where(
+          and(
+            eq(buildingManagerAssignments.tenantId, tenantId),
+            eq(buildingManagerAssignments.buildingId, property.building.id),
+            isNull(buildingManagerAssignments.endedAt),
+            eq(users.status, 'active'),
+          ),
+        )
+        .orderBy(asc(buildingManagerAssignments.createdAt));
+      return { organisation, managers };
     });
   }
 

@@ -71,7 +71,7 @@ describe('AuthService.login — every failure costs one hash verification', () =
   ] as const)('%s', async (_case, fixture, expectedHash) => {
     const { service, verify } = serviceWith(fixture as Fixture);
 
-    const attempt = service.login('maria@inova.bg', 'guess', { realm: 'inova' });
+    const attempt = service.login({ email: 'maria@inova.bg' }, 'guess', { realm: 'inova' });
 
     await expect(attempt).rejects.toThrow(UnauthorizedException);
     await expect(attempt).rejects.toThrow('Invalid credentials');
@@ -85,9 +85,9 @@ describe('AuthService.login — every failure costs one hash verification', () =
     });
     verify.mockResolvedValue(true);
 
-    await expect(service.login('maria@inova.bg', 'guess', { realm: 'inova' })).rejects.toThrow(
-      'Invalid credentials',
-    );
+    await expect(
+      service.login({ email: 'maria@inova.bg' }, 'guess', { realm: 'inova' }),
+    ).rejects.toThrow('Invalid credentials');
     expect(verify).toHaveBeenCalledTimes(1);
   });
 });
@@ -103,7 +103,9 @@ describe('AuthService.login — which identity a sign-in is about', () => {
   it('looks for the account inside the resolved tenant only', async () => {
     const { service, tenantTx, realms } = serviceWith({ account: active as Partial<AccountRow> });
 
-    await expect(service.login('maria@inova.bg', 'guess', { realm: 'inova' })).rejects.toThrow();
+    await expect(
+      service.login({ email: 'maria@inova.bg' }, 'guess', { realm: 'inova' }),
+    ).rejects.toThrow();
 
     expect(realms.resolve).toHaveBeenCalledWith({ realm: 'inova' });
     expect(tenantTx).toHaveBeenCalledTimes(1);
@@ -113,7 +115,9 @@ describe('AuthService.login — which identity a sign-in is about', () => {
   it('never opens a tenant when the organisation is unknown', async () => {
     const { service, tenantTx } = serviceWith({ realm: null });
 
-    await expect(service.login('maria@inova.bg', 'guess', { realm: 'ghost' })).rejects.toThrow();
+    await expect(
+      service.login({ email: 'maria@inova.bg' }, 'guess', { realm: 'ghost' }),
+    ).rejects.toThrow();
 
     expect(tenantTx).not.toHaveBeenCalled();
   });
@@ -124,10 +128,23 @@ describe('AuthService.login — which identity a sign-in is about', () => {
       platformUser,
     });
 
-    await expect(service.login('maria@inova.bg', 'guess')).rejects.toThrow('Invalid credentials');
+    await expect(service.login({ email: 'maria@inova.bg' }, 'guess')).rejects.toThrow(
+      'Invalid credentials',
+    );
 
     expect(verify).toHaveBeenCalledTimes(1);
     expect(verify).toHaveBeenCalledWith(PLATFORM_HASH, 'guess');
+  });
+
+  it('never reaches a platform identity by phone, even without a realm', async () => {
+    const { service, verify } = serviceWith({
+      account: { ...active, phone: '+359881000001' } as Partial<AccountRow>,
+      platformUser,
+    });
+
+    await expect(service.login({ phone: '+359881000001' }, 'guess')).rejects.toThrow();
+
+    expect(verify).toHaveBeenCalledWith(REAL_HASH, 'guess');
   });
 
   it.each([
@@ -139,7 +156,7 @@ describe('AuthService.login — which identity a sign-in is about', () => {
       platformUser,
     });
 
-    await expect(service.login('maria@inova.bg', 'guess', hint)).rejects.toThrow();
+    await expect(service.login({ email: 'maria@inova.bg' }, 'guess', hint)).rejects.toThrow();
 
     expect(verify).toHaveBeenCalledWith(REAL_HASH, 'guess');
   });
