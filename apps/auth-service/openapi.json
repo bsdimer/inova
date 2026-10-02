@@ -383,54 +383,6 @@
         "tags": ["auth"]
       }
     },
-    "/v1/auth/password": {
-      "post": {
-        "operationId": "AuthController_setPassword",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SetPasswordDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "204": {
-            "description": "Password set"
-          },
-          "400": {
-            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Set/replace own password (after invite-code activation)",
-        "tags": ["auth"]
-      }
-    },
     "/v1/auth/me": {
       "get": {
         "operationId": "AuthController_me",
@@ -464,6 +416,314 @@
         ],
         "summary": "Current account profile and its roles in the session's tenant",
         "tags": ["auth"]
+      },
+      "patch": {
+        "operationId": "ProfileController_update",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The profile as it is now",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthProfileDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change salutation, first and last name (tenant accounts)",
+        "tags": ["profile"]
+      }
+    },
+    "/v1/auth/password": {
+      "post": {
+        "operationId": "ProfileController_changePassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Store both new tokens: the old refresh token no longer works, nor does any other device",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthSessionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many attempts from this address; wait a minute.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set or change the password; every session ends and a new one is returned",
+        "tags": ["profile"]
+      }
+    },
+    "/v1/auth/me/email": {
+      "post": {
+        "operationId": "ProfileController_requestEmailChange",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailChangeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailChangeStartedDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many attempts from this address; wait a minute.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Start changing the e-mail: a code goes to the new address",
+        "tags": ["profile"]
+      }
+    },
+    "/v1/auth/me/email/confirm": {
+      "post": {
+        "operationId": "ProfileController_confirmEmailChange",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailChangeConfirmDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthProfileDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many attempts from this address; wait a minute.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Enter the code from the new address; the e-mail changes",
+        "tags": ["profile"]
       }
     }
   },
@@ -534,6 +794,21 @@
             "type": "string",
             "example": "Петър Николов"
           },
+          "salutation": {
+            "type": "string",
+            "enum": ["mr", "mrs"],
+            "nullable": true,
+            "example": "mr"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "Петър"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Николов",
+            "description": "Empty when only one name was given"
+          },
           "platformRole": {
             "type": "string",
             "enum": ["super_admin"],
@@ -546,7 +821,17 @@
             "description": "True right after activation: ask for a password"
           }
         },
-        "required": ["id", "email", "phone", "fullName", "platformRole", "mustSetPassword"]
+        "required": [
+          "id",
+          "email",
+          "phone",
+          "fullName",
+          "salutation",
+          "firstName",
+          "lastName",
+          "platformRole",
+          "mustSetPassword"
+        ]
       },
       "SessionMembershipDto": {
         "type": "object",
@@ -776,16 +1061,6 @@
         },
         "required": ["refreshToken"]
       },
-      "SetPasswordDto": {
-        "type": "object",
-        "properties": {
-          "password": {
-            "type": "string",
-            "minLength": 8
-          }
-        },
-        "required": ["password"]
-      },
       "AuthProfileDto": {
         "type": "object",
         "properties": {
@@ -801,6 +1076,87 @@
           }
         },
         "required": ["user", "memberships"]
+      },
+      "UpdateProfileDto": {
+        "type": "object",
+        "properties": {
+          "salutation": {
+            "type": "string",
+            "enum": ["mr", "mrs"],
+            "nullable": true,
+            "description": "Г-н / Г-жа; `null` removes it"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "Петър"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Николов",
+            "description": "May be empty"
+          }
+        }
+      },
+      "ChangePasswordDto": {
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "description": "The new password"
+          },
+          "currentPassword": {
+            "type": "string",
+            "description": "Required once the account has a password; not right after activation"
+          }
+        },
+        "required": ["password"]
+      },
+      "EmailChangeDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "petar@example.bg"
+          },
+          "password": {
+            "type": "string",
+            "description": "The current password"
+          }
+        },
+        "required": ["email", "password"]
+      },
+      "EmailChangeStartedDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["ok"],
+            "example": "ok"
+          },
+          "email": {
+            "type": "string",
+            "example": "petar@example.bg",
+            "description": "The new address, as it will be stored"
+          },
+          "expiresInMinutes": {
+            "type": "number",
+            "example": 10,
+            "description": "How long the code is valid"
+          }
+        },
+        "required": ["status", "email", "expiresInMinutes"]
+      },
+      "EmailChangeConfirmDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "482913",
+            "description": "The code sent to the new address"
+          }
+        },
+        "required": ["code"]
       }
     }
   }

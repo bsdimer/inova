@@ -307,8 +307,8 @@ describe('tenant-scoped account realms (B8)', () => {
       const set = await request(app.getHttpServer())
         .post('/auth/password')
         .set('Authorization', `Bearer ${demo.body.accessToken}`)
-        .send({ password: 'demo-maria-changed' });
-      expect(set.status).toBe(204);
+        .send({ password: 'demo-maria-changed', currentPassword: 'demo-maria' });
+      expect(set.status).toBe(200);
 
       const login = (realm: string, password: string) =>
         post('/auth/login', { email: 'maria@inova.bg', password, realm });
@@ -641,7 +641,9 @@ describe('invite-code activation (B7, B15)', () => {
       .post('/auth/password')
       .set('Authorization', `Bearer ${session.body.accessToken}`)
       .send({ password: 'brand-new-password' });
-    expect(res.status).toBe(204);
+    // Right after activation no current password is asked; a fresh session comes back.
+    expect(res.status).toBe(200);
+    expect(res.body.refreshToken).not.toBe(session.body.refreshToken);
 
     const me = await get('/auth/me', session.body.accessToken);
     expect(me.status).toBe(200);
