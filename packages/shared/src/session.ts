@@ -12,6 +12,11 @@ export interface SessionUser {
   /** E.164, e.g. `+359881000101`. */
   phone: string | null;
   fullName: string;
+  /** Г-н / Г-жа (D36); `null` when not given. */
+  salutation: 'mr' | 'mrs' | null;
+  firstName: string;
+  /** Empty when only one name was given. */
+  lastName: string;
   /** Set for a platform operator only; a tenant account is always `null`. */
   platformRole: 'super_admin' | null;
   /** True right after activation: send the user to «set a password». */
@@ -67,4 +72,13 @@ export interface ApiError {
   statusCode: number;
   message: string | string[];
   error: string;
+}
+
+/** `POST /v1/auth/me/email` — a code went to the new address; it takes effect on confirm. */
+export interface EmailChangeStarted {
+  status: 'ok';
+  /** The new address, as it will be stored. */
+  email: string;
+  /** How long the code is valid; the screen states it. */
+  expiresInMinutes: number;
 }

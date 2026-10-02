@@ -1,13 +1,20 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import {
   MockCodeDelivery,
   type AccessTokenClaims,
   type AuthProfile,
   type AuthSession,
 } from '@inova/shared';
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { DbService, type AuthTx } from '../db/db.service';
-import { platformUsers, staffMemberships, users } from '../db/schema';
+import {
+  auditRecords,
+  platformRefreshTokens,
+  platformUsers,
+  refreshTokens,
+  staffMemberships,
+  users,
+} from '../db/schema';
 import { InviteCodes } from './invite-codes';
 import { PasswordHasher } from './password-hasher';
 import { RealmResolver, type Realm, type RealmHint } from './realm-resolver';
@@ -15,6 +22,13 @@ import { RefreshTokens, type RefreshOwner } from './refresh-tokens';
 import { ACCESS_TTL_SECONDS, TokenService } from './token.service';
 
 type Account = typeof users.$inferSelect;
+
+/** What `PATCH /auth/me` may change; `null` clears the salutation. */
+export interface ProfileChanges {
+  salutation?: 'mr' | 'mrs' | null;
+  firstName?: string;
+  lastName?: string;
+}
 
 /** Who signs in: by e-mail (staff, residents) or by phone in E.164 (residents). */
 export type LoginIdentifier = { email: string } | { phone: string };
@@ -206,22 +220,93 @@ export class AuthService {
     await this.ownerTx(owner, (tx) => this.refreshTokens.revoke(tx, owner, rawToken));
   }
 
-  async setPassword(claims: AccessTokenClaims, newPassword: string): Promise<void> {
-    const passwordHash = await this.passwords.hash(newPassword);
+  /**
+   * Sets a new password. Once the account has one, the current password is
+   * required — an access token alone must not be enough to take an account
+   * over. Every session of the account ends, this one included; the answer
+   * is a fresh session to continue with.
+   */
+  async changePassword(
+    claims: AccessTokenClaims,
+    newPassword: string,
+    currentPassword: string | undefined,
+  ): Promise<SessionResult> {
     if (claims.kind === 'platform') {
-      await this.dbService.platformTx(async (tx) => {
-        await tx
+      const user = await this.dbService.platformTx((tx) => this.activePlatformUser(tx, claims.sub));
+      await this.assertCurrentPassword(user.passwordHash, currentPassword);
+      const passwordHash = await this.passwords.hash(newPassword);
+      return this.dbService.platformTx(async (tx) => {
+        const [updated] = await tx
           .update(platformUsers)
           .set({ passwordHash, updatedAt: new Date() })
-          .where(eq(platformUsers.id, claims.sub));
+          .where(eq(platformUsers.id, user.id))
+          .returning();
+        await tx
+          .update(platformRefreshTokens)
+          .set({ revokedAt: new Date() })
+          .where(
+            and(eq(platformRefreshTokens.userId, user.id), isNull(platformRefreshTokens.revokedAt)),
+          );
+        return this.platformSession(tx, updated);
       });
-      return;
     }
-    await this.dbService.tenantTx(claims.tid, async (tx) => {
-      await tx
+
+    const realm = await this.realmOf(claims.tid);
+    const account = await this.dbService.tenantTx(realm.id, (tx) =>
+      this.activeAccount(tx, realm.id, claims.sub),
+    );
+    await this.assertCurrentPassword(account.passwordHash, currentPassword);
+    const passwordHash = await this.passwords.hash(newPassword);
+    return this.dbService.tenantTx(realm.id, async (tx) => {
+      const [updated] = await tx
         .update(users)
         .set({ passwordHash, updatedAt: new Date() })
-        .where(and(eq(users.tenantId, claims.tid), eq(users.id, claims.sub)));
+        .where(and(eq(users.tenantId, realm.id), eq(users.id, account.id)))
+        .returning();
+      await tx
+        .update(refreshTokens)
+        .set({ revokedAt: new Date() })
+        .where(
+          and(
+            eq(refreshTokens.tenantId, realm.id),
+            eq(refreshTokens.userId, account.id),
+            isNull(refreshTokens.revokedAt),
+          ),
+        );
+      await this.audit(tx, realm.id, account.id, 'account.password_changed', {
+        firstPassword: account.passwordHash === null,
+      });
+      return this.tenantSession(tx, realm, updated);
+    });
+  }
+
+  /** Salutation, first and last name of the caller's own tenant account (D36). */
+  async updateProfile(claims: AccessTokenClaims, changes: ProfileChanges): Promise<Profile> {
+    if (claims.kind !== 'tenant') {
+      throw new ForbiddenException('A platform identity has no editable profile here');
+    }
+    const realm = await this.realmOf(claims.tid);
+    return this.dbService.tenantTx(realm.id, async (tx) => {
+      const before = await this.activeAccount(tx, realm.id, claims.sub);
+      const set: Partial<Account> = {
+        ...(changes.salutation !== undefined ? { salutation: changes.salutation } : {}),
+        ...(changes.firstName !== undefined ? { firstName: changes.firstName.trim() } : {}),
+        ...(changes.lastName !== undefined ? { lastName: changes.lastName.trim() } : {}),
+      };
+      let after = before;
+      if (Object.keys(set).length > 0) {
+        [after] = await tx
+          .update(users)
+          .set({ ...set, updatedAt: new Date() })
+          .where(and(eq(users.tenantId, realm.id), eq(users.id, before.id)))
+          .returning();
+        const keys = Object.keys(set) as Array<keyof typeof set>;
+        await this.audit(tx, realm.id, before.id, 'account.profile_updated', {
+          from: Object.fromEntries(keys.map((key) => [key, before[key]])),
+          to: Object.fromEntries(keys.map((key) => [key, after[key]])),
+        });
+      }
+      return this.tenantProfile(realm, after, await this.activeRoles(tx, realm.id, after.id));
     });
   }
 
@@ -340,6 +425,9 @@ export class AuthService {
         email: account.email,
         phone: account.phone,
         fullName: account.fullName,
+        salutation: account.salutation,
+        firstName: account.firstName,
+        lastName: account.lastName,
         platformRole: null,
         mustSetPassword: account.passwordHash === null,
       },
@@ -359,11 +447,46 @@ export class AuthService {
         email: user.email,
         phone: null,
         fullName: user.fullName,
+        // A platform identity keeps one name field.
+        salutation: null,
+        firstName: user.fullName,
+        lastName: '',
         platformRole: user.platformRole,
         mustSetPassword: user.passwordHash === null,
       },
       memberships: [],
     };
+  }
+
+  /** A wrong or missing current password ends the request; argon2 runs either way. */
+  private async assertCurrentPassword(
+    storedHash: string | null,
+    currentPassword: string | undefined,
+  ): Promise<void> {
+    // Right after activation there is no password yet; nothing to confirm.
+    if (storedHash === null) return;
+    const matches = await this.passwords.verify(storedHash, currentPassword ?? '');
+    if (currentPassword === undefined || !matches) {
+      throw new ForbiddenException('The current password is required and must be right');
+    }
+  }
+
+  private audit(
+    tx: AuthTx,
+    tenantId: string,
+    accountId: string,
+    action: string,
+    payload: Record<string, unknown>,
+  ): Promise<unknown> {
+    return tx.insert(auditRecords).values({
+      tenantId,
+      actorUserId: accountId,
+      actorType: 'user',
+      action,
+      entityType: 'account',
+      entityId: accountId,
+      payload,
+    });
   }
 
   private async activeRoles(tx: AuthTx, tenantId: string, accountId: string): Promise<string[]> {

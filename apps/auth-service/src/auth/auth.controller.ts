@@ -33,7 +33,6 @@ import {
   RecoveryRequestDto,
   RefreshDto,
   ResendCodeDto,
-  SetPasswordDto,
 } from './dto';
 import type { RealmHint } from './realm-resolver';
 import { JwtGuard, type AuthedRequest } from './jwt.guard';
@@ -172,17 +171,6 @@ export class AuthController {
   @ApiErrors(400)
   async logout(@Body() dto: RefreshDto) {
     await this.auth.logout(dto.refreshToken);
-  }
-
-  @Post('password')
-  @HttpCode(204)
-  @UseGuards(JwtGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Set/replace own password (after invite-code activation)' })
-  @ApiNoContentResponse({ description: 'Password set' })
-  @ApiErrors(400, 401)
-  async setPassword(@Req() req: AuthedRequest, @Body() dto: SetPasswordDto) {
-    await this.auth.setPassword(req.user, dto.password);
   }
 
   @Get('me')
