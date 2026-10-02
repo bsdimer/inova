@@ -277,7 +277,9 @@ test.describe('sizes', () => {
     const sheet = page.getByRole('dialog', { name: 'Филтри' });
     await expect(sheet.getByRole('heading', { level: 3 })).toHaveText(['Квартал', 'Статус']);
     await sheet.getByRole('checkbox', { name: 'Чернова' }).click();
-    await sheet.getByRole('button', { name: 'Покажи 1' }).click();
+    // Staged: the cards stay as they were until «Покажи».
+    await expect(cards).toHaveCount(4);
+    await sheet.getByRole('button', { name: 'Покажи 1 сграда' }).click();
     await expect(sheet).toHaveCount(0);
     await expect(cards).toHaveCount(1);
     await expect(page.getByRole('button', { name: 'Филтри · 1' })).toBeVisible();

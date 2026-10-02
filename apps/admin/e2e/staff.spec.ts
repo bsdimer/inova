@@ -105,6 +105,22 @@ test.describe('with the list loaded', () => {
     await expect(rows(page).first()).toContainText('Мария Иванова');
   });
 
+  test('a cut name has the full text in a tooltip', async ({ page }) => {
+    await expect(page.locator('main table').getByText('Мария Иванова')).toHaveAttribute(
+      'title',
+      'Мария Иванова',
+    );
+  });
+
+  test('«Изчисти филтрите» keeps the chosen sort', async ({ page }) => {
+    await page.getByRole('button', { name: 'Първо нуждаещите се от внимание' }).click();
+    await page.getByRole('option', { name: 'Име А–Я' }).click();
+    await page.getByPlaceholder('Търси по име, имейл или телефон').fill('никой');
+    await page.getByRole('button', { name: 'Изчисти филтрите' }).click();
+    await expect(rows(page)).toHaveCount(2);
+    await expect(page.getByRole('button', { name: 'Име А–Я' })).toBeVisible();
+  });
+
   test('the sort preset reorders the list', async ({ page }) => {
     await page.getByRole('button', { name: 'Първо нуждаещите се от внимание' }).click();
     await page.getByRole('option', { name: 'Име А–Я' }).click();
@@ -355,24 +371,68 @@ test.describe('the «Роли и обхват» panel', () => {
   });
 });
 
-test('402: the filter sheet narrows the list, «Изчисти» clears it, «Покажи» closes', async ({
+test('402: the filter sheet stages the choice and applies it only on «Покажи»', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 402, height: 874 });
   await openSignedIn(page, ORG_ADMIN, '/staff');
-  await page.getByRole('button', { name: /^Филтри/ }).click();
+  const filters = page.getByRole('button', { name: /^Филтри/ });
   const sheet = page.getByRole('dialog', { name: 'Филтри' });
+  const invited = sheet.getByRole('checkbox', { name: 'Поканен' });
+
+  await filters.click();
   await expect(sheet.getByRole('heading', { level: 3 })).toHaveText(['Статус', 'Роля', 'Покана']);
-  await sheet.getByRole('checkbox', { name: 'Поканен' }).click();
-  await expect(sheet.getByRole('checkbox', { name: 'Поканен' })).toHaveAttribute(
-    'aria-checked',
-    'true',
-  );
-  await expect(sheet.getByRole('button', { name: 'Покажи 1' })).toBeVisible();
+  await invited.click();
+  await expect(invited).toHaveAttribute('aria-checked', 'true');
+  // The button previews the result; the list behind it has not changed.
+  await expect(sheet.getByRole('button', { name: 'Покажи 1 служител' })).toBeVisible();
+  await expect(page.getByText('2 служители', { exact: true })).toBeAttached();
   await sheet.getByRole('button', { name: 'Изчисти' }).click();
-  await expect(sheet.getByRole('button', { name: 'Покажи 2' })).toBeVisible();
-  await sheet.getByRole('checkbox', { name: 'Поканен' }).click();
-  await sheet.getByRole('button', { name: 'Покажи 1' }).click();
+  await expect(invited).toHaveAttribute('aria-checked', 'false');
+  await expect(sheet.getByRole('button', { name: 'Покажи 2 служители' })).toBeVisible();
+
+  // Closing drops the choice.
+  await invited.click();
+  await page.keyboard.press('Escape');
+  await expect(sheet).toHaveCount(0);
+  await expect(page.getByText('2 служители', { exact: true })).toBeVisible();
+  await filters.click();
+  await expect(invited).toHaveAttribute('aria-checked', 'false');
+
+  await invited.click();
+  await sheet.getByRole('button', { name: 'Покажи 1 служител' }).click();
   await expect(sheet).toHaveCount(0);
   await expect(page.getByText('1 от 2 служители')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Филтри · 1' })).toBeVisible();
+});
+
+test('a role that cannot see staff is told at once, without retries', async ({ page }) => {
+  await page.route('**/v1/tenant/staff', (route) =>
+    route.fulfill({ status: 403, json: { statusCode: 403, message: 'Forbidden' } }),
+  );
+  await openSignedIn(page, ORG_ADMIN, '/staff');
+  await expect(
+    page.locator('main table').getByText('Ролята ви не може да вижда служители'),
+  ).toBeVisible({ timeout: 3_000 });
+});
+
+test('«Опитай пак» shows the list loading at once, then the rows', async ({ page }) => {
+  let failing = true;
+  let release: () => void = () => undefined;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route('**/v1/tenant/staff', async (route) => {
+    if (failing) return route.fulfill({ status: 500, json: { statusCode: 500 } });
+    await held;
+    await route.continue();
+  });
+  await openSignedIn(page, ORG_ADMIN, '/staff');
+  const table = page.locator('main table');
+  await expect(table.getByText(/^Списъкът не можа да се зареди/)).toBeVisible({ timeout: 15_000 });
+  failing = false;
+  await table.getByRole('button', { name: 'Опитай пак' }).click();
+  // With no rows yet, the retry goes straight back to the skeleton.
+  await expect(table.locator('.animate-pulse').first()).toBeVisible();
+  await expect(table.getByText(/^Списъкът не можа да се зареди/)).toHaveCount(0);
+  release();
+  await expect(rows(page)).toHaveCount(2);
 });

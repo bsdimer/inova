@@ -4,6 +4,7 @@ import {
   Facet,
   FilterChip,
   FilterSheet,
+  type FilterChoice,
   SearchField,
   SortSelect,
   type FacetOption,
@@ -19,6 +20,7 @@ import {
   hasActiveFacets,
   hasAnyFilter,
   type InviteState,
+  type MemberStatus,
   type StaffFilters,
 } from './model';
 
@@ -38,10 +40,12 @@ interface ToolbarProps {
   roles: Role[];
   shown: number;
   total: number;
+  /** How many members a choice of facets would leave, for the sheet's preview. */
+  countWith: (filters: StaffFilters) => number;
 }
 
 export function StaffToolbar(props: ToolbarProps) {
-  const { filters, onChange, roleOptions, roles, shown, total } = props;
+  const { filters, onChange, roleOptions, roles, shown, total, countWith } = props;
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const set = <K extends keyof StaffFilters>(key: K, value: StaffFilters[K]) =>
@@ -140,13 +144,16 @@ export function StaffToolbar(props: ToolbarProps) {
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
         groups={[
-          { key: 'status', title: 'Статус', options: STATUS_OPTIONS, selected: filters.status },
-          { key: 'role', title: 'Роля', options: roleOptions, selected: filters.role },
-          { key: 'invite', title: 'Покана', options: INVITE_OPTIONS, selected: filters.invite },
+          { key: 'status', title: 'Статус', options: STATUS_OPTIONS },
+          { key: 'role', title: 'Роля', options: roleOptions },
+          { key: 'invite', title: 'Покана', options: INVITE_OPTIONS },
         ]}
-        onToggle={(key, value) => onChange(toggled(filters, key as SheetKey, value))}
-        onClear={clearFacets}
-        shown={shown}
+        applied={{ status: filters.status, role: filters.role, invite: filters.invite }}
+        onApply={(choice) => onChange(withChoice(filters, choice))}
+        preview={(choice) => {
+          const n = countWith(withChoice(filters, choice));
+          return `${n} ${n === 1 ? 'служител' : 'служители'}`;
+        }}
       />
     </div>
   );
@@ -154,8 +161,19 @@ export function StaffToolbar(props: ToolbarProps) {
 
 type SheetKey = 'status' | 'role' | 'invite';
 
-function toggled(filters: StaffFilters, key: SheetKey, value: string): StaffFilters {
-  const current = filters[key] as string[];
-  const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
-  return { ...filters, [key]: next };
+function isMemberStatus(value: string): value is MemberStatus {
+  return (STATUS_ORDER as readonly string[]).includes(value);
+}
+
+function isInviteState(value: string): value is InviteState {
+  return INVITE_OPTIONS.some((option) => option.value === value);
+}
+
+function withChoice(filters: StaffFilters, choice: FilterChoice<SheetKey>): StaffFilters {
+  return {
+    ...filters,
+    status: choice.status.filter(isMemberStatus),
+    role: choice.role,
+    invite: choice.invite.filter(isInviteState),
+  };
 }

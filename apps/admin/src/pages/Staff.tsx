@@ -76,6 +76,8 @@ export function StaffPage() {
     queryKey: ['staff', tenantId],
     queryFn: () => api<StaffMember[]>('/tenant/staff', { tenantId: tenantId! }),
     enabled: Boolean(tenantId),
+    // A refusal (403) does not change on a retry; say so at once.
+    retry: (failures, error) => !(error instanceof ApiError && error.status < 500) && failures < 3,
   });
   const roles = useQuery({
     queryKey: ['roles', tenantId],
@@ -178,6 +180,7 @@ export function StaffPage() {
     notice,
     error: !denied && staff.error ? staff.error : null,
     onDismiss: () => setNotice(null),
+    retrying: staff.isFetching,
     onRetry: () => void staff.refetch(),
   });
 
@@ -193,7 +196,8 @@ export function StaffPage() {
     roles: roleList,
     canManage: canManage === true,
     onInvite: () => setInviteOpen(true),
-    onReset: () => setFilters(EMPTY_FILTERS),
+    // The sort is not a filter: clearing the filters keeps it.
+    onReset: () => setFilters({ ...EMPTY_FILTERS, sort: filters.sort }),
   });
 
   return (
@@ -220,6 +224,7 @@ export function StaffPage() {
         roles={roleList}
         shown={hasAnyFilter(filters) ? visible.length : members.length}
         total={members.length}
+        countWith={(next) => applyFilters(members, next).length}
       />
 
       {/* The table is the drawn layout; below md the same rows become cards. */}
@@ -365,6 +370,8 @@ function pickStrip(input: {
   notice: Notice | null;
   error: Error | null;
   onDismiss: () => void;
+  /** A retry runs its own back-off; the button waits for it. */
+  retrying: boolean;
   onRetry: () => void;
 }) {
   if (input.denied) return undefined;
@@ -373,7 +380,11 @@ function pickStrip(input: {
       <TableStrip
         tone="danger"
         icon={<WarningCircle size="0.875rem" />}
-        action={<GhostButton onClick={input.onRetry}>Опитай пак</GhostButton>}
+        action={
+          <GhostButton onClick={input.onRetry} disabled={input.retrying}>
+            {input.retrying ? 'Зарежда…' : 'Опитай пак'}
+          </GhostButton>
+        }
       >
         Списъкът не можа да се зареди: {input.error.message}
       </TableStrip>

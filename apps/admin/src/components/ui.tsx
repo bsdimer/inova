@@ -856,33 +856,63 @@ export function Drawer({
   );
 }
 
-export interface FilterGroup {
-  key: string;
+export interface FilterGroup<K extends string> {
+  key: K;
   title: string;
   options: FacetOption[];
-  selected: string[];
+}
+
+/** The ticked values per facet; a facet with nothing ticked filters nothing. */
+export type FilterChoice<K extends string> = Record<K, string[]>;
+
+/** `choice` with `value` ticked in `key` if it was not, and unticked if it was. */
+export function toggleChoice<K extends string>(
+  choice: FilterChoice<K>,
+  key: K,
+  value: string,
+): FilterChoice<K> {
+  const current = choice[key];
+  const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
+  return { ...choice, [key]: next };
 }
 
 /**
  * Phone filters (Служители, Сгради): the facets of the toolbar as checkbox
  * groups in a bottom sheet; pinned header and footer, the groups scroll.
+ * The sheet stages (design.md → Windows and navigation): ticks build a
+ * draft, «Покажи …» previews and applies it, closing drops it, «Изчисти»
+ * clears the draft only.
  */
-export function FilterSheet({
+export function FilterSheet<K extends string>({
   open,
   onClose,
   groups,
-  onToggle,
-  onClear,
-  shown,
+  applied,
+  onApply,
+  preview,
 }: {
   open: boolean;
   onClose: () => void;
-  groups: FilterGroup[];
-  onToggle: (key: string, value: string) => void;
-  onClear: () => void;
-  /** How many rows the current choice leaves, for «Покажи N». */
-  shown: number;
+  groups: FilterGroup<K>[];
+  applied: FilterChoice<K>;
+  onApply: (choice: FilterChoice<K>) => void;
+  /** What the draft would leave, as the button says it: «7 сгради». */
+  preview: (draft: FilterChoice<K>) => string;
 }) {
+  const [draft, setDraft] = useState(applied);
+  const [wasOpen, setWasOpen] = useState(open);
+  // Every opening starts from what the list shows now (set during render,
+  // not in an effect, so the first frame already has it).
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setDraft(applied);
+  }
+  const clear = () => {
+    const cleared = { ...draft };
+    for (const group of groups) cleared[group.key] = [];
+    setDraft(cleared);
+  };
+
   return (
     <Drawer
       open={open}
@@ -893,7 +923,7 @@ export function FilterSheet({
           <h2 className="text-base font-semibold">Филтри</h2>
           <button
             type="button"
-            onClick={onClear}
+            onClick={clear}
             className="text-sm font-medium text-panel-ink-muted underline underline-offset-4"
           >
             Изчисти
@@ -903,10 +933,13 @@ export function FilterSheet({
       footer={
         <button
           type="button"
-          onClick={onClose}
+          onClick={() => {
+            onApply(draft);
+            onClose();
+          }}
           className="w-full rounded-full bg-panel-ink py-3 text-sm font-semibold text-panel-ink-inverse"
         >
-          Покажи {shown}
+          Покажи {preview(draft)}
         </button>
       }
     >
@@ -918,14 +951,14 @@ export function FilterSheet({
             </h3>
             <div className="space-y-1.5">
               {group.options.map((option) => {
-                const checked = group.selected.includes(option.value);
+                const checked = draft[group.key].includes(option.value);
                 return (
                   <button
                     key={option.value}
                     type="button"
                     role="checkbox"
                     aria-checked={checked}
-                    onClick={() => onToggle(group.key, option.value)}
+                    onClick={() => setDraft(toggleChoice(draft, group.key, option.value))}
                     className={`flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-left text-sm font-medium transition-colors ${
                       checked ? 'bg-panel-row-strong' : 'bg-panel-row'
                     }`}

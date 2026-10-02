@@ -4,6 +4,7 @@ import {
   Facet,
   FilterChip,
   FilterSheet,
+  type FilterChoice,
   SearchField,
   SkeletonBar,
   SortSelect,
@@ -20,6 +21,7 @@ import {
   hasActiveFacets,
   hasAnyFilter,
   type BuildingFilters,
+  type BuildingStatus,
   type FacetKey,
 } from './model';
 
@@ -40,13 +42,15 @@ interface ToolbarProps {
   cities: string[];
   shown: number;
   total: number;
+  /** How many buildings a choice of facets would leave, for the sheet's preview. */
+  countWith: (filters: BuildingFilters) => number;
   /** The list is on its way: the count line holds its place with a bar. */
   loading: boolean;
 }
 
 // TODO(M2): the «Домоуправител» facet (945:5119) once the list carries the manager (WHI-96).
 export function BuildingsToolbar(props: ToolbarProps) {
-  const { filters, onChange, districts, cities, shown, total, loading } = props;
+  const { filters, onChange, districts, cities, shown, total, loading, countWith } = props;
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const set = <K extends keyof BuildingFilters>(key: K, value: BuildingFilters[K]) =>
@@ -130,15 +134,10 @@ export function BuildingsToolbar(props: ToolbarProps) {
       <FilterSheet
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
-        groups={facets.map(({ key, options }) => ({
-          key,
-          title: FACET_TITLES[key],
-          options,
-          selected: filters[key],
-        }))}
-        onToggle={(key, value) => onChange(toggled(filters, key as FacetKey, value))}
-        onClear={clearFacets}
-        shown={shown}
+        groups={facets.map(({ key, options }) => ({ key, title: FACET_TITLES[key], options }))}
+        applied={{ district: filters.district, status: filters.status, city: filters.city }}
+        onApply={(choice) => onChange(withChoice(filters, choice))}
+        preview={(choice) => counted(countWith(withChoice(filters, choice)), 'сграда', 'сгради')}
       />
     </div>
   );
@@ -158,8 +157,15 @@ function facetGroups(districts: string[], cities: string[]): FacetGroup[] {
   return groups;
 }
 
-function toggled(filters: BuildingFilters, key: FacetKey, value: string): BuildingFilters {
-  const current = filters[key] as string[];
-  const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
-  return { ...filters, [key]: next };
+function isBuildingStatus(value: string): value is BuildingStatus {
+  return (STATUS_ORDER as readonly string[]).includes(value);
+}
+
+function withChoice(filters: BuildingFilters, choice: FilterChoice<FacetKey>): BuildingFilters {
+  return {
+    ...filters,
+    district: choice.district,
+    status: choice.status.filter(isBuildingStatus),
+    city: choice.city,
+  };
 }

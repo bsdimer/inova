@@ -97,6 +97,7 @@ export function BuildingsPage() {
           shown={visible.length}
           total={buildings.length}
           loading={loading}
+          countWith={(next) => applyFilters(buildings, next).length}
         />
       )}
 
