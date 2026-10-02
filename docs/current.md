@@ -28,7 +28,8 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
   release builds default to `https://portal.whitenova.tech/auth/v1` (`EXPO_PUBLIC_AUTH_URL`
   overrides; `__DEV__` keeps localhost). Home greets the signed-in user. B8 multi-account
   portfolio / tenant switcher waits on the backend realm refactor. Building/home/dues/issues
-  still MOCK (`TODO(M2/M3/…)`).
+  still MOCK (`TODO(M2/M3/…)`). Home Календар is a glass month grid with local
+  date selection (`TODO(M3+)`); events are not from an API yet.
 - Admin: real login, tenant switcher, Staff / Roles / Tenants (provisioning
   wizard) on live APIs. The portal uses the warm inova visual system across
   login, shell, shared controls, cards, tables, modals, and responsive
@@ -65,7 +66,7 @@ Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migr
 
 - Invite delivery: `TODO(M1)` / `MOCK` in auth-service + api (log only).
 - Admin silent refresh: `TODO(M1)` in `apps/admin/src/lib/api.ts`.
-- Mobile home/building/cash/dues/issues/notices: `TODO(M2/M3/M6/M7)` + `MOCK` constants.
+- Mobile home/building/cash/dues/issues/notices/calendar: `TODO(M2/M3/M6/M7)` + `MOCK` constants.
 - Theme persistence on mobile: `TODO(M5)`.
 
 ## Blockers

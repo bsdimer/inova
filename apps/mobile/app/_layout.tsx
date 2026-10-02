@@ -50,6 +50,7 @@ export default function RootLayout() {
             <Stack.Screen name="cash" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="kasa" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="deposit" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="calendar" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="history" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="documents" options={{ animation: 'slide_from_right' }} />
           </Stack>

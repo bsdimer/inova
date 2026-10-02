@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 import React from 'react';
 
-/** Home tab stack: dashboard → history (and other home-pushed screens). */
+/** Home tab stack. Pushed screens that hide the tab bar live on the root stack. */
 export default function HomeLayout() {
   return (
     <Stack

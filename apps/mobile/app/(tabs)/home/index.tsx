@@ -46,10 +46,10 @@ const QUICK_CARDS: QuickCard[] = [
     route: '/surveys',
   },
   {
-    icon: 'time-outline',
-    title: 'История',
-    description: 'Хронология на ключовите събития',
-    route: '/home/history',
+    icon: 'calendar-outline',
+    title: 'Календар',
+    description: 'Събития и плащания по дати.',
+    route: '/calendar',
   },
   {
     icon: 'notifications-outline',
