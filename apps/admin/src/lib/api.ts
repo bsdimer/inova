@@ -1,9 +1,9 @@
 /**
  * Core-api client (port 4000): JWT + X-Tenant-Id on every tenant-scoped call.
- * TODO(M1): silent refresh — currently a 401 clears the session and returns
- * the user to the login screen.
+ * An expired access token is renewed once and the request repeated; only a
+ * session that cannot be renewed returns the user to the login screen.
  */
-import { clearSession, getSession } from './auth';
+import { clearSession, getSession, renewSession, type Session } from './auth';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/v1';
 
@@ -22,18 +22,25 @@ interface RequestOptions {
   tenantId?: string;
 }
 
-export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const session = getSession();
+function send(path: string, options: RequestOptions, session: Session | null) {
   const headers: Record<string, string> = {};
   if (session) headers.Authorization = `Bearer ${session.accessToken}`;
   if (options.tenantId) headers['X-Tenant-Id'] = options.tenantId;
   if (options.body !== undefined) headers['content-type'] = 'application/json';
-
-  const res = await fetch(`${API_URL}${path}`, {
+  return fetch(`${API_URL}${path}`, {
     method: options.method ?? 'GET',
     headers,
     body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
   });
+}
+
+export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const session = getSession();
+  let res = await send(path, options, session);
+  if (res.status === 401 && session) {
+    const renewed = await renewSession(session);
+    if (renewed) res = await send(path, options, renewed);
+  }
 
   if (res.status === 401) {
     clearSession();

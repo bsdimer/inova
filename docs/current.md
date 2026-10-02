@@ -150,7 +150,7 @@ Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migr
 2. **Mobile activation and recovery screens** — the identifier field on activation, forgot-password by e-mail first, phone second (B13, #74). See [milestones/M1-identity.md](milestones/M1-identity.md).
 3. **Worker skeleton** before M3 (fee generation is a worker job) with its own `inova_worker` role (D21).
 4. Wire mobile “My building” / resident profile to M2 APIs as they land.
-5. Deferred M1 (before pilot): Redis denylist, real invite delivery, admin silent refresh, audit viewer.
+5. Deferred M1 (before pilot): Redis denylist, real invite delivery, audit viewer.
 6. Self-contained Testcontainers for integration tests (harness Phase 2 remainder).
 7. Before production exists: provision the pilot host per **D19** (a single VM
    with the compose stack, its own database and secrets, nightly off-box
