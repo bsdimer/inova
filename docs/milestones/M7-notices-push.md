@@ -10,7 +10,7 @@ Admin publishes categorized notices to targeted audiences; residents get pushes;
 
 ## Dependencies
 
-M2; device-token infra; for residents without the app, the **Infobip** gateway (D36): SMS in the pilot, Viber through the same provider interface once the sender is registered (M-Pilot).
+M2; device-token infra — the `devices` table and `PUT/GET/DELETE /v1/me/devices` are built ahead (#85, WHI-129, team lead 02.10); sending, provider-rejected token pruning and stale-device pruning stay here; for residents without the app, the **Infobip** gateway (D36): SMS in the pilot, Viber through the same provider interface once the sender is registered (M-Pilot).
 
 ## Tables
 

@@ -163,7 +163,7 @@ inova/  (monorepo: pnpm workspaces + Turborepo)
 │   ├── admin/                  # React + Vite admin SPA
 │   └── mobile/                 # Expo React Native resident app
 ├── packages/
-│   ├── shared/                 # Money, ids, enums, zod schemas, api types (OpenAPI-generated)
+│   ├── shared/                 # Money, ids, enums, zod schemas, api types (hand-written; response DTOs implement them)
 │   ├── i18n/                   # ICU message catalogs (bg, en, later ro/sr/pl)
 │   ├── country-bg/             # BG-specific document/VAT/numbering policy
 │   └── ui/                     # shared admin UI primitives (optional)
