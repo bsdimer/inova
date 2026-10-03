@@ -1,8 +1,19 @@
 import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiProperty, ApiTags } from '@nestjs/swagger';
+import type { ProvisionResult, TenantSummary } from '@inova/shared';
+import {
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiProperty,
+  ApiTags,
+} from '@nestjs/swagger';
 import { IsEmail, IsOptional, IsString, Matches, MinLength } from 'class-validator';
 import { JwtGuard, type AuthedRequest } from '../../auth/jwt.guard';
 import { PlatformGuard } from '../../auth/platform.guard';
+import { ApiErrors } from '../../openapi/api-errors';
+import { TenantSummaryDto } from '../../openapi/common.responses';
+import { ProvisionResultDto } from './platform.responses';
 import { PlatformService } from './platform.service';
 
 class ProvisionTenantDto {
@@ -47,7 +58,9 @@ export class PlatformController {
 
   @Get('tenants')
   @ApiOperation({ summary: 'List all tenants (super_admin only)' })
-  listTenants() {
+  @ApiOkResponse({ type: [TenantSummaryDto] })
+  @ApiErrors(401, 403)
+  listTenants(): Promise<TenantSummary[]> {
     return this.platform.listTenants();
   }
 
@@ -55,7 +68,12 @@ export class PlatformController {
   @ApiOperation({
     summary: "Provision a tenant: starter roles + first user with the 'admin' role (invited)",
   })
-  provisionTenant(@Req() req: AuthedRequest, @Body() dto: ProvisionTenantDto) {
+  @ApiCreatedResponse({ type: ProvisionResultDto })
+  @ApiErrors(400, 401, 403, 409)
+  provisionTenant(
+    @Req() req: AuthedRequest,
+    @Body() dto: ProvisionTenantDto,
+  ): Promise<ProvisionResult> {
     return this.platform.provisionTenant(dto, req.auth.sub);
   }
 }

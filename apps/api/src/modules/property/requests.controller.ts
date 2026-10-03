@@ -21,9 +21,25 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import type { MyLinkRequest } from '@inova/shared';
+import type {
+  Accepted,
+  BuildingManager,
+  LinkRequest,
+  LinkRequestQueueItem,
+  MyLinkRequest,
+  PlatformRemovalRequest,
+  RemovalRequest,
+} from '@inova/shared';
 import { ApiErrors } from '../../openapi/api-errors';
+import { AcceptedDto } from '../../openapi/common.responses';
 import { MyLinkRequestDto } from './me.responses';
+import {
+  BuildingManagerDto,
+  LinkRequestDto,
+  LinkRequestQueueItemDto,
+  PlatformRemovalRequestDto,
+  RemovalRequestDto,
+} from './property.responses';
 import { JwtGuard, type AuthedRequest } from '../../auth/jwt.guard';
 import { PermissionsGuard, RequirePermissions } from '../../auth/permissions.guard';
 import { PlatformGuard } from '../../auth/platform.guard';
@@ -64,29 +80,38 @@ export class BuildingRequestsController {
   @Get('managers')
   @RequirePermissions('property.read')
   @ApiOperation({ summary: "The building's house managers" })
-  listManagers(@Req() req: AuthedRequest, @Param('buildingId', ParseUUIDPipe) buildingId: string) {
+  @ApiOkResponse({ type: [BuildingManagerDto] })
+  @ApiErrors(400, 401, 403, 404)
+  listManagers(
+    @Req() req: AuthedRequest,
+    @Param('buildingId', ParseUUIDPipe) buildingId: string,
+  ): Promise<BuildingManager[]> {
     return this.managers.list(req.tenantId!, actorOf(req), buildingId);
   }
 
   @Post('managers')
   @RequirePermissions('staff.manage')
   @ApiOperation({ summary: 'Assign an account as house manager of the building' })
+  @ApiCreatedResponse({ type: BuildingManagerDto })
+  @ApiErrors(400, 401, 403, 404, 409)
   assignManager(
     @Req() req: AuthedRequest,
     @Param('buildingId', ParseUUIDPipe) buildingId: string,
     @Body() dto: AssignManagerDto,
-  ) {
+  ): Promise<BuildingManager> {
     return this.managers.assign(req.tenantId!, actorOf(req), buildingId, dto.accountId);
   }
 
   @Delete('managers/:accountId')
   @RequirePermissions('staff.manage')
   @ApiOperation({ summary: "End an account's assignment to the building" })
+  @ApiOkResponse({ type: AcceptedDto })
+  @ApiErrors(400, 401, 403, 404)
   endManager(
     @Req() req: AuthedRequest,
     @Param('buildingId', ParseUUIDPipe) buildingId: string,
     @Param('accountId', ParseUUIDPipe) accountId: string,
-  ) {
+  ): Promise<Accepted> {
     return this.managers.end(req.tenantId!, actorOf(req), buildingId, accountId);
   }
 
@@ -95,11 +120,13 @@ export class BuildingRequestsController {
   @ApiOperation({
     summary: 'Ask to end an occupancy, remove a resident account or archive a property (B10)',
   })
+  @ApiCreatedResponse({ type: RemovalRequestDto })
+  @ApiErrors(400, 401, 403, 404, 409)
   requestRemoval(
     @Req() req: AuthedRequest,
     @Param('buildingId', ParseUUIDPipe) buildingId: string,
     @Body() dto: CreateRemovalRequestDto,
-  ) {
+  ): Promise<RemovalRequest> {
     return this.removals.create(req.tenantId!, actorOf(req), buildingId, dto);
   }
 }
@@ -115,18 +142,22 @@ export class RemovalRequestsController {
   @Get()
   @RequirePermissions('property.removal.request')
   @ApiOperation({ summary: 'Removal requests in the caller’s buildings; `status` filter (D27)' })
-  list(@Req() req: AuthedRequest, @Query() query: RemovalListQuery) {
+  @ApiOkResponse({ type: [RemovalRequestDto] })
+  @ApiErrors(400, 401, 403)
+  list(@Req() req: AuthedRequest, @Query() query: RemovalListQuery): Promise<RemovalRequest[]> {
     return this.removals.list(req.tenantId!, actorOf(req), query.status);
   }
 
   @Patch(':requestId')
   @RequirePermissions('property.removal.request')
   @ApiOperation({ summary: 'The author edits a pending request (D27)' })
+  @ApiOkResponse({ type: RemovalRequestDto })
+  @ApiErrors(400, 401, 403, 404, 409)
   update(
     @Req() req: AuthedRequest,
     @Param('requestId', ParseUUIDPipe) requestId: string,
     @Body() dto: UpdateRemovalRequestDto,
-  ) {
+  ): Promise<RemovalRequest> {
     return this.removals.update(req.tenantId!, actorOf(req), requestId, dto);
   }
 
@@ -134,7 +165,12 @@ export class RemovalRequestsController {
   @HttpCode(200)
   @RequirePermissions('property.removal.request')
   @ApiOperation({ summary: 'The author withdraws a pending request (D27)' })
-  withdraw(@Req() req: AuthedRequest, @Param('requestId', ParseUUIDPipe) requestId: string) {
+  @ApiOkResponse({ type: RemovalRequestDto })
+  @ApiErrors(400, 401, 403, 404, 409)
+  withdraw(
+    @Req() req: AuthedRequest,
+    @Param('requestId', ParseUUIDPipe) requestId: string,
+  ): Promise<RemovalRequest> {
     return this.removals.withdraw(req.tenantId!, actorOf(req), requestId);
   }
 }
@@ -150,31 +186,37 @@ export class PlatformRemovalRequestsController {
   @ApiOperation({
     summary: 'Removal requests of every organisation, or one; `status` filter (D27)',
   })
-  list(@Query() query: PlatformRemovalListQuery) {
+  @ApiOkResponse({ type: [PlatformRemovalRequestDto] })
+  @ApiErrors(400, 401, 403)
+  list(@Query() query: PlatformRemovalListQuery): Promise<PlatformRemovalRequest[]> {
     return this.removals.listForPlatform(query.status, query.tenantId);
   }
 
   @Post(':tenantId/:requestId/approve')
   @HttpCode(200)
   @ApiOperation({ summary: 'Approve and apply a removal request at once' })
+  @ApiOkResponse({ type: RemovalRequestDto })
+  @ApiErrors(400, 401, 403, 404, 409)
   approve(
     @Req() req: AuthedRequest,
     @Param('tenantId', ParseUUIDPipe) tenantId: string,
     @Param('requestId', ParseUUIDPipe) requestId: string,
     @Body() dto: DecisionDto,
-  ) {
+  ): Promise<RemovalRequest> {
     return this.removals.approve(tenantId, req.auth.sub, requestId, dto.note);
   }
 
   @Post(':tenantId/:requestId/reject')
   @HttpCode(200)
   @ApiOperation({ summary: 'Reject a removal request, with the reason' })
+  @ApiOkResponse({ type: RemovalRequestDto })
+  @ApiErrors(400, 401, 403, 404, 409)
   reject(
     @Req() req: AuthedRequest,
     @Param('tenantId', ParseUUIDPipe) tenantId: string,
     @Param('requestId', ParseUUIDPipe) requestId: string,
     @Body() dto: RejectionDto,
-  ) {
+  ): Promise<RemovalRequest> {
     return this.removals.reject(tenantId, req.auth.sub, requestId, dto.note);
   }
 }
@@ -190,7 +232,9 @@ export class LinkRequestsController {
   @Get()
   @RequirePermissions('residents.read')
   @ApiOperation({ summary: '«Заявки за връзка»; `status` filter, pending by default (D27)' })
-  list(@Req() req: AuthedRequest, @Query() query: LinkListQuery) {
+  @ApiOkResponse({ type: [LinkRequestQueueItemDto] })
+  @ApiErrors(400, 401, 403)
+  list(@Req() req: AuthedRequest, @Query() query: LinkListQuery): Promise<LinkRequestQueueItem[]> {
     return this.links.list(req.tenantId!, query.status);
   }
 
@@ -198,11 +242,13 @@ export class LinkRequestsController {
   @HttpCode(200)
   @RequirePermissions('property.write')
   @ApiOperation({ summary: 'Link the resident to the property staff found; creates the occupancy' })
+  @ApiOkResponse({ type: LinkRequestDto })
+  @ApiErrors(400, 401, 403, 404, 409)
   approve(
     @Req() req: AuthedRequest,
     @Param('requestId', ParseUUIDPipe) requestId: string,
     @Body() dto: ApproveLinkDto,
-  ) {
+  ): Promise<LinkRequest> {
     return this.links.approve(req.tenantId!, actorOf(req), requestId, dto);
   }
 
@@ -210,11 +256,13 @@ export class LinkRequestsController {
   @HttpCode(200)
   @RequirePermissions('property.write')
   @ApiOperation({ summary: 'Reject a link request, with the reason' })
+  @ApiOkResponse({ type: LinkRequestDto })
+  @ApiErrors(400, 401, 403, 404, 409)
   reject(
     @Req() req: AuthedRequest,
     @Param('requestId', ParseUUIDPipe) requestId: string,
     @Body() dto: RejectionDto,
-  ) {
+  ): Promise<LinkRequest> {
     return this.links.reject(req.tenantId!, actorOf(req), requestId, dto.note);
   }
 }

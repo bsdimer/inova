@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import type { MyLinkRequest } from '@inova/shared';
+import type { LinkRequest, LinkRequestQueueItem, MyLinkRequest } from '@inova/shared';
 import { and, asc, eq, inArray, ne, sql } from 'drizzle-orm';
 import { DbService, type TenantTx } from '../../db/db.service';
 import { apartments, buildings, linkRequests, occupancies, users } from '../../db/schema';
@@ -100,7 +100,10 @@ export class LinkRequestsService {
   }
 
   /** The staff queue: pending unless asked otherwise (D27), with who asked. */
-  async list(tenantId: string, statuses: LinkStatus[] = ['pending']) {
+  async list(
+    tenantId: string,
+    statuses: LinkStatus[] = ['pending'],
+  ): Promise<LinkRequestQueueItem[]> {
     return this.dbService.withTenant(tenantId, (tx) =>
       tx
         .select({
@@ -114,12 +117,19 @@ export class LinkRequestsService {
         )
         .where(and(eq(linkRequests.tenantId, tenantId), inArray(linkRequests.status, statuses)))
         .orderBy(asc(linkRequests.createdAt))
-        .then((rows) => rows.map(({ request, requester }) => ({ ...request, requester }))),
+        .then((rows) =>
+          rows.map(({ request, requester }) => ({ ...this.staffView(request), requester })),
+        ),
     );
   }
 
   /** Staff found the property: the occupancy is created from the request. */
-  async approve(tenantId: string, actor: Actor, requestId: string, input: ApproveLinkDto) {
+  async approve(
+    tenantId: string,
+    actor: Actor,
+    requestId: string,
+    input: ApproveLinkDto,
+  ): Promise<LinkRequest> {
     try {
       return await this.dbService.withTenant(tenantId, async (tx) => {
         const request = await this.find(tx, tenantId, requestId);
@@ -164,7 +174,7 @@ export class LinkRequestsService {
             role: request.role,
           },
         );
-        return approved;
+        return this.staffView(approved);
       });
     } catch (error) {
       if (isUniqueViolation(error)) {
@@ -174,7 +184,12 @@ export class LinkRequestsService {
     }
   }
 
-  async reject(tenantId: string, actor: Actor, requestId: string, note: string) {
+  async reject(
+    tenantId: string,
+    actor: Actor,
+    requestId: string,
+    note: string,
+  ): Promise<LinkRequest> {
     return this.dbService.withTenant(tenantId, async (tx) => {
       const request = await this.find(tx, tenantId, requestId);
       this.assertPending(request.status);
@@ -199,7 +214,7 @@ export class LinkRequestsService {
         requestId,
         { note },
       );
-      return rejected;
+      return this.staffView(rejected);
     });
   }
 
@@ -228,6 +243,18 @@ export class LinkRequestsService {
     if (!property || !BuildingScope.covers(await this.scope.of(tx, tenantId, actor), buildingId)) {
       throw new NotFoundException('Property not found');
     }
+  }
+
+  /** What staff see: the resident's view plus who asked and what was decided. */
+  private staffView(row: typeof linkRequests.$inferSelect): LinkRequest {
+    return {
+      ...this.residentView(row),
+      accountId: row.userId,
+      propertyId: row.apartmentId,
+      occupancyId: row.occupancyId,
+      decidedBy: row.decidedBy,
+      updatedAt: row.updatedAt.toISOString(),
+    };
   }
 
   /** What a resident sees of their request: no staff ids, no other accounts. */
