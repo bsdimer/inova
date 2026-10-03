@@ -16,24 +16,28 @@ async function open(page: Page, path: string, theme: 'light' | 'dark', width = 4
   await expect(page.locator('main h1, main h2').first()).toBeVisible();
 }
 
-test('402, light: the shade sits at the top, 300 high, under the content', async ({ page }) => {
-  await open(page, '/buildings', 'light');
-  await expect(shade(page)).toBeVisible();
-  const box = await shade(page).evaluate((el) => {
-    const r = el.getBoundingClientRect();
-    return {
-      top: r.top,
-      height: r.height,
-      width: r.width,
-      z: getComputedStyle(el.parentElement!).zIndex,
-    };
+for (const path of ['/buildings', '/staff']) {
+  test(`402, light, ${path}: the shade sits at the top, 300 high, under the content`, async ({
+    page,
+  }) => {
+    await open(page, path, 'light');
+    await expect(shade(page)).toBeVisible();
+    const box = await shade(page).evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return {
+        top: r.top,
+        height: r.height,
+        width: r.width,
+        z: getComputedStyle(el.parentElement!).zIndex,
+      };
+    });
+    expect(box.top).toBe(0);
+    expect(box.height).toBe(300);
+    expect(box.width).toBe(402);
+    // It belongs to the fixed background layer, so the page scrolls over it.
+    expect(box.z).toBe('0');
   });
-  expect(box.top).toBe(0);
-  expect(box.height).toBe(300);
-  expect(box.width).toBe(402);
-  // It belongs to the fixed background layer, so the page scrolls over it.
-  expect(box.z).toBe('0');
-});
+}
 
 test('402, dark: no shade', async ({ page }) => {
   await open(page, '/buildings', 'dark');

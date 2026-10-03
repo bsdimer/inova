@@ -776,7 +776,7 @@ function Topbar({
   return (
     // Below 1024, V2/Topbar tablet (850:360) and phone (850:382): the menu
     // button and the wordmark lead; on a tablet the search fills the middle,
-    // on a phone it drops to its own row under the bar. From 1024, V2/Topbar
+    // on a phone, on Табло only, it drops to its own row under the bar. From 1024, V2/Topbar
     // (850:312): search 380 wide, a spacer, the bell and the account, 20 apart.
     <header className={`flex h-14 items-center ${compact ? 'gap-3 md:gap-5' : 'gap-5'}`}>
       {compact && (
