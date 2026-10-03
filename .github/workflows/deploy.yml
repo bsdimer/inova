@@ -208,7 +208,7 @@ jobs:
             echo "| --- | --- |"
             echo "| url | https://$DOMAIN |"
             echo "| commit | \`${{ github.sha }}\` |"
-            echo "| images | \`$IMAGE_NAMESPACE/inova-{api,auth-service,admin}:${{ github.sha }}\` |"
+            echo "| images | \`$IMAGE_NAMESPACE/inova-{api,auth-service,worker,admin}:${{ github.sha }}\` |"
             echo
             echo "Roll back by re-running an older successful deploy of this environment."
           } >> "$GITHUB_STEP_SUMMARY"

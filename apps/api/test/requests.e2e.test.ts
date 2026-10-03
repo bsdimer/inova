@@ -570,7 +570,7 @@ describe('link requests (B7 fallback)', () => {
       propertyId: b.flats[1],
     });
     expect(approved.status).toBe(200);
-    expect(approved.body).toMatchObject({ status: 'approved', apartmentId: b.flats[1] });
+    expect(approved.body).toMatchObject({ status: 'approved', propertyId: b.flats[1] });
     const props = await asker.client.get('/me/properties');
     expect(props.body.map((p: { number: string }) => p.number).sort()).toEqual(['1', '2']);
     expect(

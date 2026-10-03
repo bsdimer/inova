@@ -3,8 +3,19 @@
  * natural key, activation, the correction edit with its audit record (D25),
  * permissions and input validation. Runs against a real Postgres with RLS.
  */
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { bootTestApp, type Client, type TestApp } from './test-app';
+
+const contract = JSON.parse(
+  readFileSync(path.resolve(__dirname, '..', 'openapi.json'), 'utf8'),
+) as { components: { schemas: Record<string, { properties: Record<string, unknown> }> } };
+
+/** The fields the published document promises for a response class. */
+const documented = (schema: string) =>
+  Object.keys(contract.components.schemas[schema].properties).sort();
+const fieldsOf = (body: object) => Object.keys(body).sort();
 
 let t: TestApp;
 let tenantA: string;
@@ -377,6 +388,40 @@ describe('corrections (D25)', () => {
     const audit = await auditOf(id);
     expect(audit.map((row) => row.action)).toEqual(['building.created', 'building.updated']);
     expect(audit[1].payload.changes).toMatchObject({ district: 'Изток', bankAccount: null });
+  });
+});
+
+describe('the answers are the documented ones (WHI-144)', () => {
+  it('carry exactly the fields of openapi.json — no tenant id, timestamps as ISO strings', async () => {
+    const created = await manager.post('/buildings', building({ entrances: ['А'] }));
+    expect(fieldsOf(created.body)).toEqual(documented('BuildingDetailDto'));
+    expect(fieldsOf(created.body.entrances[0])).toEqual(['id', 'name', 'propertyCount']);
+    expect(created.body.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T.*Z$/);
+    const id = created.body.id as string;
+
+    const added = await manager.post(
+      `/buildings/${id}/properties`,
+      property(created.body.entrances[0].id, 1, '1', { areaM2: '64.20' }),
+    );
+    expect(fieldsOf(added.body)).toEqual(documented('PropertyRecordDto'));
+    expect(added.body).toMatchObject({ entranceName: 'А', areaM2: '64.20' });
+    const corrected = await manager.patch(`/buildings/${id}/properties/${added.body.id}`, {
+      rooms: 3,
+    });
+    expect(fieldsOf(corrected.body)).toEqual(documented('PropertyRecordDto'));
+
+    const activated = await manager.post(`/buildings/${id}/activate`, {});
+    expect(fieldsOf(activated.body)).toEqual(documented('BuildingRecordDto'));
+    expect(activated.body.activatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T.*Z$/);
+
+    const one = await manager.get(`/buildings/${id}`);
+    expect(fieldsOf(one.body)).toEqual(documented('BuildingDetailDto'));
+    const listed = (await manager.get('/buildings')).body.find(
+      (row: { id: string }) => row.id === id,
+    );
+    expect(fieldsOf(listed)).toEqual(documented('BuildingListItemDto'));
+    const properties = await manager.get(`/buildings/${id}/properties`);
+    expect(fieldsOf(properties.body[0])).toEqual(documented('PropertyRecordDto'));
   });
 });
 

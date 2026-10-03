@@ -28,3 +28,26 @@ describe('the OpenAPI contract', () => {
     }
   });
 });
+
+/**
+ * Every route says what it answers (WHI-144): an admin or app developer reads
+ * the answer's shape in the document instead of guessing it from a response.
+ */
+describe('the documented answers', () => {
+  it('give every route a success answer with a body, or an explicit 204', async () => {
+    const document = JSON.parse(readFileSync(SNAPSHOT, 'utf8')) as {
+      paths: Record<string, Record<string, { responses: Record<string, { content?: unknown }> }>>;
+    };
+    const undocumented = Object.entries(document.paths).flatMap(([route, operations]) =>
+      Object.entries(operations)
+        .filter(([, operation]) => {
+          const success = Object.entries(operation.responses).filter(([code]) =>
+            code.startsWith('2'),
+          );
+          return !success.some(([code, answer]) => code === '204' || answer.content !== undefined);
+        })
+        .map(([method]) => `${method.toUpperCase()} ${route}`),
+    );
+    expect(undocumented).toEqual([]);
+  });
+});

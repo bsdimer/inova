@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import type { PlatformRemovalRequest, RemovalRequest as RemovalRequestView } from '@inova/shared';
 import { and, asc, eq, inArray, isNull, max, ne, sql } from 'drizzle-orm';
 import { DbService, type TenantTx } from '../../db/db.service';
 import {
@@ -29,6 +30,26 @@ import type {
 
 type RemovalRequest = typeof removalRequests.$inferSelect;
 
+/** What a client sees of a request row: no tenant id, timestamps as ISO strings. */
+function toView(row: RemovalRequest): RemovalRequestView {
+  return {
+    id: row.id,
+    subjectType: row.subjectType,
+    subjectId: row.subjectId,
+    buildingId: row.buildingId,
+    reason: row.reason,
+    effectiveDate: row.effectiveDate,
+    status: row.status,
+    requestedBy: row.requestedBy,
+    decidedBy: row.decidedBy,
+    decidedAt: row.decidedAt?.toISOString() ?? null,
+    decisionNote: row.decisionNote,
+    appliedAt: row.appliedAt?.toISOString() ?? null,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
 /** Postgres unique violation, whether or not the driver error is wrapped. */
 function isUniqueViolation(error: unknown): boolean {
   return [error, (error as { cause?: unknown } | null)?.cause].some(
@@ -51,7 +72,12 @@ export class RemovalRequestsService {
     private readonly scope: BuildingScope,
   ) {}
 
-  async create(tenantId: string, actor: Actor, buildingId: string, input: CreateRemovalRequestDto) {
+  async create(
+    tenantId: string,
+    actor: Actor,
+    buildingId: string,
+    input: CreateRemovalRequestDto,
+  ): Promise<RemovalRequestView> {
     return this.unique(() =>
       this.dbService.withTenant(tenantId, async (tx) => {
         await this.activeBuildingInScope(tx, tenantId, actor, buildingId);
@@ -81,17 +107,21 @@ export class RemovalRequestsService {
           buildingId,
           effectiveDate: request.effectiveDate,
         });
-        return request;
+        return toView(request);
       }),
     );
   }
 
   /** The tenant's requests in the actor's building scope; the queue asks for `pending`. */
-  async list(tenantId: string, actor: Actor, statuses: RemovalStatus[] = ['pending']) {
+  async list(
+    tenantId: string,
+    actor: Actor,
+    statuses: RemovalStatus[] = ['pending'],
+  ): Promise<RemovalRequestView[]> {
     return this.dbService.withTenant(tenantId, async (tx) => {
       const scope = await this.scope.of(tx, tenantId, actor);
       if (!scope.all && scope.buildingIds.size === 0) return [];
-      return tx
+      const rows = await tx
         .select()
         .from(removalRequests)
         .where(
@@ -102,11 +132,17 @@ export class RemovalRequestsService {
           ),
         )
         .orderBy(asc(removalRequests.createdAt));
+      return rows.map(toView);
     });
   }
 
   /** The author edits a pending request; the edit is audited, no new request (D27). */
-  async update(tenantId: string, actor: Actor, requestId: string, input: UpdateRemovalRequestDto) {
+  async update(
+    tenantId: string,
+    actor: Actor,
+    requestId: string,
+    input: UpdateRemovalRequestDto,
+  ): Promise<RemovalRequestView> {
     return this.unique(() =>
       this.dbService.withTenant(tenantId, async (tx) => {
         const before = await this.authorsPending(tx, tenantId, actor, requestId);
@@ -138,13 +174,13 @@ export class RemovalRequestsService {
             to: Object.fromEntries(changed.map((key) => [key, after[key]])),
           });
         }
-        return after;
+        return toView(after);
       }),
     );
   }
 
   /** Only the author, only while pending (D27). */
-  async withdraw(tenantId: string, actor: Actor, requestId: string) {
+  async withdraw(tenantId: string, actor: Actor, requestId: string): Promise<RemovalRequestView> {
     return this.dbService.withTenant(tenantId, async (tx) => {
       await this.authorsPending(tx, tenantId, actor, requestId);
       const [request] = await tx
@@ -153,18 +189,21 @@ export class RemovalRequestsService {
         .where(and(eq(removalRequests.tenantId, tenantId), eq(removalRequests.id, requestId)))
         .returning();
       await this.record(tx, tenantId, actor, 'removal_request.withdrawn', requestId, {});
-      return request;
+      return toView(request);
     });
   }
 
   /** The platform queue: one organisation, or every one (a few dozen at most). */
-  async listForPlatform(statuses: RemovalStatus[] = ['pending'], tenantId?: string) {
+  async listForPlatform(
+    statuses: RemovalStatus[] = ['pending'],
+    tenantId?: string,
+  ): Promise<PlatformRemovalRequest[]> {
     const tenantRows = await this.dbService.db
       .select({ id: tenants.id, key: tenants.key, name: tenants.name })
       .from(tenants)
       .where(tenantId ? eq(tenants.id, tenantId) : undefined)
       .orderBy(asc(tenants.name));
-    const result = [];
+    const result: PlatformRemovalRequest[] = [];
     for (const tenant of tenantRows) {
       const rows = await this.dbService.withTenant(tenant.id, (tx) =>
         tx
@@ -184,7 +223,7 @@ export class RemovalRequestsService {
       );
       for (const row of rows) {
         result.push({
-          ...row.request,
+          ...toView(row.request),
           buildingName: row.buildingName,
           tenant: { id: tenant.id, key: tenant.key, name: tenant.name },
         });
@@ -194,7 +233,12 @@ export class RemovalRequestsService {
   }
 
   /** Approving applies the request at once (team lead, 01.10). */
-  async approve(tenantId: string, platformUserId: string, requestId: string, note?: string) {
+  async approve(
+    tenantId: string,
+    platformUserId: string,
+    requestId: string,
+    note?: string,
+  ): Promise<RemovalRequestView> {
     return this.dbService.withTenant(tenantId, async (tx) => {
       const request = await this.pending(tx, tenantId, requestId);
       await this.apply(tx, request);
@@ -225,11 +269,16 @@ export class RemovalRequestsService {
           note: note ?? null,
         },
       });
-      return decided;
+      return toView(decided);
     });
   }
 
-  async reject(tenantId: string, platformUserId: string, requestId: string, note: string) {
+  async reject(
+    tenantId: string,
+    platformUserId: string,
+    requestId: string,
+    note: string,
+  ): Promise<RemovalRequestView> {
     return this.dbService.withTenant(tenantId, async (tx) => {
       await this.pending(tx, tenantId, requestId);
       const now = new Date();
@@ -253,7 +302,7 @@ export class RemovalRequestsService {
         entityId: requestId,
         payload: { note },
       });
-      return decided;
+      return toView(decided);
     });
   }
 

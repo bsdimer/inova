@@ -1,6 +1,6 @@
 # Current status
 
-**Last updated:** 2026-10-01
+**Last updated:** 2026-10-02
 **Current milestone:** M2 Property hierarchy — backend done 2026-10-01 (#59, #61, #75, #77); the admin screens next
 **Focus:** B8 tenant-account realms and invite-code hardening landed 2026-09-30 (#57, #58); M1's last pre-M2 item, password recovery, landed 2026-10-01 (#74), and so did the whole M2 backend (#59, #61, #75, #77), so mobile can drop mock building/apartment data and the admin «Сгради» screens can start.
 
@@ -21,19 +21,21 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
   (`/opt/edge`, Let's Encrypt, renewed by a systemd timer) that test deploys
   maintain. Host secrets are generated on the box and live only there.
   `main` and `develop` are protected (PR + green CI). Only test is seeded.
-- `pnpm db:migrate && pnpm db:seed` — migrations `0001`–`0009` (identity, rename, auth DB role, tenant-account realms, invite-code hardening, property hierarchy, occupancies and pets, password resets, requests and manager assignments) + two tenants, a platform admin, tenant admins, residents with invite codes; `maria@inova.bg` exists in both tenants as two accounts.
+- `pnpm db:migrate && pnpm db:seed` — migrations `0001`–`0012` (identity, rename, auth DB role, tenant-account realms, invite-code hardening, property hierarchy, occupancies and pets, password resets, requests and manager assignments, worker role, e-mail changes, devices) + two tenants, a platform admin, tenant admins, residents with invite codes, and in demo three resident accounts for the mobile app that every seed run resets (`+359881000101`–`103`, password `demo-resident`, #82); `maria@inova.bg` exists in both tenants as two accounts.
 - Auth service (`:4001`): login, activate, refresh (rotation + reuse revocation), set-password, `/me`, resend-code (MOCK delivery), JWKS, throttling, Swagger `/docs`. **Accounts belong to one organisation (B8, #57):** the same e-mail or phone in two organisations is two unrelated accounts; requests carry `realm` or `brand`, without them `AUTH_DEFAULT_REALM` (`TODO(M10)`); platform operators are `platform_users`; a token is `kind: 'tenant'` with one `tid` or `kind: 'platform'`. **Activation takes identifier + code (B14–B15, #58):** one active code per account, five wrong tries void it, resend voids the old code, `INVITE_CODE_TTL_DAYS` (default 30, 1–90).
-- Core API (`:4000`): JWKS JWT verify, `X-Tenant-Id` must equal the token's `tid`, then the DB membership re-check; permission guards, RLS via `SET LOCAL app.tenant_id`. Tenant profile/staff/audit, staff+roles CRUD (admin-role lock, last-admin guard), super_admin tenant provisioning — a platform operator entering an organisation writes `platform.access` to its audit trail — public brand config, health. `GET /v1/tenant` names the caller's role (`roleName`, #50). **M2 (#59, #61, migrations `0006`, `0007`):** buildings, entrances and properties (draft → active, IBAN check, audited corrections), residents on a property with an invite, occupancies and pets with an inclusive `valid_to`, and `GET /v1/me/properties` for the resident app; removal and link requests decided without deleting anything, house managers scoped to their assigned buildings, and a spreadsheet import to our own template with a dry run (#75, #77, migration `0009`). The seed has an active building per organisation (Elena in inova, Georgi in demo) and a scoped manager on each.
+- Core API (`:4000`): JWKS JWT verify, `X-Tenant-Id` must equal the token's `tid`, then the DB membership re-check; permission guards, RLS via `SET LOCAL app.tenant_id`. Tenant profile/staff/audit, staff+roles CRUD (admin-role lock, last-admin guard), super_admin tenant provisioning — a platform operator entering an organisation writes `platform.access` to its audit trail — public brand config, health. `GET /v1/tenant` names the caller's role (`roleName`, #50). **M2 (#59, #61, migrations `0006`, `0007`):** buildings, entrances and properties (draft → active, IBAN check, audited corrections), residents on a property with an invite, occupancies and pets with an inclusive `valid_to`, and `GET /v1/me/properties` for the resident app with the building's managers and bank account (#79); removal and link requests decided without deleting anything, house managers scoped to their assigned buildings, and a spreadsheet import to our own template with a dry run (#75, #77, migration `0009`). The seed has an active building per organisation (Elena in inova, Georgi in demo) and a scoped manager on each.
 - Passwords: argon2id (2026-09-22; the code had used bcrypt while the plan said argon2id). A legacy bcrypt hash is verified once and upgraded on that login. `pnpm install` now needs to build one native module (`argon2`, prebuilt binaries for macOS/Linux/Alpine).
 - Hardening (2026-09-21, defects in running code — not phase work): auth-service connects as its own `inova_auth` DB role and the cross-tenant identity-scope policies are granted to it alone (migration `0003`), so core-api's `inova_app` can no longer read other tenants' memberships or invite codes by setting a session variable; the strict limit on login/activate/resend really applies (the deployed value `'true'` had parsed to `NaN` and disabled it — malformed settings now stop the service); rate limiting is per client behind the edge proxy (`TRUST_PROXY_HOPS=1`); one-time codes are logged only when `CODE_DELIVERY=log` is set on purpose, otherwise a production process refuses to start.
-- Password recovery (B13, #74): e-mail link or phone code, single use, five tries, every session revoked, audited; `RECOVERY_LINK_TTL_MINUTES` / `RECOVERY_CODE_TTL_MINUTES`. Still missing: real delivery (worker + Infobip / e-mail), the daily expiry job, and the mobile activation screen's identifier field — the shipped screen sends the code alone and gets 400.
+- Password recovery (B13, #74): e-mail link or phone code, single use, five tries, every session revoked, audited; `RECOVERY_LINK_TTL_MINUTES` / `RECOVERY_CODE_TTL_MINUTES`. Sign-in takes e-mail or phone + password (#78). Still missing: real delivery (worker + Infobip / e-mail) and the mobile activation screen's identifier field — the shipped screen sends the code alone and gets 400.
+- Worker (`apps/worker`, #81): BullMQ on Redis, its own `inova_worker` role without BYPASSRLS, one transaction per tenant; the first job retires lapsed invite codes and password resets every night at 02:15 Europe/Sofia. `develop` builds its image (#86) and the test stack runs it (#95); the deploy waits for it to be healthy. Fee generation in M3 is its next job.
+- Resident app API (#82–#85): profile, password change (current password, ends every session) and e-mail change by code (#84); push-token registration `/v1/me/devices`, ahead of M7 (#85); both OpenAPI documents describe every auth and `/me` answer and error, the types are in `@inova/shared`, and a contract test keeps the committed `openapi.json` in step (#83).
 - Mobile: production-ready auth against live auth-service — activate → set-password,
   login, resend-code (phone → E.164), silent refresh, logout, session gate on tabs;
   release builds default to `https://portal.whitenova.tech/auth/v1` (`EXPO_PUBLIC_AUTH_URL`
   overrides; `__DEV__` keeps localhost). Home greets the signed-in user. The multi-account
   portfolio / tenant switcher is M10 (moved 2026-09-21). Building/home/dues/issues
   still MOCK (`TODO(M2/M3/…)`).
-- Admin: real login, organization switching, Табло / Служители / Роли /
+- Admin: real login with silent refresh — a 401 renews the session once, one refresh at a time across tabs, so staff are not signed out every 15 minutes (#72); Табло / Служители / Роли /
   Организации on live APIs, in Bulgarian. The portal uses the V2 glass visual
   system from the Figma page **Screens**: a fixed photograph with a scrim, the
   three glass fills (card / data / input) and the panel surface (light by day, dark at night) for
@@ -70,7 +72,7 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
   what it lets you do, and returns the keyboard to its button on close (#44,
   #48); «Роли» names every right in Bulgarian words as drawn (#49); no plan
   codes reach the screen (#45); Табло fits a phone (#43); the route tree and
-  its guards live in `apps/admin/src/router.tsx` (#47); «Роли и обхват» shows what a role change does and asks before closing unsaved changes (#54) and matches the approved frames (#66); staff who may only view roles see no create, edit or delete buttons (#62); the account menu survives a resize across the tablet width (#64); «Роли» sits where drawn and an open side menu says it is open (#68). With «reduce motion» turned on in the system, the portal stops its animations (#70). The account menu names the staff member's organisation; the organisation switcher is gone, since an account belongs to one organisation (B8; #76). Choosing the organisation on the admin sign-in is after the pilot, with M10 — a link per organisation (`…/inova/login`), not a form field or a subdomain; the default realm covers the pilot (D37). «Роли» names «Преглед на сгради и имоти», «Управление на сгради и имоти» (group «Имоти») and «Преглед на жителите» (#59, #61).
+  its guards live in `apps/admin/src/router.tsx` (#47); «Роли и обхват» shows what a role change does and asks before closing unsaved changes (#54) and matches the approved frames (#66); staff who may only view roles see no create, edit or delete buttons (#62); the account menu survives a resize across the tablet width (#64); «Роли» sits where drawn and an open side menu says it is open (#68). With «reduce motion» turned on in the system, the portal stops its animations (#70). The account menu names the staff member's organisation; the organisation switcher is gone, since an account belongs to one organisation (B8; #76). «Сгради» is a live list with search, filters, sort and phone cards (#92); «Живущи» and «Домоуправител» show «—» until the list API carries them (WHI-96). Choosing the organisation on the admin sign-in is after the pilot, with M10 — a link per organisation (`…/inova/login`), not a form field or a subdomain; the default realm covers the pilot (D37). «Роли» names «Преглед на сгради и имоти», «Управление на сгради и имоти» (group «Имоти») and «Преглед на жителите» (#59, #61).
   Contract for the full Табло: [features/admin-dashboard.md](features/admin-dashboard.md);
   it added M2b (unified search) and M11 (staff tasks/calendar) to the plan and
   extended M6 (issue priority), M7 (debtors audience, unread count) and M9.
@@ -81,27 +83,30 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
 
 ## Tests (release blockers)
 
-209 integration tests against real Postgres + RLS + the non-privileged `inova_app` / `inova_auth` roles, plus 148 unit tests (counts of #74 and #77, 2026-10-01):
+246 integration tests against real Postgres + RLS + the non-privileged `inova_app` / `inova_auth` / `inova_worker` roles, plus 154 unit tests (the CI run of `develop` at #86, 2026-10-02):
 
 | Suite                                                                                                             | Count | Job                |
 | ----------------------------------------------------------------------------------------------------------------- | ----- | ------------------ |
-| `apps/api/test/tenant-isolation.e2e.test.ts`                                                                      | 32    | `tenant-isolation` |
-| `apps/api/test/tenant-schema.contract.test.ts`                                                                    | 7     | `tenant-isolation` |
+| `apps/api/test/tenant-isolation.e2e.test.ts`                                                                      | 33    | `tenant-isolation` |
+| `apps/api/test/tenant-schema.contract.test.ts`                                                                    | 8     | `tenant-isolation` |
 | `apps/api/test/staff-roles.e2e.test.ts`                                                                           | 16    | `auth` (RBAC)      |
 | `apps/api/test/buildings.e2e.test.ts`                                                                             | 32    | `auth`             |
-| `apps/api/test/residents.e2e.test.ts`                                                                             | 24    | `auth`             |
+| `apps/api/test/residents.e2e.test.ts`                                                                             | 34    | `auth`             |
 | `apps/api/test/requests.e2e.test.ts`                                                                              | 20    | `auth`             |
 | `apps/api/test/import.e2e.test.ts`                                                                                | 13    | `auth`             |
-| `apps/auth-service/test/auth-flows.e2e.test.ts`                                                                   | 37    | `auth`             |
+| `apps/auth-service/test/auth-flows.e2e.test.ts`                                                                   | 43    | `auth`             |
 | `apps/auth-service/test/rate-limit.e2e.test.ts`                                                                   | 3     | `auth`             |
 | `apps/auth-service/test/db-helper.e2e.test.ts`                                                                    | 2     | `auth`             |
 | `apps/auth-service/test/realm-migration.e2e.test.ts`                                                              | 6     | `auth`             |
 | `apps/auth-service/test/recovery.e2e.test.ts`                                                                     | 17    | `auth`             |
+| `apps/auth-service/test/profile.e2e.test.ts`                                                                      | 12    | `auth`             |
 | `packages/shared` unit (Money, runtime env, sign-in, dashboard, theme, names, auth claims, IBAN, occupancy dates) | 100   | `unit`             |
-| `apps/auth-service` unit (hasher, login failures, realms, refresh tokens, lifetimes)                              | 37    | `unit`             |
-| `apps/api` unit (property sheet parser)                                                                           | 11    | `unit`             |
+| `apps/auth-service` unit (hasher, login failures, realms, refresh tokens, lifetimes, contract)                    | 39    | `unit`             |
+| `apps/api` unit (property sheet parser, OpenAPI contract)                                                         | 12    | `unit`             |
+| `apps/worker` unit (queue, health)                                                                                | 3     | `unit`             |
+| `apps/worker/test/expire-lapsed-codes.e2e.test.ts`                                                                | 7     | `auth`             |
 
-Browser (Playwright, `apps/admin/e2e`, CI job `e2e`): 181 passed on 2026-10-01 (the #76 run).
+Browser (Playwright, `apps/admin/e2e`, CI job `e2e`): 186 passed on 2026-10-02 (the CI run of `develop` at #86).
 
 Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migrations`, `check:no-design-data`, `check:agent-harness`, `check:worklog`, `check:decisions`.
 
@@ -110,16 +115,19 @@ Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migr
 | Milestone                            | Status                                                                                                                                                                                                               | Gaps vs original acceptance                                                                                                                                                                                                                   |
 | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | M0 Foundations                       | Done for _local_ foundations; test environment now deployed                                                                                                                                                          | Container deploy to the test host exists (GHCR images, compose, nginx, Let's Encrypt). Still no Terraform/OIDC, no generated OpenAPI clients, no “one command” full stack. Those belong to M-Ops / later. Lint and format are now real gates. |
-| M1 Identity                          | In progress: backend + admin screens; B8 (#57), B14–B15 (#58) and B13 recovery (#74) done — nothing left before M2                                                                                                   | Multi-role context needs M2 occupancies; then Redis denylist, worker, real delivery, silent refresh, audit viewer.                                                                                                                            |
+| M1 Identity                          | In progress: backend + admin screens; B8 (#57), B14–B15 (#58), B13 recovery (#74), phone sign-in (#78), admin silent refresh (#72) and the worker skeleton (#81) done                                                | Multi-role context needs M2 occupancies; then Redis denylist, real delivery, audit viewer; the worker into the deployed stack.                                                                                                                |
 | M2 Property                          | In progress: backend done 2026-10-01 — buildings (#59), residents (#61), requests, manager assignments and building scope (#75), import (#77)                                                                        | The admin screens and the mobile «Добави моя имот» form; the pilot's data into the template; the building photo is in M6.                                                                                                                     |
-| M5 Mobile / M9 Dashboard / M10 Brand | Mobile: UI shells on `MOCK` data; the surveys screens were built ahead of the plan — surveys come before the pilot (D23), their milestone is still to be cut. Admin Табло: shell on live APIs, empty slots until M2+ | Mock data until M2+ APIs exist.                                                                                                                                                                                                               |
+| M5 Mobile / M9 Dashboard / M10 Brand | Mobile: UI shells on `MOCK` data; the surveys screens were built ahead of the plan — surveys come before the pilot (D23), their milestone is still to be cut. Admin Табло: shell on live APIs, empty slots until M2+ | The resident app's M2 APIs exist (properties, contacts, profile, devices, #61–#85); the app still runs on `MOCK` until it is rebuilt on them.                                                                                                 |
 
 ## Temporary mocks (greppable)
 
-- Invite delivery: `TODO(M1)` / `MOCK` in auth-service + api (log only).
-- Admin silent refresh: `TODO(M1)` in `apps/admin/src/lib/api.ts`.
-- Mobile home/building/cash/dues/issues/notices: `TODO(M2/M3/M6/M7)` + `MOCK` constants.
+- Code delivery (invite, recovery, e-mail change): `TODO(M1)` / `MOCK` in auth-service + api (log only) until the worker sends through Infobip / e-mail.
+- Default realm: `TODO(M10)` in `realm-resolver.ts` until the sign-in link per organisation (D37).
+- Seed: `TODO(M2)` on the `resident` role — whether residents' access should come from occupancies alone is for the M2 close (#61).
+- Admin: `TODO(M1)` public password recovery on the sign-in page (the backend exists, #74); `TODO(M2)` building scope in «Роли и обхват» and Служители (the backend exists, #75); Табло slots until M2+.
+- Mobile home/building/cash/dues/issues/notices: `TODO(M2/M3/M6/M7)` + `MOCK` constants; «Контакти» lists cashier and emergency numbers, which have no data model (#79).
 - Theme persistence on mobile: `TODO(M5)`.
+- Legacy bcrypt verification: `TODO(M1)` in `password-hasher.ts` until no `$2` hashes remain.
 
 ## Blockers
 
@@ -128,9 +136,8 @@ Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migr
   (`bg.inova.resident`) in both app stores.
 - Long-lead items that need no code and can each block go-live are listed in
   [milestones/M-Pilot.md](milestones/M-Pilot.md): SMS/Viber gateway and sender
-  registration, store accounts, domains, spreadsheet samples, accountant (B2),
+  registration, store accounts, domains, the pilot's data in the import template, accountant (B2),
   counsel (DPA, B12), production host.
-- Real pilot spreadsheet samples are still required before locking the M2 import column mapping.
 - SMS gateway: Infobip (D36); the contract and sender registration are long-lead (M-Pilot) and block real invite delivery, not M2.
 - B2 (Bulgarian receipt/invoice legal shape) still open — blocks M4 templates, not M2.
 - Stakeholders prefer iCard for online payments; its merchant/account model,
@@ -148,11 +155,10 @@ Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migr
 
 1. **M2 admin screens** — «Сгради», the request queues with История, manager assignment («Обхват» in «Роли и обхват»), «Импорт на имоти»; the mobile app reads `GET /v1/me/properties`. See [milestones/M2-property.md](milestones/M2-property.md).
 2. **Mobile activation and recovery screens** — the identifier field on activation, forgot-password by e-mail first, phone second (B13, #74). See [milestones/M1-identity.md](milestones/M1-identity.md).
-3. **Worker skeleton** before M3 (fee generation is a worker job) with its own `inova_worker` role (D21).
-4. Wire mobile “My building” / resident profile to M2 APIs as they land.
-5. Deferred M1 (before pilot): Redis denylist, real invite delivery, audit viewer.
-6. Self-contained Testcontainers for integration tests (harness Phase 2 remainder).
-7. Before production exists: provision the pilot host per **D19** (a single VM
+3. Rebuild the resident app on the real API (`/auth/docs`, `/api/docs`, types from `@inova/shared`; test accounts of #82).
+4. Deferred M1 (before pilot): Redis denylist, real invite delivery, audit viewer.
+5. Self-contained Testcontainers for integration tests (harness Phase 2 remainder).
+6. Before production exists: provision the pilot host per **D19** (a single VM
    with the compose stack, its own database and secrets, nightly off-box
    `pg_dump`, one rehearsed restore — EKS deferred), re-enable `main` deploys in `ci.yml`, move edge maintenance to production deploys,
    and remove the leftover `/opt/inova` stack and `portal.whitenova.tech` site

@@ -24,6 +24,7 @@ const MEANING: Record<number, string> = {
   403: 'Signed in, but not allowed here.',
   404: 'Not found — or not yours, which is answered the same way.',
   409: 'Conflicts with the current state.',
+  413: 'The uploaded file is too large.',
   429: 'Too many attempts from this address; wait a minute.',
 };
 

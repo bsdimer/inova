@@ -19,11 +19,13 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type {
+  AddedResident,
   BuildingContacts,
   MyProperty,
   MyPropertyDetail,
   OccupantRecord,
   PetRecord,
+  PropertyResidents,
 } from '@inova/shared';
 import { ApiErrors } from '../../openapi/api-errors';
 import {
@@ -33,6 +35,7 @@ import {
   OccupantRecordDto,
   PetRecordDto,
 } from './me.responses';
+import { AddedResidentDto, PropertyResidentsDto } from './property.responses';
 import { JwtGuard, type AuthedRequest } from '../../auth/jwt.guard';
 import { PermissionsGuard, RequirePermissions } from '../../auth/permissions.guard';
 import { TenantContextGuard } from '../../auth/tenant-context.guard';
@@ -51,12 +54,14 @@ export class ResidentsController {
   @Get()
   @RequirePermissions('residents.read')
   @ApiOperation({ summary: "A property's residents and pets; `at` keeps those counting that day" })
+  @ApiOkResponse({ type: PropertyResidentsDto })
+  @ApiErrors(400, 401, 403, 404)
   list(
     @Req() req: AuthedRequest,
     @Param('buildingId', ParseUUIDPipe) buildingId: string,
     @Param('propertyId', ParseUUIDPipe) propertyId: string,
     @Query() query: ResidentsQuery,
-  ) {
+  ): Promise<PropertyResidents> {
     return this.service.listResidents(
       req.tenantId!,
       actorOf(req),
@@ -71,12 +76,14 @@ export class ResidentsController {
   @ApiOperation({
     summary: 'Add an owner, tenant or occupant from a date; an account and an invite code follow',
   })
+  @ApiCreatedResponse({ type: AddedResidentDto })
+  @ApiErrors(400, 401, 403, 404, 409)
   add(
     @Req() req: AuthedRequest,
     @Param('buildingId', ParseUUIDPipe) buildingId: string,
     @Param('propertyId', ParseUUIDPipe) propertyId: string,
     @Body() dto: AddResidentDto,
-  ) {
+  ): Promise<AddedResident> {
     return this.service.addResident(req.tenantId!, actorOf(req), buildingId, propertyId, dto);
   }
 }
