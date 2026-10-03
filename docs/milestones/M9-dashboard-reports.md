@@ -10,7 +10,7 @@ Manager's daily cockpit and the debtor list; XLSX export of debtors and transact
 
 ## Dependencies
 
-M4 for the money. The cards also consume M2b (search), M6 (issue summary, attachment infrastructure), M7 (unread count, `debtors` audience type) and M11 (tasks). A source that is late ships as a hidden card or an empty state — never as mock numbers — so only M4 is a hard blocker.
+M4 for the money. The cards also consume M2b (search), M4 (attachment infrastructure, D38), M6 (issue summary), M7 (unread count, `debtors` audience type) and M11 (tasks). A source that is late ships as a hidden card or an empty state — never as mock numbers — so only M4 is a hard blocker.
 
 ## Tables
 

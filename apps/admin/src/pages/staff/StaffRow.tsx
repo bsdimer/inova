@@ -90,7 +90,9 @@ export function StaffRow(props: RowProps) {
         <div className="flex items-center gap-3">
           <Avatar name={member.fullName} size={36} />
           <span className="min-w-0">
-            <span className="text-body-14 block truncate font-semibold">{member.fullName}</span>
+            <span className="text-body-14 block truncate font-semibold" title={member.fullName}>
+              {member.fullName}
+            </span>
             <span className="text-body-13-tight block truncate text-ink-soft">
               {isSelf && 'вие'}
               <span className="@4xl:hidden">

@@ -84,7 +84,7 @@ Caption: "Портфолио · N сгради · <month>".
 
 Actions:
 
-- "Виж детайли" → Finance section.
+- "Виж финанси" → the «Финанси» section (WHI-137, 02.10).
 - "Изпрати известия" → bulk notice to debtors (M7 `debtors` audience over the
   M9 debtor query). Flow: `POST /v1/notices/debtor-reminders/preview` returns
   the recipient and apartment counts for the account's scope → confirmation
@@ -99,8 +99,8 @@ Actions:
 
 ### Documents ("Документи")
 
-- "Качи документ" → presigned upload into the document library (M9, on the M6
-  attachment infrastructure): the manager picks a category (`supplier_invoice`,
+- "Качи документ" → presigned upload into the document library (M9, on the
+  attachment infrastructure built in M4, D38): the manager picks a category (`supplier_invoice`,
   `building_document`, `other`), an optional building and an optional period.
   The file becomes visible after the AV scan. Needs `documents.upload`. See
   open decision D15.
@@ -113,7 +113,7 @@ Actions:
 `{ openCount, buildingCount, counters: { pending, planned, urgent, resolved }, urgent: [{ id, title, buildingName, entranceName?, createdAt }] }`
 
 - `openCount` = issues not in `resolved`, `closed` or `rejected`.
-- `pending` = `reported` + `acknowledged`; `planned` = `planned` +
+- `pending` = `reported` (no `acknowledged` since D39); `planned` = `planned` +
   `in_progress`; `resolved` = resolved **within the period** (an all-time
   count would only ever grow); `urgent` = open issues with
   `priority = urgent`. Urgent overlaps pending/planned by design — it is a
@@ -188,7 +188,7 @@ milestones. Each card goes live when its source does.
 | ----- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1     | M2                   | building and apartment counts, "add building" tile                                                                                                                                                       |
 | 2     | M2b                  | unified search endpoint + shell search box                                                                                                                                                               |
-| 3     | M6                   | `issues.priority`, `GET /v1/issues/summary`; shared attachment infrastructure                                                                                                                            |
+| 3     | M6                   | `issues.priority`, `GET /v1/issues/summary`; attachments come from M4 (D38)                                                                                                                              |
 | 4     | M7                   | unread count, `debtors` audience type (resolver wired in M9)                                                                                                                                             |
 | 5     | M11                  | tasks module: tables, API, permissions, Tasks section + calendar data                                                                                                                                    |
 | 6     | M9                   | balance and per-building rollups, debtor-reminder send, document library upload, report picker, **dashboard page assembly**, render-based contrast check                                                 |

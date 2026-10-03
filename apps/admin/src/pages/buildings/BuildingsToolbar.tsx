@@ -4,6 +4,7 @@ import {
   Facet,
   FilterChip,
   FilterSheet,
+  type FilterChoice,
   SearchField,
   SkeletonBar,
   SortSelect,
@@ -12,6 +13,7 @@ import {
 import {
   FACET_TITLES,
   SORT_LABELS,
+  SORT_SHORT_LABELS,
   STATUS_LABELS,
   STATUS_ORDER,
   counted,
@@ -20,6 +22,7 @@ import {
   hasActiveFacets,
   hasAnyFilter,
   type BuildingFilters,
+  type BuildingStatus,
   type FacetKey,
 } from './model';
 
@@ -40,13 +43,15 @@ interface ToolbarProps {
   cities: string[];
   shown: number;
   total: number;
+  /** How many buildings a choice of facets would leave, for the sheet's preview. */
+  countWith: (filters: BuildingFilters) => number;
   /** The list is on its way: the count line holds its place with a bar. */
   loading: boolean;
 }
 
 // TODO(M2): the «Домоуправител» facet (945:5119) once the list carries the manager (WHI-96).
 export function BuildingsToolbar(props: ToolbarProps) {
-  const { filters, onChange, districts, cities, shown, total, loading } = props;
+  const { filters, onChange, districts, cities, shown, total, loading, countWith } = props;
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const set = <K extends keyof BuildingFilters>(key: K, value: BuildingFilters[K]) =>
@@ -67,7 +72,7 @@ export function BuildingsToolbar(props: ToolbarProps) {
           onChange={(next) => set('search', next)}
           placeholder="Търси сграда или адрес"
           label="Търсене в сградите"
-          className="flex-1"
+          className="w-full md:w-auto md:flex-1"
         />
 
         {/* Facets have room of their own only from md up; below that they live in the sheet. */}
@@ -82,18 +87,27 @@ export function BuildingsToolbar(props: ToolbarProps) {
             />
           ))}
         </div>
+      </div>
 
+      {/* On a phone: «Филтри» and the sort share the row under the search (952:5831). */}
+      <div className="flex items-center gap-3 md:hidden">
         <button
           type="button"
           onClick={() => setSheetOpen(true)}
-          className={`text-body-14 flex h-12 items-center gap-2 rounded-full px-4 font-medium md:hidden ${
+          className={`text-body-14 flex h-11 items-center gap-2 rounded-full px-4 font-medium ${
             facetCount(filters) > 0 ? 'glass-control-active' : 'glass-control text-ink'
           }`}
         >
-          <SlidersHorizontal size="0.9375rem" />
           Филтри
           {facetCount(filters) > 0 && <span className="num">· {facetCount(filters)}</span>}
+          <SlidersHorizontal size="0.9375rem" />
         </button>
+        <SortSelect
+          value={filters.sort}
+          options={SORT_LABELS}
+          buttonLabels={SORT_SHORT_LABELS}
+          onChange={(next) => set('sort', next)}
+        />
       </div>
 
       <div className="flex min-h-11 flex-wrap items-center gap-3 px-1">
@@ -118,7 +132,7 @@ export function BuildingsToolbar(props: ToolbarProps) {
             Изчисти
           </button>
         )}
-        <div className="ml-auto">
+        <div className="ml-auto hidden md:block">
           <SortSelect
             value={filters.sort}
             options={SORT_LABELS}
@@ -130,15 +144,11 @@ export function BuildingsToolbar(props: ToolbarProps) {
       <FilterSheet
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
-        groups={facets.map(({ key, options }) => ({
-          key,
-          title: FACET_TITLES[key],
-          options,
-          selected: filters[key],
-        }))}
-        onToggle={(key, value) => onChange(toggled(filters, key as FacetKey, value))}
-        onClear={clearFacets}
-        shown={shown}
+        groups={facets.map(({ key, options }) => ({ key, title: FACET_TITLES[key], options }))}
+        applied={{ district: filters.district, status: filters.status, city: filters.city }}
+        onApply={(choice) => onChange(withChoice(filters, choice))}
+        countWith={(choice) => countWith(withChoice(filters, choice))}
+        preview={(choice) => counted(countWith(withChoice(filters, choice)), 'сграда', 'сгради')}
       />
     </div>
   );
@@ -158,8 +168,15 @@ function facetGroups(districts: string[], cities: string[]): FacetGroup[] {
   return groups;
 }
 
-function toggled(filters: BuildingFilters, key: FacetKey, value: string): BuildingFilters {
-  const current = filters[key] as string[];
-  const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
-  return { ...filters, [key]: next };
+function isBuildingStatus(value: string): value is BuildingStatus {
+  return (STATUS_ORDER as readonly string[]).includes(value);
+}
+
+function withChoice(filters: BuildingFilters, choice: FilterChoice<FacetKey>): BuildingFilters {
+  return {
+    ...filters,
+    district: choice.district,
+    status: choice.status.filter(isBuildingStatus),
+    city: choice.city,
+  };
 }

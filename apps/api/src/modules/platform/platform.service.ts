@@ -1,7 +1,13 @@
-import { MockCodeDelivery, splitFullName } from '@inova/shared';
+import {
+  MockCodeDelivery,
+  splitFullName,
+  type ProvisionResult,
+  type TenantSummary,
+} from '@inova/shared';
 import { ConflictException, Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { DbService } from '../../db/db.service';
+import { toTenantSummary } from '../../db/tenant-summary';
 import {
   permissions,
   roles,
@@ -56,8 +62,9 @@ export class PlatformService {
     private readonly inviteCodes: InviteCodeIssuer,
   ) {}
 
-  async listTenants() {
-    return this.dbService.db.select().from(tenants).orderBy(tenants.createdAt);
+  async listTenants(): Promise<TenantSummary[]> {
+    const rows = await this.dbService.db.select().from(tenants).orderBy(tenants.createdAt);
+    return rows.map(toTenantSummary);
   }
 
   /**
@@ -66,7 +73,10 @@ export class PlatformService {
    * FIRST user with the per-tenant 'admin' role (invite-code activation, B7).
    * super_admin itself is a platform-level claim, never a tenant role.
    */
-  async provisionTenant(input: ProvisionTenantInput, actorUserId: string) {
+  async provisionTenant(
+    input: ProvisionTenantInput,
+    actorUserId: string,
+  ): Promise<ProvisionResult> {
     const [existing] = await this.dbService.db
       .select({ id: tenants.id })
       .from(tenants)
@@ -147,6 +157,6 @@ export class PlatformService {
       });
     });
 
-    return { tenant, adminInviteSent: inviteCode !== null };
+    return { tenant: toTenantSummary(tenant), adminInviteSent: inviteCode !== null };
   }
 }

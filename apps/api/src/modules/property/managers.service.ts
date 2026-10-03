@@ -1,3 +1,4 @@
+import type { Accepted, BuildingManager } from '@inova/shared';
 import {
   BadRequestException,
   ConflictException,
@@ -32,36 +33,19 @@ export class ManagersService {
     private readonly scope: BuildingScope,
   ) {}
 
-  async list(tenantId: string, actor: Actor, buildingId: string) {
+  async list(tenantId: string, actor: Actor, buildingId: string): Promise<BuildingManager[]> {
     return this.dbService.withTenant(tenantId, async (tx) => {
       await this.buildingInScope(tx, tenantId, actor, buildingId);
-      return tx
-        .select({
-          accountId: users.id,
-          fullName: users.fullName,
-          phone: users.phone,
-          email: users.email,
-          roleKey: staffMemberships.roleKey,
-          since: buildingManagerAssignments.createdAt,
-        })
-        .from(buildingManagerAssignments)
-        .innerJoin(
-          users,
-          and(
-            eq(users.tenantId, buildingManagerAssignments.tenantId),
-            eq(users.id, buildingManagerAssignments.userId),
-          ),
-        )
-        .leftJoin(
-          staffMemberships,
-          and(eq(staffMemberships.tenantId, users.tenantId), eq(staffMemberships.userId, users.id)),
-        )
-        .where(this.open(tenantId, buildingId))
-        .orderBy(asc(buildingManagerAssignments.createdAt));
+      return this.managers(tx, tenantId, buildingId);
     });
   }
 
-  async assign(tenantId: string, actor: Actor, buildingId: string, accountId: string) {
+  async assign(
+    tenantId: string,
+    actor: Actor,
+    buildingId: string,
+    accountId: string,
+  ): Promise<BuildingManager> {
     try {
       return await this.dbService.withTenant(tenantId, async (tx) => {
         await this.buildingInScope(tx, tenantId, actor, buildingId);
@@ -73,14 +57,14 @@ export class ManagersService {
         if (account.status === 'suspended') {
           throw new BadRequestException('A suspended account cannot manage a building');
         }
-        const [assignment] = await tx
+        await tx
           .insert(buildingManagerAssignments)
-          .values({ tenantId, buildingId, userId: accountId, assignedBy: actor.userId })
-          .returning();
+          .values({ tenantId, buildingId, userId: accountId, assignedBy: actor.userId });
         await this.record(tx, tenantId, actor, 'building_manager.assigned', buildingId, {
           accountId,
         });
-        return assignment;
+        const [manager] = await this.managers(tx, tenantId, buildingId, accountId);
+        return manager;
       });
     } catch (error) {
       if (isUniqueViolation(error)) {
@@ -90,7 +74,12 @@ export class ManagersService {
     }
   }
 
-  async end(tenantId: string, actor: Actor, buildingId: string, accountId: string) {
+  async end(
+    tenantId: string,
+    actor: Actor,
+    buildingId: string,
+    accountId: string,
+  ): Promise<Accepted> {
     return this.dbService.withTenant(tenantId, async (tx) => {
       await this.buildingInScope(tx, tenantId, actor, buildingId);
       const [ended] = await tx
@@ -104,6 +93,44 @@ export class ManagersService {
       await this.record(tx, tenantId, actor, 'building_manager.ended', buildingId, { accountId });
       return { status: 'ok' as const };
     });
+  }
+
+  /** The building's open assignments with the account behind each; one account when named. */
+  private async managers(
+    tx: TenantTx,
+    tenantId: string,
+    buildingId: string,
+    accountId?: string,
+  ): Promise<BuildingManager[]> {
+    const rows = await tx
+      .select({
+        accountId: users.id,
+        fullName: users.fullName,
+        phone: users.phone,
+        email: users.email,
+        roleKey: staffMemberships.roleKey,
+        since: buildingManagerAssignments.createdAt,
+      })
+      .from(buildingManagerAssignments)
+      .innerJoin(
+        users,
+        and(
+          eq(users.tenantId, buildingManagerAssignments.tenantId),
+          eq(users.id, buildingManagerAssignments.userId),
+        ),
+      )
+      .leftJoin(
+        staffMemberships,
+        and(eq(staffMemberships.tenantId, users.tenantId), eq(staffMemberships.userId, users.id)),
+      )
+      .where(
+        and(
+          this.open(tenantId, buildingId),
+          accountId ? eq(buildingManagerAssignments.userId, accountId) : undefined,
+        ),
+      )
+      .orderBy(asc(buildingManagerAssignments.createdAt));
+    return rows.map((row) => ({ ...row, since: row.since.toISOString() }));
   }
 
   private open(tenantId: string, buildingId: string) {
