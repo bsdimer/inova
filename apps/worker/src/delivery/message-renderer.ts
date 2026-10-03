@@ -20,7 +20,11 @@ const paragraphs = (lines: string[]) =>
  * name and sender come with M10. TODO(M10): per-brand name and sender.
  */
 export class MessageRenderer {
-  /** Where the recovery e-mail's link points; the token is appended (B13). */
+  /**
+   * Where the recovery e-mail's link points (B13). The token rides in the
+   * fragment: a browser never sends it to a server, so no proxy or access log
+   * records a live reset token. The page reads it from there.
+   */
   constructor(private readonly recoveryLinkUrl: string) {}
 
   render(purpose: MessagePurpose, secret: string, organisation: string): RenderedMessage {
@@ -37,7 +41,7 @@ export class MessageRenderer {
           `inova: кодът ви за активиране от ${organisation} е ${secret}`,
         );
       case 'recovery_link': {
-        const link = `${this.recoveryLinkUrl}?token=${encodeURIComponent(secret)}`;
+        const link = `${this.recoveryLinkUrl}#token=${encodeURIComponent(secret)}`;
         return this.message(
           'Нова парола за inova',
           [

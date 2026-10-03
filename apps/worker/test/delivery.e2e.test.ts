@@ -121,7 +121,7 @@ describe('sending a queued message', () => {
       to: 'petar@example.bg',
       subject: 'Нова парола за inova',
     });
-    expect(email.mock.calls[0][0].text).toContain(`${LINK}?token=tok.en`);
+    expect(email.mock.calls[0][0].text).toContain(`${LINK}#token=tok.en`);
     expect(await row(id)).toMatchObject({ status: 'sent', attempts: 1, last_error: null });
   });
 
