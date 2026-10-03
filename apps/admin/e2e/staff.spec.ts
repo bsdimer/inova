@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page, type Route } from '@playwright/test';
+import type { RoleSummary } from '@inova/shared';
 import { rectsInOneFrame } from './geometry';
 import { ORG_ADMIN, openSignedIn } from './session';
 
@@ -609,7 +610,7 @@ test('402: the filter sheet as drawn — top at 132, rows every 46, labels 15/18
   await page.route('**/v1/tenant/roles', async (route) => {
     if (route.request().method() !== 'GET') return route.fallback();
     const response = await route.fetch();
-    const extra = Array.from({ length: 10 }, (_, i) => ({
+    const extra: RoleSummary[] = Array.from({ length: 10 }, (_, i) => ({
       key: `extra-${i}`,
       name: `Роля ${i + 1}`,
       isSystem: false,

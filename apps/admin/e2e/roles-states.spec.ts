@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import type { RoleSummary } from '@inova/shared';
 import { ORG_ADMIN, openSignedIn } from './session';
 
 /**
@@ -10,7 +11,7 @@ const card = (page: Page, name: string) =>
   page.locator('main article').filter({ has: page.getByRole('heading', { name, exact: true }) });
 
 /** Adds custom roles to the seed's answer. */
-async function withRoles(page: Page, extra: object[]) {
+async function withRoles(page: Page, extra: RoleSummary[]) {
   await page.route('**/v1/tenant/roles', async (route) => {
     if (route.request().method() !== 'GET') return route.fallback();
     const response = await route.fetch();

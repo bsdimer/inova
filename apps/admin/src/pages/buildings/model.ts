@@ -1,7 +1,5 @@
+import type { BuildingListItem, BuildingStatus } from '@inova/shared';
 import type { StatusTone } from '../../components/ui';
-import type { Building } from '../../lib/api';
-
-export type BuildingStatus = Building['status'];
 
 export const STATUS_LABELS: Record<BuildingStatus, string> = {
   active: 'Активна',
@@ -56,7 +54,7 @@ export const FACET_TITLES: Record<FacetKey, string> = {
 };
 
 /** Every property type counts: «имот» is any of them (D26, D27). */
-export function propertyTotal(building: Building): number {
+export function propertyTotal(building: BuildingListItem): number {
   return Object.values(building.propertyCounts).reduce((sum, n) => sum + n, 0);
 }
 
@@ -65,12 +63,12 @@ export function counted(n: number, one: string, many: string): string {
   return `${n} ${n === 1 ? one : many}`;
 }
 
-export function addressLine(building: Building): string {
+export function addressLine(building: BuildingListItem): string {
   return `${building.address}, ${building.city}`;
 }
 
 /** The distinct values of a column, sorted, for a facet's options. */
-export function valuesOf(buildings: Building[], key: 'district' | 'city'): string[] {
+export function valuesOf(buildings: BuildingListItem[], key: 'district' | 'city'): string[] {
   return [...new Set(buildings.map((b) => b[key]))].sort((a, b) => a.localeCompare(b, 'bg'));
 }
 
@@ -90,7 +88,10 @@ export function facetValueLabel(key: FacetKey, value: string): string {
   return key === 'status' ? STATUS_LABELS[value as BuildingStatus] : value;
 }
 
-export function applyFilters(buildings: Building[], f: BuildingFilters): Building[] {
+export function applyFilters(
+  buildings: BuildingListItem[],
+  f: BuildingFilters,
+): BuildingListItem[] {
   const needle = f.search.trim().toLocaleLowerCase('bg');
   return buildings.filter(
     (b) =>
@@ -105,11 +106,11 @@ export function applyFilters(buildings: Building[], f: BuildingFilters): Buildin
 }
 
 /** Quotes and other punctuation do not count: «„Лозенец“» sorts under Л. */
-function byName(a: Building, b: Building): number {
+function byName(a: BuildingListItem, b: BuildingListItem): number {
   return a.name.localeCompare(b.name, 'bg', { ignorePunctuation: true });
 }
 
-export function sortBuildings(buildings: Building[], sort: SortPreset): Building[] {
+export function sortBuildings(buildings: BuildingListItem[], sort: SortPreset): BuildingListItem[] {
   const sorted = [...buildings];
   if (sort === 'name') return sorted.sort(byName);
   return sorted.sort((a, b) => propertyTotal(b) - propertyTotal(a) || byName(a, b));

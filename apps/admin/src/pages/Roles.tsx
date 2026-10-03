@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
+import type { PermissionInfo, RoleSummary } from '@inova/shared';
 import { Lock, PencilSimple, Trash } from '../components/icons';
 import { useState, useSyncExternalStore, type FormEvent } from 'react';
 import {
@@ -13,7 +14,7 @@ import {
   SkeletonBar,
   panelInputClass,
 } from '../components/ui';
-import { api, ApiError, type Permission, type Role } from '../lib/api';
+import { api, ApiError } from '../lib/api';
 import { useSelectedTenantId, useTenantContext } from '../lib/tenant';
 import { AccessNote } from './Staff';
 import { groupPermissions, permissionLabel, sortPermissions } from './roles/permissions';
@@ -55,7 +56,7 @@ function memberLabel(count: number): string {
 export function RolesPage() {
   const tenantId = useSelectedTenantId();
   const queryClient = useQueryClient();
-  const [editorRole, setEditorRole] = useState<Role | 'new' | null>(null);
+  const [editorRole, setEditorRole] = useState<RoleSummary | 'new' | null>(null);
   const [pageError, setPageError] = useState<string | null>(null);
   // Without roles.manage every write ends in 403, so the buttons are not
   // offered; while the rights load, nothing is offered either.
@@ -63,12 +64,12 @@ export function RolesPage() {
 
   const roles = useQuery({
     queryKey: ['roles', tenantId],
-    queryFn: () => api<Role[]>('/tenant/roles', { tenantId: tenantId! }),
+    queryFn: () => api<RoleSummary[]>('/tenant/roles', { tenantId: tenantId! }),
     enabled: Boolean(tenantId),
   });
   const permissions = useQuery({
     queryKey: ['permissions', tenantId],
-    queryFn: () => api<Permission[]>('/tenant/permissions', { tenantId: tenantId! }),
+    queryFn: () => api<PermissionInfo[]>('/tenant/permissions', { tenantId: tenantId! }),
     enabled: Boolean(tenantId),
   });
 
@@ -186,9 +187,9 @@ function RoleCard({
   onDelete,
   deleting,
 }: {
-  role: Role;
+  role: RoleSummary;
   index: number;
-  catalogue: Permission[];
+  catalogue: PermissionInfo[];
   canManage: boolean;
   onEdit: () => void;
   onDelete: () => void;
@@ -265,7 +266,7 @@ function RoleCard({
 }
 
 /** Каталог на правата (1093:154): every right the platform knows, by area. */
-function PermissionCatalogue({ catalogue }: { catalogue: Permission[] }) {
+function PermissionCatalogue({ catalogue }: { catalogue: PermissionInfo[] }) {
   if (catalogue.length === 0) return null;
   return (
     <section
@@ -305,11 +306,11 @@ function RoleEditor({
   tenantId,
   catalogue,
 }: {
-  role: Role | 'new' | null;
+  role: RoleSummary | 'new' | null;
   onClose: () => void;
   tenantId: string | null;
   /** Undefined until it loads, or when it failed: nothing to choose from yet. */
-  catalogue: Permission[] | undefined;
+  catalogue: PermissionInfo[] | undefined;
 }) {
   const queryClient = useQueryClient();
   const isNew = role === 'new';
@@ -320,7 +321,7 @@ function RoleEditor({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   // Sync form state when a different role is opened.
-  const [loadedFor, setLoadedFor] = useState<Role | 'new' | null>(null);
+  const [loadedFor, setLoadedFor] = useState<RoleSummary | 'new' | null>(null);
   if (role !== loadedFor) {
     setLoadedFor(role);
     setKey(isNew || !role ? '' : role.key);
@@ -337,7 +338,7 @@ function RoleEditor({
             tenantId: tenantId!,
             body: { key, name, permissions: [...selected] },
           })
-        : api(`/tenant/roles/${(role as Role).key}`, {
+        : api(`/tenant/roles/${(role as RoleSummary).key}`, {
             method: 'PATCH',
             tenantId: tenantId!,
             body: { name, permissions: [...selected] },
