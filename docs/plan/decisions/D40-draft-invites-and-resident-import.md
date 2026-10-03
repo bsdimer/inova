@@ -4,7 +4,7 @@ title: Draft invitations wait for activation; resident import includes contactle
 status: decided
 decided: 2026-10-03 (stakeholder)
 source: WHI-37 — stakeholder approval 2026-10-03; decision comment 45ca9f02
-pr: pending WHI-148
+pr: '#100'
 affects: [B4, B7, B14, D24]
 ---
 

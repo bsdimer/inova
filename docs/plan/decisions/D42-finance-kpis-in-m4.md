@@ -4,7 +4,7 @@ title: Finance cards ship with payments and share the later dashboard rules
 status: decided
 decided: 2026-10-03 (stakeholder)
 source: WHI-137 — stakeholder approval 2026-10-03; decision comment 0d8fff90
-pr: pending WHI-148
+pr: '#100'
 affects: [D12, D38]
 ---
 

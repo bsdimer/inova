@@ -4,7 +4,7 @@ title: Infobip Email sends transactional messages from a verified WhiteNova doma
 status: decided
 decided: 2026-10-03 (stakeholder)
 source: WHI-116 — stakeholder approval and whitenova.tech ownership 2026-10-03; decision comment 7f3f756a
-pr: pending WHI-148
+pr: '#100'
 affects: [B13, D36, D39]
 ---
 
