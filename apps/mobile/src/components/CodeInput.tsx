@@ -1,8 +1,12 @@
-import React, { useRef, useState } from 'react';
+import React, { useImperativeHandle, useRef, useState, type Ref } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { rs } from '../theme/responsive';
 import { glass } from '../theme/tokens';
+
+export interface CodeInputHandle {
+  focus: () => void;
+}
 
 interface Props {
   length?: number;
@@ -10,6 +14,7 @@ interface Props {
   onChange: (code: string) => void;
   /** Fires once when all digits are filled. */
   onFilled?: (code: string) => void;
+  ref?: Ref<CodeInputHandle>;
 }
 
 /**
@@ -17,9 +22,11 @@ interface Props {
  * hidden TextInput, so the system keyboard, paste and SMS autofill all behave
  * natively. Empty boxes show the mockup's underscore placeholder.
  */
-export function CodeInput({ length = 6, value, onChange, onFilled }: Props) {
+export function CodeInput({ length = 6, value, onChange, onFilled, ref }: Props) {
   const inputRef = useRef<TextInput>(null);
   const [focused, setFocused] = useState(false);
+
+  useImperativeHandle(ref, () => ({ focus: () => inputRef.current?.focus() }), []);
 
   const handleChange = (raw: string) => {
     const digits = raw.replace(/\D/g, '').slice(0, length);
