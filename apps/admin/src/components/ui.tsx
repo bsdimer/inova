@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   type ReactNode,
+  type Ref,
   type RefObject,
 } from 'react';
 import { createPortal } from 'react-dom';
@@ -57,14 +58,17 @@ export function PrimaryButton({
   onClick,
   disabled = false,
   type = 'button',
+  ref,
 }: {
   children: ReactNode;
   onClick?: () => void;
   disabled?: boolean;
   type?: 'button' | 'submit';
+  ref?: Ref<HTMLButtonElement>;
 }) {
   return (
     <button
+      ref={ref}
       type={type}
       onClick={onClick}
       disabled={disabled}
@@ -778,6 +782,7 @@ export function Drawer({
   label,
   pinFooter = false,
   phoneHeight = 'max-h-[92vh]',
+  phoneFullScreen = false,
 }: {
   open: boolean;
   onClose: () => void;
@@ -792,6 +797,12 @@ export function Drawer({
   pinFooter?: boolean;
   /** The sheet's height (or cap) on a phone, as a Tailwind class written out in full. */
   phoneHeight?: string;
+  /**
+   * A form on a phone (design.md: «full screen, × top right»): the panel
+   * covers the screen; its buttons still end the content. Beside the page
+   * nothing changes.
+   */
+  phoneFullScreen?: boolean;
 }) {
   const dialog = useDialog<HTMLElement>(open, onClose);
   const body = useRef<HTMLDivElement>(null);
@@ -844,7 +855,9 @@ export function Drawer({
             // the note, «Отказ» and «Запази промените» side by side. The
             // sheet's top corners are 28, its bottom ones straight (1764:28895);
             // the floating panel is 28 round on every corner.
-            className={`panel flex ${phoneHeight} w-full flex-col overflow-hidden rounded-t-[1.75rem] sm:h-full sm:max-h-none sm:w-[32.5rem] sm:rounded-[1.75rem]`}
+            className={`panel flex w-full flex-col overflow-hidden sm:h-full sm:max-h-none sm:w-[32.5rem] sm:rounded-[1.75rem] ${
+              phoneFullScreen ? 'h-dvh' : `${phoneHeight} rounded-t-[1.75rem]`
+            }`}
           >
             <div className="shrink-0 border-b border-panel-divider px-5 py-4">{header}</div>
             <div
@@ -858,7 +871,12 @@ export function Drawer({
                 {!pinFooter && (
                   <div
                     data-drawer-footer
-                    className="mt-auto border-t border-panel-divider px-5 py-4"
+                    // Full screen, the end of the form meets the iPhone home indicator.
+                    className={`mt-auto border-t border-panel-divider px-5 ${
+                      phoneFullScreen
+                        ? 'pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-4'
+                        : 'py-4'
+                    }`}
                   >
                     {footer}
                   </div>
