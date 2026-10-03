@@ -790,7 +790,7 @@ export function Drawer({
    * design.md pins the buttons (the filter sheet, a long table's action).
    */
   pinFooter?: boolean;
-  /** The sheet's height cap on a phone, as a Tailwind class written out in full. */
+  /** The sheet's height (or cap) on a phone, as a Tailwind class written out in full. */
   phoneHeight?: string;
 }) {
   const dialog = useDialog<HTMLElement>(open, onClose);

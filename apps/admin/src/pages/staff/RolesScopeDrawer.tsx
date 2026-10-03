@@ -134,8 +134,9 @@ export function RolesScopeDrawer({
         open
         onClose={close}
         label={`Роли и обхват — ${member.fullName}`}
-        // 1764:28895: on a phone the sheet starts 40 below the top.
-        phoneHeight="max-h-[calc(100dvh-2.5rem)]"
+        // 1764:28895: on a phone the sheet fills the screen from 40 below the top;
+        // a short form keeps its buttons at the bottom (design.md).
+        phoneHeight="h-[calc(100dvh-2.5rem)]"
         header={
           <div className="flex items-start gap-3">
             <Avatar name={member.fullName} size={40} />
