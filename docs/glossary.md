@@ -113,6 +113,18 @@ does not take the entry for the current UI.
   manager; every change is in the issue's history (D39). It is not a role and
   not an activity; the general word for a contracted firm stays «Доставчик».
   Source: D39 (WHI-116, 236947fc).
+- **Авария** — the issue category a resident picks for what cannot wait
+  (Чистота / Поддръжка / Други / Авария, required). A resident's «Авария» gets
+  the priority «Спешен» by itself; until the house manager changes the
+  category, only the house manager and the accounts with the right «Аварийни
+  сигнали» (`issues.emergency`; Administrator and House Manager by default, not
+  contractor roles) see it, and those of them whose scope covers the building
+  get an e-mail about a new one that each account can turn off (D39, D41).
+  «Спешен» / «Спешни» stays the priority (the V2/Urgency tag, the Табло tile
+  «Спешни»), which staff may also set on any issue: «Авария» is what the
+  resident reports, «Спешен» is how urgent it is. Avoid: «Спешно» as a
+  category name (renamed by the stakeholder so residents do not flag trivia).
+  Source: D39, D41; WHI-116 (c1e9e350, 236947fc, 7f3f756a).
 
 ## Staff and contractors
 

@@ -56,8 +56,11 @@ The schema contract test must pass on the new tables without being rewritten.
   `user_id` (the current `0007` constraint only allows a contactless
   `occupant`), while retaining a non-empty name and a tenant-leading key/RLS.
   Public resident routes must require a linked account, not a name alone.
-  Building-level values appear once per building in the template, and the dry
-  run shows the inherited values on each property/resident row (D40).
+  Building-level values appear once per building in the template, on the first
+  row of its block; the empty cells below inherit only within that block. The
+  dry run shows which building each property/resident row belongs to and the
+  inherited values, and refuses a block whose building is ambiguous (D40;
+  team lead, WHI-37 45ca9f02).
 - Separate owner/tenant/occupant app capabilities; multiple simultaneous owner
   occupancies are valid and owner-only permissions are server-enforced.
 - Effective-dated residents and pets (`valid_from` / `valid_to`) for later fee
@@ -98,8 +101,9 @@ survey proposal/voting are hidden and server-blocked for tenant/occupant roles.
 
 - Import edge cases (bad rows, dry-run vs commit); `city`, `district`,
   `rooms`, the property type and — D30 — `floors` and `has_elevator` are
-  mapped and validated. Cover inherited building values, duplicate contacts,
-  contactless residents and an all-or-nothing commit (D40).
+  mapped and validated. Cover inherited building values, an ambiguous building block refused in
+  the dry run, duplicate contacts, contactless residents and an
+  all-or-nothing commit (D40).
 - Draft addition creates no active code/delivery; activation issues only the
   eligible count once even on retry, and adding to an active building issues
   one invite. No-contact occupancies cannot sign in; later contact verification
