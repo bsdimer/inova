@@ -1,10 +1,12 @@
 import {
   MockCodeDelivery,
+  type AddedResident,
   type BuildingContacts,
   type OccupantRecord,
   type PetRecord,
   type MyProperty,
   type MyPropertyDetail,
+  type PropertyResidents,
 } from '@inova/shared';
 import {
   BadRequestException,
@@ -68,7 +70,7 @@ export class ResidentsService {
     buildingId: string,
     propertyId: string,
     input: AddResidentDto,
-  ) {
+  ): Promise<AddedResident> {
     const hasContact = Boolean(input.phone || input.email);
     if (input.role !== 'occupant' && !hasContact) {
       throw new BadRequestException('An owner or tenant needs a phone or an e-mail for the invite');
@@ -152,7 +154,7 @@ export class ResidentsService {
     buildingId: string,
     propertyId: string,
     at?: string,
-  ) {
+  ): Promise<PropertyResidents> {
     return this.dbService.withTenant(tenantId, async (tx) => {
       await this.property(tx, tenantId, actor, buildingId, propertyId);
       const people = await tx

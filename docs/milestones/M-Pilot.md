@@ -34,7 +34,7 @@ Each can block go-live on its own, and each takes weeks of someone else's time.
       organisation account for the shared app; bundle id `bg.inova.resident`
       reserved.
 - [ ] Domains and mail: `inova.bg`, `app.inova.bg`, `support@inova.bg`.
-- [ ] Real pilot spreadsheet samples (blocks the M2 import column mapping).
+- [ ] The pilot's buildings and properties copied into the import template (#77) — needs the spreadsheets and the «Импорт на имоти» screen.
 - [ ] Accountant's answer on receipt/invoice shape (B2) — blocks M4 templates.
 - [ ] Counsel's answers: DPA template, EGN/identity data (B12), retention.
 - [ ] Production host provisioned per D19, with off-box backups and one

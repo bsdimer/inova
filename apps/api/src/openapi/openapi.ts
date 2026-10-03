@@ -7,14 +7,18 @@ export function applyGlobalPrefix(app: INestApplication): void {
 
 /**
  * The guide at the top of the published document (/api/docs on the test
- * portal) — written for the developers of the resident app.
+ * portal) — written for the developers of the resident app and the admin.
  */
 const GUIDE = `
 The core API: buildings, properties, residents and everything built on them.
 The answers of the resident routes (\`/me/*\`) and the brand configuration are
 TypeScript types in \`@inova/shared\` (\`MyProperty\`, \`MyPropertyDetail\`,
 \`BuildingContacts\`, \`OccupantRecord\`, \`PetRecord\`, \`MyLinkRequest\`, \`MyDevice\`,
-\`BrandConfig\`, \`ApiError\`) — import them rather than copying.
+\`BrandConfig\`, \`ApiError\`) — import them rather than copying. So are the
+answers of the staff routes the admin portal calls (\`TenantContext\`,
+\`StaffMember\`, \`RoleSummary\`, \`BuildingListItem\`, \`BuildingDetail\`,
+\`PropertyRecord\`, \`PropertyResidents\`, \`BuildingManager\`, \`RemovalRequest\`,
+\`LinkRequestQueueItem\`, \`ImportReport\`, …).
 
 **Test portal:** \`https://test-portal.whitenova.tech/api/v1\`. Signing in
 happens at auth-service — its own document at \`/auth/docs\` explains it and
@@ -55,8 +59,24 @@ answers 404, exactly like one that does not exist.
 - Every error has the body \`ApiError\`: \`{ statusCode, message, error }\`;
   \`message\` lists the broken fields on a 400.
 
-The staff routes (buildings, imports, requests, roles) are documented here too;
-their answers are described as the admin screens need them.
+## What the admin portal reads
+
+Every staff route names the right it needs (\`property.read\`, \`staff.manage\`, …);
+without it the answer is 403. A building outside a building-scoped manager's
+buildings answers 404, exactly like one that does not exist.
+
+| Screen | Call |
+| --- | --- |
+| Shell: who is signed in, what they may do | \`GET /tenant\` |
+| «Служители» | \`GET /tenant/staff\`, \`POST /tenant/staff\`, \`PATCH /tenant/staff/{userId}\` |
+| «Роли» | \`GET /tenant/roles\`, \`GET /tenant/permissions\`, \`POST\` / \`PATCH\` / \`DELETE /tenant/roles/{key}\` |
+| «Сгради» | \`GET /buildings\`, \`POST /buildings\` |
+| A building | \`GET /buildings/{id}\`, \`GET /buildings/{id}/properties\`, \`GET /buildings/{id}/managers\` |
+| A property's residents | \`GET\` / \`POST /buildings/{id}/properties/{propertyId}/residents\` |
+| «Импорт на имоти» | \`GET /imports/properties/template\`, \`POST /imports/properties\` (a dry run unless \`dryRun=false\`) |
+| «Заявки за връзка» | \`GET /link-requests\`, \`POST /link-requests/{id}/approve\` or \`/reject\` |
+| Removal requests | \`POST /buildings/{id}/removal-requests\`, \`GET /removal-requests\`; the platform decides at \`/platform/removal-requests\` |
+| «Организации» (platform) | \`GET /platform/tenants\`, \`POST /platform/tenants\` |
 `;
 
 export function createOpenApiDocument(app: INestApplication): OpenAPIObject {

@@ -1,3 +1,4 @@
+import type { ImportReport } from '@inova/shared';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { and, eq, sql } from 'drizzle-orm';
 import { readSheet } from 'read-excel-file/node';
@@ -6,28 +7,12 @@ import { apartments, buildingManagerAssignments, buildings, entrances } from '..
 import { AuditService } from '../../audit/audit.service';
 import { BuildingScope } from '../building-scope';
 import type { Actor } from '../buildings.service';
-import { checkSheet, parseCsv, type CheckedSheet, type RowError } from './property-sheet';
+import { checkSheet, parseCsv, type CheckedSheet } from './property-sheet';
 
 export interface UploadedSheet {
   buffer: Buffer;
   originalname: string;
   mimetype: string;
-}
-
-export interface ImportReport {
-  dryRun: boolean;
-  /** True only when a real run wrote everything; never partly. */
-  committed: boolean;
-  properties: number;
-  buildings: Array<{
-    name: string;
-    row: number;
-    /** `existing`: its details stay as they are; only entrances and properties are added. */
-    status: 'new' | 'existing';
-    entrancesCreated: number;
-    propertiesCreated: number;
-  }>;
-  errors: RowError[];
 }
 
 /** Ends the transaction without writing: a dry run, or a sheet with errors. */

@@ -12,7 +12,7 @@ balances, and receipts match a spreadsheet oracle.
 ## Tables
 
 `bank_transactions`, `payments`, `payment_allocations`, logical
-`cash_accounts`, `ledger_entries`, `receipts`; append-only triggers;
+`cash_accounts`, `ledger_entries`, `receipts`, fund transfers with a required `note` and an optional attachment (D38); the shared **`files` module** (`attachments`, presigned upload, AV scan) is built here, moved from M6 (D38); append-only triggers;
 idempotency table. Operational and deposit/repair funds are logical sub-ledgers
 over one real building bank account. App role: no UPDATE/DELETE on financial
 tables.
@@ -23,9 +23,10 @@ tables.
   match proposals. Ambiguous/unmatched entries stay in a staff reconciliation
   queue and do not mutate the ledger silently.
 - Payment entry (oldest-first allocation, A-ALLOC, manual override), reversal,
-  ledger writer, receipt PDF job, logical-fund summaries.
+  ledger writer, receipt PDF job (the stakeholder's fields, D38), a «Справка за плащания» PDF for a chosen period that the resident downloads in the app (D38, M5), logical-fund summaries. `payments.record` may be granted to an «Счетоводител» role (D38). The bank statement is uploaded each day there is a payment (A-BANK-MATCH).
 - Per-building allow/disallow configuration for operational/deposit transfers;
-  permitted transfers create balanced, audited ledger entries.
+  permitted transfers create balanced, audited ledger entries, with a required note and an optional document (D38).
+- The shared `files` module (D38, moved from M6): presigned upload with content-type and size limits, server-side MIME sniffing, the ClamAV scan in the worker before an attachment becomes visible. Image re-encode and thumbnails stay in M6.
 - One manager-designated verified owner occupancy receives apartment documents;
   historical documents retain their original recipient.
 
@@ -39,7 +40,9 @@ tables.
 - Designated-recipient changes do not rewrite prior documents.
 - Reversal round-trip; ledger balance properties.
 - Gapless receipt numbering under concurrency.
+- A transfer without a note is refused; its document goes through the `files` scan; the «Справка за плащания» for a period sums exactly the payments of that period.
 - `Idempotency-Key` on money-creating POSTs.
+- Malicious uploads (D38, from M6): a polyglot file, an oversized file and a wrong MIME are refused; an infected test file (EICAR) is quarantined and never becomes visible.
 
 ## Acceptance
 

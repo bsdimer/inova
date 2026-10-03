@@ -68,6 +68,15 @@ does not take the entry for the current UI.
 - **Плащания** — the name for payments to доставчици when such a section
   appears; none in the mockups yet (the expense ledger is P1). Source: D26,
   WHI-41 (23.09 18:34).
+- **Постъпления** — money coming into the building's account from residents:
+  the section «Постъпления · <месец>» in a building's «Финанси», the buttons
+  «Внеси постъпление» / «Потвърди постъпление», «чакащи постъпления». What one
+  resident paid stays «плащане» in a sentence («Плащането погасява…», «Начин
+  на плащане»), and so do the right «Въвеждане на плащане» and the app's
+  «Справка за плащания». An incoming payment pays a «входна такса», and the
+  screens say so (the column «Входна такса», «погасява входната такса за
+  октомври»). Avoid: «Плащания» for incoming money — it names payments to
+  доставчици. Source: WHI-137 (02.10: 050fe424, c60d100d, fab63dcd).
 
 ## Residents
 
@@ -99,6 +108,11 @@ does not take the entry for the current UI.
 - **Решен** — the issue status `resolved`, beside «Планиран» (`planned`) and
   «В процес» (`in_progress`); the counter and the filter are «Решени».
   Avoid: «Разрешен», «Разрешени». Source: WHI-27 (26.09 16:06), M6.
+- **Изпълнител** — who does the work on one issue: a Доставчик or a staff
+  member («служител»). One optional field on the issue, set by the house
+  manager; every change is in the issue's history (D39). It is not a role and
+  not an activity; the general word for a contracted firm stays «Доставчик».
+  Source: D39 (WHI-116, 236947fc).
 
 ## Staff and contractors
 
@@ -136,7 +150,8 @@ does not take the entry for the current UI.
   доставчик» in the «Добави» menu). The role names stay «Почистваща фирма»
   and «Техник» (D22; the Bulgarian names in the WHI-27 description, 22.09).
   Avoid: «фирма», «изпълнител», «подизпълнител» as the general word. Source:
-  WHI-27 (28.09 09:13).
+  WHI-27 (28.09 09:13). «Изпълнител» is only the field on an issue (see
+  Изпълнител).
 - **Дейност** — what a contractor does, in a few words («Почистване»,
   «Поддръжка», «Озеленяване»; `contractor.activity`, free text): the field
   under «Фирма или име» in «Нов доставчик», the second line of the building's

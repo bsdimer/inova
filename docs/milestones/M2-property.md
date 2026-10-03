@@ -38,7 +38,7 @@ The schema contract test must pass on the new tables without being rewritten.
   entrance holds apartments, which leave only through a removal request);
   apartments are added after the building exists, one by one or by import.
   The building photo is not part of M2: it needs the shared `files` module,
-  built in M6, and lands there; until then the «Сгради» list shows the icon.
+  built in M4 (D38); the photo itself lands with M6; until then the «Сгради» list shows the icon.
 - Create-resident-on-apartment: tenant-local account + effective-dated
   occupancy + invite code. Residents may be added while the building is still
   a draft (#61). Normalized email/phone is unique within the tenant,
@@ -57,7 +57,9 @@ The schema contract test must pass on the new tables without being rewritten.
   may edit or withdraw the request while it is pending; both request lists
   take a status filter, the queues show `pending` only (D27).
 - Building-scoped house-manager assignments independent of employer: tenant
-  staff, a resident owner, or a platform-employed operator may hold the role.
+  staff, a resident owner, or a platform-employed operator may hold the role. A pending
+  (not yet activated) account may be assigned; the admin marks it «поканен»
+  (planner, 02.10).
 
 ## Admin
 
@@ -146,4 +148,4 @@ Moved verbatim from the implementation plan §7 when it was split. Where this an
 - **Mobile:** distinct role-derived owner/tenant/occupant/manager views in the active branded tenant context; explicit role/view and apartment switching where applicable; tenant switching among independently authenticated accounts in the shared app (→ M10); profile screens (contacts, occupants, pets with effective dates); fallback "add my apartment" request flow. Owner-only features stay hidden and server-blocked for tenants/occupants, regardless of the selected view.
 - **Tests:** import edge cases; natural-key uniqueness including floor; duplicate email/phone across tenants but not within one tenant; multiple co-owner access; owner/tenant authorization differences; effective-date boundaries; draft vs active removal policy; removal approval audit; occupancy state machine; resident cannot see unlinked apartments.
 - **Acceptance:** inova's real structure importable from spreadsheet; verification round-trip works end to end.
-- **Risks:** source data is spreadsheets (B4 resolved) — obtain sample files early to fix column mappings for the bulk importer.
+- **Risks:** source data is spreadsheets (B4) — the import uses our own template (#77), so the pilot's data has to be copied into it once the «Импорт на имоти» screen exists.

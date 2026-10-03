@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page, type Route } from '@playwright/test';
+import { rectsInOneFrame } from './geometry';
 import { ORG_ADMIN, openSignedIn } from './session';
 
 /**
@@ -103,6 +104,22 @@ test.describe('with the list loaded', () => {
     await page.getByPlaceholder('Търси по име, имейл или телефон').fill('Мария');
     await expect(rows(page)).toHaveCount(1);
     await expect(rows(page).first()).toContainText('Мария Иванова');
+  });
+
+  test('a cut name has the full text in a tooltip', async ({ page }) => {
+    await expect(page.locator('main table').getByText('Мария Иванова')).toHaveAttribute(
+      'title',
+      'Мария Иванова',
+    );
+  });
+
+  test('«Изчисти филтрите» keeps the chosen sort', async ({ page }) => {
+    await page.getByRole('button', { name: 'Първо нуждаещите се от внимание' }).click();
+    await page.getByRole('option', { name: 'Име А–Я' }).click();
+    await page.getByPlaceholder('Търси по име, имейл или телефон').fill('никой');
+    await page.getByRole('button', { name: 'Изчисти филтрите' }).click();
+    await expect(rows(page)).toHaveCount(2);
+    await expect(page.getByRole('button', { name: 'Име А–Я' })).toBeVisible();
   });
 
   test('the sort preset reorders the list', async ({ page }) => {
@@ -355,24 +372,223 @@ test.describe('the «Роли и обхват» panel', () => {
   });
 });
 
-test('402: the filter sheet narrows the list, «Изчисти» clears it, «Покажи» closes', async ({
+test('402: the filter sheet stages the choice and applies it only on «Покажи»', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 402, height: 874 });
   await openSignedIn(page, ORG_ADMIN, '/staff');
-  await page.getByRole('button', { name: /^Филтри/ }).click();
+  const filters = page.getByRole('button', { name: /^Филтри/ });
   const sheet = page.getByRole('dialog', { name: 'Филтри' });
+  const invited = sheet.getByRole('checkbox', { name: 'Поканен' });
+
+  await filters.click();
   await expect(sheet.getByRole('heading', { level: 3 })).toHaveText(['Статус', 'Роля', 'Покана']);
-  await sheet.getByRole('checkbox', { name: 'Поканен' }).click();
-  await expect(sheet.getByRole('checkbox', { name: 'Поканен' })).toHaveAttribute(
-    'aria-checked',
-    'true',
+  // «Филтри» at the left, × against the right edge, 20 in (1126:10849).
+  const [panel, title, close] = await rectsInOneFrame(page, [
+    sheet,
+    sheet.getByRole('heading', { level: 2, name: 'Филтри' }),
+    sheet.getByRole('button', { name: 'Затвори' }),
+  ]);
+  expect(Math.round(title.x - panel.x)).toBe(20);
+  // The × disc (32) sits centred in its 44 target: 20 from the edge to the disc.
+  expect(Math.round(panel.x + panel.width - (close.x + close.width) + 6)).toBe(20);
+  // Option rows are touch targets.
+  expect(await invited.evaluate((el) => (el as HTMLElement).offsetHeight)).toBeGreaterThanOrEqual(
+    44,
   );
-  await expect(sheet.getByRole('button', { name: 'Покажи 1' })).toBeVisible();
+  await invited.click();
+  await expect(invited).toHaveAttribute('aria-checked', 'true');
+  // The button previews the result; the list behind it has not changed.
+  await expect(sheet.getByRole('button', { name: 'Покажи 1 служител' })).toBeVisible();
+  await expect(page.getByText('2 служители', { exact: true })).toBeAttached();
   await sheet.getByRole('button', { name: 'Изчисти' }).click();
-  await expect(sheet.getByRole('button', { name: 'Покажи 2' })).toBeVisible();
-  await sheet.getByRole('checkbox', { name: 'Поканен' }).click();
-  await sheet.getByRole('button', { name: 'Покажи 1' }).click();
+  await expect(invited).toHaveAttribute('aria-checked', 'false');
+  await expect(sheet.getByRole('button', { name: 'Покажи 2 служители' })).toBeVisible();
+
+  // Closing drops the choice — by Escape and by × (1126:10849).
+  await invited.click();
+  await page.keyboard.press('Escape');
+  await expect(sheet).toHaveCount(0);
+  await filters.click();
+  await invited.click();
+  await sheet.getByRole('button', { name: 'Затвори' }).click();
+  await expect(sheet).toHaveCount(0);
+  await expect(page.getByText('2 служители', { exact: true })).toBeVisible();
+  await filters.click();
+  await expect(invited).toHaveAttribute('aria-checked', 'false');
+
+  await invited.click();
+  await sheet.getByRole('button', { name: 'Покажи 1 служител' }).click();
   await expect(sheet).toHaveCount(0);
   await expect(page.getByText('1 от 2 служители')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Филтри · 1' })).toBeVisible();
+});
+
+test('a role that cannot see staff is told at once, without retries', async ({ page }) => {
+  await page.route('**/v1/tenant/staff', (route) =>
+    route.fulfill({ status: 403, json: { statusCode: 403, message: 'Forbidden' } }),
+  );
+  await openSignedIn(page, ORG_ADMIN, '/staff');
+  await expect(
+    page.locator('main table').getByText('Ролята ви не може да вижда служители'),
+  ).toBeVisible({ timeout: 3_000 });
+});
+
+test('«Опитай пак» shows the list loading at once, then the rows', async ({ page }) => {
+  let failing = true;
+  let release: () => void = () => undefined;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route('**/v1/tenant/staff', async (route) => {
+    if (failing) return route.fulfill({ status: 500, json: { statusCode: 500 } });
+    await held;
+    await route.continue();
+  });
+  await openSignedIn(page, ORG_ADMIN, '/staff');
+  const table = page.locator('main table');
+  await expect(table.getByText(/^Списъкът не можа да се зареди/)).toBeVisible({ timeout: 15_000 });
+  failing = false;
+  await table.getByRole('button', { name: 'Опитай пак' }).click();
+  // With no rows yet, the retry goes straight back to the skeleton.
+  await expect(table.locator('.animate-pulse').first()).toBeVisible();
+  await expect(table.getByText(/^Списъкът не можа да се зареди/)).toHaveCount(0);
+  release();
+  await expect(rows(page)).toHaveCount(2);
+});
+
+test('402: search across, then «Филтри» 44 high and the short sort, then the count (877:2945)', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 402, height: 874 });
+  await openSignedIn(page, ORG_ADMIN, '/staff');
+  await expect(page.getByText('2 служители', { exact: true })).toBeVisible();
+  const search = page.getByRole('searchbox', { name: 'Търсене в служителите' });
+  const filters = page.getByRole('button', { name: /^Филтри/ });
+  const sort = page.getByRole('button', { name: 'За внимание' });
+  const count = page.getByText('2 служители', { exact: true });
+  const [s, f, o, c] = await rectsInOneFrame(page, [search, filters, sort, count]);
+  expect(f.y).toBeGreaterThan(s.y + s.height);
+  expect(Math.abs(o.y - f.y)).toBeLessThanOrEqual(1);
+  expect(c.y).toBeGreaterThan(f.y + f.height);
+  expect(await filters.evaluate((el) => (el as HTMLElement).offsetHeight)).toBe(44);
+});
+
+test('402: «Покани» beside the title, the short line under it (877:2945)', async ({ page }) => {
+  await page.setViewportSize({ width: 402, height: 874 });
+  await openSignedIn(page, ORG_ADMIN, '/staff');
+  await expect(page.getByText('2 акаунта · 1 сграда', { exact: true })).toBeVisible();
+  const [title, invite] = await rectsInOneFrame(page, [
+    page.getByRole('heading', { level: 1, name: 'Служители' }),
+    page.getByRole('button', { name: /^Покани/ }),
+  ]);
+  // Same row: the button's middle is within the title's band.
+  expect(invite.y).toBeLessThan(title.y + title.height);
+  expect(invite.x).toBeGreaterThan(title.x + title.width);
+});
+
+test('402: without the right to see buildings the line counts accounts only', async ({ page }) => {
+  // The role has no `property.read`: the buildings are never asked for.
+  let asked = 0;
+  await page.route('**/v1/buildings', (route) => {
+    asked += 1;
+    return route.fulfill({ status: 403, json: { statusCode: 403 } });
+  });
+  await page.route('**/v1/tenant', async (route) => {
+    const response = await route.fetch();
+    const context = await response.json();
+    await route.fulfill({
+      response,
+      json: {
+        ...context,
+        permissions: context.permissions.filter((p: string) => p !== 'property.read'),
+      },
+    });
+  });
+  await page.setViewportSize({ width: 402, height: 874 });
+  await openSignedIn(page, ORG_ADMIN, '/staff');
+  await expect(page.getByText('2 акаунта', { exact: true })).toBeVisible();
+  await page.waitForTimeout(500);
+  await expect(page.getByText(/^2 акаунта/)).toHaveText('2 акаунта');
+  expect(asked).toBe(0);
+});
+
+test('402: a refused buildings answer is not retried and leaves the accounts alone', async ({
+  page,
+}) => {
+  let asked = 0;
+  await page.route('**/v1/buildings', (route) => {
+    asked += 1;
+    return route.fulfill({ status: 403, json: { statusCode: 403 } });
+  });
+  await page.setViewportSize({ width: 402, height: 874 });
+  const answered = page.waitForResponse('**/v1/buildings');
+  await openSignedIn(page, ORG_ADMIN, '/staff');
+  await answered;
+  await expect(page.getByText('2 акаунта', { exact: true })).toBeVisible();
+  await page.waitForTimeout(1500); // a retry would come within the first back-off
+  await expect(page.getByText(/^2 акаунта/)).toHaveText('2 акаунта');
+  expect(asked).toBe(1);
+});
+
+test('402: the head line stays while the buildings refresh in the background', async ({ page }) => {
+  let calls = 0;
+  let release: () => void = () => undefined;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route('**/v1/buildings', async (route) => {
+    calls += 1;
+    if (calls > 1) await held;
+    await route.continue();
+  });
+  await page.setViewportSize({ width: 402, height: 874 });
+  await openSignedIn(page, ORG_ADMIN, '/buildings');
+  await expect(page.getByText('1 сграда · 4 имота')).toBeVisible();
+  // Back to Служители through the app: the cached buildings are stale, so
+  // they are fetched again — and that answer is held.
+  await page.evaluate(() => {
+    history.pushState({}, '', '/staff');
+    dispatchEvent(new PopStateEvent('popstate'));
+  });
+  await expect(page.getByRole('heading', { level: 1, name: 'Служители' })).toBeVisible();
+  await expect.poll(() => calls).toBe(2);
+  await expect(page.getByText('2 акаунта · 1 сграда', { exact: true })).toBeVisible();
+  release();
+});
+
+test('402 × 600: «Покажи …» stays on screen while the options of the sheet scroll', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 402, height: 600 });
+  await openSignedIn(page, ORG_ADMIN, '/staff');
+  await page.getByRole('button', { name: /^Филтри/ }).click();
+  const sheet = page.getByRole('dialog', { name: 'Филтри' });
+  await expect(sheet.getByRole('heading', { level: 3 }).first()).toBeVisible();
+  // The options are taller than the sheet: the body scrolls, the buttons do not.
+  await expect(sheet.getByRole('button', { name: /^Покажи / })).toBeInViewport();
+  await expect(sheet.getByRole('button', { name: 'Изчисти' })).toBeInViewport();
+});
+
+test('a failed refresh of a loaded list: «Опитай пак» waits as «Зарежда…»', async ({ page }) => {
+  let failing = false;
+  let release: () => void = () => undefined;
+  let held: Promise<void> | null = null;
+  await page.route('**/v1/tenant/staff', async (route) => {
+    if (failing) return route.fulfill({ status: 500, json: { statusCode: 500 } });
+    if (held) await held;
+    await route.continue();
+  });
+  await openSignedIn(page, ORG_ADMIN, '/staff');
+  await expect(rows(page)).toHaveCount(2);
+
+  // A background refresh (the tab comes back into view) fails through its retries.
+  failing = true;
+  await page.evaluate(() => window.dispatchEvent(new Event('visibilitychange')));
+  const table = page.locator('main table');
+  await expect(table.getByText(/^Списъкът не можа да се зареди/)).toBeVisible({ timeout: 15_000 });
+
+  failing = false;
+  held = new Promise<void>((resolve) => (release = resolve));
+  await table.getByRole('button', { name: 'Опитай пак' }).click();
+  await expect(table.getByRole('button', { name: 'Зарежда…' })).toBeDisabled();
+  release();
+  await expect(table.getByText(/^Списъкът не можа да се зареди/)).toHaveCount(0);
+  await expect(rows(page)).toHaveCount(2);
 });
