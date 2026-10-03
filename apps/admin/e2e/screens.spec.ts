@@ -47,6 +47,32 @@ test('Сгради', async ({ page }) => {
   await page.screenshot(shot('sgradi'));
 });
 
+test('Нова сграда, filled in, at 1728 and 402', async ({ page }) => {
+  for (const [name, width, height] of [
+    ['1728', 1728, 1117],
+    ['402', 402, 874],
+  ] as const) {
+    await page.setViewportSize({ width, height });
+    await openSignedIn(page, ORG_ADMIN, '/buildings');
+    await page.getByRole('button', { name: /^Добави/ }).click();
+    const form = page.getByRole('dialog', { name: 'Нова сграда' });
+    await form.getByLabel('Име', { exact: true }).fill('Резиденция Лозенец');
+    await form.getByLabel('Адрес').fill('ул. Черни връх 45');
+    await form.getByLabel('Град').fill('София');
+    await form.getByLabel('Квартал').fill('Лозенец');
+    await form.getByRole('button', { name: 'Добави вход' }).click();
+    await form.getByLabel('Име на входа').fill('Б');
+    await form.getByLabel('Име на входа').press('Enter');
+    await form.getByLabel('Име на входа').press('Escape');
+    await form.getByLabel('Етажи').fill('8');
+    await form.getByText('Има асансьор').click();
+    await form.getByLabel('Разпределение на таксите').selectOption({ label: 'По идеални части' });
+    await form.getByLabel('Етажи').blur();
+    await settled(page);
+    await page.screenshot(shot(`nova-sgrada-${name}`));
+  }
+});
+
 test('Организации', async ({ page }) => {
   await openSignedIn(page, PLATFORM_ADMIN, '/tenants');
   await expect(page.locator('main table tbody tr')).toHaveCount(2);
