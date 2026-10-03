@@ -183,7 +183,10 @@ test.describe('a portfolio of four', () => {
   });
 
   test('a single city gets no «Град» filter (1553:33265)', async ({ page }) => {
-    await expect(page.getByRole('button', { name: 'Град' })).toHaveCount(0);
+    // Once the role's rights are in, the head is complete; «Добави сграда» also
+    // contains «град», hence the exact name.
+    await expect(page.getByRole('button', { name: 'Добави сграда' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Град', exact: true })).toHaveCount(0);
   });
 });
 
@@ -193,7 +196,7 @@ test('several cities add the «Град» filter', async ({ page }) => {
     { name: 'Морска', city: 'Варна', district: 'Чайка' },
   ]);
   await openSignedIn(page, ORG_ADMIN, '/buildings');
-  await page.getByRole('button', { name: 'Град' }).click();
+  await page.getByRole('button', { name: 'Град', exact: true }).click();
   await page.getByRole('option', { name: 'Варна' }).click();
   await page.keyboard.press('Escape');
   await expect(rows(page)).toHaveCount(1);
