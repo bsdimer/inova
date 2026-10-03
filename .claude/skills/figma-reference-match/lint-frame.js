@@ -13,11 +13,16 @@ const CIRCLE_SET = '846:160'; // V2/Button · Circle
 const PLUS_ICON = '496:38'; // Icon/plus · Phosphor Light
 // §8: durations and limits («валиден 10 минути», «3 опита»). The age of a
 // record («преди 3 ч.», «3 ч.» in an issue row) is sample data, not a limit.
+// §8: a sentence that promises behaviour (sends, blocks, after activation…)
+// needs a plan section or merged code. Listed for a check by hand, not counted
+// as a finding: the source is in the plan, which the lint cannot read.
+const BEHAVIOUR = /(изпраща|изпратен|тръгва|блокира|автоматично|след активиран|след като|не може да|изисква|изтрива|архивира|получава|вижда)/i;
 const NUMBER_UNITS = /\d+\s*(минути|минута|часа|час(?![а-я])|дни|ден(?![а-я])|опита|опит(?![а-я]))/i;
 const SKIP_NAMES = /^(BG photo|Scrim|Drawer scrim|Fold|Fold label|Note|Label)/;
 
 const hex = (c) => [c.r, c.g, c.b].map((v) => Math.round(v * 255).toString(16).padStart(2, '0')).join('');
 const findings = [];
+const toCheck = []; // behaviour sentences: find the plan or code source by hand (§8)
 const add = (rule, node, detail) => {
   // an exception matches the layer text, or the name for frames and cards
   const subject = node.type === 'TEXT' ? node.characters : node.name;
@@ -80,9 +85,12 @@ async function checkPanelText(node) {
 // A clipped vertical container whose content is taller than itself hides the
 // rest. It needs a scroll cue next to it (V2/Drawer · Fade, and on desktop
 // V2/Drawer · Scrollbar) — or the content has to be tightened (docs/design.md).
+// Content is cut only where a child runs past the container's edge. Summing
+// heights plus padding reported a short bottom padding as «hidden» (Табло's
+// «Card · Сгради»: 17 px padding instead of 24 read as 6 px cut, ~25 frames).
 function contentHeight(n) {
   const kids = n.children.filter((k) => k.visible && k.layoutPositioning !== 'ABSOLUTE');
-  return (n.paddingTop || 0) + (n.paddingBottom || 0) + kids.reduce((s, k) => s + k.height, 0) + (n.itemSpacing || 0) * Math.max(0, kids.length - 1);
+  return kids.reduce((m, k) => Math.max(m, k.y + k.height), 0);
 }
 function checkOverflow(node) {
   if (!('layoutMode' in node) || node.layoutMode !== 'VERTICAL' || !node.clipsContent || !node.children || !node.children.length) return;
@@ -139,6 +147,7 @@ function checkText(node, inInstance) {
     if (new RegExp(`(^|[^а-яА-Я])${a.word}([^а-яА-Я]|$)`).test(text)) add('avoid-word', node, `«${a.word}» — ${a.entry}`);
   }
   if (NUMBER_UNITS.test(text)) add('number-source', node, 'duration or limit — needs a source in the plan (§8)');
+  if (!inInstance && BEHAVIOUR.test(text)) toCheck.push({ id: node.id, text: text.slice(0, 120) });
 }
 
 async function checkCircle(node) {
@@ -226,4 +235,4 @@ for (const id of FRAME_IDS) {
 
 const byRule = {};
 for (const x of findings) byRule[x.rule] = (byRule[x.rule] || 0) + 1;
-return { frames: FRAME_IDS.length, total: findings.length, byRule, findings: findings.slice(0, 120) };
+return { frames: FRAME_IDS.length, total: findings.length, byRule, findings: findings.slice(0, 120), behaviourToCheck: toCheck.slice(0, 60) };

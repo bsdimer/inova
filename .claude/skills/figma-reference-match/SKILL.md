@@ -31,6 +31,10 @@ elsewhere and not repeated here:
 9. Every showing states what changed and what still differs.
 10. A mechanical remark that reached the stakeholder becomes, the same day,
     a lint check or a line in §12.
+11. A fix goes to every copy of the frame: its 402, dark, edit, standalone
+    and prototype-helper twins. Search the page for the old text first and
+    change all hits from that list.
+12. A prototype is «ready» only after the reachability check (§8c).
 
 ## 0. Before the first `use_figma` in a session
 
@@ -185,7 +189,15 @@ Which glass goes where — `docs/design.md` → Surfaces.
   the state again instead of assuming.
 - **`layoutSizing*` only after `appendChild`** into an auto-layout parent.
 - Overlays inside auto-layout — `layoutPositioning = 'ABSOLUTE'`, then x/y;
-  child coordinates are relative to the frame, not the canvas.
+  child coordinates are relative to the frame, not the canvas. Set it **right
+  after `appendChild`**: a scrim or panel appended into an auto-layout frame
+  first reflows `Main` and breaks its rows. A frame already broken this way is
+  rebuilt from a fresh clone of the original, not repaired.
+- **Hidden layers inside an INSTANCE may be missing from `.children`** (a
+  hidden option description, a hidden unit next to a number): a walk cannot
+  find them to show them. Rebuild the element from a sibling that has the
+  layer visible (clone the neighbouring option, set its texts), then check
+  its prototype reactions — a clone carries the source's.
 - **SF Pro is a variable font:** `setRangeFontName` fails with
   «"wdth" is not a valid variation setting». For one style over a whole
   paragraph just assign `.characters` — the first character's style spreads.
@@ -214,6 +226,13 @@ Durations, limits, counters and lifetimes **must have a source** in the plan
 (`docs/plan/decisions.md`, `docs/plan/security.md`, the milestones). A
 plausible invented number reads as decided and goes into the code. With no
 source, leave the number out (e.g. «PDF, JPG или PNG» without a size limit).
+
+The same holds for **behaviour sentences**: «изпраща», «блокира»,
+«автоматично», «след активиране», «изисква», «получава», «вижда»… Each needs
+a plan section or merged code (not the old M1/M2 pages, §9). With no source,
+rewrite it to what the plan says, or mark the frame with a note «ПО-КЪСНО —
+… още няма в плана» and leave the screen as it is. The lint returns such
+sentences as `behaviourToCheck` — a list to check by hand, not findings.
 
 ## 8a. Before showing — lint the frames
 
@@ -251,7 +270,7 @@ What `lint-frame.js` checks:
 | `series`         | siblings of the same width have a dark twin or a 402 and this frame has none (twins are matched by frame name without width and theme — name frames as a pair)        |
 | `series-glass`   | a card with the same name in a sibling frame sits on a different glass                                                                                                |
 | `panel-text`     | text bound to a glass `text/*` variable (white) on a light panel surface (`panel/fill`, `panel/row`, `panel/control`…) — it takes `panel/text` or `panel/text-muted`  |
-| `overflow`       | a clipped vertical container whose content is more than 4 px taller than itself, with no `Fade` / `Scrollbar` next to it (docs/design.md → panels: cue or tighten)    |
+| `overflow`       | a clipped vertical container with a child more than 4 px past its bottom edge, with no `Fade` / `Scrollbar` next to it (docs/design.md → panels: cue or tighten)      |
 | `past-edge`      | a direct child of the frame (panel, sheet, card) that runs more than 2 px below the frame's bottom edge                                                               |
 
 To look at the result, put the screenshots side by side with `shots.py`
@@ -305,41 +324,63 @@ screen, after the PR that first builds it is merged (rule of 30.09).
    no second pass — their screenshots in the PR are enough. No repeat full
    audits (§12).
 
-## 9. Before calling something a gap — read the contract
+## 8c. Prototype
 
-**Screens shows how it looks. M1 and M2 say how it works.** Completeness
-cannot be judged from the glass frames alone.
+- **One prototype per menu section**: one flow start on the section's main
+  1728 frame («Сигнали (M6)», «Финанси (M4)»…), no flow starts for inner
+  screens. A cloned frame clones its flow start — prune
+  `flowStartingPoints` after every clone.
+- **Motion is the admin's** (`apps/admin` `ui.tsx`): page — `DISSOLVE` 0.3 s
+  ease-out; drawer — `SMART_ANIMATE` spring mass 1 / stiffness 320 / damping
+  30, panel from y + 40 and opacity 0; modal — spring 1 / 350 / 28, y + 16,
+  scale 0.98; popover — ease-out 0.15 s, y − 4.
+- **Drawers and modals open through helper frames** in the section «V2 ·
+  Прототип · … (помощни кадри)»: «… · начало (прототип)» (overlay at its
+  start state, `AFTER_TIMEOUT` 0.001 → the real frame with the spring) and
+  «… · край (прототип)» for closing (→ the frame underneath, no transition).
+  Helpers have their own reactions cleared after cloning.
+- **The hotspot is the whole control**: a toggle instance, a row, a card —
+  not one segment or a text inside it. Every window, panel, menu and dialog
+  drawn for the section is wired, with a way back (close, «Отказ», the scrim,
+  the menu).
+- **Reachability check before «ready»**: collect every `NAVIGATE`
+  destination on the page, instance sublayers included (`findAll` skips
+  them — walk `.children`), and list the section's 1728 frames nobody
+  reaches, leaving out dark twins, 402, helpers and «Отменено». Only pure
+  states (empty, no results, error) may stay unreached.
 
-Tables were once run through the complex-data-tables checklist looking only at
-Screens, and five gaps were reported: no keyboard focus, sorting by icon only,
-non-tabular numbers, no selection or bulk, mobile filters applied live. **All
-five were already settled** — on M1 the filter sheet `153:2939` and the table
-states sheet `47:1079`, on M2 the frame `113:5992` «M2 tables — behaviour
-spec»: tab order, a 2 px focus ring, sorting in words, `tabular-nums`, a sticky
-header, truncation, and an explicit decision that M2 has no selection or bulk.
+## 9. Before calling something a gap — read the plan
 
-Before any "this is missing":
+**Rules come from the plan and merged code; current frames live only on
+Screens.** The old Figma pages M1 · Context & States and M2 · Property are
+drafts in the pre-V2 style: they may hint at UI ideas (a filter sheet, a table
+states sheet), but they are **never a rule source** — on 02.10 fourteen of
+their assumptions contradicted the plan (activation, invites, import).
 
-1. Find the contract frame on M1/M2 for the screen and read it in full,
-   including the note frames next to it (`… — note`) and the summary spec
-   frames.
+Before any "this is missing" or "this behaves so":
+
+1. Read the milestone, the decision cards and `docs/design.md` for the
+   screen, and the merged code when it exists (DTOs, services, e2e).
 2. Only then compare with Screens.
-3. Tell apart **no decision** (a finding) and **a decision not yet drawn in
-   glass** (a missing frame, not a defect).
+3. Tell apart **no decision** (a finding — a question to the planner, or to
+   the team lead when it needs the backend) and **a decision not yet drawn**
+   (a missing frame, not a defect).
 
 ## 10. Where things are
 
 - **Pages:** Foundations, Components, Screens, M1 · Context & States,
   M2 · Property, V2 · Glass direction.
-- **Screens** — all live screens, in sections in flow order: Вход → Табло →
-  Служители → Сгради → Сграда → Импорт на имоти → Апартамент →
-  Добави жител → Жители → Роли → Организации → Адаптив (Табло) → Търсене →
-  Основи и решения → Старо (pre-V2 warm style, do not edit).
+- **Screens** — all live screens, one section per area: Вход, Табло,
+  Служители, Сгради, Сграда, Импорт на имоти, Апартамент, Добави жител,
+  Жители, Роли, Организации, Финанси, Сигнали, Документи, Одитен дневник,
+  Известия, Каталог (P1), Адаптив (Табло), Търсене, Основи и решения,
+  Панели целиком, the prototype helpers and Старо (pre-V2 warm style, do not
+  edit).
 - A section label above each row of frames: «ОДОБРЕНО <date>» (approved,
   a contract) or «ЗА ПРЕГЛЕД» (awaiting review), then the frames it covers and
   the issue.
-- **M1 · Context & States** and **M2 · Property** — the behaviour contract in
-  the old warm style. Read, do not redraw, add nothing there.
+- **M1 · Context & States** and **M2 · Property** — old drafts in the warm
+  style, not a contract (§9). Do not edit, add nothing there.
 - **V2 · Glass direction** — history only since 21.09.2026: trials and early
   variants. Nothing to edit.
 - Components — page Components, section «V2 · Glass». Variables — the
@@ -369,6 +410,10 @@ Bulgarian terms used in comments on frames for drawing techniques.
   white glow; «тъмна» — the night photo with warm light.
 - «опушено стъкло» — the darkened card glass (`glass/card`), as in the
   sibling frames of the series.
+- «Супер е» / «Идеално» / «Страхотно» — an answer to a yes/no question is a
+  «да»; under a showing it means she likes what she sees. Open questions in
+  that issue still need their own answer before the label becomes
+  «ОДОБРЕНО».
 
 ## 12. Non-negotiable
 
