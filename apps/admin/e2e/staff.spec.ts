@@ -163,6 +163,14 @@ test.describe('the «Роли и обхват» panel', () => {
     return panel(page);
   }
 
+  test('402: the panel is a sheet from 40 below the top (1764:28895)', async ({ page }) => {
+    await page.setViewportSize({ width: 402, height: 874 });
+    const drawer = await openPanel(page);
+    await expect
+      .poll(() => drawer.evaluate((el) => Math.round(el.getBoundingClientRect().top)))
+      .toBe(40);
+  });
+
   /** Answers the PATCH itself; `calls` counts how many times it was asked. */
   async function answerSave(
     page: Page,
