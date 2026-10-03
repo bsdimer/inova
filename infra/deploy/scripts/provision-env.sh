@@ -62,6 +62,24 @@ if [ "$ENV_NAME" = "test" ] && ! grep -q '^CODE_DELIVERY=' "$STACK_DIR/.env"; th
   log "added CODE_DELIVERY=log (test only)"
 fi
 
+# Test reads what the system sends in its own mailbox (WHI-150): the worker
+# sends to it over SMTP, SMS included, and the team opens /mail/ with the
+# password below. Production never gets these keys.
+if [ "$ENV_NAME" = "test" ]; then
+  for setting in COMPOSE_PROFILES=mailbox EMAIL_TRANSPORT=smtp SMTP_URL=smtp://mailbox:1025 SMS_TRANSPORT=mailbox; do
+    grep -q "^${setting%%=*}=" "$STACK_DIR/.env" || { echo "$setting" >>"$STACK_DIR/.env" && log "added $setting (test only)"; }
+  done
+  if [ ! -f "$STACK_DIR/secrets/mailbox-password" ]; then
+    log "generating the test mailbox password (read it from secrets/mailbox-password)"
+    umask 077
+    openssl rand -base64 18 >"$STACK_DIR/secrets/mailbox-password"
+  fi
+  # Re-derived on every run, so a changed password file takes effect.
+  echo "team:$(openssl passwd -apr1 "$(cat "$STACK_DIR/secrets/mailbox-password")")" \
+    >"$STACK_DIR/secrets/mailbox-auth"
+  chmod 644 "$STACK_DIR/secrets/mailbox-auth"
+fi
+
 # Accounts belong to one organisation each; a sign-in that names none lands in
 # this one. Test has the seeded `inova` organisation. Production gets the key
 # of its own first organisation when that environment is created.

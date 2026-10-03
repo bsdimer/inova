@@ -97,6 +97,17 @@ verify() { curl -fsS --max-time 10 --resolve "$DOMAIN:443:127.0.0.1" "$@"; }
 verify "https://$DOMAIN/api/v1/health" >/dev/null
 verify "https://$DOMAIN/auth/v1/health" >/dev/null
 verify -o /dev/null "https://$DOMAIN/"
+# The test mailbox holds every code the system sent: it must refuse a
+# request without its password. A 200 here fails the deploy.
+if [[ ",${COMPOSE_PROFILES:-}," == *",mailbox,"* ]]; then
+  status=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 10 \
+    --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN/mail/")
+  if [ "$status" != "401" ]; then
+    echo "FAILED: https://$DOMAIN/mail/ answered $status without a password (expected 401)" >&2
+    exit 1
+  fi
+  log "mailbox refuses a request without its password"
+fi
 
 # Public DNS is reported, not enforced. The ::warning:: line surfaces as an
 # annotation on the GitHub Actions run.
