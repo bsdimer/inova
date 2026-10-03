@@ -163,6 +163,14 @@ test.describe('the «Роли и обхват» panel', () => {
     return panel(page);
   }
 
+  test('402: the panel is a sheet from 40 below the top (1764:28895)', async ({ page }) => {
+    await page.setViewportSize({ width: 402, height: 874 });
+    const drawer = await openPanel(page);
+    await expect
+      .poll(() => drawer.evaluate((el) => Math.round(el.getBoundingClientRect().top)))
+      .toBe(40);
+  });
+
   /** Answers the PATCH itself; `calls` counts how many times it was asked. */
   async function answerSave(
     page: Page,
@@ -591,4 +599,50 @@ test('a failed refresh of a loaded list: «Опитай пак» waits as «За
   release();
   await expect(table.getByText(/^Списъкът не можа да се зареди/)).toHaveCount(0);
   await expect(rows(page)).toHaveCount(2);
+});
+
+test('402: the filter sheet as drawn — top at 132, rows every 46, labels 15/18 regular (1126:10849)', async ({
+  page,
+}) => {
+  // 132 is the cap: a shorter list leaves a shorter sheet. Ten more roles
+  // make the options taller than the screen, so the sheet meets the cap.
+  await page.route('**/v1/tenant/roles', async (route) => {
+    if (route.request().method() !== 'GET') return route.fallback();
+    const response = await route.fetch();
+    const extra = Array.from({ length: 10 }, (_, i) => ({
+      key: `extra-${i}`,
+      name: `Роля ${i + 1}`,
+      isSystem: false,
+      permissions: [],
+      members: 0,
+    }));
+    await route.fulfill({ response, json: [...(await response.json()), ...extra] });
+  });
+  await page.setViewportSize({ width: 402, height: 874 });
+  await openSignedIn(page, ORG_ADMIN, '/staff');
+  await page.getByRole('button', { name: /^Филтри/ }).click();
+  const sheet = page.getByRole('dialog', { name: 'Филтри' });
+  // The sheet springs up; read its top once it has settled.
+  await expect
+    .poll(() => sheet.evaluate((el) => Math.round(el.getBoundingClientRect().top)))
+    .toBe(132);
+  const [active, invited] = [
+    sheet.getByRole('checkbox', { name: /^Активен/ }),
+    sheet.getByRole('checkbox', { name: /^Поканен/ }),
+  ];
+  const pitch = await invited.evaluate(
+    (el, prev) => (el as HTMLElement).offsetTop - prev,
+    await active.evaluate((el) => (el as HTMLElement).offsetTop),
+  );
+  expect(pitch).toBe(46);
+  const label = await active.getByText('Активен').evaluate((el) => {
+    const s = getComputedStyle(el);
+    return `${s.fontSize}/${s.lineHeight} ${s.fontWeight}`;
+  });
+  expect(label).toBe('15px/18px 400');
+  expect(
+    await sheet
+      .getByRole('heading', { level: 2, name: 'Филтри' })
+      .evaluate((el) => getComputedStyle(el).fontWeight),
+  ).toBe('500');
 });

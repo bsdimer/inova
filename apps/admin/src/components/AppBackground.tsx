@@ -3,7 +3,8 @@ import { useResolvedTheme } from '../lib/theme';
 
 /**
  * The photograph behind the whole app, plus the gradient scrim that keeps text
- * legible over its bright areas.
+ * legible over its bright areas, and on a phone in the light theme a second
+ * shade under the page head.
  *
  * It is a real <img> rather than a CSS background-image: the design calls for a
  * fixed layer, and `background-attachment: fixed` is broken in iOS Safari.
@@ -17,7 +18,7 @@ import { useResolvedTheme } from '../lib/theme';
  * changes underneath. Until it is on the surfaces are plain tints, which is
  * the right fallback.
  */
-export function AppBackground() {
+export function AppBackground({ headScrim = false }: { headScrim?: boolean }) {
   const theme = useResolvedTheme();
   const ref = useRef<HTMLImageElement>(null);
 
@@ -70,6 +71,10 @@ export function AppBackground() {
         className="h-full w-full object-cover"
       />
       <span className="app-scrim" />
+      {/* The phone's shade under the page title (WHI-37 c982891f): the light
+          photograph is brightest at the top, where the 402 head sits. Not on
+          the sign-in pages, which have no head. */}
+      {headScrim && theme === 'light' && <span className="app-head-scrim md:hidden" />}
     </div>
   );
 }

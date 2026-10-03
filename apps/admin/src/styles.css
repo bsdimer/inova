@@ -344,6 +344,20 @@ body {
   );
 }
 
+/* «Scrim · шапка» of the light 402 frames (e.g. 952:5831): 300 tall from the top. */
+.app-head-scrim {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 18.75rem;
+  background-image: linear-gradient(
+    180deg,
+    rgb(0 0 0 / 0.42) 0,
+    rgb(0 0 0 / 0.22) 11.25rem,
+    rgb(0 0 0 / 0) 18.75rem
+  );
+}
+
 /** Everything the app draws sits above the photograph layer. */
 .app-content {
   position: relative;

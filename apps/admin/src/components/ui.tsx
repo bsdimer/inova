@@ -777,6 +777,7 @@ export function Drawer({
   children,
   label,
   pinFooter = false,
+  phoneHeight = 'max-h-[92vh]',
 }: {
   open: boolean;
   onClose: () => void;
@@ -789,6 +790,8 @@ export function Drawer({
    * design.md pins the buttons (the filter sheet, a long table's action).
    */
   pinFooter?: boolean;
+  /** The sheet's height (or cap) on a phone, as a Tailwind class written out in full. */
+  phoneHeight?: string;
 }) {
   const dialog = useDialog<HTMLElement>(open, onClose);
   const body = useRef<HTMLDivElement>(null);
@@ -841,7 +844,7 @@ export function Drawer({
             // the note, «Отказ» and «Запази промените» side by side. The
             // sheet's top corners are 28, its bottom ones straight (1764:28895);
             // the floating panel is 28 round on every corner.
-            className="panel flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-[1.75rem] sm:h-full sm:max-h-none sm:w-[32.5rem] sm:rounded-[1.75rem]"
+            className={`panel flex ${phoneHeight} w-full flex-col overflow-hidden rounded-t-[1.75rem] sm:h-full sm:max-h-none sm:w-[32.5rem] sm:rounded-[1.75rem]`}
           >
             <div className="shrink-0 border-b border-panel-divider px-5 py-4">{header}</div>
             <div
@@ -944,10 +947,12 @@ export function FilterSheet<K extends string>({
       onClose={onClose}
       label="Филтри"
       pinFooter
+      // 1126:10849: the sheet starts 132 below the top of the screen.
+      phoneHeight="max-h-[calc(100dvh-8.25rem)]"
       header={
         // 1126:10849: × beside the title, the actions at the foot.
         <div className="flex items-center justify-between gap-2">
-          <h2 className="text-base font-semibold">Филтри</h2>
+          <h2 className="text-base font-medium">Филтри</h2>
           <button
             type="button"
             onClick={onClose}
@@ -994,7 +999,7 @@ export function FilterSheet<K extends string>({
             <h3 className="mb-2 text-xs font-semibold tracking-wider text-panel-ink-faint uppercase">
               {group.title}
             </h3>
-            <div>
+            <div className="space-y-0.5">
               {group.options.map((option) => {
                 const checked = draft[group.key].includes(option.value);
                 return (
@@ -1004,10 +1009,10 @@ export function FilterSheet<K extends string>({
                     role="checkbox"
                     aria-checked={checked}
                     onClick={() => setDraft(toggleChoice(draft, group.key, option.value))}
-                    className="flex min-h-11 w-full items-center gap-3 text-left text-sm font-medium text-panel-ink"
+                    className="flex min-h-11 w-full items-center gap-3 text-left text-panel-ink"
                   >
                     <span
-                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md ${
+                      className={`flex h-[1.375rem] w-[1.375rem] shrink-0 items-center justify-center rounded-md ${
                         checked ? 'bg-panel-ink' : ''
                       }`}
                       style={{
@@ -1022,9 +1027,11 @@ export function FilterSheet<K extends string>({
                         />
                       )}
                     </span>
-                    <span className="min-w-0 flex-1 truncate">{option.label}</span>
+                    <span className="text-body-15-tight min-w-0 flex-1 truncate">
+                      {option.label}
+                    </span>
                     {/* Facet count: the option alone in its group, the rest of the draft as it is. */}
-                    <span className="num shrink-0 text-panel-ink-muted">
+                    <span className="num text-body-14 shrink-0 text-panel-ink-muted">
                       {countWith({ ...draft, [group.key]: [option.value] })}
                     </span>
                   </button>

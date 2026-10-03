@@ -1,5 +1,6 @@
 import { Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
 import { AnimatePresence, animate, motion, useMotionValue } from 'framer-motion';
+import type { AuthSession } from '@inova/shared';
 import {
   Bell,
   Buildings,
@@ -119,7 +120,7 @@ export function AppShell() {
 
   return (
     <>
-      <AppBackground />
+      <AppBackground headScrim />
       {/*
         The page's margins, per 1074:9754 and the design README (Адаптив):
         16 on a phone, 24 on a tablet; from 1024 the column is centred — the
@@ -186,7 +187,9 @@ export function AppShell() {
             onOpenNav={() => setOverlay(true)}
             session={session}
           />
-          {mode === 'drawer' && <GlobalSearch className="md:hidden" />}
+          {/* On a phone the general search lives on Табло only (818:11596);
+              the other pages search their own list. */}
+          {mode === 'drawer' && pathname === '/' && <GlobalSearch className="md:hidden" />}
           {!platform && <PlatformVisitNote session={session} />}
           <motion.main
             key={pathname}
@@ -223,7 +226,7 @@ export function AppShell() {
  * (`AuditService.record`, actorType 'platform'). The banner says so, and
  * carries the way back out.
  */
-function PlatformVisitNote({ session }: { session: Session }) {
+function PlatformVisitNote({ session }: { session: AuthSession | null }) {
   const navigate = useNavigate();
   const context = useTenantContext();
 
@@ -257,8 +260,7 @@ function PlatformVisitNote({ session }: { session: Session }) {
 }
 
 type NavGroups = readonly (readonly { to: string; label: string; icon: typeof Bell }[])[];
-type Session = ReturnType<typeof getSession>;
-type Shared = { nav: NavGroups; pathname: string; session: Session; platform: boolean };
+type Shared = { nav: NavGroups; pathname: string; session: AuthSession | null; platform: boolean };
 
 const isActive = (to: string, pathname: string) =>
   to === '/' ? pathname === '/' : pathname.startsWith(to);
@@ -411,7 +413,7 @@ function NavList({ nav, pathname }: { nav: NavGroups; pathname: string }) {
 }
 
 /** The sidebar's foot: a 100 px rule, then who is signed in. */
-function SidebarFooter({ session }: { session: Session }) {
+function SidebarFooter({ session }: { session: AuthSession | null }) {
   const role = useRoleName(session);
   const name = session?.user.fullName ?? '—';
   return (
@@ -766,7 +768,7 @@ function Topbar({
   menuButton: RefObject<HTMLButtonElement | null>;
   menuOpen: boolean;
   onOpenNav: () => void;
-  session: Session;
+  session: AuthSession | null;
 }) {
   const compact = mode === 'drawer';
   // One tree for both bars: every element keeps its place, so crossing 1024
@@ -774,7 +776,7 @@ function Topbar({
   return (
     // Below 1024, V2/Topbar tablet (850:360) and phone (850:382): the menu
     // button and the wordmark lead; on a tablet the search fills the middle,
-    // on a phone it drops to its own row under the bar. From 1024, V2/Topbar
+    // on a phone, on Табло only, it drops to its own row under the bar. From 1024, V2/Topbar
     // (850:312): search 380 wide, a spacer, the bell and the account, 20 apart.
     <header className={`flex h-14 items-center ${compact ? 'gap-3 md:gap-5' : 'gap-5'}`}>
       {compact && (
