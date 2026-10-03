@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { BuildingListItem, RoleSummary, StaffMember, TenantContext } from '@inova/shared';
 import {
   WarningCircle,
   CheckCircle,
@@ -19,15 +20,7 @@ import {
   type FacetOption,
   type StripTone,
 } from '../components/ui';
-import {
-  api,
-  ApiError,
-  retryUnlessRefused,
-  type Building,
-  type Role,
-  type StaffMember,
-  type TenantContext,
-} from '../lib/api';
+import { api, ApiError, retryUnlessRefused } from '../lib/api';
 import { getSession } from '../lib/auth';
 import { useSelectedTenantId } from '../lib/tenant';
 import { permissionLabel } from './roles/permissions';
@@ -91,7 +84,7 @@ export function StaffPage() {
   const canReadBuildings = context.data?.permissions.includes('property.read') === true;
   const buildings = useQuery({
     queryKey: ['buildings', tenantId],
-    queryFn: () => api<Building[]>('/buildings', { tenantId: tenantId! }),
+    queryFn: () => api<BuildingListItem[]>('/buildings', { tenantId: tenantId! }),
     enabled: Boolean(tenantId) && canReadBuildings,
     // A count in a head line is not worth ~7 s of retries: on any failure
     // the line shows the accounts alone.
@@ -99,7 +92,7 @@ export function StaffPage() {
   });
   const roles = useQuery({
     queryKey: ['roles', tenantId],
-    queryFn: () => api<Role[]>('/tenant/roles', { tenantId: tenantId! }),
+    queryFn: () => api<RoleSummary[]>('/tenant/roles', { tenantId: tenantId! }),
     enabled: Boolean(tenantId),
   });
 
@@ -341,7 +334,7 @@ function buildEmptyBody(input: {
   members: StaffMember[];
   visible: StaffMember[];
   filters: StaffFilters;
-  roles: Role[];
+  roles: RoleSummary[];
   canManage: boolean;
   onInvite: () => void;
   onReset: () => void;

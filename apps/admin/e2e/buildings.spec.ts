@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import type { BuildingListItem, BuildingStatus } from '@inova/shared';
 import { rectsInOneFrame } from './geometry';
 import { ORG_ADMIN, openSignedIn } from './session';
 
@@ -15,17 +16,16 @@ interface Fake {
   city?: string;
   district?: string;
   address?: string;
-  status?: 'draft' | 'active' | 'archived';
+  status?: BuildingStatus;
   floors?: number;
   entrances?: number;
   apartments?: number;
   garages?: number;
 }
 
-function building(fake: Fake, i: number) {
+function building(fake: Fake, i: number): BuildingListItem {
   return {
     id: `00000000-0000-4000-8000-${String(i).padStart(12, '0')}`,
-    tenantId: '00000000-0000-4000-8000-000000000000',
     name: fake.name,
     city: fake.city ?? 'София',
     district: fake.district ?? 'Лозенец',

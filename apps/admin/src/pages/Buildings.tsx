@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState, type ReactNode } from 'react';
+import type { BuildingListItem, TenantContext } from '@inova/shared';
 import { Buildings, Lock, MagnifyingGlass, Warning } from '../components/icons';
 import { EmptyState, GhostButton, PrimaryButton } from '../components/ui';
-import { api, ApiError, retryUnlessRefused, type Building, type TenantContext } from '../lib/api';
+import { api, ApiError, retryUnlessRefused } from '../lib/api';
 import { useSelectedTenantId } from '../lib/tenant';
 import { permissionLabel } from './roles/permissions';
 import {
@@ -40,7 +41,7 @@ export function BuildingsPage() {
   });
   const list = useQuery({
     queryKey: ['buildings', tenantId],
-    queryFn: () => api<Building[]>('/buildings', { tenantId: tenantId! }),
+    queryFn: () => api<BuildingListItem[]>('/buildings', { tenantId: tenantId! }),
     enabled: Boolean(tenantId),
     retry: retryUnlessRefused,
   });

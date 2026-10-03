@@ -3,9 +3,7 @@
  * how the toolbar narrows the list. Kept free of React so the rules stay
  * testable and the page only wires state.
  */
-import type { Role, StaffMember } from '../../lib/api';
-
-export type MemberStatus = StaffMember['status'];
+import type { RoleSummary, StaffMember, StaffStatus } from '@inova/shared';
 
 /**
  * Invite column. The API only exposes membership status: an `invited` member
@@ -28,7 +26,7 @@ export const INVITE_LABELS: Record<InviteState, string> = {
   none: '—',
 };
 
-export const STATUS_LABELS: Record<MemberStatus, string> = {
+export const STATUS_LABELS: Record<StaffStatus, string> = {
   active: 'Активен',
   invited: 'Поканен',
   suspended: 'Спрян',
@@ -37,14 +35,14 @@ export const STATUS_LABELS: Record<MemberStatus, string> = {
 
 export type StatusTone = 'pending' | 'urgent' | 'resolved' | 'muted';
 
-export const STATUS_TONES: Record<MemberStatus, StatusTone> = {
+export const STATUS_TONES: Record<StaffStatus, StatusTone> = {
   active: 'resolved',
   invited: 'pending',
   suspended: 'urgent',
   revoked: 'muted',
 };
 
-export const STATUS_ORDER: MemberStatus[] = ['active', 'invited', 'suspended', 'revoked'];
+export const STATUS_ORDER: StaffStatus[] = ['active', 'invited', 'suspended', 'revoked'];
 
 /**
  * Bulgarian names for the role keys the seed creates. A tenant's own custom
@@ -65,7 +63,7 @@ export const ROLE_NAMES: Record<string, string> = {
   technician: 'Техник',
 };
 
-export function roleName(key: string, roles: Role[]): string {
+export function roleName(key: string, roles: RoleSummary[]): string {
   return ROLE_NAMES[key] ?? roles.find((r) => r.key === key)?.name ?? key;
 }
 
@@ -75,7 +73,10 @@ export function roleName(key: string, roles: Role[]): string {
  * `+N` overflow do not change when the data does.
  * TODO(M1-B8): read `member.roles` once the API returns several.
  */
-export function rolesOf(member: StaffMember, roles: Role[]): { key: string; name: string }[] {
+export function rolesOf(
+  member: StaffMember,
+  roles: RoleSummary[],
+): { key: string; name: string }[] {
   return [{ key: member.roleKey, name: roleName(member.roleKey, roles) }];
 }
 
@@ -113,7 +114,7 @@ export const SORT_SHORT_LABELS: Record<SortPreset, string> = {
 
 export interface StaffFilters {
   search: string;
-  status: MemberStatus[];
+  status: StaffStatus[];
   role: string[];
   invite: InviteState[];
   sort: SortPreset;
@@ -161,7 +162,7 @@ export function applyFilters(members: StaffMember[], f: StaffFilters): StaffMemb
 
 // Lower comes first. Invited accounts wait on someone; suspended ones on a
 // decision; revoked ones are history.
-const ATTENTION_RANK: Record<MemberStatus, number> = {
+const ATTENTION_RANK: Record<StaffStatus, number> = {
   invited: 0,
   suspended: 1,
   active: 2,
@@ -187,10 +188,10 @@ export function sortMembers(members: StaffMember[], preset: SortPreset): StaffMe
 export function describeFacet(
   key: 'status' | 'role' | 'invite',
   values: string[],
-  roles: Role[],
+  roles: RoleSummary[],
 ): string {
   const labels = values.map((v) => {
-    if (key === 'status') return STATUS_LABELS[v as MemberStatus] ?? v;
+    if (key === 'status') return STATUS_LABELS[v as StaffStatus] ?? v;
     if (key === 'invite') return INVITE_LABELS[v as InviteState] ?? v;
     return roleName(v, roles);
   });
@@ -202,7 +203,7 @@ export function describeFacet(
  * The active filters as one sentence for the no-results state (880:3378):
  * «Филтриране по статус е „Поканен“ или „Спрян“ и търсенето е „Иван“».
  */
-export function describeFilters(f: StaffFilters, roles: Role[]): string {
+export function describeFilters(f: StaffFilters, roles: RoleSummary[]): string {
   const quoted = (labels: string[]) => labels.map((l) => `„${l}“`).join(' или ');
   const parts: string[] = [];
   if (f.status.length) {

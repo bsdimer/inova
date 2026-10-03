@@ -9,8 +9,8 @@ import {
   X,
 } from '../../components/icons';
 import { useState } from 'react';
+import type { RoleSummary, StaffMember } from '@inova/shared';
 import { Avatar, ConfirmDialog, Drawer, StatusDot } from '../../components/ui';
-import type { Role, StaffMember } from '../../lib/api';
 import { permissionLabel, sortPermissions } from '../roles/permissions';
 import {
   ACTION_PROGRESS,
@@ -39,7 +39,7 @@ const ROLE_DESCRIPTIONS: Record<string, string> = {
   technician: 'Само сигналите с етикет «Поддръжка».',
 };
 
-function describeRole(role: Role): string {
+function describeRole(role: RoleSummary): string {
   return (
     ROLE_DESCRIPTIONS[role.key] ??
     `${role.permissions.length} ${role.permissions.length === 1 ? 'право' : 'права'}.`
@@ -66,7 +66,7 @@ export function RolesScopeDrawer({
   onAccountAction,
 }: {
   member: StaffMember | null;
-  roles: Role[];
+  roles: RoleSummary[];
   save: SaveState;
   protection: string | null;
   onClose: () => void;
@@ -340,7 +340,7 @@ function SaveBand({
 }: {
   save: SaveState;
   member: StaffMember;
-  roles: Role[];
+  roles: RoleSummary[];
   dirty: boolean;
 }) {
   if (save.kind === 'failed') {

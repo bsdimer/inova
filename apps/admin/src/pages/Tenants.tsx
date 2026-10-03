@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
+import type { ProvisionResult, TenantStatus, TenantSummary } from '@inova/shared';
 import { ArrowLeft, ArrowRight, Check, Sparkle } from '../components/icons';
 import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
@@ -16,10 +17,8 @@ import {
   type FacetOption,
   type StatusTone,
 } from '../components/ui';
-import { api, ApiError, type ProvisionResult, type TenantSummary } from '../lib/api';
+import { api, ApiError } from '../lib/api';
 import { setSelectedTenantId } from '../lib/tenant';
-
-type TenantStatus = TenantSummary['status'];
 
 const STATUS_LABELS: Record<TenantStatus, string> = {
   trial: 'Пробен период',
