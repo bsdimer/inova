@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
+import type { InvitedStaff, RoleSummary } from '@inova/shared';
 import { Field, Modal, panelInputClass } from '../../components/ui';
-import { api, ApiError, type Role } from '../../lib/api';
+import { api, ApiError } from '../../lib/api';
 import { ROLE_NAMES } from './model';
 
 /**
@@ -18,7 +19,7 @@ export function InviteModal({
   open: boolean;
   onClose: () => void;
   tenantId: string | null;
-  roles: Role[];
+  roles: RoleSummary[];
 }) {
   const queryClient = useQueryClient();
   const [fullName, setFullName] = useState('');
@@ -30,7 +31,7 @@ export function InviteModal({
 
   const invite = useMutation({
     mutationFn: () =>
-      api<{ inviteSent: boolean }>('/tenant/staff', {
+      api<InvitedStaff>('/tenant/staff', {
         method: 'POST',
         tenantId: tenantId!,
         body: { fullName, email, phone: phone || undefined, roleKey },

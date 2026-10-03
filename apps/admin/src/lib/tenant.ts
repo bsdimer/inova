@@ -6,7 +6,8 @@
  */
 import { useQuery } from '@tanstack/react-query';
 import { useSyncExternalStore } from 'react';
-import { api, type TenantContext } from './api';
+import type { TenantContext } from '@inova/shared';
+import { api } from './api';
 import { getSession } from './auth';
 
 const STORAGE_KEY = 'inova.tenantId';

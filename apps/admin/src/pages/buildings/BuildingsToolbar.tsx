@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { BuildingStatus } from '@inova/shared';
 import { SlidersHorizontal } from '../../components/icons';
 import {
   Facet,
@@ -22,7 +23,6 @@ import {
   hasActiveFacets,
   hasAnyFilter,
   type BuildingFilters,
-  type BuildingStatus,
   type FacetKey,
 } from './model';
 

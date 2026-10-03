@@ -64,14 +64,6 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
   return (await res.json()) as T;
 }
 
-// ---------------------------------------------------------------------------
-// API response types (mirror apps/api controllers)
-
-import type { TenantSummary } from '@inova/shared';
-
-// The /tenant contract lives in packages/shared, shared with core-api.
-export type { TenantContext, TenantSummary } from '@inova/shared';
-
 /**
  * TanStack Query `retry` for lists: a refusal or a bad request (4xx) does not
  * change on a retry, so it is shown at once; a server or network error gets
@@ -79,48 +71,4 @@ export type { TenantContext, TenantSummary } from '@inova/shared';
  */
 export function retryUnlessRefused(failures: number, error: Error): boolean {
   return !(error instanceof ApiError && error.status < 500) && failures < 3;
-}
-
-export interface StaffMember {
-  userId: string;
-  roleKey: string;
-  status: 'invited' | 'active' | 'suspended' | 'revoked';
-  fullName: string;
-  email: string | null;
-  phone: string | null;
-  since: string;
-}
-
-/** `GET /tenant` — the caller's own role and effective permissions. */
-export interface Role {
-  key: string;
-  name: string;
-  isSystem: boolean;
-  permissions: string[];
-  members: number;
-}
-
-export interface Permission {
-  key: string;
-  description: string;
-}
-
-export interface ProvisionResult {
-  tenant: TenantSummary;
-  adminInviteSent: boolean;
-}
-
-/** One row of `GET /buildings`: the building with its entrance and property counts. */
-export interface Building {
-  id: string;
-  name: string;
-  city: string;
-  district: string;
-  address: string;
-  floors: number;
-  hasElevator: boolean;
-  status: 'draft' | 'active' | 'archived';
-  activatedAt: string | null;
-  entranceCount: number;
-  propertyCounts: Record<'apartment' | 'garage' | 'shop' | 'storage' | 'parking_spot', number>;
 }

@@ -1,5 +1,6 @@
 import { SlidersHorizontal } from '../../components/icons';
 import { useState } from 'react';
+import type { RoleSummary, StaffStatus } from '@inova/shared';
 import {
   Facet,
   FilterChip,
@@ -9,7 +10,6 @@ import {
   SortSelect,
   type FacetOption,
 } from '../../components/ui';
-import type { Role } from '../../lib/api';
 import {
   INVITE_LABELS,
   SORT_LABELS,
@@ -21,7 +21,6 @@ import {
   hasActiveFacets,
   hasAnyFilter,
   type InviteState,
-  type MemberStatus,
   type StaffFilters,
 } from './model';
 
@@ -38,7 +37,7 @@ interface ToolbarProps {
   filters: StaffFilters;
   onChange: (next: StaffFilters) => void;
   roleOptions: FacetOption[];
-  roles: Role[];
+  roles: RoleSummary[];
   shown: number;
   total: number;
   /** How many members a choice of facets would leave, for the sheet's preview. */
@@ -172,7 +171,7 @@ export function StaffToolbar(props: ToolbarProps) {
 
 type SheetKey = 'status' | 'role' | 'invite';
 
-function isMemberStatus(value: string): value is MemberStatus {
+function isStaffStatus(value: string): value is StaffStatus {
   return (STATUS_ORDER as readonly string[]).includes(value);
 }
 
@@ -183,7 +182,7 @@ function isInviteState(value: string): value is InviteState {
 function withChoice(filters: StaffFilters, choice: FilterChoice<SheetKey>): StaffFilters {
   return {
     ...filters,
-    status: choice.status.filter(isMemberStatus),
+    status: choice.status.filter(isStaffStatus),
     role: choice.role,
     invite: choice.invite.filter(isInviteState),
   };

@@ -1,7 +1,7 @@
 import { WarningCircle, CheckCircle, Clock, CircleNotch, DotsThree } from '../../components/icons';
 import type { ReactNode } from 'react';
+import type { StaffMember } from '@inova/shared';
 import { Avatar, Chip, SolidIconButton, StatusDot } from '../../components/ui';
-import type { StaffMember } from '../../lib/api';
 import {
   INVITE_LABELS,
   STATUS_LABELS,

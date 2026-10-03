@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
+import type { BuildingListItem } from '@inova/shared';
 import { Buildings } from '../../components/icons';
 import { SkeletonBar, StatusDot } from '../../components/ui';
-import type { Building } from '../../lib/api';
 import { STATUS_LABELS, STATUS_TONES, addressLine, counted, propertyTotal } from './model';
 
 /**
@@ -112,7 +112,7 @@ const CELL = 'px-3 align-middle';
 // once `GET /buildings` carries them (asked in WHI-96); «—» until then.
 const UNKNOWN = <span className="text-body-14 text-ink-soft">—</span>;
 
-export function BuildingRow({ building }: { building: Building }) {
+export function BuildingRow({ building }: { building: BuildingListItem }) {
   return (
     <tr className="h-[4.0625rem] transition-colors hover:bg-glass-inner-soft">
       <td className={CELL}>
@@ -149,7 +149,7 @@ export function BuildingRow({ building }: { building: Building }) {
 }
 
 /** Phone layout (952:5831): one card per building. */
-export function BuildingCard({ building }: { building: Building }) {
+export function BuildingCard({ building }: { building: BuildingListItem }) {
   return (
     <article className="glass-data p-4" aria-label={building.name}>
       <div className="flex items-center gap-3">
