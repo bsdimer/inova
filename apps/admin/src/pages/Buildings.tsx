@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { BuildingListItem, TenantContext } from '@inova/shared';
-import { Buildings, Lock, MagnifyingGlass, Warning } from '../components/icons';
+import { Buildings, Lock, MagnifyingGlass, Plus, Warning } from '../components/icons';
 import { EmptyState, GhostButton, PrimaryButton } from '../components/ui';
 import { api, ApiError, retryUnlessRefused } from '../lib/api';
 import { useSelectedTenantId } from '../lib/tenant';
@@ -15,6 +15,7 @@ import {
   SkeletonRows,
 } from './buildings/BuildingsTable';
 import { BuildingsToolbar } from './buildings/BuildingsToolbar';
+import { NewBuildingDrawer } from './buildings/NewBuildingDrawer';
 import {
   EMPTY_FILTERS,
   applyFilters,
@@ -27,11 +28,15 @@ import {
   type BuildingFilters,
 } from './buildings/model';
 
-// TODO(M2): «Добави сграда» and «Импорт от таблица» (945:5108) come with the
-// building form and the import screens.
+// TODO(M2): «Импорт от таблица» (945:5108) comes with the import screens.
 export function BuildingsPage() {
   const tenantId = useSelectedTenantId();
   const [filters, setFilters] = useState<BuildingFilters>(EMPTY_FILTERS);
+  const [creating, setCreating] = useState(false);
+  // After the first building the empty list's button is gone: the focus goes
+  // to «Добави сграда» in the head once the list has it.
+  const addButton = useRef<HTMLButtonElement>(null);
+  const focusAddOnList = useRef(false);
 
   const context = useQuery({
     queryKey: ['tenant', tenantId],
@@ -52,10 +57,16 @@ export function BuildingsPage() {
     [buildings, filters],
   );
   const tenantName = context.data?.tenant.name ?? 'организацията';
+  const canCreate = context.data?.permissions.includes('property.write') === true;
   const denied = list.error instanceof ApiError && list.error.status === 403;
   const properties = buildings.reduce((sum, b) => sum + propertyTotal(b), 0);
   const loading = list.isPending;
   const hasList = buildings.length > 0;
+  useEffect(() => {
+    if (!focusAddOnList.current || !hasList) return;
+    focusAddOnList.current = false;
+    addButton.current?.focus();
+  }, [hasList]);
   // The toolbar stays from the first frame so the rows do not jump down when
   // they arrive; it goes only where there is nothing to search.
   const showToolbar = !list.error && (loading || hasList);
@@ -71,20 +82,30 @@ export function BuildingsPage() {
     retrying: list.isFetching,
     onRetry: () => void list.refetch(),
     onReset: () => setFilters({ ...EMPTY_FILTERS, sort: filters.sort }),
+    onCreate: canCreate ? () => setCreating(true) : null,
   });
 
   return (
     // Page head, toolbar and table stand 16 apart (945:5108: 72 + 50 → 138, 242 → 258).
     <div className="space-y-4">
-      <div className="min-w-0">
-        <h1 className="text-title-22 font-medium">Сгради</h1>
-        <p className="text-body-14 mt-1 hidden text-ink-muted md:block">
-          Портфолиото на {tenantName} — всяка сграда с входовете, имотите и домоуправителя ѝ.
-        </p>
-        {hasList && (
-          <p className="num text-body-14 mt-1 text-ink-soft md:hidden">
-            {counted(buildings.length, 'сграда', 'сгради')} · {counted(properties, 'имот', 'имота')}
+      {/* On a phone «Добави» stays beside the title (952:5831), as «Покани» on Служители. */}
+      <div className="flex items-start justify-between gap-4 md:flex-wrap md:items-center md:gap-x-6">
+        <div className="min-w-0">
+          <h1 className="text-title-22 font-medium">Сгради</h1>
+          <p className="text-body-14 mt-1 hidden text-ink-muted md:block">
+            Портфолиото на {tenantName} — всяка сграда с входовете, имотите и домоуправителя ѝ.
           </p>
+          {hasList && (
+            <p className="num text-body-14 mt-1 text-ink-soft md:hidden">
+              {counted(buildings.length, 'сграда', 'сгради')} ·{' '}
+              {counted(properties, 'имот', 'имота')}
+            </p>
+          )}
+        </div>
+        {canCreate && hasList && (
+          <PrimaryButton ref={addButton} onClick={() => setCreating(true)}>
+            Добави<span className="hidden sm:inline"> сграда</span>
+          </PrimaryButton>
         )}
       </div>
 
@@ -133,6 +154,17 @@ export function BuildingsPage() {
           </div>
         </>
       )}
+
+      <NewBuildingDrawer
+        open={creating}
+        onClose={() => setCreating(false)}
+        onCreated={() => {
+          if (!hasList) focusAddOnList.current = true;
+        }}
+        tenantId={tenantId}
+        cities={valuesOf(buildings, 'city')}
+        districts={valuesOf(buildings, 'district')}
+      />
     </div>
   );
 }
@@ -152,6 +184,8 @@ function bodyMessage(input: {
   retrying: boolean;
   onRetry: () => void;
   onReset: () => void;
+  /** Null when the role may not create buildings. */
+  onCreate: (() => void) | null;
 }): Message {
   if (input.denied) {
     return {
@@ -188,7 +222,19 @@ function bodyMessage(input: {
     return {
       kind: 'portfolio-empty',
       body: (
-        <EmptyState icon={<Buildings size="1.375rem" />} title="Още няма сгради">
+        <EmptyState
+          icon={<Buildings size="1.375rem" />}
+          title="Още няма сгради"
+          action={
+            input.onCreate && (
+              <PrimaryButton onClick={input.onCreate}>
+                <span className="flex items-center gap-2">
+                  <Plus size="1rem" /> Добави сграда
+                </span>
+              </PrimaryButton>
+            )
+          }
+        >
           Започнете с една сграда: адрес, входове и списък с имоти. Собствениците и живущите се
           добавят после — един по един, от реда на имота.
         </EmptyState>

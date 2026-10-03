@@ -1,4 +1,4 @@
-import type { BuildingListItem, BuildingStatus } from '@inova/shared';
+import type { AssessmentBasis, BuildingListItem, BuildingStatus } from '@inova/shared';
 import type { StatusTone } from '../../components/ui';
 
 export const STATUS_LABELS: Record<BuildingStatus, string> = {
@@ -126,4 +126,74 @@ export function describeFilters(f: BuildingFilters): string {
   if (f.search.trim()) parts.push(`търсене „${f.search.trim()}“`);
   const text = parts.join('; ');
   return text.charAt(0).toLocaleUpperCase('bg') + text.slice(1);
+}
+
+/** «Разпределение на таксите» (2564:2): the five ways the server knows. */
+export const ASSESSMENT_LABELS: Record<AssessmentBasis, string> = {
+  fixed: 'Фиксирано',
+  per_area: 'По площ',
+  per_occupant: 'По брой живущи',
+  per_ideal_part: 'По идеални части',
+  per_room: 'По брой стаи',
+};
+
+export const ASSESSMENT_ORDER: AssessmentBasis[] = [
+  'per_ideal_part',
+  'per_area',
+  'per_occupant',
+  'per_room',
+  'fixed',
+];
+
+/** The «Нова сграда» form as typed; numbers stay text until sent. */
+export interface BuildingDraft {
+  name: string;
+  address: string;
+  city: string;
+  district: string;
+  entrances: string[];
+  floors: string;
+  hasElevator: boolean;
+  assessmentBasis: AssessmentBasis | '';
+}
+
+// Most buildings have one entrance; the form starts with it rather than none.
+export const EMPTY_DRAFT: BuildingDraft = {
+  name: '',
+  address: '',
+  city: '',
+  district: '',
+  entrances: ['А'],
+  floors: '',
+  hasElevator: false,
+  assessmentBasis: '',
+};
+
+export type DraftField = 'name' | 'address' | 'city' | 'district' | 'floors' | 'assessmentBasis';
+
+/** The longest text the server takes per field (CreateBuildingDto); the inputs stop there. */
+export const DRAFT_MAX_LENGTH = { name: 120, address: 200, city: 80, district: 80 } as const;
+
+/** The server's own limits (CreateBuildingDto): 2 characters and up, 1 to 200 floors. */
+export function draftErrors(draft: BuildingDraft): Partial<Record<DraftField, string>> {
+  const errors: Partial<Record<DraftField, string>> = {};
+  // The upper limits are the fields' maxLength (DRAFT_MAX_LENGTH).
+  const text = (field: keyof typeof DRAFT_MAX_LENGTH, empty: string) => {
+    if (draft[field].trim().length < 2) errors[field] = empty;
+  };
+  text('name', 'Въведете името на сградата.');
+  text('address', 'Въведете адреса.');
+  text('city', 'Въведете града.');
+  text('district', 'Въведете квартала.');
+  const floors = Number(draft.floors);
+  if (!/^\d+$/.test(draft.floors.trim()) || floors < 1 || floors > 200) {
+    errors.floors = 'От 1 до 200.';
+  }
+  if (!draft.assessmentBasis) errors.assessmentBasis = 'Изберете как се разпределят таксите.';
+  return errors;
+}
+
+/** «Вход Б» and «б» name the same entrance: the chip already says «Вход». */
+export function entranceName(typed: string): string {
+  return typed.trim().replace(/^вход\s+/i, '');
 }
