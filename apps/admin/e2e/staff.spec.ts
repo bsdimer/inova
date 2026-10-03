@@ -604,6 +604,20 @@ test('a failed refresh of a loaded list: «Опитай пак» waits as «За
 test('402: the filter sheet as drawn — top at 132, rows every 46, labels 15/18 regular (1126:10849)', async ({
   page,
 }) => {
+  // 132 is the cap: a shorter list leaves a shorter sheet. Ten more roles
+  // make the options taller than the screen, so the sheet meets the cap.
+  await page.route('**/v1/tenant/roles', async (route) => {
+    if (route.request().method() !== 'GET') return route.fallback();
+    const response = await route.fetch();
+    const extra = Array.from({ length: 10 }, (_, i) => ({
+      key: `extra-${i}`,
+      name: `Роля ${i + 1}`,
+      isSystem: false,
+      permissions: [],
+      members: 0,
+    }));
+    await route.fulfill({ response, json: [...(await response.json()), ...extra] });
+  });
   await page.setViewportSize({ width: 402, height: 874 });
   await openSignedIn(page, ORG_ADMIN, '/staff');
   await page.getByRole('button', { name: /^Филтри/ }).click();
