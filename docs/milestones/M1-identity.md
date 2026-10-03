@@ -76,9 +76,10 @@ occupancies, and the shared-app realm item (M10).
 identifier + code, `resend-code`, the invite lifetime setting
 (`INVITE_CODE_TTL_DAYS`, 1–90 days). **Done 2026-10-01 (#74):** recovery by e-mail link or phone code
 (`RECOVERY_LINK_TTL_MINUTES` 60, 15–1440; `RECOVERY_CODE_TTL_MINUTES` 10, 5–30),
-single use, five tries, every session revoked, audited. **Left:** the
-real delivery, the URL the e-mailed recovery link opens (decided with the screens, #74), the recovery and activation
-screens (mobile identifier field).
+single use, five tries, every session revoked, audited. **Since 2026-10-03:** the
+worker sends the messages (#101) and the e-mailed link opens a page of
+auth-service (#102); mobile activation takes the identifier (#97). **Left:**
+Infobip Email and SMS for real delivery, the recovery screens.
 
 - Forward migration on `invite_codes`: `status` column, partial unique indexes
   `(tenant_id, code_hash)` and `(tenant_id, user_id)` on active rows; a
@@ -95,11 +96,15 @@ screens (mobile identifier field).
   an audit record. Staff TOTP is not bypassed.
 - Settings with bounds validated at start-up: recovery link, recovery code and
   invite lifetimes (defaults 60 min, 10 min, 30 days).
-- Delivery and the daily voiding job run in the worker; the worker skeleton and
-  expiry job exist, but delivery stays MOCK until D41/D36 channels are ready.
-- Mobile and admin: the activation screen gains the identifier field (the
-  shipped mobile screen is code-only today); forgot-password flow with the
-  email path first and "recover by phone" second; no remaining-attempts text.
+- Delivery and the daily voiding job run in the worker: both are built (#81,
+  #101). Messages are sent through SMTP (MailHog locally, a protected mailbox
+  on test, #102); Infobip Email waits for the verified sender (D41) and SMS
+  for a gateway (D36).
+- The recovery link opens a page of auth-service that sets the password in the
+  browser or opens the app at `inova://reset` (#102).
+- Mobile and admin: the activation screen takes the identifier (mobile, #97);
+  forgot-password flow with the email path first and "recover by phone"
+  second (mobile and admin still to build); no remaining-attempts text.
 
 Required tests (release blockers, `auth-flows.e2e`): same email/phone in two
 tenants recovers only in the requested realm; unknown and known accounts get
@@ -125,8 +130,8 @@ reset revokes existing sessions; out-of-bounds lifetime settings fail start-up.
 - Redis access-token denylist on revoke/dismiss; fails open for ordinary
   requests, closed for sensitive ones (D20).
 - Real SMS/Viber delivery through the worker (gateway: Infobip — D36; the
-  contract and the sender registration are long-lead items, see M-Pilot). Until then `MockCodeDelivery` logs
-  codes and refuses to start in production without `CODE_DELIVERY=log`.
+  contract and the sender registration are long-lead items, see M-Pilot). Until then an SMS is refused
+  in production and audited as `message.failed`; on test it lands in the mailbox (#101, #102).
 - Transactional e-mail through Infobip Email (D41), first for recovery links
   and e-mail-change codes, then staff/resident invitations (including the M2
   activation batch, D40). Use `notify.whitenova.tech` as the planned sending
