@@ -1,3 +1,9 @@
+import {
+  identifierValue,
+  type AuthProfile,
+  type AuthSession,
+  type SignInIdentifier,
+} from '@inova/shared';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
@@ -20,33 +26,21 @@ function resolveAuthUrl(): string {
 
 const AUTH_URL = resolveAuthUrl();
 
+/**
+ * The organisation whose accounts this app signs in to (B8). Unset, the server
+ * uses its default realm (`inova` on test); set `demo` to use the sample
+ * residents. A hint for the server, never proof of access.
+ * TODO(M10): the shared app chooses the organisation by invitation or selection.
+ */
+const REALM = process.env.EXPO_PUBLIC_AUTH_REALM || undefined;
+const realmHint = (): { realm?: string } => (REALM ? { realm: REALM } : {});
+
 /** Refresh the access token this many ms before it expires. */
 const REFRESH_SKEW_MS = 60_000;
 
-export interface SessionUser {
-  id: string;
-  email: string | null;
-  phone: string | null;
-  fullName: string;
-  platformRole: 'super_admin' | null;
-  mustSetPassword: boolean;
-}
-
-export interface Membership {
-  t: string;
-  r: string;
-  tenantKey: string;
-  tenantName: string;
-}
-
-export interface Session {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
+export interface Session extends AuthSession {
   /** Absolute expiry of the access token (client-side clock). */
   expiresAt: number;
-  user: SessionUser;
-  memberships: Membership[];
 }
 
 export type PostAuthRoute = '/set-password' | '/home';
@@ -54,20 +48,6 @@ export type PostAuthRoute = '/set-password' | '/home';
 /** Where to send the user after login/activate/bootstrap. */
 export function postAuthRoute(session: Session): PostAuthRoute {
   return session.user.mustSetPassword ? '/set-password' : '/home';
-}
-
-/**
- * Normalize a phone for `POST /auth/resend-code`. Accepts E.164 (`+…`) or a
- * Bulgarian national number starting with `0` (mapped to `+359…`).
- */
-export function toE164Phone(input: string): string | null {
-  const trimmed = input.trim();
-  if (/^\+\d{6,15}$/.test(trimmed)) return trimmed;
-
-  const digits = trimmed.replace(/\D/g, '');
-  if (/^0\d{8,9}$/.test(digits)) return `+359${digits.slice(1)}`;
-  if (/^359\d{8,9}$/.test(digits)) return `+${digits}`;
-  return null;
 }
 
 // Only the (small) refresh token goes to the keychain — access tokens are
@@ -135,8 +115,6 @@ async function request<T>(
     method: 'GET' | 'POST';
     body?: object;
     accessToken?: string;
-    /** 204 responses have no JSON body. */
-    emptyOk?: boolean;
   },
 ): Promise<T> {
   const headers: Record<string, string> = {};
@@ -152,10 +130,6 @@ async function request<T>(
     });
   } catch {
     throw new ApiError(0, 'Cannot reach the server. Check your connection.');
-  }
-
-  if (init.emptyOk && res.status === 204) {
-    return undefined as T;
   }
 
   const data = (await res.json().catch(() => ({}))) as { message?: string | string[] };
@@ -184,16 +158,25 @@ export async function ensureFreshAccessToken(): Promise<string> {
   return refreshed.accessToken;
 }
 
-export async function login(email: string, password: string): Promise<Session> {
-  return storeSession(await post<Omit<Session, 'expiresAt'>>('/auth/login', { email, password }));
+export async function login(identifier: SignInIdentifier, password: string): Promise<Session> {
+  const who =
+    identifier.kind === 'email' ? { email: identifier.email } : { phone: identifier.phone };
+  return storeSession(await post<AuthSession>('/auth/login', { ...realmHint(), ...who, password }));
 }
 
-export async function activate(code: string): Promise<Session> {
-  return storeSession(await post<Omit<Session, 'expiresAt'>>('/auth/activate', { code }));
+/** Invite-code activation: the phone or e-mail the code went to, plus the code (B15). */
+export async function activate(identifier: SignInIdentifier, code: string): Promise<Session> {
+  return storeSession(
+    await post<AuthSession>('/auth/activate', {
+      ...realmHint(),
+      identifier: identifierValue(identifier),
+      code,
+    }),
+  );
 }
 
 export async function resendCode(phone: string): Promise<void> {
-  await post('/auth/resend-code', { phone });
+  await post('/auth/resend-code', { ...realmHint(), phone });
 }
 
 /**
@@ -204,9 +187,7 @@ export async function refreshSession(): Promise<Session | null> {
   const refreshToken = session?.refreshToken ?? (await SecureStore.getItemAsync(REFRESH_TOKEN_KEY));
   if (!refreshToken) return null;
   try {
-    return await storeSession(
-      await post<Omit<Session, 'expiresAt'>>('/auth/refresh', { refreshToken }),
-    );
+    return await storeSession(await post<AuthSession>('/auth/refresh', { refreshToken }));
   } catch (error) {
     if (error instanceof ApiError && error.status > 0) {
       // Token revoked/expired/reused — the stored token is dead, drop it.
@@ -224,31 +205,25 @@ export async function bootstrapSession(): Promise<Session | null> {
   return refreshSession();
 }
 
-export async function setPassword(password: string): Promise<void> {
+/**
+ * Sets or changes the password. The server ends every session of the account,
+ * this one included, and answers with a fresh one — keep it, or the next
+ * refresh uses a revoked token. `currentPassword` is required once the account
+ * has a password; right after activation it has none.
+ */
+export async function setPassword(password: string, currentPassword?: string): Promise<Session> {
   const accessToken = await ensureFreshAccessToken();
-  await request<void>('/auth/password', {
+  const next = await request<AuthSession>('/auth/password', {
     method: 'POST',
-    body: { password },
+    body: currentPassword === undefined ? { password } : { password, currentPassword },
     accessToken,
-    emptyOk: true,
   });
-  if (session) {
-    session = {
-      ...session,
-      user: { ...session.user, mustSetPassword: false },
-    };
-    notifySessionListeners();
-  }
+  return storeSession(next);
 }
 
-export async function fetchMe(): Promise<
-  Omit<Session, 'accessToken' | 'refreshToken' | 'expiresIn' | 'expiresAt'>
-> {
+export async function fetchMe(): Promise<AuthProfile> {
   const accessToken = await ensureFreshAccessToken();
-  const data = await request<{
-    user: SessionUser;
-    memberships: Membership[];
-  }>('/auth/me', { method: 'GET', accessToken });
+  const data = await request<AuthProfile>('/auth/me', { method: 'GET', accessToken });
   if (session) {
     session = {
       ...session,

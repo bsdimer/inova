@@ -85,6 +85,14 @@ export default tseslint.config(
     },
   },
   {
+    // Metro loads its config as CommonJS.
+    files: ['apps/mobile/metro.config.js'],
+    languageOptions: {
+      globals: { require: 'readonly', module: 'writable', __dirname: 'readonly' },
+    },
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
+  },
+  {
     files: ['apps/api/src/modules/tenant/**/*.ts'],
     rules: noCrossModule(['platform', 'brands']),
   },

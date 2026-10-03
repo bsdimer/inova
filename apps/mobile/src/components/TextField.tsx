@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useState, type Ref } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
 import Animated, {
   interpolateColor,
@@ -14,10 +14,11 @@ interface Props extends TextInputProps {
   label: string;
   icon?: keyof typeof Ionicons.glyphMap;
   secure?: boolean;
+  ref?: Ref<TextInput>;
 }
 
 /** Frosted glass input with an animated focus ring and optional secure-text toggle. */
-export function TextField({ label, icon, secure = false, ...inputProps }: Props) {
+export function TextField({ label, icon, secure = false, ref, ...inputProps }: Props) {
   const [hidden, setHidden] = useState(secure);
   const focus = useSharedValue(0);
 
@@ -33,6 +34,7 @@ export function TextField({ label, icon, secure = false, ...inputProps }: Props)
         {icon ? <Ionicons name={icon} size={rs(20, 18)} color={glass.textSecondary} /> : null}
         <TextInput
           {...inputProps}
+          ref={ref}
           secureTextEntry={hidden}
           placeholderTextColor={glass.textMuted}
           onFocus={(e) => {
