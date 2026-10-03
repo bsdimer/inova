@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",
+    "@inova/shared": "workspace:*",
     "@react-navigation/bottom-tabs": "^7.18.17",
     "expo": "~57.0.15",
     "expo-blur": "~57.0.2",

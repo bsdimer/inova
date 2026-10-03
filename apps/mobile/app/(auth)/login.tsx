@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -8,10 +8,13 @@ import {
   StyleSheet,
   Text,
   View,
+  type TextInput,
 } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ApiError, login, postAuthRoute } from '../../src/api/client';
+import { parseSignInIdentifier } from '@inova/shared';
+import { login, postAuthRoute } from '../../src/api/client';
+import { IDENTIFIER_HINT, signInErrorMessage } from '../../src/auth/messages';
 import { AppBackground } from '../../src/components/AppBackground';
 import { GlassCircleButton } from '../../src/components/GlassCircleButton';
 import { GradientButton } from '../../src/components/GradientButton';
@@ -23,25 +26,25 @@ import { glass, palette } from '../../src/theme/tokens';
 export default function Login() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const passwordRef = useRef<TextInput>(null);
 
   const submit = async () => {
+    const who = parseSignInIdentifier(identifier);
+    if (!who) {
+      setError(IDENTIFIER_HINT);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
-      const session = await login(email.trim(), password);
+      const session = await login(who, password);
       router.replace(postAuthRoute(session));
     } catch (e) {
-      setError(
-        e instanceof ApiError && e.status === 401
-          ? 'Грешен имейл или парола.'
-          : e instanceof Error
-            ? e.message
-            : 'Нещо се обърка',
-      );
+      setError(signInErrorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -83,22 +86,40 @@ export default function Login() {
 
           <Animated.View entering={FadeInUp.duration(420).delay(200)} style={styles.form}>
             <TextField
-              label="Имейл"
-              icon="mail-outline"
-              placeholder="you@example.com"
+              label="Телефон или имейл"
+              icon="person-outline"
+              placeholder="0888 123 456 или you@example.com"
               autoCapitalize="none"
-              autoComplete="email"
+              autoCorrect={false}
+              autoComplete="username"
+              textContentType="username"
               keyboardType="email-address"
-              value={email}
-              onChangeText={setEmail}
+              returnKeyType="next"
+              submitBehavior="submit"
+              onSubmitEditing={() => passwordRef.current?.focus()}
+              value={identifier}
+              onChangeText={(next) => {
+                setIdentifier(next);
+                if (error) setError(null);
+              }}
             />
             <TextField
+              ref={passwordRef}
               label="Парола"
               icon="lock-closed-outline"
               placeholder="Вашата парола"
               secure
+              autoComplete="current-password"
+              textContentType="password"
+              returnKeyType="go"
+              onSubmitEditing={() => {
+                if (identifier.trim() && password && !loading) void submit();
+              }}
               value={password}
-              onChangeText={setPassword}
+              onChangeText={(next) => {
+                setPassword(next);
+                if (error) setError(null);
+              }}
             />
             <PressableScale haptic={false} onPress={forgotPassword} style={styles.forgot}>
               <Text style={styles.forgotText}>Забравена парола?</Text>
@@ -122,7 +143,7 @@ export default function Login() {
             trailingIcon="arrow-forward"
             onPress={submit}
             loading={loading}
-            disabled={email.length === 0 || password.length === 0}
+            disabled={identifier.trim().length === 0 || password.length === 0}
           />
         </Animated.View>
       </KeyboardAvoidingView>
