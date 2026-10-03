@@ -19,10 +19,11 @@ affects: [D22, D18]
    change to D22, where only staff set the priority. Only the house manager
    and accounts holding the right for «Авария» see it until the manager
    changes the category; then it goes to the contractor of the new category.
-   A **notification** of a new «Авария» goes to every account with that right
+   The right is `issues.emergency`, initially on Administrator and House
+   Manager, not the contractor starter roles. A **notification** of a new «Авария» goes to every account with that right
    in the issue's building scope, each able to turn it off (a per-account
-   setting, M6 Tables), **in the pilot, by e-mail** through the worker;
-   `MOCK` until there is an e-mail provider.
+   setting, M6 Tables), **in the pilot, by e-mail** through the worker's
+   Infobip Email channel (D41; MOCK until real delivery is configured).
 3. **Statuses:** `acknowledged` is removed. The path is
    `reported → planned → in_progress`, with three ends: `resolved` («Решен»),
    `closed` («Затворен») and `rejected` («Отхвърлен», only with a note).

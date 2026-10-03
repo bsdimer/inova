@@ -6,8 +6,8 @@ activation by identifier + code with one active code (B14–B15) the same day
 (#58, migration `0005`), password recovery (B13) on 2026-10-01 (#74, migration
 `0008`). Nothing is left before M2. Admin silent refresh landed 2026-10-02 (#72) and the worker
 skeleton the same night (#81, migration `0010`, nightly expiry of lapsed codes).
-Also deferred to pre-pilot: Redis revocation denylist, real SMS/Viber
-delivery, audit-trail viewer.
+Also deferred to pre-pilot: Redis revocation denylist, real SMS/Viber and
+transactional e-mail delivery, audit-trail viewer.
 
 ## Goal
 
@@ -95,7 +95,8 @@ screens (mobile identifier field).
   an audit record. Staff TOTP is not bypassed.
 - Settings with bounds validated at start-up: recovery link, recovery code and
   invite lifetimes (defaults 60 min, 10 min, 30 days).
-- Delivery and the daily voiding job run in the worker; MOCK until it exists.
+- Delivery and the daily voiding job run in the worker; the worker skeleton and
+  expiry job exist, but delivery stays MOCK until D41/D36 channels are ready.
 - Mobile and admin: the activation screen gains the identifier field (the
   shipped mobile screen is code-only today); forgot-password flow with the
   email path first and "recover by phone" second; no remaining-attempts text.
@@ -126,6 +127,24 @@ reset revokes existing sessions; out-of-bounds lifetime settings fail start-up.
 - Real SMS/Viber delivery through the worker (gateway: Infobip — D36; the
   contract and the sender registration are long-lead items, see M-Pilot). Until then `MockCodeDelivery` logs
   codes and refuses to start in production without `CODE_DELIVERY=log`.
+- Transactional e-mail through Infobip Email (D41), first for recovery links
+  and e-mail-change codes, then staff/resident invitations (including the M2
+  activation batch, D40). Use `notify.whitenova.tech` as the planned sending
+  subdomain of the owned `whitenova.tech` domain. Verify the sender/domain in
+  Infobip and publish the account-provided SPF and DKIM DNS records; check
+  DMARC alignment and a real test delivery before enabling production sends.
+  Keep the API key and sender configuration in environment secrets. Auth/core
+  APIs enqueue delivery after committing the code; the worker uses a stable
+  delivery id, bounded retries and failure visibility without logging links,
+  tokens or codes. MailHog remains the local boundary. The SMS/phone path
+  stays separate. Provisioning and DNS are long-lead M-Pilot items, not
+  evidence that real delivery already works.
+- Delivery tests: duplicate jobs send once, transient provider failure retries,
+  permanent failure is visible to staff without exposing the code; an unknown
+  account has the same public response and does not create a deliverable
+  message; cross-tenant recipients never receive another realm's link; e-mail
+  change reaches only the pending new address. A controlled test delivery
+  verifies the sending domain before the pilot.
 - Audit-trail page (before the pilot — the platform rail already shows «Одитен дневник»). One screen for both scopes: the platform administrator sees every organisation with an organisation filter (Figma «V2 · Одитен дневник» `2343:54613`); an organisation account with `audit.read` (the seeded Administrator role) sees its own trail through `GET /v1/tenant/audit`, reached from the organisation's settings, not a tenth rail item — the nine-item menu stands (WHI-24).
 
 ## Hardening done outside the phase scope (2026-09-21)

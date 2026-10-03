@@ -20,6 +20,10 @@ M4 for the money. The cards also consume M2b (search), M4 (attachment infrastruc
 
 - **Scope and period:** every dashboard endpoint covers the buildings the caller may access (tenant-wide or assigned) and takes `period=YYYY-MM` defaulting to the current month in the tenant timezone. An optional `building_ids` filter can only narrow that set.
 - **Balance:** `GET /v1/reports/dashboard/balance` → `charged`, `collected`, `outstanding` per currency + building count. `collected` = allocations against the period's charges, so `charged = collected + outstanding`; ratio = collected / charged. The `reports` module reads billing/payments through their read interfaces, never their tables.
+- **Shared Finance meaning (D42):** M4 already shows building count, properties
+  with overdue unpaid charges and the selected period's `collected / charged`
+  percentage. These M9 rollups reuse that scoped calculation; a no-charge
+  period has no percentage, rather than a misleading zero.
 - **Buildings overview:** `GET /v1/reports/dashboard/buildings` → building and apartment counts, and per building `paidApartments / chargedApartments` for the period.
 - **Rollup refresh:** worker job every 5 min plus an event-triggered refresh of the affected `(building, period)` on payment recorded/reversed and charge generated, so a manager who just recorded a payment does not wait for the next tick.
 - **Debtor query** with filters/sorting, and the **`debtors` audience resolver** plugged into M7. **Debtor reminder:** `POST /v1/notices/debtor-reminders/preview` (recipient and apartment counts for the caller's scope) and `POST /v1/notices/debtor-reminders` with `Idempotency-Key`; audience resolved server-side at send time; push + in-app feed via the worker; no amounts in the push payload (§8.3); audited; needs `notifications.send` + `billing.read`. Defaults pending D13.

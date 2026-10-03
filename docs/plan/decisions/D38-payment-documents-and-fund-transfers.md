@@ -15,6 +15,9 @@ affects: [B2, A-DEPOSIT, A-BANK-MATCH]
 - a **receipt** for every payment, with the stakeholder's fields — document
   name, number, date of issue, payee, payer, purpose, amount, currency,
   method, the date the money was actually received, full or partial payment;
+  the designated document recipient views/downloads it in the app, and staff
+  view/print it in admin. E-mail delivery is not a pilot condition. A change
+  of recipient does not reassign historical receipts (WHI-115, 2026-10-03);
 - a **«Справка за плащания»** for a chosen period (one or more months),
   whatever the payment method; the resident downloads it in the app (M5).
 
