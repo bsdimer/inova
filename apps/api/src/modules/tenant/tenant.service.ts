@@ -1,4 +1,13 @@
-import { MockCodeDelivery, splitFullName } from '@inova/shared';
+import {
+  MockCodeDelivery,
+  splitFullName,
+  type Accepted,
+  type CreatedRole,
+  type InvitedStaff,
+  type PermissionInfo,
+  type RoleSummary,
+  type StaffChange,
+} from '@inova/shared';
 import {
   BadRequestException,
   ConflictException,
@@ -55,11 +64,14 @@ export class TenantService {
     private readonly inviteCodes: InviteCodeIssuer,
   ) {}
 
-  listPermissions() {
-    return this.dbService.db.select().from(permissions).orderBy(permissions.key);
+  listPermissions(): Promise<PermissionInfo[]> {
+    return this.dbService.db
+      .select({ key: permissions.key, description: permissions.description })
+      .from(permissions)
+      .orderBy(permissions.key);
   }
 
-  async listRoles(tenantId: string) {
+  async listRoles(tenantId: string): Promise<RoleSummary[]> {
     return this.dbService.withTenant(tenantId, async (tx) => {
       const roleRows = await tx
         .select()
@@ -90,7 +102,7 @@ export class TenantService {
     });
   }
 
-  async createRole(tenantId: string, actor: Actor, input: RoleInput) {
+  async createRole(tenantId: string, actor: Actor, input: RoleInput): Promise<CreatedRole> {
     await this.assertKnownPermissions(input.permissions);
 
     return this.dbService.withTenant(tenantId, async (tx) => {
@@ -127,7 +139,12 @@ export class TenantService {
     });
   }
 
-  async updateRole(tenantId: string, actor: Actor, key: string, input: RoleUpdateInput) {
+  async updateRole(
+    tenantId: string,
+    actor: Actor,
+    key: string,
+    input: RoleUpdateInput,
+  ): Promise<Accepted> {
     // The admin role is the guaranteed full-access role — locking it prevents
     // a tenant from ever removing its own ability to manage roles.
     if (key === 'admin') {
@@ -180,7 +197,7 @@ export class TenantService {
     });
   }
 
-  async deleteRole(tenantId: string, actor: Actor, key: string) {
+  async deleteRole(tenantId: string, actor: Actor, key: string): Promise<Accepted> {
     if (key === 'admin') {
       throw new BadRequestException('The admin role cannot be deleted');
     }
@@ -223,7 +240,11 @@ export class TenantService {
     });
   }
 
-  async inviteStaff(tenantId: string, actor: Actor, input: InviteStaffInput) {
+  async inviteStaff(
+    tenantId: string,
+    actor: Actor,
+    input: InviteStaffInput,
+  ): Promise<InvitedStaff> {
     return this.dbService.withTenant(tenantId, async (tx) => {
       await this.assertRoleExists(tx, tenantId, input.roleKey);
 
@@ -308,7 +329,12 @@ export class TenantService {
     });
   }
 
-  async updateStaff(tenantId: string, actor: Actor, userId: string, input: UpdateStaffInput) {
+  async updateStaff(
+    tenantId: string,
+    actor: Actor,
+    userId: string,
+    input: UpdateStaffInput,
+  ): Promise<StaffChange> {
     if (userId === actor.userId) {
       throw new BadRequestException('You cannot change your own membership');
     }

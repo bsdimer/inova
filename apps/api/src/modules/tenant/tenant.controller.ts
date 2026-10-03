@@ -10,13 +10,33 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiHeader, ApiOperation, ApiProperty, ApiTags } from '@nestjs/swagger';
+import type {
+  Accepted,
+  AuditEntry,
+  CreatedRole,
+  InvitedStaff,
+  PermissionInfo,
+  RoleSummary,
+  StaffChange,
+  StaffMember,
+  TenantContext,
+} from '@inova/shared';
+import {
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiHeader,
+  ApiOkResponse,
+  ApiOperation,
+  ApiProperty,
+  ApiTags,
+} from '@nestjs/swagger';
 import { IsArray, IsEmail, IsIn, IsOptional, IsString, Matches, MinLength } from 'class-validator';
 import { and, desc, eq } from 'drizzle-orm';
 import { JwtGuard, type AuthedRequest } from '../../auth/jwt.guard';
 import { PermissionsGuard, RequirePermissions } from '../../auth/permissions.guard';
 import { TenantContextGuard } from '../../auth/tenant-context.guard';
 import { DbService } from '../../db/db.service';
+import { toTenantSummary } from '../../db/tenant-summary';
 import {
   auditRecords,
   rolePermissions,
@@ -25,6 +45,18 @@ import {
   tenants,
   users,
 } from '../../db/schema';
+import { ApiErrors } from '../../openapi/api-errors';
+import { AcceptedDto } from '../../openapi/common.responses';
+import {
+  AuditEntryDto,
+  CreatedRoleDto,
+  InvitedStaffDto,
+  PermissionInfoDto,
+  RoleSummaryDto,
+  StaffChangeDto,
+  StaffMemberDto,
+  TenantContextDto,
+} from './tenant.responses';
 import { TenantService } from './tenant.service';
 
 class CreateRoleDto {
@@ -107,7 +139,9 @@ export class TenantController {
   @Get()
   @RequirePermissions('tenant.read')
   @ApiOperation({ summary: 'Current tenant profile, caller role (key and name) and permissions' })
-  async current(@Req() req: AuthedRequest) {
+  @ApiOkResponse({ type: TenantContextDto })
+  @ApiErrors(401, 403, 404)
+  async current(@Req() req: AuthedRequest): Promise<TenantContext> {
     const tenantId = req.tenantId!;
     const [tenant] = await this.dbService.db.select().from(tenants).where(eq(tenants.id, tenantId));
     if (!tenant) throw new NotFoundException('Tenant not found');
@@ -129,8 +163,8 @@ export class TenantController {
     });
 
     return {
-      tenant,
-      role: req.roleKey,
+      tenant: toTenantSummary(tenant),
+      role: req.roleKey!,
       roleName: role?.name ?? req.roleKey,
       permissions: permissions.map((p) => p.key),
     };
@@ -139,9 +173,11 @@ export class TenantController {
   @Get('staff')
   @RequirePermissions('staff.read')
   @ApiOperation({ summary: 'List staff members with roles' })
-  async staff(@Req() req: AuthedRequest) {
+  @ApiOkResponse({ type: [StaffMemberDto] })
+  @ApiErrors(401, 403)
+  async staff(@Req() req: AuthedRequest): Promise<StaffMember[]> {
     const tenantId = req.tenantId!;
-    return this.dbService.withTenant(tenantId, (tx) =>
+    const rows = await this.dbService.withTenant(tenantId, (tx) =>
       tx
         .select({
           userId: staffMemberships.userId,
@@ -160,12 +196,15 @@ export class TenantController {
         .where(eq(staffMemberships.tenantId, tenantId))
         .orderBy(staffMemberships.createdAt),
     );
+    return rows.map((row) => ({ ...row, since: row.since.toISOString() }));
   }
 
   @Post('staff')
   @RequirePermissions('staff.manage')
   @ApiOperation({ summary: 'Invite a staff member (creates the tenant account if needed)' })
-  inviteStaff(@Req() req: AuthedRequest, @Body() dto: InviteStaffDto) {
+  @ApiCreatedResponse({ type: InvitedStaffDto })
+  @ApiErrors(400, 401, 403, 409)
+  inviteStaff(@Req() req: AuthedRequest, @Body() dto: InviteStaffDto): Promise<InvitedStaff> {
     return this.tenantService.inviteStaff(
       req.tenantId!,
       { userId: req.auth.sub, roleKey: req.roleKey! },
@@ -176,11 +215,13 @@ export class TenantController {
   @Patch('staff/:userId')
   @RequirePermissions('staff.manage')
   @ApiOperation({ summary: "Change a staff member's role or status" })
+  @ApiOkResponse({ type: StaffChangeDto })
+  @ApiErrors(400, 401, 403, 404)
   updateStaff(
     @Req() req: AuthedRequest,
     @Param('userId') userId: string,
     @Body() dto: UpdateStaffDto,
-  ) {
+  ): Promise<StaffChange> {
     return this.tenantService.updateStaff(
       req.tenantId!,
       { userId: req.auth.sub, roleKey: req.roleKey! },
@@ -192,21 +233,27 @@ export class TenantController {
   @Get('permissions')
   @RequirePermissions('roles.read')
   @ApiOperation({ summary: 'Permission catalog (platform-wide, fixed)' })
-  permissions() {
+  @ApiOkResponse({ type: [PermissionInfoDto] })
+  @ApiErrors(401, 403)
+  permissions(): Promise<PermissionInfo[]> {
     return this.tenantService.listPermissions();
   }
 
   @Get('roles')
   @RequirePermissions('roles.read')
   @ApiOperation({ summary: 'List roles with their permissions and member counts' })
-  roles(@Req() req: AuthedRequest) {
+  @ApiOkResponse({ type: [RoleSummaryDto] })
+  @ApiErrors(401, 403)
+  roles(@Req() req: AuthedRequest): Promise<RoleSummary[]> {
     return this.tenantService.listRoles(req.tenantId!);
   }
 
   @Post('roles')
   @RequirePermissions('roles.manage')
   @ApiOperation({ summary: 'Create a custom role' })
-  createRole(@Req() req: AuthedRequest, @Body() dto: CreateRoleDto) {
+  @ApiCreatedResponse({ type: CreatedRoleDto })
+  @ApiErrors(400, 401, 403, 409)
+  createRole(@Req() req: AuthedRequest, @Body() dto: CreateRoleDto): Promise<CreatedRole> {
     return this.tenantService.createRole(
       req.tenantId!,
       { userId: req.auth.sub, roleKey: req.roleKey! },
@@ -217,7 +264,13 @@ export class TenantController {
   @Patch('roles/:key')
   @RequirePermissions('roles.manage')
   @ApiOperation({ summary: "Update a role's name and/or permissions" })
-  updateRole(@Req() req: AuthedRequest, @Param('key') key: string, @Body() dto: UpdateRoleDto) {
+  @ApiOkResponse({ type: AcceptedDto })
+  @ApiErrors(400, 401, 403, 404)
+  updateRole(
+    @Req() req: AuthedRequest,
+    @Param('key') key: string,
+    @Body() dto: UpdateRoleDto,
+  ): Promise<Accepted> {
     return this.tenantService.updateRole(
       req.tenantId!,
       { userId: req.auth.sub, roleKey: req.roleKey! },
@@ -229,7 +282,9 @@ export class TenantController {
   @Delete('roles/:key')
   @RequirePermissions('roles.manage')
   @ApiOperation({ summary: 'Delete an unused custom role' })
-  deleteRole(@Req() req: AuthedRequest, @Param('key') key: string) {
+  @ApiOkResponse({ type: AcceptedDto })
+  @ApiErrors(400, 401, 403, 404, 409)
+  deleteRole(@Req() req: AuthedRequest, @Param('key') key: string): Promise<Accepted> {
     return this.tenantService.deleteRole(
       req.tenantId!,
       { userId: req.auth.sub, roleKey: req.roleKey! },
@@ -240,9 +295,11 @@ export class TenantController {
   @Get('audit')
   @RequirePermissions('audit.read')
   @ApiOperation({ summary: 'Recent audit records for the tenant' })
-  async audit(@Req() req: AuthedRequest) {
+  @ApiOkResponse({ type: [AuditEntryDto] })
+  @ApiErrors(401, 403)
+  async audit(@Req() req: AuthedRequest): Promise<AuditEntry[]> {
     const tenantId = req.tenantId!;
-    return this.dbService.withTenant(tenantId, (tx) =>
+    const rows = await this.dbService.withTenant(tenantId, (tx) =>
       tx
         .select()
         .from(auditRecords)
@@ -250,5 +307,15 @@ export class TenantController {
         .orderBy(desc(auditRecords.createdAt))
         .limit(100),
     );
+    return rows.map((row) => ({
+      id: row.id,
+      actorUserId: row.actorUserId,
+      actorType: row.actorType,
+      action: row.action,
+      entityType: row.entityType,
+      entityId: row.entityId,
+      payload: row.payload as Record<string, unknown>,
+      createdAt: row.createdAt.toISOString(),
+    }));
   }
 }

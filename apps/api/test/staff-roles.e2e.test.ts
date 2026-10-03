@@ -8,6 +8,8 @@ import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { JWT_AUDIENCE, JWT_ISSUER } from '@inova/shared';
 import { SignJWT, calculateJwkThumbprint, exportJWK, generateKeyPair } from 'jose';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import pg from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -363,5 +365,39 @@ describe('Tenant context (GET /tenant)', () => {
       roleName: 'Касиер',
       permissions: ['tenant.read'],
     });
+  });
+});
+
+describe('the answers are the documented ones (WHI-144)', () => {
+  const schemas = (
+    JSON.parse(readFileSync(path.resolve(__dirname, '..', 'openapi.json'), 'utf8')) as {
+      components: { schemas: Record<string, { properties: Record<string, unknown> }> };
+    }
+  ).components.schemas;
+  const documented = (schema: string) => Object.keys(schemas[schema].properties).sort();
+  const fieldsOf = (body: object) => Object.keys(body).sort();
+
+  it('carry exactly the fields of openapi.json — the organisation without its settings', async () => {
+    const created = await admin.post('/tenant/roles', {
+      key: 'shape-check',
+      name: 'Проверка',
+      permissions: ['tenant.read'],
+    });
+    expect(fieldsOf(created.body)).toEqual(documented('CreatedRoleDto'));
+
+    const context = await admin.get('/tenant');
+    expect(fieldsOf(context.body)).toEqual(documented('TenantContextDto'));
+    expect(fieldsOf(context.body.tenant)).toEqual(documented('TenantSummaryDto'));
+
+    const staff = await admin.get('/tenant/staff');
+    expect(fieldsOf(staff.body[0])).toEqual(documented('StaffMemberDto'));
+    expect(staff.body[0].since).toMatch(/^\d{4}-\d{2}-\d{2}T.*Z$/);
+
+    const roles = await admin.get('/tenant/roles');
+    expect(fieldsOf(roles.body[0])).toEqual(documented('RoleSummaryDto'));
+    const permissions = await admin.get('/tenant/permissions');
+    expect(fieldsOf(permissions.body[0])).toEqual(documented('PermissionInfoDto'));
+    const audit = await admin.get('/tenant/audit');
+    expect(fieldsOf(audit.body[0])).toEqual(documented('AuditEntryDto'));
   });
 });

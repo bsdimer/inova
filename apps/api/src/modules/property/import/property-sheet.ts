@@ -1,3 +1,5 @@
+import type { ImportRowError } from '@inova/shared';
+
 /**
  * The property import template (WHI-99; the team lead chose our own template
  * over the pilot's spreadsheets, 01.10): one row per property, the building's
@@ -91,24 +93,8 @@ const YES = new Set(['да', 'yes', 'y', '1', 'true', 'има']);
 const NO = new Set(['не', 'no', 'n', '0', 'false', 'няма', '']);
 
 /** What is wrong with a row; `code` lets the screen say it in its own words. */
-export interface RowError {
-  /** The spreadsheet's row number: the header is row 1. */
-  row: number;
-  /** The header as the file names it; absent for a whole-row problem. */
-  column?: string;
-  code:
-    | 'missing_column'
-    | 'required'
-    | 'invalid'
-    | 'duplicate_in_file'
-    | 'inconsistent_building'
-    | 'exists'
-    | 'out_of_scope'
-    | 'archived_building'
-    | 'too_many_rows'
-    | 'empty';
-  message: string;
-}
+/** One problem in the sheet; the shape is shared with the admin (`ImportRowError`). */
+export type RowError = ImportRowError;
 
 export interface BuildingSpec {
   name: string;

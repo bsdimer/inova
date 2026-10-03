@@ -7,7 +7,14 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthDto"
+                }
+              }
+            }
           }
         },
         "summary": "Liveness probe",
@@ -263,7 +270,37 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TenantSummaryDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -289,7 +326,54 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProvisionResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -341,7 +425,47 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BuildingListItemDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -376,7 +500,44 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildingDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -411,7 +572,54 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildingDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -454,7 +662,64 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildingRecordDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -489,7 +754,64 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildingRecordDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -534,7 +856,64 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntranceRecordDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -587,7 +966,64 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntranceRecordDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -628,7 +1064,64 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -680,7 +1173,57 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropertyRecordDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -723,7 +1266,64 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyRecordDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -776,7 +1376,64 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyRecordDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -817,7 +1474,64 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -870,7 +1584,54 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyResidentsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -921,7 +1682,64 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddedResidentDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1361,7 +2179,57 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BuildingManagerDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1404,7 +2272,64 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildingManagerDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1447,7 +2372,54 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1492,7 +2464,64 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemovalRequestDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1531,7 +2560,47 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RemovalRequestDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1576,7 +2645,64 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemovalRequestDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1611,7 +2737,64 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemovalRequestDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1651,7 +2834,47 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlatformRemovalRequestDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1696,7 +2919,64 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemovalRequestDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1741,7 +3021,64 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemovalRequestDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1780,7 +3117,47 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LinkRequestQueueItemDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1825,7 +3202,64 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkRequestDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1870,7 +3304,64 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkRequestDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2128,7 +3619,34 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "The header row and one example row",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2163,9 +3681,84 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "CSV or .xlsx"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": ""
+            "description": "A dry run with its findings, or a real run that wrote everything",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportReportDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The uploaded file is too large.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A real run found errors and wrote nothing; the body is the report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportReportDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2192,7 +3785,44 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantContextDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2219,7 +3849,37 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StaffMemberDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2254,7 +3914,54 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitedStaffDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2299,7 +4006,54 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffChangeDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2326,7 +4080,37 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PermissionInfoDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2353,7 +4137,37 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RoleSummaryDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2388,7 +4202,54 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedRoleDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2433,7 +4294,54 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2466,7 +4374,64 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2493,7 +4458,37 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditEntryDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2508,7 +4503,7 @@
   },
   "info": {
     "title": "inova Core API",
-    "description": "The core API: buildings, properties, residents and everything built on them.\nThe answers of the resident routes (`/me/*`) and the brand configuration are\nTypeScript types in `@inova/shared` (`MyProperty`, `MyPropertyDetail`,\n`BuildingContacts`, `OccupantRecord`, `PetRecord`, `MyLinkRequest`, `MyDevice`,\n`BrandConfig`, `ApiError`) — import them rather than copying.\n\n**Test portal:** `https://test-portal.whitenova.tech/api/v1`. Signing in\nhappens at auth-service — its own document at `/auth/docs` explains it and\nlists the test accounts.\n\n## Every call\n\n```\nAuthorization: Bearer <accessToken from auth-service>\nX-Tenant-Id:   <memberships[0].t from the same session>\n```\n\nThe organisation in `X-Tenant-Id` must be the one the token was issued for;\nanything else is 403. On 401 the access token has expired: refresh it at\nauth-service and repeat the call once.\n\n## What the resident app reads\n\n| Screen | Call |\n| --- | --- |\n| Start: the properties to choose from | `GET /me/properties` |\n| «Моята сграда», the profile | `GET /me/properties/{id}` — building, bank account, household, pets |\n| «Контакти» | `GET /me/properties/{id}/contacts` |\n| Add a household member / a pet | `POST /me/properties/{id}/occupants`, `POST /me/properties/{id}/pets` |\n| «Добави моя имот» | `POST /me/link-requests`, `GET /me/link-requests`, `POST /me/link-requests/{id}/withdraw` |\n| Notifications later reach this phone | `PUT /me/devices` after sign-in and on every start; `DELETE /me/devices/{id}` before sign-out |\n| Theme, locales, support | `GET /brands/{key}/config` — public, no token |\n\nShow owner-only actions only when `ownerActions` is true; the server refuses\nthem to tenants and occupants anyway. A property the resident does not live in\nanswers 404, exactly like one that does not exist.\n\n## Conventions\n\n- Days are `YYYY-MM-DD` (`validFrom`, `validTo`); `validTo` is the last day\n  that counts, `null` while it lasts. Moments are ISO timestamps in UTC.\n- Ids are UUIDs.\n- Every error has the body `ApiError`: `{ statusCode, message, error }`;\n  `message` lists the broken fields on a 400.\n\nThe staff routes (buildings, imports, requests, roles) are documented here too;\ntheir answers are described as the admin screens need them.",
+    "description": "The core API: buildings, properties, residents and everything built on them.\nThe answers of the resident routes (`/me/*`) and the brand configuration are\nTypeScript types in `@inova/shared` (`MyProperty`, `MyPropertyDetail`,\n`BuildingContacts`, `OccupantRecord`, `PetRecord`, `MyLinkRequest`, `MyDevice`,\n`BrandConfig`, `ApiError`) — import them rather than copying. So are the\nanswers of the staff routes the admin portal calls (`TenantContext`,\n`StaffMember`, `RoleSummary`, `BuildingListItem`, `BuildingDetail`,\n`PropertyRecord`, `PropertyResidents`, `BuildingManager`, `RemovalRequest`,\n`LinkRequestQueueItem`, `ImportReport`, …).\n\n**Test portal:** `https://test-portal.whitenova.tech/api/v1`. Signing in\nhappens at auth-service — its own document at `/auth/docs` explains it and\nlists the test accounts.\n\n## Every call\n\n```\nAuthorization: Bearer <accessToken from auth-service>\nX-Tenant-Id:   <memberships[0].t from the same session>\n```\n\nThe organisation in `X-Tenant-Id` must be the one the token was issued for;\nanything else is 403. On 401 the access token has expired: refresh it at\nauth-service and repeat the call once.\n\n## What the resident app reads\n\n| Screen | Call |\n| --- | --- |\n| Start: the properties to choose from | `GET /me/properties` |\n| «Моята сграда», the profile | `GET /me/properties/{id}` — building, bank account, household, pets |\n| «Контакти» | `GET /me/properties/{id}/contacts` |\n| Add a household member / a pet | `POST /me/properties/{id}/occupants`, `POST /me/properties/{id}/pets` |\n| «Добави моя имот» | `POST /me/link-requests`, `GET /me/link-requests`, `POST /me/link-requests/{id}/withdraw` |\n| Notifications later reach this phone | `PUT /me/devices` after sign-in and on every start; `DELETE /me/devices/{id}` before sign-out |\n| Theme, locales, support | `GET /brands/{key}/config` — public, no token |\n\nShow owner-only actions only when `ownerActions` is true; the server refuses\nthem to tenants and occupants anyway. A property the resident does not live in\nanswers 404, exactly like one that does not exist.\n\n## Conventions\n\n- Days are `YYYY-MM-DD` (`validFrom`, `validTo`); `validTo` is the last day\n  that counts, `null` while it lasts. Moments are ISO timestamps in UTC.\n- Ids are UUIDs.\n- Every error has the body `ApiError`: `{ statusCode, message, error }`;\n  `message` lists the broken fields on a 400.\n\n## What the admin portal reads\n\nEvery staff route names the right it needs (`property.read`, `staff.manage`, …);\nwithout it the answer is 403. A building outside a building-scoped manager's\nbuildings answers 404, exactly like one that does not exist.\n\n| Screen | Call |\n| --- | --- |\n| Shell: who is signed in, what they may do | `GET /tenant` |\n| «Служители» | `GET /tenant/staff`, `POST /tenant/staff`, `PATCH /tenant/staff/{userId}` |\n| «Роли» | `GET /tenant/roles`, `GET /tenant/permissions`, `POST` / `PATCH` / `DELETE /tenant/roles/{key}` |\n| «Сгради» | `GET /buildings`, `POST /buildings` |\n| A building | `GET /buildings/{id}`, `GET /buildings/{id}/properties`, `GET /buildings/{id}/managers` |\n| A property's residents | `GET` / `POST /buildings/{id}/properties/{propertyId}/residents` |\n| «Импорт на имоти» | `GET /imports/properties/template`, `POST /imports/properties` (a dry run unless `dryRun=false`) |\n| «Заявки за връзка» | `GET /link-requests`, `POST /link-requests/{id}/approve` or `/reject` |\n| Removal requests | `POST /buildings/{id}/removal-requests`, `GET /removal-requests`; the platform decides at `/platform/removal-requests` |\n| «Организации» (platform) | `GET /platform/tenants`, `POST /platform/tenants` |",
     "version": "0.1.0",
     "contact": {}
   },
@@ -2523,6 +4518,26 @@
       }
     },
     "schemas": {
+      "HealthDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["ok"],
+            "example": "ok"
+          },
+          "service": {
+            "type": "string",
+            "example": "core-api"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z"
+          }
+        },
+        "required": ["status", "service", "timestamp"]
+      },
       "BrandCompanyDto": {
         "type": "object",
         "properties": {
@@ -2903,6 +4918,34 @@
         },
         "required": ["id", "platform", "appId", "locale", "createdAt", "lastSeenAt"]
       },
+      "TenantSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "key": {
+            "type": "string",
+            "example": "inova"
+          },
+          "name": {
+            "type": "string",
+            "example": "inova"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["trial", "active", "suspended", "offboarded"],
+            "example": "active"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z"
+          }
+        },
+        "required": ["id", "key", "name", "status", "createdAt"]
+      },
       "ProvisionTenantDto": {
         "type": "object",
         "properties": {
@@ -2929,6 +4972,139 @@
           }
         },
         "required": ["key", "name"]
+      },
+      "ProvisionResultDto": {
+        "type": "object",
+        "properties": {
+          "tenant": {
+            "$ref": "#/components/schemas/TenantSummaryDto"
+          },
+          "adminInviteSent": {
+            "type": "boolean",
+            "description": "False when the request named no first admin"
+          }
+        },
+        "required": ["tenant", "adminInviteSent"]
+      },
+      "PropertyCountsDto": {
+        "type": "object",
+        "properties": {
+          "apartment": {
+            "type": "number",
+            "example": 24
+          },
+          "garage": {
+            "type": "number",
+            "example": 6
+          },
+          "shop": {
+            "type": "number",
+            "example": 1
+          },
+          "storage": {
+            "type": "number",
+            "example": 0
+          },
+          "parking_spot": {
+            "type": "number",
+            "example": 0
+          }
+        },
+        "required": ["apartment", "garage", "shop", "storage", "parking_spot"]
+      },
+      "BuildingListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "бл. 12"
+          },
+          "city": {
+            "type": "string",
+            "example": "София"
+          },
+          "district": {
+            "type": "string",
+            "example": "Младост"
+          },
+          "address": {
+            "type": "string",
+            "example": "ул. Проф. Александър Фол 7"
+          },
+          "floors": {
+            "type": "number",
+            "example": 8
+          },
+          "hasElevator": {
+            "type": "boolean"
+          },
+          "assessmentBasis": {
+            "type": "string",
+            "enum": ["fixed", "per_area", "per_occupant", "per_ideal_part", "per_room"],
+            "example": "per_occupant"
+          },
+          "bankAccount": {
+            "type": "string",
+            "nullable": true,
+            "example": "BG80BNBG96611020345678",
+            "description": "IBAN"
+          },
+          "signatureName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Мария Стоянова"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["draft", "active", "archived"],
+            "example": "active"
+          },
+          "activatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z"
+          },
+          "entranceCount": {
+            "type": "number",
+            "example": 2
+          },
+          "propertyCounts": {
+            "$ref": "#/components/schemas/PropertyCountsDto"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "city",
+          "district",
+          "address",
+          "floors",
+          "hasElevator",
+          "assessmentBasis",
+          "bankAccount",
+          "signatureName",
+          "status",
+          "activatedAt",
+          "createdAt",
+          "updatedAt",
+          "entranceCount",
+          "propertyCounts"
+        ]
       },
       "CreateBuildingDto": {
         "type": "object",
@@ -2988,6 +5164,120 @@
           "assessmentBasis"
         ]
       },
+      "EntranceWithCountDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "А"
+          },
+          "propertyCount": {
+            "type": "number",
+            "example": 12
+          }
+        },
+        "required": ["id", "name", "propertyCount"]
+      },
+      "BuildingDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "бл. 12"
+          },
+          "city": {
+            "type": "string",
+            "example": "София"
+          },
+          "district": {
+            "type": "string",
+            "example": "Младост"
+          },
+          "address": {
+            "type": "string",
+            "example": "ул. Проф. Александър Фол 7"
+          },
+          "floors": {
+            "type": "number",
+            "example": 8
+          },
+          "hasElevator": {
+            "type": "boolean"
+          },
+          "assessmentBasis": {
+            "type": "string",
+            "enum": ["fixed", "per_area", "per_occupant", "per_ideal_part", "per_room"],
+            "example": "per_occupant"
+          },
+          "bankAccount": {
+            "type": "string",
+            "nullable": true,
+            "example": "BG80BNBG96611020345678",
+            "description": "IBAN"
+          },
+          "signatureName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Мария Стоянова"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["draft", "active", "archived"],
+            "example": "active"
+          },
+          "activatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z"
+          },
+          "entrances": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntranceWithCountDto"
+            }
+          },
+          "propertyCounts": {
+            "$ref": "#/components/schemas/PropertyCountsDto"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "city",
+          "district",
+          "address",
+          "floors",
+          "hasElevator",
+          "assessmentBasis",
+          "bankAccount",
+          "signatureName",
+          "status",
+          "activatedAt",
+          "createdAt",
+          "updatedAt",
+          "entrances",
+          "propertyCounts"
+        ]
+      },
       "UpdateBuildingDto": {
         "type": "object",
         "properties": {
@@ -3025,6 +5315,91 @@
           }
         }
       },
+      "BuildingRecordDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "бл. 12"
+          },
+          "city": {
+            "type": "string",
+            "example": "София"
+          },
+          "district": {
+            "type": "string",
+            "example": "Младост"
+          },
+          "address": {
+            "type": "string",
+            "example": "ул. Проф. Александър Фол 7"
+          },
+          "floors": {
+            "type": "number",
+            "example": 8
+          },
+          "hasElevator": {
+            "type": "boolean"
+          },
+          "assessmentBasis": {
+            "type": "string",
+            "enum": ["fixed", "per_area", "per_occupant", "per_ideal_part", "per_room"],
+            "example": "per_occupant"
+          },
+          "bankAccount": {
+            "type": "string",
+            "nullable": true,
+            "example": "BG80BNBG96611020345678",
+            "description": "IBAN"
+          },
+          "signatureName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Мария Стоянова"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["draft", "active", "archived"],
+            "example": "active"
+          },
+          "activatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "city",
+          "district",
+          "address",
+          "floors",
+          "hasElevator",
+          "assessmentBasis",
+          "bankAccount",
+          "signatureName",
+          "status",
+          "activatedAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
       "EntranceDto": {
         "type": "object",
         "properties": {
@@ -3034,6 +5409,101 @@
           }
         },
         "required": ["name"]
+      },
+      "EntranceRecordDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "А"
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "AcceptedDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["ok"],
+            "example": "ok"
+          }
+        },
+        "required": ["status"]
+      },
+      "PropertyRecordDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "buildingId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "entranceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "entranceName": {
+            "type": "string",
+            "example": "А"
+          },
+          "floor": {
+            "type": "number",
+            "example": 1,
+            "description": "0 is the ground floor; below it is negative"
+          },
+          "number": {
+            "type": "string",
+            "example": "1"
+          },
+          "propertyType": {
+            "type": "string",
+            "enum": ["apartment", "garage", "shop", "storage", "parking_spot"],
+            "example": "apartment"
+          },
+          "rooms": {
+            "type": "number",
+            "nullable": true,
+            "example": 3
+          },
+          "areaM2": {
+            "type": "string",
+            "nullable": true,
+            "example": "74.50",
+            "description": "Decimal string, m²"
+          },
+          "idealParts": {
+            "type": "string",
+            "nullable": true,
+            "example": "2.3410",
+            "description": "Decimal string, percent"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "archived"],
+            "example": "active"
+          }
+        },
+        "required": [
+          "id",
+          "buildingId",
+          "entranceId",
+          "entranceName",
+          "floor",
+          "number",
+          "propertyType",
+          "rooms",
+          "areaM2",
+          "idealParts",
+          "status"
+        ]
       },
       "CreatePropertyDto": {
         "type": "object",
@@ -3101,6 +5571,118 @@
           }
         }
       },
+      "PropertyResidentDto": {
+        "type": "object",
+        "properties": {
+          "occupancyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["owner", "tenant", "occupant"],
+            "example": "owner"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-01-01"
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": null,
+            "description": "The last day it counts (inclusive); null while it lasts"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Петър Николов"
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "accountStatus": {
+            "type": "string",
+            "enum": ["pending", "active", "suspended"],
+            "nullable": true,
+            "example": "pending",
+            "description": "Null for a household member recorded without an account"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+359881000101"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          }
+        },
+        "required": [
+          "occupancyId",
+          "role",
+          "validFrom",
+          "validTo",
+          "fullName",
+          "accountId",
+          "accountStatus",
+          "phone",
+          "email"
+        ]
+      },
+      "PetRecordDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Бобо"
+          },
+          "species": {
+            "type": "string",
+            "enum": ["dog", "cat", "other"],
+            "example": "dog"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-01-01"
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": null,
+            "description": "The last day it counts (inclusive); null while it lasts"
+          }
+        },
+        "required": ["id", "name", "species", "validFrom", "validTo"]
+      },
+      "PropertyResidentsDto": {
+        "type": "object",
+        "properties": {
+          "residents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PropertyResidentDto"
+            }
+          },
+          "pets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PetRecordDto"
+            }
+          }
+        },
+        "required": ["residents", "pets"]
+      },
       "AddResidentDto": {
         "type": "object",
         "properties": {
@@ -3136,6 +5718,62 @@
           }
         },
         "required": ["role", "validFrom", "firstName"]
+      },
+      "AddedResidentDto": {
+        "type": "object",
+        "properties": {
+          "occupancyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["owner", "tenant", "occupant"],
+            "example": "owner"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-01-01"
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": null,
+            "description": "The last day it counts (inclusive); null while it lasts"
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "accountStatus": {
+            "type": "string",
+            "enum": ["pending", "active", "suspended"],
+            "nullable": true,
+            "example": "pending",
+            "description": "Null for a household member recorded without an account"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Петър Николов"
+          },
+          "inviteSent": {
+            "type": "boolean",
+            "description": "True when a new account was created and its invite code issued"
+          }
+        },
+        "required": [
+          "occupancyId",
+          "role",
+          "validFrom",
+          "validTo",
+          "accountId",
+          "accountStatus",
+          "fullName",
+          "inviteSent"
+        ]
       },
       "MyBuildingDto": {
         "type": "object",
@@ -3298,37 +5936,6 @@
           }
         },
         "required": ["id", "role", "name", "validFrom", "validTo", "isMe"]
-      },
-      "PetRecordDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string",
-            "example": "Бобо"
-          },
-          "species": {
-            "type": "string",
-            "enum": ["dog", "cat", "other"],
-            "example": "dog"
-          },
-          "validFrom": {
-            "type": "string",
-            "format": "date",
-            "example": "2026-01-01"
-          },
-          "validTo": {
-            "type": "string",
-            "format": "date",
-            "nullable": true,
-            "example": null,
-            "description": "The last day it counts (inclusive); null while it lasts"
-          }
-        },
-        "required": ["id", "name", "species", "validFrom", "validTo"]
       },
       "MyPropertyDetailDto": {
         "type": "object",
@@ -3511,6 +6118,42 @@
         },
         "required": ["name", "species", "validFrom"]
       },
+      "BuildingManagerDto": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Мария Стоянова"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+359881234567"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "example": "maria@inova.bg"
+          },
+          "roleKey": {
+            "type": "string",
+            "nullable": true,
+            "example": "house_manager",
+            "description": "Null for an account without a staff membership"
+          },
+          "since": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z",
+            "description": "When the assignment began"
+          }
+        },
+        "required": ["accountId", "fullName", "phone", "email", "roleKey", "since"]
+      },
       "AssignManagerDto": {
         "type": "object",
         "properties": {
@@ -3544,6 +6187,94 @@
         },
         "required": ["subjectType", "subjectId", "reason", "effectiveDate"]
       },
+      "RemovalRequestDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "subjectType": {
+            "type": "string",
+            "enum": ["occupancy", "account", "property"],
+            "example": "occupancy"
+          },
+          "subjectId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "buildingId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reason": {
+            "type": "string",
+            "example": "Продаден имот"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-01-01",
+            "description": "The last day the occupancies count"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "approved", "rejected", "applied", "withdrawn"],
+            "example": "pending"
+          },
+          "requestedBy": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "decidedBy": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z",
+            "nullable": true
+          },
+          "decisionNote": {
+            "type": "string",
+            "nullable": true
+          },
+          "appliedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "subjectType",
+          "subjectId",
+          "buildingId",
+          "reason",
+          "effectiveDate",
+          "status",
+          "requestedBy",
+          "decidedBy",
+          "decidedAt",
+          "decisionNote",
+          "appliedAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
       "UpdateRemovalRequestDto": {
         "type": "object",
         "properties": {
@@ -3561,6 +6292,121 @@
             "type": "string"
           }
         }
+      },
+      "RequestTenantDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "key": {
+            "type": "string",
+            "example": "demo"
+          },
+          "name": {
+            "type": "string",
+            "example": "Demo Property Management"
+          }
+        },
+        "required": ["id", "key", "name"]
+      },
+      "PlatformRemovalRequestDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "subjectType": {
+            "type": "string",
+            "enum": ["occupancy", "account", "property"],
+            "example": "occupancy"
+          },
+          "subjectId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "buildingId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reason": {
+            "type": "string",
+            "example": "Продаден имот"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-01-01",
+            "description": "The last day the occupancies count"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "approved", "rejected", "applied", "withdrawn"],
+            "example": "pending"
+          },
+          "requestedBy": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "decidedBy": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z",
+            "nullable": true
+          },
+          "decisionNote": {
+            "type": "string",
+            "nullable": true
+          },
+          "appliedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z"
+          },
+          "buildingName": {
+            "type": "string",
+            "example": "бл. 12"
+          },
+          "tenant": {
+            "$ref": "#/components/schemas/RequestTenantDto"
+          }
+        },
+        "required": [
+          "id",
+          "subjectType",
+          "subjectId",
+          "buildingId",
+          "reason",
+          "effectiveDate",
+          "status",
+          "requestedBy",
+          "decidedBy",
+          "decidedAt",
+          "decisionNote",
+          "appliedAt",
+          "createdAt",
+          "updatedAt",
+          "buildingName",
+          "tenant"
+        ]
       },
       "DecisionDto": {
         "type": "object",
@@ -3581,6 +6427,139 @@
         },
         "required": ["note"]
       },
+      "RequesterDto": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "example": "Иван Иванов"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+359881000104"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          }
+        },
+        "required": ["fullName", "phone", "email"]
+      },
+      "LinkRequestQueueItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["owner", "tenant"],
+            "example": "owner"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-01-01"
+          },
+          "address": {
+            "type": "string",
+            "example": "бл. 12, ул. Проф. Александър Фол 7"
+          },
+          "entrance": {
+            "type": "string",
+            "nullable": true,
+            "example": "А"
+          },
+          "floor": {
+            "type": "string",
+            "nullable": true,
+            "example": "2"
+          },
+          "number": {
+            "type": "string",
+            "example": "4"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "approved", "rejected", "withdrawn"],
+            "example": "pending"
+          },
+          "decisionNote": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Why staff rejected it, or their note on approval"
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": null
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T08:30:00.000Z"
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The resident who asked"
+          },
+          "propertyId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "The property staff linked; null until approved"
+          },
+          "occupancyId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "decidedBy": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z"
+          },
+          "requester": {
+            "$ref": "#/components/schemas/RequesterDto"
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "validFrom",
+          "address",
+          "entrance",
+          "floor",
+          "number",
+          "note",
+          "status",
+          "decisionNote",
+          "decidedAt",
+          "createdAt",
+          "accountId",
+          "propertyId",
+          "occupancyId",
+          "decidedBy",
+          "updatedAt",
+          "requester"
+        ]
+      },
       "ApproveLinkDto": {
         "type": "object",
         "properties": {
@@ -3596,6 +6575,115 @@
           }
         },
         "required": ["buildingId", "propertyId"]
+      },
+      "LinkRequestDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["owner", "tenant"],
+            "example": "owner"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-01-01"
+          },
+          "address": {
+            "type": "string",
+            "example": "бл. 12, ул. Проф. Александър Фол 7"
+          },
+          "entrance": {
+            "type": "string",
+            "nullable": true,
+            "example": "А"
+          },
+          "floor": {
+            "type": "string",
+            "nullable": true,
+            "example": "2"
+          },
+          "number": {
+            "type": "string",
+            "example": "4"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "approved", "rejected", "withdrawn"],
+            "example": "pending"
+          },
+          "decisionNote": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Why staff rejected it, or their note on approval"
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": null
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T08:30:00.000Z"
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The resident who asked"
+          },
+          "propertyId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "The property staff linked; null until approved"
+          },
+          "occupancyId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "decidedBy": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "validFrom",
+          "address",
+          "entrance",
+          "floor",
+          "number",
+          "note",
+          "status",
+          "decisionNote",
+          "decidedAt",
+          "createdAt",
+          "accountId",
+          "propertyId",
+          "occupancyId",
+          "decidedBy",
+          "updatedAt"
+        ]
       },
       "CreateLinkRequestDto": {
         "type": "object",
@@ -3708,6 +6796,166 @@
           "createdAt"
         ]
       },
+      "ImportedBuildingDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "бл. 12"
+          },
+          "row": {
+            "type": "number",
+            "example": 2,
+            "description": "The first row that named it"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["new", "existing"],
+            "example": "new",
+            "description": "`existing`: its details stay as they are; only entrances and properties are added"
+          },
+          "entrancesCreated": {
+            "type": "number",
+            "example": 2
+          },
+          "propertiesCreated": {
+            "type": "number",
+            "example": 30
+          }
+        },
+        "required": ["name", "row", "status", "entrancesCreated", "propertiesCreated"]
+      },
+      "ImportRowErrorDto": {
+        "type": "object",
+        "properties": {
+          "row": {
+            "type": "number",
+            "example": 1,
+            "description": "The spreadsheet's row number: the header is row 1"
+          },
+          "column": {
+            "type": "string",
+            "example": "Етаж",
+            "description": "The header as the file names it; absent for a whole-row problem"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "missing_column",
+              "required",
+              "invalid",
+              "duplicate_in_file",
+              "inconsistent_building",
+              "exists",
+              "out_of_scope",
+              "archived_building",
+              "too_many_rows",
+              "empty"
+            ],
+            "example": "missing_column"
+          },
+          "message": {
+            "type": "string",
+            "example": "The column «Етаж» is missing"
+          }
+        },
+        "required": ["row", "code", "message"]
+      },
+      "ImportReportDto": {
+        "type": "object",
+        "properties": {
+          "dryRun": {
+            "type": "boolean"
+          },
+          "committed": {
+            "type": "boolean",
+            "description": "True only when a real run wrote everything; never partly"
+          },
+          "properties": {
+            "type": "number",
+            "example": 30,
+            "description": "Property rows read from the sheet"
+          },
+          "buildings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportedBuildingDto"
+            }
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportRowErrorDto"
+            }
+          }
+        },
+        "required": ["dryRun", "committed", "properties", "buildings", "errors"]
+      },
+      "TenantContextDto": {
+        "type": "object",
+        "properties": {
+          "tenant": {
+            "$ref": "#/components/schemas/TenantSummaryDto"
+          },
+          "role": {
+            "type": "string",
+            "example": "manager",
+            "description": "The caller's role key"
+          },
+          "roleName": {
+            "type": "string",
+            "example": "Домоуправител",
+            "description": "The role's name as the organisation stored it"
+          },
+          "permissions": {
+            "example": ["tenant.read", "staff.read"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["tenant", "role", "roleName", "permissions"]
+      },
+      "StaffMemberDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "roleKey": {
+            "type": "string",
+            "example": "manager"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["invited", "active", "suspended", "revoked"],
+            "example": "active"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Мария Стоянова"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "example": "maria@inova.bg"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+359881234567"
+          },
+          "since": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z",
+            "description": "When the membership was created"
+          }
+        },
+        "required": ["userId", "roleKey", "status", "fullName", "email", "phone", "since"]
+      },
       "InviteStaffDto": {
         "type": "object",
         "properties": {
@@ -3730,6 +6978,43 @@
         },
         "required": ["email", "fullName", "roleKey"]
       },
+      "InvitedStaffDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "roleKey": {
+            "type": "string",
+            "example": "manager"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["invited", "active", "suspended", "revoked"],
+            "example": "active"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Николь Петрова"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "example": "nikol@bloksofia.bg"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "inviteSent": {
+            "type": "boolean",
+            "description": "False when the account was already active: it simply gains the role"
+          }
+        },
+        "required": ["userId", "roleKey", "status", "fullName", "email", "phone", "inviteSent"]
+      },
       "UpdateStaffDto": {
         "type": "object",
         "properties": {
@@ -3742,6 +7027,69 @@
             "enum": ["active", "suspended", "revoked"]
           }
         }
+      },
+      "StaffChangeDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "roleKey": {
+            "type": "string",
+            "example": "manager"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["invited", "active", "suspended", "revoked"],
+            "example": "active"
+          }
+        },
+        "required": ["userId", "roleKey", "status"]
+      },
+      "PermissionInfoDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "property.read"
+          },
+          "description": {
+            "type": "string",
+            "example": "View buildings and properties"
+          }
+        },
+        "required": ["key", "description"]
+      },
+      "RoleSummaryDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "accountant"
+          },
+          "name": {
+            "type": "string",
+            "example": "Счетоводител"
+          },
+          "isSystem": {
+            "type": "boolean",
+            "description": "System roles cannot be deleted; `admin` cannot be edited either"
+          },
+          "permissions": {
+            "example": ["tenant.read", "audit.read"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "members": {
+            "type": "number",
+            "example": 2,
+            "description": "Staff memberships holding the role, any status"
+          }
+        },
+        "required": ["key", "name", "isSystem", "permissions", "members"]
       },
       "CreateRoleDto": {
         "type": "object",
@@ -3764,6 +7112,31 @@
         },
         "required": ["key", "name", "permissions"]
       },
+      "CreatedRoleDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "accountant"
+          },
+          "name": {
+            "type": "string",
+            "example": "Счетоводител"
+          },
+          "isSystem": {
+            "type": "boolean",
+            "description": "System roles cannot be deleted; `admin` cannot be edited either"
+          },
+          "permissions": {
+            "example": ["tenant.read", "audit.read"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["key", "name", "isSystem", "permissions"]
+      },
       "UpdateRoleDto": {
         "type": "object",
         "properties": {
@@ -3777,6 +7150,57 @@
             }
           }
         }
+      },
+      "AuditEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actorUserId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "actorType": {
+            "type": "string",
+            "enum": ["user", "system", "platform"],
+            "example": "user"
+          },
+          "action": {
+            "type": "string",
+            "example": "staff.invited"
+          },
+          "entityType": {
+            "type": "string",
+            "example": "staff_membership"
+          },
+          "entityId": {
+            "type": "string",
+            "nullable": true
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "What changed; its shape depends on `action`"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "actorUserId",
+          "actorType",
+          "action",
+          "entityType",
+          "entityId",
+          "payload",
+          "createdAt"
+        ]
       }
     }
   }

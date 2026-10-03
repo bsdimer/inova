@@ -1,4 +1,13 @@
-import { isValidIban, normalizeIban } from '@inova/shared';
+import {
+  isValidIban,
+  normalizeIban,
+  type Accepted,
+  type BuildingDetail,
+  type BuildingListItem,
+  type BuildingRecord,
+  type EntranceRecord,
+  type PropertyRecord,
+} from '@inova/shared';
 import {
   BadRequestException,
   ConflictException,
@@ -34,6 +43,26 @@ type PropertyCounts = Record<PropertyType, number>;
 const noProperties = (): PropertyCounts =>
   Object.fromEntries(PROPERTY_TYPES.map((type) => [type, 0])) as PropertyCounts;
 
+/** What a client sees of a building row: no tenant id, timestamps as ISO strings. */
+function toRecord(row: Building): BuildingRecord {
+  return {
+    id: row.id,
+    name: row.name,
+    city: row.city,
+    district: row.district,
+    address: row.address,
+    floors: row.floors,
+    hasElevator: row.hasElevator,
+    assessmentBasis: row.assessmentBasis,
+    bankAccount: row.bankAccount,
+    signatureName: row.signatureName,
+    status: row.status,
+    activatedAt: row.activatedAt?.toISOString() ?? null,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
 /** The constraint a Postgres unique violation names, whether or not the driver error is wrapped. */
 function violatedConstraint(error: unknown): string | undefined {
   for (const candidate of [error, (error as { cause?: unknown } | null)?.cause]) {
@@ -58,7 +87,11 @@ export class BuildingsService {
     private readonly scope: BuildingScope,
   ) {}
 
-  async list(tenantId: string, actor: Actor, filter: ListBuildingsQuery) {
+  async list(
+    tenantId: string,
+    actor: Actor,
+    filter: ListBuildingsQuery,
+  ): Promise<BuildingListItem[]> {
     return this.dbService.withTenant(tenantId, async (tx) => {
       const scope = await this.scope.of(tx, tenantId, actor);
       if (!scope.all && scope.buildingIds.size === 0) return [];
@@ -79,14 +112,14 @@ export class BuildingsService {
       const entranceCounts = await this.entranceCounts(tx, tenantId, ids);
       const propertyCounts = await this.propertyCounts(tx, tenantId, ids);
       return rows.map((row) => ({
-        ...row,
+        ...toRecord(row),
         entranceCount: entranceCounts.get(row.id) ?? 0,
         propertyCounts: propertyCounts.get(row.id) ?? noProperties(),
       }));
     });
   }
 
-  async get(tenantId: string, actor: Actor, buildingId: string) {
+  async get(tenantId: string, actor: Actor, buildingId: string): Promise<BuildingDetail> {
     return this.dbService.withTenant(tenantId, async (tx) => {
       const building = await this.building(tx, tenantId, buildingId, actor);
       const entranceRows = await tx
@@ -105,14 +138,14 @@ export class BuildingsService {
         .orderBy(asc(entrances.createdAt), asc(entrances.name));
       const counts = await this.propertyCounts(tx, tenantId, [buildingId]);
       return {
-        ...building,
+        ...toRecord(building),
         entrances: entranceRows,
         propertyCounts: counts.get(buildingId) ?? noProperties(),
       };
     });
   }
 
-  async create(tenantId: string, actor: Actor, input: CreateBuildingDto) {
+  async create(tenantId: string, actor: Actor, input: CreateBuildingDto): Promise<BuildingDetail> {
     const entranceNames = (input.entrances ?? []).map((name) => name.trim());
     return this.dbService.withTenant(tenantId, async (tx) => {
       const [building] = await tx
@@ -152,11 +185,20 @@ export class BuildingsService {
         name: building.name,
         entrances: entranceNames,
       });
-      return { ...building, entrances: entranceRows };
+      return {
+        ...toRecord(building),
+        entrances: entranceRows.map((entrance) => ({ ...entrance, propertyCount: 0 })),
+        propertyCounts: noProperties(),
+      };
     });
   }
 
-  async update(tenantId: string, actor: Actor, buildingId: string, input: UpdateBuildingDto) {
+  async update(
+    tenantId: string,
+    actor: Actor,
+    buildingId: string,
+    input: UpdateBuildingDto,
+  ): Promise<BuildingRecord> {
     return this.dbService.withTenant(tenantId, async (tx) => {
       const before = await this.editableBuilding(tx, tenantId, buildingId, actor);
       const changes: Partial<Building> = {
@@ -174,7 +216,7 @@ export class BuildingsService {
           ? { signatureName: input.signatureName?.trim() ?? null }
           : {}),
       };
-      if (Object.keys(changes).length === 0) return before;
+      if (Object.keys(changes).length === 0) return toRecord(before);
 
       const [after] = await tx
         .update(buildings)
@@ -184,12 +226,12 @@ export class BuildingsService {
       await this.record(tx, tenantId, actor, 'building.updated', 'building', buildingId, {
         changes,
       });
-      return after;
+      return toRecord(after);
     });
   }
 
   /** Draft → active. A building goes live with at least one entrance and one property. */
-  async activate(tenantId: string, actor: Actor, buildingId: string) {
+  async activate(tenantId: string, actor: Actor, buildingId: string): Promise<BuildingRecord> {
     return this.dbService.withTenant(tenantId, async (tx) => {
       const building = await this.building(tx, tenantId, buildingId, actor);
       if (building.status !== 'draft') {
@@ -211,11 +253,16 @@ export class BuildingsService {
       await this.record(tx, tenantId, actor, 'building.activated', 'building', buildingId, {
         properties,
       });
-      return active;
+      return toRecord(active);
     });
   }
 
-  async addEntrance(tenantId: string, actor: Actor, buildingId: string, name: string) {
+  async addEntrance(
+    tenantId: string,
+    actor: Actor,
+    buildingId: string,
+    name: string,
+  ): Promise<EntranceRecord> {
     return this.inBuilding(tenantId, actor, buildingId, 'entrance', async (tx) => {
       const [entrance] = await tx
         .insert(entrances)
@@ -235,7 +282,7 @@ export class BuildingsService {
     buildingId: string,
     entranceId: string,
     name: string,
-  ) {
+  ): Promise<EntranceRecord> {
     return this.inBuilding(tenantId, actor, buildingId, 'entrance', async (tx) => {
       const [entrance] = await tx
         .update(entrances)
@@ -252,7 +299,12 @@ export class BuildingsService {
   }
 
   /** Only while the building is a draft, and only an entrance that holds no property. */
-  async removeEntrance(tenantId: string, actor: Actor, buildingId: string, entranceId: string) {
+  async removeEntrance(
+    tenantId: string,
+    actor: Actor,
+    buildingId: string,
+    entranceId: string,
+  ): Promise<Accepted> {
     return this.inBuilding(tenantId, actor, buildingId, 'entrance', async (tx, building) => {
       if (building.status !== 'draft') {
         throw new ConflictException('An entrance of an active building cannot be removed');
@@ -283,28 +335,10 @@ export class BuildingsService {
     actor: Actor,
     buildingId: string,
     filter: ListPropertiesQuery,
-  ) {
+  ): Promise<PropertyRecord[]> {
     return this.dbService.withTenant(tenantId, async (tx) => {
       await this.building(tx, tenantId, buildingId, actor);
-      return tx
-        .select({
-          id: apartments.id,
-          buildingId: apartments.buildingId,
-          entranceId: apartments.entranceId,
-          entranceName: entrances.name,
-          floor: apartments.floor,
-          number: apartments.number,
-          propertyType: apartments.propertyType,
-          rooms: apartments.rooms,
-          areaM2: apartments.areaM2,
-          idealParts: apartments.idealParts,
-          status: apartments.status,
-        })
-        .from(apartments)
-        .innerJoin(
-          entrances,
-          and(eq(entrances.tenantId, apartments.tenantId), eq(entrances.id, apartments.entranceId)),
-        )
+      return this.propertyRows(tx)
         .where(
           and(
             eq(apartments.tenantId, tenantId),
@@ -317,7 +351,12 @@ export class BuildingsService {
     });
   }
 
-  async addProperty(tenantId: string, actor: Actor, buildingId: string, input: CreatePropertyDto) {
+  async addProperty(
+    tenantId: string,
+    actor: Actor,
+    buildingId: string,
+    input: CreatePropertyDto,
+  ): Promise<PropertyRecord> {
     return this.inBuilding(tenantId, actor, buildingId, 'property', async (tx) => {
       await this.entrance(tx, tenantId, buildingId, input.entranceId);
       const [property] = await tx
@@ -341,7 +380,7 @@ export class BuildingsService {
         number: property.number,
         propertyType: property.propertyType,
       });
-      return property;
+      return this.property(tx, tenantId, property.id);
     });
   }
 
@@ -352,7 +391,7 @@ export class BuildingsService {
     buildingId: string,
     propertyId: string,
     input: UpdatePropertyDto,
-  ) {
+  ): Promise<PropertyRecord> {
     return this.inBuilding(tenantId, actor, buildingId, 'property', async (tx) => {
       const row = and(
         eq(apartments.tenantId, tenantId),
@@ -376,7 +415,7 @@ export class BuildingsService {
           ? { idealParts: this.idealParts(input.idealParts) ?? null }
           : {}),
       };
-      if (Object.keys(changes).length === 0) return before;
+      if (Object.keys(changes).length === 0) return this.property(tx, tenantId, propertyId);
 
       const [after] = await tx
         .update(apartments)
@@ -389,12 +428,17 @@ export class BuildingsService {
         from: Object.fromEntries(changed.map((key) => [key, before[key]])),
         to: Object.fromEntries(changed.map((key) => [key, after[key]])),
       });
-      return after;
+      return this.property(tx, tenantId, propertyId);
     });
   }
 
   /** Free while the building is a draft; afterwards only a removal request ends a property. */
-  async removeProperty(tenantId: string, actor: Actor, buildingId: string, propertyId: string) {
+  async removeProperty(
+    tenantId: string,
+    actor: Actor,
+    buildingId: string,
+    propertyId: string,
+  ): Promise<Accepted> {
     return this.inBuilding(tenantId, actor, buildingId, 'property', async (tx, building) => {
       if (building.status !== 'draft') {
         throw new ConflictException(
@@ -479,6 +523,36 @@ export class BuildingsService {
       throw new ConflictException('An archived building cannot be changed');
     }
     return building;
+  }
+
+  /** Properties with their entrance's name, the shape every property route returns. */
+  private propertyRows(tx: TenantTx) {
+    return tx
+      .select({
+        id: apartments.id,
+        buildingId: apartments.buildingId,
+        entranceId: apartments.entranceId,
+        entranceName: entrances.name,
+        floor: apartments.floor,
+        number: apartments.number,
+        propertyType: apartments.propertyType,
+        rooms: apartments.rooms,
+        areaM2: apartments.areaM2,
+        idealParts: apartments.idealParts,
+        status: apartments.status,
+      })
+      .from(apartments)
+      .innerJoin(
+        entrances,
+        and(eq(entrances.tenantId, apartments.tenantId), eq(entrances.id, apartments.entranceId)),
+      );
+  }
+
+  private async property(tx: TenantTx, tenantId: string, propertyId: string) {
+    const [property] = await this.propertyRows(tx).where(
+      and(eq(apartments.tenantId, tenantId), eq(apartments.id, propertyId)),
+    );
+    return property;
   }
 
   private entranceOf(tenantId: string, buildingId: string, entranceId: string) {
