@@ -394,3 +394,28 @@ describe('invalid input (400)', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('the page the recovery link opens (WHI-150)', () => {
+  it('is one static page for everyone: the token stays in the fragment, the script under a nonce', async () => {
+    const res = await request(app.getHttpServer()).get('/auth/reset');
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toMatch(/^text\/html/);
+    expect(res.headers['cache-control']).toBe('no-store');
+    expect(res.headers['referrer-policy']).toBe('no-referrer');
+
+    const csp = res.headers['content-security-policy'] as string;
+    const nonce = /script-src 'nonce-([^']+)'/.exec(csp)?.[1];
+    expect(nonce).toBeDefined();
+    expect(csp).toContain("connect-src 'self'");
+    expect(csp).toContain("frame-ancestors 'none'");
+    expect(res.text).toContain(`<script nonce="${nonce}">`);
+    // The token is read from location.hash and posted to the confirm route next to it.
+    expect(res.text).toContain('location.hash');
+    expect(res.text).toContain("fetch('recovery/confirm'");
+    expect(res.text).toContain("'inova://reset?token='");
+
+    // A fresh nonce per response.
+    const again = await request(app.getHttpServer()).get('/auth/reset');
+    expect(again.headers['content-security-policy']).not.toBe(csp);
+  });
+});

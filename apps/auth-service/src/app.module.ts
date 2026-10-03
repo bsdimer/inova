@@ -7,6 +7,7 @@ import { MessageOutbox } from './delivery/message-outbox';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthController } from './auth/auth.controller';
 import { EmailChangeService } from './auth/email-change.service';
+import { ResetPageController } from './auth/reset-page.controller';
 import { ProfileController } from './auth/profile.controller';
 import { AuthService } from './auth/auth.service';
 import { InviteCodes } from './auth/invite-codes';
@@ -28,7 +29,13 @@ import { KeysService } from './keys/keys.service';
     ConfigModule.forRoot({ isGlobal: true }),
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 30 }]),
   ],
-  controllers: [HealthController, JwksController, AuthController, ProfileController],
+  controllers: [
+    HealthController,
+    JwksController,
+    AuthController,
+    ProfileController,
+    ResetPageController,
+  ],
   providers: [
     DbService,
     KeysService,

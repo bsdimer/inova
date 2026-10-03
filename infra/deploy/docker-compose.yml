@@ -207,6 +207,31 @@ services:
           memory: 256m
     logging: *logging
 
+  # The test environment's mailbox (WHI-150): the worker's SMTP target, so
+  # every e-mail — and every SMS, rendered as an e-mail — lands where the team
+  # can read it at https://<domain>/mail/, behind the password provision-env.sh
+  # generates. Only with COMPOSE_PROFILES=mailbox, which only test gets.
+  # Keeps the latest 500 messages and nothing on disk.
+  mailbox:
+    image: axllent/mailpit:v1.31.4
+    profiles: ['mailbox']
+    restart: unless-stopped
+    networks:
+      default: {}
+      edge:
+        aliases: ['${ENV_NAME:?set in .env}-mail']
+    environment:
+      MP_WEBROOT: mail
+      MP_UI_AUTH_FILE: /run/secrets/mailbox-auth
+      MP_MAX_MESSAGES: '500'
+    volumes:
+      - ./secrets/mailbox-auth:/run/secrets/mailbox-auth:ro
+    deploy:
+      resources:
+        limits:
+          memory: 64m
+    logging: *logging
+
   # One-shot tooling, never started by `docker compose up`:
   #   docker compose run --rm migrator
   #   docker compose run --rm seed
