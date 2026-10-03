@@ -30,10 +30,17 @@ Each can block go-live on its own, and each takes weeks of someone else's time.
 
 - [ ] SMS/Viber gateway: **Infobip** (team lead, 30.09, D36); contract signed,
       **sender ID / Viber business sender registered** for Bulgaria.
+- [ ] **Infobip Email** transactional sender (D41): `whitenova.tech` is owned;
+      register and verify planned `notify.whitenova.tech`, publish the exact
+      SPF/DKIM records issued by the Infobip account, check DMARC alignment,
+      and confirm a real test delivery. Store API credentials in the deployed
+      secret environment, never in Git. DNS/provider readiness precedes
+      enabling M1 recovery/invites and M6 emergency e-mails.
 - [ ] Apple Developer organisation account (D-U-N-S) and Google Play
       organisation account for the shared app; bundle id `bg.inova.resident`
       reserved.
-- [ ] Domains and mail: `inova.bg`, `app.inova.bg`, `support@inova.bg`.
+- [ ] Pilot app/support domains and mail: `inova.bg`, `app.inova.bg`,
+      `support@inova.bg` (separate from the owned `whitenova.tech` sender).
 - [ ] The pilot's buildings and properties copied into the import template (#77) — needs the spreadsheets and the «Импорт на имоти» screen.
 - [ ] Accountant's answer on receipt/invoice shape (B2) — blocks M4 templates.
 - [ ] Counsel's answers: DPA template, EGN/identity data (B12), retention.

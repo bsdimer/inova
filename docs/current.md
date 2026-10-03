@@ -1,6 +1,6 @@
 # Current status
 
-**Last updated:** 2026-10-02
+**Last updated:** 2026-10-03
 **Current milestone:** M2 Property hierarchy — backend done 2026-10-01 (#59, #61, #75, #77); the admin screens next
 **Focus:** B8 tenant-account realms and invite-code hardening landed 2026-09-30 (#57, #58); M1's last pre-M2 item, password recovery, landed 2026-10-01 (#74), and so did the whole M2 backend (#59, #61, #75, #77), so mobile can drop mock building/apartment data and the admin «Сгради» screens can start.
 
@@ -115,8 +115,8 @@ Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migr
 | Milestone                            | Status                                                                                                                                                                                                               | Gaps vs original acceptance                                                                                                                                                                                                                   |
 | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | M0 Foundations                       | Done for _local_ foundations; test environment now deployed                                                                                                                                                          | Container deploy to the test host exists (GHCR images, compose, nginx, Let's Encrypt). Still no Terraform/OIDC, no generated OpenAPI clients, no “one command” full stack. Those belong to M-Ops / later. Lint and format are now real gates. |
-| M1 Identity                          | In progress: backend + admin screens; B8 (#57), B14–B15 (#58), B13 recovery (#74), phone sign-in (#78), admin silent refresh (#72) and the worker skeleton (#81) done                                                | Multi-role context needs M2 occupancies; then Redis denylist, real delivery, audit viewer; the worker into the deployed stack.                                                                                                                |
-| M2 Property                          | In progress: backend done 2026-10-01 — buildings (#59), residents (#61), requests, manager assignments and building scope (#75), import (#77)                                                                        | The admin screens and the mobile «Добави моя имот» form; the pilot's data into the template; the building photo is in M6.                                                                                                                     |
+| M1 Identity                          | In progress: backend + admin screens; B8 (#57), B14–B15 (#58), B13 recovery (#74), phone sign-in (#78), admin silent refresh (#72) and the worker skeleton (#81) done                                                | Multi-role context needs M2 occupancies; then Redis denylist, real delivery and audit viewer; the worker runs on test (#95).                                                                                                                  |
+| M2 Property                          | In progress: backend done 2026-10-01 — buildings (#59), residents (#61), requests, manager assignments and building scope (#75), import (#77)                                                                        | D40 draft-invite and resident-import work, admin screens and mobile «Добави моя имот»; pilot data into the template; the building photo is in M6.                                                                                             |
 | M5 Mobile / M9 Dashboard / M10 Brand | Mobile: UI shells on `MOCK` data; the surveys screens were built ahead of the plan — surveys come before the pilot (D23), their milestone is still to be cut. Admin Табло: shell on live APIs, empty slots until M2+ | The resident app's M2 APIs exist (properties, contacts, profile, devices, #61–#85); the app still runs on `MOCK` until it is rebuilt on them.                                                                                                 |
 
 ## Temporary mocks (greppable)
@@ -134,11 +134,18 @@ Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migr
 - Before public release, confirm ownership/configuration of `inova.bg`,
   `app.inova.bg`, `support@inova.bg`, and reservation of the proposed mobile IDs
   (`bg.inova.resident`) in both app stores.
+- Infobip Email transactional delivery (D41): `whitenova.tech` is owned;
+  `notify.whitenova.tech` sender verification, account-provided SPF/DKIM DNS,
+  DMARC check and controlled delivery test are still pending. M1 recovery,
+  e-mail change and invitations remain on MOCK delivery until the worker
+  channel and domain are ready; M6 reuses it for «Авария».
 - Long-lead items that need no code and can each block go-live are listed in
   [milestones/M-Pilot.md](milestones/M-Pilot.md): SMS/Viber gateway and sender
   registration, store accounts, domains, the pilot's data in the import template, accountant (B2),
   counsel (DPA, B12), production host.
-- SMS gateway: Infobip (D36); the contract and sender registration are long-lead (M-Pilot) and block real invite delivery, not M2.
+- SMS gateway: Infobip (D36); its contract and sender registration are
+  long-lead (M-Pilot) and block the phone channel, not M2. Transactional e-mail
+  uses the separate Infobip Email onboarding (D41).
 - B2 (Bulgarian receipt/invoice legal shape) still open — blocks M4 templates, not M2.
 - Stakeholders prefer iCard for online payments; its merchant/account model,
   APIs, webhook/refund/reconciliation support, and Bulgarian onboarding must be
@@ -153,10 +160,15 @@ Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migr
 
 ## Next up
 
-1. **M2 admin screens** — «Сгради», the request queues with История, manager assignment («Обхват» in «Роли и обхват»), «Импорт на имоти»; the mobile app reads `GET /v1/me/properties`. See [milestones/M2-property.md](milestones/M2-property.md).
+1. **M2 admin screens and D40 gaps** — «Сгради», the request queues with История,
+   manager assignment («Обхват» in «Роли и обхват»), «Импорт на имоти» with
+   resident rows and deferred draft invites; the mobile app reads
+   `GET /v1/me/properties`. See [milestones/M2-property.md](milestones/M2-property.md).
 2. **Mobile activation and recovery screens** — the identifier field on activation, forgot-password by e-mail first, phone second (B13, #74). See [milestones/M1-identity.md](milestones/M1-identity.md).
 3. Rebuild the resident app on the real API (`/auth/docs`, `/api/docs`, types from `@inova/shared`; test accounts of #82).
-4. Deferred M1 (before pilot): Redis denylist, real invite delivery, audit viewer.
+4. Deferred M1 (before pilot): Redis denylist, Infobip Email onboarding and
+   real recovery/e-mail-change/invite delivery through the worker (D41),
+   SMS/Viber delivery, audit viewer.
 5. Self-contained Testcontainers for integration tests (harness Phase 2 remainder).
 6. Before production exists: provision the pilot host per **D19** (a single VM
    with the compose stack, its own database and secrets, nightly off-box

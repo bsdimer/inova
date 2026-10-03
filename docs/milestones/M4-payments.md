@@ -28,7 +28,16 @@ tables.
   permitted transfers create balanced, audited ledger entries, with a required note and an optional document (D38).
 - The shared `files` module (D38, moved from M6): presigned upload with content-type and size limits, server-side MIME sniffing, the ClamAV scan in the worker before an attachment becomes visible. Image re-encode and thumbnails stay in M6.
 - One manager-designated verified owner occupancy receives apartment documents;
-  historical documents retain their original recipient.
+  historical documents retain their original recipient. That recipient can
+  view/download each payment's receipt in the app; authorized staff can
+  view/print it in admin (D38). E-mail delivery is not a pilot condition.
+- The Finance page ships in M4 with three scoped cards (D42): building count,
+  properties with an overdue unpaid charge, and the percentage of charges for
+  the selected month settled by allocations to date. The percentage uses
+  integer minor units and the M9 `collected / charged` definition; when no
+  charges exist show an honest empty state, not 0% collection. Use M3/M4 read
+  interfaces, not another module's tables; M9 reuses the contract and may
+  later cache it.
 
 ## Required tests (future release blockers)
 
@@ -38,6 +47,12 @@ tables.
 - Logical funds reconcile to the real-account ledger; allowed/disallowed
   inter-fund transfer cases.
 - Designated-recipient changes do not rewrite prior documents.
+- Receipt list/download is allowed only for the designated recipient retained
+  on that receipt and authorized staff; another resident, building or tenant
+  is denied. Admin print renders the same receipt.
+- Finance cards match the ledger oracle for partial payment, reversal,
+  overdue status, no-charge month and building-scope narrowing; the collected
+  percentage uses allocations to that month's charges, not payment dates.
 - Reversal round-trip; ledger balance properties.
 - Gapless receipt numbering under concurrency.
 - A transfer without a note is refused; its document goes through the `files` scan; the «Справка за плащания» for a period sums exactly the payments of that period.

@@ -1,6 +1,6 @@
 # M2 — Property hierarchy and resident linking
 
-**Status:** In progress — backend done 2026-10-01: buildings, entrances, properties and activation (#59, WHI-96); residents, occupancies and pets, `GET /v1/me/properties` (#61, WHI-97); removal and link requests, manager assignments and building scope (#75, WHI-98); spreadsheet import to our own template with a dry run (#77, WHI-99). Left: the admin screens (queues and История, manager assignment, «Импорт на имоти», «Сгради»), the mobile «Добави моя имот» form; the pilot's data copied into the template.
+**Status:** In progress — backend foundation done 2026-10-01: buildings, entrances, properties and activation (#59, WHI-96); residents, occupancies and pets, `GET /v1/me/properties` (#61, WHI-97); removal and link requests, manager assignments and building scope (#75, WHI-98); building/property spreadsheet import to our own template with a dry run (#77, WHI-99). Left: D40's deferred draft invites, resident import and list summaries; the admin screens (queues and История, manager assignment, «Импорт на имоти», «Сгради»), the mobile «Добави моя имот» form; the pilot's data copied into the template.
 
 ## Goal
 
@@ -40,9 +40,24 @@ The schema contract test must pass on the new tables without being rewritten.
   The building photo is not part of M2: it needs the shared `files` module,
   built in M4 (D38); the photo itself lands with M6; until then the «Сгради» list shows the icon.
 - Create-resident-on-apartment: tenant-local account + effective-dated
-  occupancy + invite code. Residents may be added while the building is still
-  a draft (#61). Normalized email/phone is unique within the tenant,
-  not globally.
+  occupancy. Residents may be added while the building is still a draft (#61),
+  but no active invite code or delivery is created until activation (D40).
+  Activation previews the eligible recipient count and issues/queues one
+  invite per eligible account after the state change through the D41
+  transactional e-mail/worker channel when available; retries must not issue
+  duplicate active codes or messages. Adding an eligible resident to an active
+  building issues/queues the invite immediately. Normalized email/phone is
+  unique within the tenant, not globally.
+- Extend the own-template import to resident rows (name, occupancy role and
+  optional contact). A row without e-mail/phone becomes a named occupancy
+  marked «без акаунт», with no app access or invite; a later verified contact
+  creates/links the tenant account and follows the invitation rule above.
+  A forward migration must allow named owner/tenant occupancies with null
+  `user_id` (the current `0007` constraint only allows a contactless
+  `occupant`), while retaining a non-empty name and a tenant-leading key/RLS.
+  Public resident routes must require a linked account, not a name alone.
+  Building-level values appear once per building in the template, and the dry
+  run shows the inherited values on each property/resident row (D40).
 - Separate owner/tenant/occupant app capabilities; multiple simultaneous owner
   occupancies are valid and owner-only permissions are server-enforced.
 - Effective-dated residents and pets (`valid_from` / `valid_to`) for later fee
@@ -60,6 +75,9 @@ The schema contract test must pass on the new tables without being rewritten.
   staff, a resident owner, or a platform-employed operator may hold the role. A pending
   (not yet activated) account may be assigned; the admin marks it «поканен»
   (planner, 02.10).
+- Building list summaries include entrance count, resident count by account/
+  invitation status, and the assigned house manager. The manager selector uses
+  a scoped, paginated candidate search with a clear empty result (D40).
 
 ## Admin
 
@@ -80,7 +98,14 @@ survey proposal/voting are hidden and server-blocked for tenant/occupant roles.
 
 - Import edge cases (bad rows, dry-run vs commit); `city`, `district`,
   `rooms`, the property type and — D30 — `floors` and `has_elevator` are
-  mapped and validated.
+  mapped and validated. Cover inherited building values, duplicate contacts,
+  contactless residents and an all-or-nothing commit (D40).
+- Draft addition creates no active code/delivery; activation issues only the
+  eligible count once even on retry, and adding to an active building issues
+  one invite. No-contact occupancies cannot sign in; later contact verification
+  follows the same invitation rule. The forward migration passes the unchanged
+  tenant schema contract and an RLS cross-tenant test. List counts and manager candidate search
+  obey tenant, building and permission scope (D40).
 - Apartment correction writes an audit row and needs no approval; ending an
   occupancy still does (D25).
 - Apartment natural-key uniqueness includes floor.

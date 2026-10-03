@@ -16,7 +16,11 @@ M2, M3, M4 APIs (mocked earlier).
 
 «Моята сграда» → «Документи»: the building's documents marked `visible_to_residents` (D34), read-only, with download (`GET /v1/me/documents`, the file through the shared presigned download); nothing else of the library; an archived document disappears. Navigation polish, offline-tolerant caching (TanStack Query persistence), Android + iOS parity per team rules (`rs(wide, narrow)` per AGENTS.md, Android back handling), accessibility pass, bg/en locales.
 
-Payments in the app (D38): the apartment's credit from an overpayment is shown; the resident downloads a «Справка за плащания» for a chosen period (one or more months), whatever the payment method.
+Payments in the app (D38): the apartment's credit from an overpayment is shown;
+the designated document recipient sees and downloads each payment's receipt,
+including historical receipts addressed to them; the resident downloads a
+«Справка за плащания» for a chosen period (one or more months), whatever the
+payment method.
 
 ## Tests
 
