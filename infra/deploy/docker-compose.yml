@@ -98,9 +98,8 @@ services:
       # One reverse proxy (the edge nginx) sits in front. Without this every
       # client shares the proxy's address and the limit above is one bucket.
       TRUST_PROXY_HOPS: '1'
-      # Empty in production: the service then refuses to start instead of
-      # writing one-time codes to the log. provision-env.sh sets `log` for test.
-      CODE_DELIVERY: ${CODE_DELIVERY:-}
+      # Recovery links, e-mail change and invite codes are recorded and queued
+      # on Redis above; the worker sends them (D41).
       # The organisation a sign-in lands in when the request names none (the
       # portal's form does not ask for one yet). Empty = no default: such a
       # request then fails like a wrong password. provision-env.sh sets the
@@ -140,7 +139,6 @@ services:
       DATABASE_URL: postgres://inova_app:${APP_DB_PASSWORD:?set in .env}@postgres:5432/inova
       REDIS_URL: redis://redis:6379
       TRUST_PROXY_HOPS: '1'
-      CODE_DELIVERY: ${CODE_DELIVERY:-}
       INVITE_CODE_TTL_DAYS: ${INVITE_CODE_TTL_DAYS:-30}
       # JWKS is fetched over the internal network — no public round trip, and
       # core-api still verifies tokens locally after the first fetch.
@@ -185,9 +183,21 @@ services:
       NODE_ENV: production
       # Its own role (D21, db/migrations/0010), never core-api's inova_app.
       WORKER_DATABASE_URL: postgres://inova_worker:${WORKER_DB_PASSWORD:?set in .env}@postgres:5432/inova
-      # The same Redis as the services that will enqueue its jobs; `noeviction`
+      # The same Redis as the services that enqueue its jobs; `noeviction`
       # above keeps BullMQ's keys from being dropped under memory pressure.
       REDIS_URL: redis://redis:6379
+      # Message delivery (D41) — see apps/worker/src/delivery/delivery-config.ts.
+      # Unset in production stops the worker; `CODE_DELIVERY=log` (test only,
+      # provision-env.sh) writes codes to its log until a transport is named.
+      CODE_DELIVERY: ${CODE_DELIVERY:-}
+      EMAIL_TRANSPORT: ${EMAIL_TRANSPORT:-}
+      SMS_TRANSPORT: ${SMS_TRANSPORT:-}
+      SMTP_URL: ${SMTP_URL:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      INFOBIP_BASE_URL: ${INFOBIP_BASE_URL:-}
+      INFOBIP_API_KEY: ${INFOBIP_API_KEY:-}
+      # The page a recovery e-mail's link opens, on this environment's domain.
+      RECOVERY_LINK_URL: https://${DOMAIN:?set in .env}/auth/v1/auth/reset
     # One job at a time over a pool of four connections; it measured ~45 MB at
     # rest (2026-10-02), so this leaves room for a job's working set without
     # taking memory from the two environments sharing the box.

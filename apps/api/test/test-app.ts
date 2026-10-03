@@ -1,6 +1,6 @@
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
-import { JWT_AUDIENCE, JWT_ISSUER } from '@inova/shared';
+import { JWT_AUDIENCE, JWT_ISSUER, type DeliveryJob } from '@inova/shared';
 import { SignJWT, calculateJwkThumbprint, exportJWK, generateKeyPair } from 'jose';
 import pg from 'pg';
 import request from 'supertest';
@@ -23,6 +23,8 @@ export interface TestApp {
   as(token: string, tenantId: string): Client;
   /** An active account with a membership, planted directly in the database. */
   account(tenantId: string, email: string, roleKey: string): Promise<string>;
+  /** The delivery jobs queued so far — the queue is replaced at its boundary. */
+  delivered: DeliveryJob[];
   dispose(): Promise<void>;
 }
 
@@ -52,7 +54,13 @@ export async function bootTestApp(dbPrefix: string): Promise<TestApp> {
   // Dynamic import so the env vars above are read at module evaluation time.
   const { AppModule } = await import('../src/app.module');
   const { configureHttpApp } = await import('../src/http-app');
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+  // The delivery queue is Redis: recorded here instead of sent.
+  const delivered: DeliveryJob[] = [];
+  const { DeliveryJobs } = await import('../src/delivery/delivery-jobs');
+  const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
+    .overrideProvider(DeliveryJobs)
+    .useValue({ add: async (job: DeliveryJob) => void delivered.push(job) })
+    .compile();
   const app = moduleRef.createNestApplication<NestExpressApplication>();
   configureHttpApp(app);
   // Listen once: on a server that is not listening, supertest binds a fresh
@@ -89,6 +97,7 @@ export async function bootTestApp(dbPrefix: string): Promise<TestApp> {
     adminPool,
     migratorUrl,
     tenants,
+    delivered,
     as: client,
     platformToken: (platformUserId) =>
       new SignJWT({ kind: 'platform', name: 'Platform', platform_role: 'super_admin' })

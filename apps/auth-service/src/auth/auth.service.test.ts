@@ -1,5 +1,5 @@
 import { UnauthorizedException } from '@nestjs/common';
-import type { MockCodeDelivery } from '@inova/shared';
+import type { MessageOutbox } from '../delivery/message-outbox';
 import { describe, expect, it, vi } from 'vitest';
 import type { DbService } from '../db/db.service';
 import { platformUsers, users } from '../db/schema';
@@ -49,7 +49,7 @@ function serviceWith({ realm = INOVA, account, platformUser }: Fixture) {
     {} as TokenService,
     {} as RefreshTokens,
     {} as InviteCodes,
-    {} as MockCodeDelivery,
+    {} as MessageOutbox,
     passwords,
   );
   return { service, verify, tenantTx, realms };

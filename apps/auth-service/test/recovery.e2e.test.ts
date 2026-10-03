@@ -8,23 +8,14 @@
 import type { INestApplication } from '@nestjs/common';
 import { ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { MockCodeDelivery } from '@inova/shared';
+import type { DeliveryJob } from '@inova/shared';
 import argon2 from 'argon2';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import pg from 'pg';
 import request from 'supertest';
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type MockInstance,
-} from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTestDb } from './db-helper';
 
 let app: INestApplication;
@@ -32,7 +23,8 @@ let db: pg.Client;
 let disposeDb: () => Promise<void>;
 let inovaId: string;
 let demoId: string;
-let delivered: MockInstance<MockCodeDelivery['deliver']>;
+/** The delivery queue, replaced at its boundary: what a person would be sent. */
+const delivered = vi.fn(async (_job: DeliveryJob) => undefined);
 
 const post = (url: string, body: object) =>
   request(app.getHttpServer()).post(url).send(body).set('content-type', 'application/json');
@@ -44,7 +36,7 @@ const INVALID = {
 };
 
 /** The link or code the last request sent — what the person would receive. */
-const lastSecret = (): string => delivered.mock.calls.at(-1)![2];
+const lastSecret = (): string => delivered.mock.calls.at(-1)![0].secret;
 
 const login = (email: string, password: string, realm: string) =>
   post('/auth/login', { email, password, realm });
@@ -93,13 +85,16 @@ beforeAll(async () => {
   process.env.RECOVERY_LINK_TTL_MINUTES = '30';
 
   const { AppModule } = await import('../src/app.module');
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+  const { DeliveryJobs } = await import('../src/delivery/delivery-jobs');
+  const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
+    .overrideProvider(DeliveryJobs)
+    .useValue({ add: delivered })
+    .compile();
   app = moduleRef.createNestApplication();
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   // Listen once: on a server that is not listening, supertest binds a fresh
   // ephemeral port for every request.
   await app.listen(0);
-  delivered = vi.spyOn(app.get(MockCodeDelivery), 'deliver');
 
   db = new pg.Client({ connectionString: testDb.migratorUrl });
   await db.connect();
@@ -130,6 +125,21 @@ describe('recovery by e-mail link', () => {
     expect(delivered).toHaveBeenCalledTimes(1);
     const token = lastSecret();
     expect(token.startsWith(`r.${inovaId}.`)).toBe(true);
+    // Recorded for the worker under the realm, to the account's own address.
+    const { deliveryId, tenantId } = delivered.mock.calls.at(-1)![0];
+    expect(tenantId).toBe(inovaId);
+    const [delivery] = (
+      await db.query(
+        'SELECT tenant_id, purpose, channel, recipient FROM message_deliveries WHERE id = $1',
+        [deliveryId],
+      )
+    ).rows;
+    expect(delivery).toEqual({
+      tenant_id: inovaId,
+      purpose: 'recovery_link',
+      channel: 'email',
+      recipient: 'link@inova.bg',
+    });
 
     const done = await post('/auth/recovery/confirm', { token, password: 'new-password-1' });
     expect(done.status).toBe(204);
@@ -306,6 +316,12 @@ describe('no answer tells whether an account exists (B8, B13)', () => {
     const pending = await post('/auth/recovery', { phone: '+359881000001', realm: 'inova' });
     expect(pending.status).toBe(202);
     expect(delivered).not.toHaveBeenCalled();
+    // Nothing deliverable was even recorded for them.
+    const recorded = await db.query(
+      `SELECT count(*)::int AS n FROM message_deliveries
+       WHERE recipient IN ('ghost@inova.bg', 'ivan@demo.bg', 'suspended@inova.bg', 'admin@inova.bg', '+359881000001')`,
+    );
+    expect(recorded.rows[0].n).toBe(0);
   });
 
   it('recovers only the account of the requested realm when the e-mail is in both', async () => {

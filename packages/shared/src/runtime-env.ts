@@ -46,35 +46,6 @@ export class RuntimeEnv {
 }
 
 /**
- * MOCK: stand-in for the SMS/Viber/email gateway — it writes the one-time code
- * to the log. That is a credential in plain text, so a production process only
- * gets this class when `CODE_DELIVERY=log` is set on purpose (the seeded test
- * environment). Without it the service refuses to start rather than leak codes.
- * TODO(M1): replace with real delivery through the worker.
- */
-export class MockCodeDelivery {
-  constructor(
-    source: EnvSource,
-    private readonly log: (message: string) => void,
-  ) {
-    const mode = source.CODE_DELIVERY;
-    if (mode !== undefined && mode !== '' && mode !== 'log') {
-      throw new Error(`CODE_DELIVERY must be "log" or unset, got "${mode}"`);
-    }
-    if (source.NODE_ENV === 'production' && mode !== 'log') {
-      throw new Error(
-        'No code delivery channel is configured. Logging one-time codes in production ' +
-          'requires the explicit opt-in CODE_DELIVERY=log (test environment only).',
-      );
-    }
-  }
-
-  deliver(purpose: string, recipient: string, code: string): void {
-    this.log(`MOCK delivery — ${purpose} for ${recipient}: ${code}`);
-  }
-}
-
-/**
  * How long an invite code stays valid (decision B14): a setting, not a
  * constant. 30 days unless INVITE_CODE_TTL_DAYS says otherwise, and never
  * outside 1–90 days — an out-of-bounds value stops the service at start-up.

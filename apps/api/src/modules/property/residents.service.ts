@@ -1,5 +1,4 @@
 import {
-  MockCodeDelivery,
   type AddedResident,
   type BuildingContacts,
   type OccupantRecord,
@@ -16,6 +15,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { and, asc, eq, gte, isNull, lte, ne, or, sql, type SQL } from 'drizzle-orm';
+import { MessageOutbox } from '../../delivery/message-outbox';
 import { DbService, type TenantTx } from '../../db/db.service';
 import {
   apartments,
@@ -60,7 +60,7 @@ export class ResidentsService {
     private readonly dbService: DbService,
     private readonly audit: AuditService,
     private readonly inviteCodes: InviteCodeIssuer,
-    private readonly codeDelivery: MockCodeDelivery,
+    private readonly outbox: MessageOutbox,
     private readonly scope: BuildingScope,
   ) {}
 
@@ -141,8 +141,12 @@ export class ResidentsService {
       });
 
     if (code) {
-      // TODO(M1): deliver via SMS/Viber gateway through the worker. MOCK: log only.
-      this.codeDelivery.deliver('resident invite code', input.phone ?? input.email!, code);
+      await this.outbox.send({
+        tenantId,
+        purpose: 'invite_code',
+        recipient: input.phone ?? input.email!,
+        secret: code,
+      });
     }
     return result;
   }

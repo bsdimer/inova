@@ -14,3 +14,4 @@ export * from './session';
 export * from './device';
 export * from './staff';
 export * from './property';
+export * from './delivery';

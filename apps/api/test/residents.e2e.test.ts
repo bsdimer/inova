@@ -199,6 +199,61 @@ describe('a manager adds a resident', () => {
     expect(JSON.stringify(asTenant.body)).not.toContain('maria.owner@example.bg');
   });
 
+  it('hands each invitation to the worker: recorded to the contact, the code only in the job (D41)', async () => {
+    // A property of its own: the other tests count the people on theirs.
+    const own = await manager.post(`/buildings/${buildingId}/properties`, {
+      entranceId,
+      floor: 9,
+      number: '90',
+      propertyType: 'apartment',
+    });
+    const before = t.delivered.length;
+    const byPhone = await addResident(own.body.id, {
+      role: 'owner',
+      firstName: 'Стоян',
+      phone: '+359881209031',
+    });
+    const byEmail = await addResident(own.body.id, {
+      role: 'tenant',
+      firstName: 'Ралица',
+      email: 'ralitsa.d41@example.bg',
+    });
+    expect([byPhone.inviteSent, byEmail.inviteSent]).toEqual([true, true]);
+
+    const jobs = t.delivered.slice(before);
+    expect(jobs).toHaveLength(2);
+    const rows = (
+      await t.adminPool.query(
+        `SELECT id, tenant_id, purpose, channel, recipient, status FROM message_deliveries
+         WHERE id = ANY($1::uuid[]) ORDER BY created_at`,
+        [jobs.map((job) => job.deliveryId)],
+      )
+    ).rows;
+    expect(rows.map(({ id: _id, ...rest }) => rest)).toEqual([
+      {
+        tenant_id: tenantA,
+        purpose: 'invite_code',
+        channel: 'sms',
+        recipient: '+359881209031',
+        status: 'queued',
+      },
+      {
+        tenant_id: tenantA,
+        purpose: 'invite_code',
+        channel: 'email',
+        recipient: 'ralitsa.d41@example.bg',
+        status: 'queued',
+      },
+    ]);
+    for (const job of jobs) {
+      expect(job.tenantId).toBe(tenantA);
+      expect(job.secret).toMatch(/^\d{6}$/);
+    }
+    // An occupant without contact gets no account and no message.
+    await addResident(own.body.id, { role: 'occupant', firstName: 'Дете' });
+    expect(t.delivered).toHaveLength(before + 2);
+  });
+
   it('reuses the account the organisation already knows, and invites it once per property', async () => {
     const onOne = await addResident(flat['1'], {
       role: 'owner',

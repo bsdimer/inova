@@ -1,7 +1,9 @@
-import { InviteCodePolicy, MockCodeDelivery } from '@inova/shared';
-import { Logger, Module } from '@nestjs/common';
+import { InviteCodePolicy } from '@inova/shared';
+import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { BullDeliveryJobs, DeliveryJobs } from './delivery/delivery-jobs';
+import { MessageOutbox } from './delivery/message-outbox';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthController } from './auth/auth.controller';
 import { EmailChangeService } from './auth/email-change.service';
@@ -50,11 +52,8 @@ import { KeysService } from './keys/keys.service';
       useFactory: (policy: RecoveryPolicy) => new PasswordResets(policy),
     },
     { provide: InviteCodes, useFactory: () => new InviteCodes(new InviteCodePolicy(process.env)) },
-    {
-      provide: MockCodeDelivery,
-      useFactory: () =>
-        new MockCodeDelivery(process.env, (message) => new Logger('CodeDelivery').warn(message)),
-    },
+    MessageOutbox,
+    { provide: DeliveryJobs, useClass: BullDeliveryJobs },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })

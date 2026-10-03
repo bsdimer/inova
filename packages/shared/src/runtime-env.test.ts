@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { InviteCodePolicy, MockCodeDelivery, RuntimeEnv } from './runtime-env';
+import { InviteCodePolicy, RuntimeEnv } from './runtime-env';
 
 describe('RuntimeEnv', () => {
   it('returns the fallback when the variable is unset or empty', () => {
@@ -31,36 +31,6 @@ describe('RuntimeEnv.optionalString', () => {
     expect(new RuntimeEnv({ REALM: '' }).optionalString('REALM')).toBeUndefined();
     expect(new RuntimeEnv({ REALM: '  ' }).optionalString('REALM')).toBeUndefined();
     expect(new RuntimeEnv({ REALM: ' inova ' }).optionalString('REALM')).toBe('inova');
-  });
-});
-
-describe('MockCodeDelivery', () => {
-  it('logs the code outside production without any opt-in', () => {
-    const lines: string[] = [];
-    new MockCodeDelivery({ NODE_ENV: 'test' }, (m) => lines.push(m)).deliver(
-      'invite code',
-      '+359881000001',
-      '482913',
-    );
-    expect(lines).toEqual(['MOCK delivery — invite code for +359881000001: 482913']);
-  });
-
-  it('refuses to be constructed in production without the explicit opt-in', () => {
-    expect(() => new MockCodeDelivery({ NODE_ENV: 'production' }, () => {})).toThrow(
-      /CODE_DELIVERY=log/,
-    );
-  });
-
-  it('is allowed in production only with CODE_DELIVERY=log', () => {
-    expect(
-      () => new MockCodeDelivery({ NODE_ENV: 'production', CODE_DELIVERY: 'log' }, () => {}),
-    ).not.toThrow();
-  });
-
-  it('rejects an unknown delivery mode everywhere', () => {
-    expect(
-      () => new MockCodeDelivery({ NODE_ENV: 'test', CODE_DELIVERY: 'sms' }, () => {}),
-    ).toThrow(/must be "log" or unset/);
   });
 });
 

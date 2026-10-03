@@ -1,11 +1,7 @@
-import {
-  MockCodeDelivery,
-  splitFullName,
-  type ProvisionResult,
-  type TenantSummary,
-} from '@inova/shared';
+import { splitFullName, type ProvisionResult, type TenantSummary } from '@inova/shared';
 import { ConflictException, Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
+import { MessageOutbox } from '../../delivery/message-outbox';
 import { DbService } from '../../db/db.service';
 import { toTenantSummary } from '../../db/tenant-summary';
 import {
@@ -58,7 +54,7 @@ export class PlatformService {
   constructor(
     private readonly dbService: DbService,
     private readonly audit: AuditService,
-    private readonly codeDelivery: MockCodeDelivery,
+    private readonly outbox: MessageOutbox,
     private readonly inviteCodes: InviteCodeIssuer,
   ) {}
 
@@ -142,8 +138,6 @@ export class PlatformService {
           phone: input.adminPhone,
           createdBy: actorUserId,
         });
-        // TODO(M1): deliver via SMS/Viber gateway through the worker. MOCK: log only.
-        this.codeDelivery.deliver('tenant admin invite code', input.adminEmail, inviteCode);
       }
 
       await this.audit.record(tx, {
@@ -157,6 +151,14 @@ export class PlatformService {
       });
     });
 
+    if (inviteCode && input.adminEmail) {
+      await this.outbox.send({
+        tenantId: tenant.id,
+        purpose: 'invite_code',
+        recipient: input.adminEmail,
+        secret: inviteCode,
+      });
+    }
     return { tenant: toTenantSummary(tenant), adminInviteSent: inviteCode !== null };
   }
 }

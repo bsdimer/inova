@@ -86,7 +86,12 @@ beforeAll(async () => {
   resetJwksCache();
 
   const { AppModule } = await import('../src/app.module');
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+  // The delivery queue is Redis, outside what these tests cover.
+  const { DeliveryJobs } = await import('../src/delivery/delivery-jobs');
+  const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
+    .overrideProvider(DeliveryJobs)
+    .useValue({ add: async () => undefined })
+    .compile();
   app = moduleRef.createNestApplication();
   // Listen once: on a server that is not listening, supertest binds a fresh
   // ephemeral port for every request.

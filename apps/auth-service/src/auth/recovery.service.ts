@@ -1,7 +1,8 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { MockCodeDelivery, type RecoveryStarted } from '@inova/shared';
+import type { RecoveryStarted } from '@inova/shared';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { DbService, type AuthTx } from '../db/db.service';
+import { MessageOutbox } from '../delivery/message-outbox';
 import { auditRecords, refreshTokens, users } from '../db/schema';
 import { PasswordHasher } from './password-hasher';
 import { PasswordResets, type RecoveryChannel } from './password-resets';
@@ -31,7 +32,7 @@ export class RecoveryService {
     private readonly resets: PasswordResets,
     private readonly policy: RecoveryPolicy,
     private readonly passwords: PasswordHasher,
-    private readonly codeDelivery: MockCodeDelivery,
+    private readonly outbox: MessageOutbox,
   ) {}
 
   async request(contact: RecoveryContact, hint: RealmHint = {}): Promise<RecoveryStarted> {
@@ -44,15 +45,20 @@ export class RecoveryService {
 
     const realm = await this.realms.resolve(hint);
     if (!realm) return answer;
-    const secret = await this.dbService.tenantTx(realm.id, async (tx) => {
+    const issued = await this.dbService.tenantTx(realm.id, async (tx) => {
       const account = await this.activeAccount(tx, realm.id, contact);
-      return account ? this.resets.issue(tx, realm.id, account.id, channel) : null;
+      if (!account) return null;
+      const secret = await this.resets.issue(tx, realm.id, account.id, channel);
+      // The account's own address, not the request's spelling of it.
+      return { secret, recipient: channel === 'email' ? account.email : account.phone };
     });
-    if (secret) {
-      // TODO(M1): e-mail the link (the app's "set a new password" screen) and
-      // text the code through the worker. MOCK: log only.
-      const recipient = 'email' in contact ? contact.email : contact.phone;
-      this.codeDelivery.deliver(`password recovery ${channel}`, recipient, secret);
+    if (issued?.recipient) {
+      await this.outbox.send({
+        tenantId: realm.id,
+        purpose: channel === 'email' ? 'recovery_link' : 'recovery_code',
+        recipient: issued.recipient,
+        secret: issued.secret,
+      });
     }
     return answer;
   }
@@ -117,7 +123,7 @@ export class RecoveryService {
   /** Only an active account recovers: a pending one activates with its invite code. */
   private async activeAccount(tx: AuthTx, tenantId: string, contact: RecoveryContact) {
     const [account] = await tx
-      .select({ id: users.id })
+      .select({ id: users.id, email: users.email, phone: users.phone })
       .from(users)
       .where(
         and(

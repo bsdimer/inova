@@ -1,5 +1,4 @@
 import {
-  MockCodeDelivery,
   splitFullName,
   type Accepted,
   type CreatedRole,
@@ -15,6 +14,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { and, eq, sql } from 'drizzle-orm';
+import { MessageOutbox } from '../../delivery/message-outbox';
 import { DbService, type TenantTx } from '../../db/db.service';
 import { permissions, rolePermissions, roles, staffMemberships, users } from '../../db/schema';
 import { AuditService } from '../audit/audit.service';
@@ -60,7 +60,7 @@ export class TenantService {
   constructor(
     private readonly dbService: DbService,
     private readonly audit: AuditService,
-    private readonly codeDelivery: MockCodeDelivery,
+    private readonly outbox: MessageOutbox,
     private readonly inviteCodes: InviteCodeIssuer,
   ) {}
 
@@ -245,7 +245,8 @@ export class TenantService {
     actor: Actor,
     input: InviteStaffInput,
   ): Promise<InvitedStaff> {
-    return this.dbService.withTenant(tenantId, async (tx) => {
+    let code: string | null = null;
+    const invited = await this.dbService.withTenant(tenantId, async (tx) => {
       await this.assertRoleExists(tx, tenantId, input.roleKey);
 
       // The account is this tenant's own (decision B8): the same e-mail in
@@ -297,14 +298,12 @@ export class TenantService {
       }
 
       if (user.status !== 'active') {
-        const code = await this.inviteCodes.issue(tx, {
+        code = await this.inviteCodes.issue(tx, {
           tenantId,
           accountId: user.id,
           phone: input.phone,
           createdBy: actor.userId,
         });
-        // TODO(M1): deliver via SMS/Viber gateway through the worker. MOCK: log only.
-        this.codeDelivery.deliver('staff invite code', input.email, code);
       }
 
       await this.audit.record(tx, {
@@ -327,6 +326,16 @@ export class TenantService {
         inviteSent: user.status !== 'active',
       };
     });
+    // After the commit: the worker must find the code it is asked to send.
+    if (code) {
+      await this.outbox.send({
+        tenantId,
+        purpose: 'invite_code',
+        recipient: input.email,
+        secret: code,
+      });
+    }
+    return invited;
   }
 
   async updateStaff(

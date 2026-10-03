@@ -78,7 +78,12 @@ beforeAll(async () => {
   rogueKey = (await generateKeyPair('RS256')).privateKey;
 
   const { AppModule } = await import('../src/app.module');
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+  // The delivery queue is Redis, outside what these tests cover.
+  const { DeliveryJobs } = await import('../src/delivery/delivery-jobs');
+  const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
+    .overrideProvider(DeliveryJobs)
+    .useValue({ add: async () => undefined })
+    .compile();
   app = moduleRef.createNestApplication();
   // Listen once: on a server that is not listening, supertest binds a fresh
   // ephemeral port for every request.
@@ -868,5 +873,37 @@ describe('Devices (WHI-129) stay inside their tenant', () => {
       device,
     ]);
     expect(rows).toEqual([{ tenant_id: tenantA, user_id: mariaId }]);
+  });
+});
+
+describe('Message deliveries (D41, WHI-149) stay inside their tenant', () => {
+  it("RLS hides another tenant's messages and refuses one recorded under its id", async () => {
+    const delivery = (
+      await adminPool.query(
+        `INSERT INTO message_deliveries (tenant_id, purpose, channel, recipient)
+         VALUES ($1, 'recovery_link', 'email', 'maria@inova.bg') RETURNING id`,
+        [tenantA],
+      )
+    ).rows[0].id;
+
+    const client = await appPool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [tenantB]);
+      expect(
+        (await client.query(`SELECT 1 FROM message_deliveries WHERE id = $1`, [delivery])).rows,
+      ).toHaveLength(0);
+      // Recording a message for A while acting for B is refused.
+      await expect(
+        client.query(
+          `INSERT INTO message_deliveries (tenant_id, purpose, channel, recipient)
+           VALUES ($1, 'invite_code', 'sms', '+359881000001')`,
+          [tenantA],
+        ),
+      ).rejects.toMatchObject({ code: '42501' });
+      await client.query('ROLLBACK');
+    } finally {
+      client.release();
+    }
   });
 });
