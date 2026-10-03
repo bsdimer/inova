@@ -19,7 +19,15 @@ import {
   type FacetOption,
   type StripTone,
 } from '../components/ui';
-import { api, ApiError, type Role, type StaffMember, type TenantContext } from '../lib/api';
+import {
+  api,
+  ApiError,
+  retryUnlessRefused,
+  type Building,
+  type Role,
+  type StaffMember,
+  type TenantContext,
+} from '../lib/api';
 import { getSession } from '../lib/auth';
 import { useSelectedTenantId } from '../lib/tenant';
 import { permissionLabel } from './roles/permissions';
@@ -76,6 +84,18 @@ export function StaffPage() {
     queryKey: ['staff', tenantId],
     queryFn: () => api<StaffMember[]>('/tenant/staff', { tenantId: tenantId! }),
     enabled: Boolean(tenantId),
+    retry: retryUnlessRefused,
+  });
+  // Only for the phone's head line, and only for a role that may read
+  // buildings; the others get the accounts alone.
+  const canReadBuildings = context.data?.permissions.includes('property.read') === true;
+  const buildings = useQuery({
+    queryKey: ['buildings', tenantId],
+    queryFn: () => api<Building[]>('/buildings', { tenantId: tenantId! }),
+    enabled: Boolean(tenantId) && canReadBuildings,
+    // A count in a head line is not worth ~7 s of retries: on any failure
+    // the line shows the accounts alone.
+    retry: false,
   });
   const roles = useQuery({
     queryKey: ['roles', tenantId],
@@ -178,6 +198,7 @@ export function StaffPage() {
     notice,
     error: !denied && staff.error ? staff.error : null,
     onDismiss: () => setNotice(null),
+    retrying: staff.isFetching,
     onRetry: () => void staff.refetch(),
   });
 
@@ -193,18 +214,29 @@ export function StaffPage() {
     roles: roleList,
     canManage: canManage === true,
     onInvite: () => setInviteOpen(true),
-    onReset: () => setFilters(EMPTY_FILTERS),
+    // The sort is not a filter: clearing the filters keeps it.
+    onReset: () => setFilters({ ...EMPTY_FILTERS, sort: filters.sort }),
   });
 
   return (
     // Page head, toolbar and table stand 16 apart (V2 frames: 72 + 50 → 138, 242 → 258).
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+      {/* On a phone the button stays beside the title (877:2945); from md the row may wrap. */}
+      <div className="flex items-start justify-between gap-4 md:flex-wrap md:items-center md:gap-x-6">
         <div className="min-w-0">
           <h1 className="text-title-22 font-medium">Служители</h1>
-          <p className="text-body-14 mt-1 text-ink-muted">
+          <p className="text-body-14 mt-1 hidden text-ink-muted md:block">
             Акаунти с достъп до {tenantName}, ролите им и къде важат.
           </p>
+          {/* Waits for the first answer of both, so the line does not grow after it
+              appears; a background refresh keeps it (a switched-off query is idle). */}
+          {staff.data &&
+            context.data &&
+            !(buildings.isPending && buildings.fetchStatus !== 'idle') && (
+              <p className="num text-body-14 mt-1 text-ink-soft md:hidden">
+                {phoneSummary(members.length, buildings.data?.length)}
+              </p>
+            )}
         </div>
         {canManage && (
           <PrimaryButton onClick={() => setInviteOpen(true)}>
@@ -220,6 +252,7 @@ export function StaffPage() {
         roles={roleList}
         shown={hasAnyFilter(filters) ? visible.length : members.length}
         total={members.length}
+        countWith={(next) => applyFilters(members, next).length}
       />
 
       {/* The table is the drawn layout; below md the same rows become cards. */}
@@ -285,6 +318,13 @@ export function StaffPage() {
       />
     </div>
   );
+}
+
+/** «2 акаунта · 1 сграда»; without the buildings, the accounts alone. */
+function phoneSummary(accounts: number, buildings: number | undefined): string {
+  const head = `${accounts} ${accounts === 1 ? 'акаунт' : 'акаунта'}`;
+  if (buildings === undefined) return head;
+  return `${head} · ${buildings} ${buildings === 1 ? 'сграда' : 'сгради'}`;
 }
 
 const STATUS_FOR_ACTION: Record<Exclude<RowAction, 'change-role'>, StaffMember['status']> = {
@@ -365,6 +405,8 @@ function pickStrip(input: {
   notice: Notice | null;
   error: Error | null;
   onDismiss: () => void;
+  /** A retry runs its own back-off; the button waits for it. */
+  retrying: boolean;
   onRetry: () => void;
 }) {
   if (input.denied) return undefined;
@@ -373,7 +415,11 @@ function pickStrip(input: {
       <TableStrip
         tone="danger"
         icon={<WarningCircle size="0.875rem" />}
-        action={<GhostButton onClick={input.onRetry}>Опитай пак</GhostButton>}
+        action={
+          <GhostButton onClick={input.onRetry} disabled={input.retrying}>
+            {input.retrying ? 'Зарежда…' : 'Опитай пак'}
+          </GhostButton>
+        }
       >
         Списъкът не можа да се зареди: {input.error.message}
       </TableStrip>

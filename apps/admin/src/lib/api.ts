@@ -72,6 +72,15 @@ import type { TenantSummary } from '@inova/shared';
 // The /tenant contract lives in packages/shared, shared with core-api.
 export type { TenantContext, TenantSummary } from '@inova/shared';
 
+/**
+ * TanStack Query `retry` for lists: a refusal or a bad request (4xx) does not
+ * change on a retry, so it is shown at once; a server or network error gets
+ * the usual three tries.
+ */
+export function retryUnlessRefused(failures: number, error: Error): boolean {
+  return !(error instanceof ApiError && error.status < 500) && failures < 3;
+}
+
 export interface StaffMember {
   userId: string;
   roleKey: string;

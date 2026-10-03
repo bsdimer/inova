@@ -244,10 +244,13 @@ export function SortSelect<T extends string>({
   value,
   options,
   onChange,
+  buttonLabels,
 }: {
   value: T;
   options: Record<T, string>;
   onChange: (next: T) => void;
+  /** Shorter words for the button where it shares a row on a phone (877:2945). */
+  buttonLabels?: Record<T, string>;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -264,7 +267,7 @@ export function SortSelect<T extends string>({
           className="glass-control text-body-14 flex h-11 items-center gap-2 rounded-full px-3.5 font-medium text-ink"
         >
           <ArrowsDownUp size="1rem" className="shrink-0" />
-          <span className="truncate">{options[value]}</span>
+          <span className="truncate">{buttonLabels?.[value] ?? options[value]}</span>
           <CaretDown size="1rem" className="shrink-0" />
         </button>
       }
@@ -773,6 +776,7 @@ export function Drawer({
   footer,
   children,
   label,
+  pinFooter = false,
 }: {
   open: boolean;
   onClose: () => void;
@@ -780,6 +784,11 @@ export function Drawer({
   footer: ReactNode;
   children: ReactNode;
   label: string;
+  /**
+   * Keep the footer out of the scrolling body, under the fade — only where
+   * design.md pins the buttons (the filter sheet, a long table's action).
+   */
+  pinFooter?: boolean;
 }) {
   const dialog = useDialog<HTMLElement>(open, onClose);
   const body = useRef<HTMLDivElement>(null);
@@ -843,11 +852,21 @@ export function Drawer({
             >
               <div className="flex min-h-full flex-col">
                 <div className="px-5 py-4">{children}</div>
-                <div data-drawer-footer className="mt-auto border-t border-panel-divider px-5 py-4">
-                  {footer}
-                </div>
+                {!pinFooter && (
+                  <div
+                    data-drawer-footer
+                    className="mt-auto border-t border-panel-divider px-5 py-4"
+                  >
+                    {footer}
+                  </div>
+                )}
               </div>
             </div>
+            {pinFooter && (
+              <div data-drawer-footer className="shrink-0 border-t border-panel-divider px-5 py-4">
+                {footer}
+              </div>
+            )}
           </motion.aside>
         </motion.div>
       )}
@@ -856,82 +875,139 @@ export function Drawer({
   );
 }
 
-export interface FilterGroup {
-  key: string;
+export interface FilterGroup<K extends string> {
+  key: K;
   title: string;
   options: FacetOption[];
-  selected: string[];
+}
+
+/** The ticked values per facet; a facet with nothing ticked filters nothing. */
+export type FilterChoice<K extends string> = Record<K, string[]>;
+
+/** `choice` with `value` ticked in `key` if it was not, and unticked if it was. */
+export function toggleChoice<K extends string>(
+  choice: FilterChoice<K>,
+  key: K,
+  value: string,
+): FilterChoice<K> {
+  const current = choice[key];
+  const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
+  return { ...choice, [key]: next };
 }
 
 /**
  * Phone filters (Служители, Сгради): the facets of the toolbar as checkbox
  * groups in a bottom sheet; pinned header and footer, the groups scroll.
+ * The sheet stages (design.md → Windows and navigation): ticks build a
+ * draft, «Покажи …» previews and applies it, closing (×, Escape, the
+ * backdrop) drops it, «Изчисти» clears the draft only.
  */
-export function FilterSheet({
+export function FilterSheet<K extends string>({
   open,
   onClose,
   groups,
-  onToggle,
-  onClear,
-  shown,
+  applied,
+  onApply,
+  preview,
+  countWith,
 }: {
   open: boolean;
   onClose: () => void;
-  groups: FilterGroup[];
-  onToggle: (key: string, value: string) => void;
-  onClear: () => void;
-  /** How many rows the current choice leaves, for «Покажи N». */
-  shown: number;
+  groups: FilterGroup<K>[];
+  applied: FilterChoice<K>;
+  onApply: (choice: FilterChoice<K>) => void;
+  /** What the draft would leave, as the button says it: «7 сгради». */
+  preview: (draft: FilterChoice<K>) => string;
+  /**
+   * How many rows a choice leaves, for the number beside each option. Only
+   * true while the list is loaded whole; a paged list must not pass it.
+   */
+  countWith: (choice: FilterChoice<K>) => number;
 }) {
+  const [draft, setDraft] = useState(applied);
+  const [wasOpen, setWasOpen] = useState(open);
+  // Every opening starts from what the list shows now (set during render,
+  // not in an effect, so the first frame already has it).
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setDraft(applied);
+  }
+  const clear = () => {
+    const cleared = { ...draft };
+    for (const group of groups) cleared[group.key] = [];
+    setDraft(cleared);
+  };
+
   return (
     <Drawer
       open={open}
       onClose={onClose}
       label="Филтри"
+      pinFooter
       header={
-        <div className="flex items-center justify-between">
+        // 1126:10849: × beside the title, the actions at the foot.
+        <div className="flex items-center justify-between gap-2">
           <h2 className="text-base font-semibold">Филтри</h2>
           <button
             type="button"
-            onClick={onClear}
-            className="text-sm font-medium text-panel-ink-muted underline underline-offset-4"
+            onClick={onClose}
+            data-dialog-close
+            aria-label="Затвори"
+            // A 44 touch target around the drawn 32 disc.
+            className="group -my-1.5 -mr-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
           >
-            Изчисти
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-panel-row text-panel-ink-muted transition-colors group-hover:text-panel-ink">
+              <X size="1.125rem" />
+            </span>
           </button>
         </div>
       }
       footer={
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-full rounded-full bg-panel-ink py-3 text-sm font-semibold text-panel-ink-inverse"
-        >
-          Покажи {shown}
-        </button>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={clear}
+            className="h-11 rounded-full border border-panel-border px-5 text-sm font-medium text-panel-ink"
+          >
+            Изчисти
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onApply(draft);
+              onClose();
+            }}
+            className="h-11 flex-1 rounded-full bg-panel-ink px-5 text-sm font-semibold text-panel-ink-inverse"
+          >
+            Покажи {preview(draft)}
+          </button>
+        </div>
       }
     >
+      <p className="mb-5 text-xs text-panel-ink">
+        При избор на филтри в повече от една група се показват само резултатите, които отговарят на
+        всички избрани условия.
+      </p>
       <div className="space-y-6">
         {groups.map((group) => (
           <section key={group.key}>
             <h3 className="mb-2 text-xs font-semibold tracking-wider text-panel-ink-faint uppercase">
               {group.title}
             </h3>
-            <div className="space-y-1.5">
+            <div>
               {group.options.map((option) => {
-                const checked = group.selected.includes(option.value);
+                const checked = draft[group.key].includes(option.value);
                 return (
                   <button
                     key={option.value}
                     type="button"
                     role="checkbox"
                     aria-checked={checked}
-                    onClick={() => onToggle(group.key, option.value)}
-                    className={`flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-left text-sm font-medium transition-colors ${
-                      checked ? 'bg-panel-row-strong' : 'bg-panel-row'
-                    }`}
+                    onClick={() => setDraft(toggleChoice(draft, group.key, option.value))}
+                    className="flex min-h-11 w-full items-center gap-3 text-left text-sm font-medium text-panel-ink"
                   >
                     <span
-                      className={`flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded ${
+                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md ${
                         checked ? 'bg-panel-ink' : ''
                       }`}
                       style={{
@@ -939,13 +1015,18 @@ export function FilterSheet({
                       }}
                     >
                       {checked && (
-                        <span
-                          className="h-1.5 w-1.5 rounded-[0.0625rem]"
-                          style={{ background: 'var(--panel-text-inverse)' }}
+                        <Check
+                          size="0.75rem"
+                          strokeWidth={3}
+                          style={{ color: 'var(--panel-text-inverse)' }}
                         />
                       )}
                     </span>
-                    {option.label}
+                    <span className="min-w-0 flex-1 truncate">{option.label}</span>
+                    {/* Facet count: the option alone in its group, the rest of the draft as it is. */}
+                    <span className="num shrink-0 text-panel-ink-muted">
+                      {countWith({ ...draft, [group.key]: [option.value] })}
+                    </span>
                   </button>
                 );
               })}

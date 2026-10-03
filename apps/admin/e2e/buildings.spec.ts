@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { rectsInOneFrame } from './geometry';
 import { ORG_ADMIN, openSignedIn } from './session';
 
 /**
@@ -276,8 +277,27 @@ test.describe('sizes', () => {
     await page.getByRole('button', { name: /^Филтри/ }).click();
     const sheet = page.getByRole('dialog', { name: 'Филтри' });
     await expect(sheet.getByRole('heading', { level: 3 })).toHaveText(['Квартал', 'Статус']);
+    // Each option says how many buildings it would leave with the rest of
+    // the draft (1126:10849); the list is loaded whole, so the count is true.
+    const option = (name: string) => sheet.getByRole('checkbox', { name: new RegExp(`^${name}`) });
+    await expect(option('Активна')).toContainText('2');
+    await expect(option('Чернова')).toContainText('1');
+    await expect(option('Младост')).toContainText('1');
     await sheet.getByRole('checkbox', { name: 'Чернова' }).click();
-    await sheet.getByRole('button', { name: 'Покажи 1' }).click();
+    await expect(option('Младост')).toContainText('0');
+    await expect(option('Лозенец')).toContainText('1');
+    // Staged: the cards stay as they were until «Покажи»; × drops the choice.
+    await expect(cards).toHaveCount(4);
+    await sheet.getByRole('button', { name: 'Затвори' }).click();
+    await expect(sheet).toHaveCount(0);
+    await expect(cards).toHaveCount(4);
+    await page.getByRole('button', { name: /^Филтри/ }).click();
+    await expect(sheet.getByRole('checkbox', { name: 'Чернова' })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
+    await sheet.getByRole('checkbox', { name: 'Чернова' }).click();
+    await sheet.getByRole('button', { name: 'Покажи 1 сграда' }).click();
     await expect(sheet).toHaveCount(0);
     await expect(cards).toHaveCount(1);
     await expect(page.getByRole('button', { name: 'Филтри · 1' })).toBeVisible();
@@ -286,4 +306,22 @@ test.describe('sizes', () => {
     );
     expect(overflow).toBe(0);
   });
+});
+
+test('402: search across, then «Филтри» 44 high and the short sort, then the count (952:5831)', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 402, height: 874 });
+  await answerList(page, PORTFOLIO);
+  await openSignedIn(page, ORG_ADMIN, '/buildings');
+  const count = page.getByText('4 сгради', { exact: true });
+  await expect(count).toBeVisible();
+  const search = page.getByRole('searchbox', { name: 'Търсене в сградите' });
+  const filters = page.getByRole('button', { name: /^Филтри/ });
+  const sort = page.getByRole('button', { name: 'Най-много имоти' });
+  const [s, f, o, c] = await rectsInOneFrame(page, [search, filters, sort, count]);
+  expect(f.y).toBeGreaterThan(s.y + s.height);
+  expect(Math.abs(o.y - f.y)).toBeLessThanOrEqual(1);
+  expect(c.y).toBeGreaterThan(f.y + f.height);
+  expect(await filters.evaluate((el) => (el as HTMLElement).offsetHeight)).toBe(44);
 });
