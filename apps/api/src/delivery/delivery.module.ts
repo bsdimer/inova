@@ -1,16 +1,11 @@
-import { MockCodeDelivery } from '@inova/shared';
-import { Global, Logger, Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
+import { BullDeliveryJobs, DeliveryJobs } from './delivery-jobs';
+import { MessageOutbox } from './message-outbox';
 
-/** One-time code delivery. MOCK until the worker and the SMS/Viber gateway exist (TODO(M1)). */
+/** Messages to people — invitations today — handed to the worker (D41). */
 @Global()
 @Module({
-  providers: [
-    {
-      provide: MockCodeDelivery,
-      useFactory: () =>
-        new MockCodeDelivery(process.env, (message) => new Logger('CodeDelivery').warn(message)),
-    },
-  ],
-  exports: [MockCodeDelivery],
+  providers: [MessageOutbox, { provide: DeliveryJobs, useClass: BullDeliveryJobs }],
+  exports: [MessageOutbox],
 })
 export class DeliveryModule {}

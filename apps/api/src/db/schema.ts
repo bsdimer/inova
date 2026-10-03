@@ -341,3 +341,22 @@ export const devices = pgTable(
   },
   (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
 );
+
+/**
+ * Messages handed to the worker (db/migrations/0013, D41). This service only
+ * records them; the worker sends them and writes the outcome.
+ */
+export const messageDeliveries = pgTable(
+  'message_deliveries',
+  {
+    tenantId: uuid('tenant_id').notNull(),
+    id: uuid('id').notNull().defaultRandom(),
+    purpose: text('purpose', {
+      enum: ['invite_code', 'recovery_link', 'recovery_code', 'email_change_code'],
+    }).notNull(),
+    channel: text('channel', { enum: ['email', 'sms'] }).notNull(),
+    recipient: text('recipient').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.tenantId, t.id] })],
+);

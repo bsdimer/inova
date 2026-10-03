@@ -36,7 +36,12 @@ beforeAll(async () => {
   // Dynamic import so env vars above are read at module evaluation time.
   const { AppModule } = await import('../src/app.module');
   const { configureHttpApp } = await import('../src/http-app');
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+  // The delivery queue is Redis, outside what these tests cover.
+  const { DeliveryJobs } = await import('../src/delivery/delivery-jobs');
+  const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
+    .overrideProvider(DeliveryJobs)
+    .useValue({ add: async () => undefined })
+    .compile();
   app = moduleRef.createNestApplication<NestExpressApplication>();
   configureHttpApp(app);
   await app.init();

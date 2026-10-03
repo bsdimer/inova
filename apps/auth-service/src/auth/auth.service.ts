@@ -1,11 +1,7 @@
 import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
-import {
-  MockCodeDelivery,
-  type AccessTokenClaims,
-  type AuthProfile,
-  type AuthSession,
-} from '@inova/shared';
+import { type AccessTokenClaims, type AuthProfile, type AuthSession } from '@inova/shared';
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { MessageOutbox } from '../delivery/message-outbox';
 import { DbService, type AuthTx } from '../db/db.service';
 import {
   auditRecords,
@@ -57,7 +53,7 @@ export class AuthService {
     private readonly tokens: TokenService,
     private readonly refreshTokens: RefreshTokens,
     private readonly inviteCodes: InviteCodes,
-    private readonly codeDelivery: MockCodeDelivery,
+    private readonly outbox: MessageOutbox,
     private readonly passwords: PasswordHasher,
   ) {}
 
@@ -177,8 +173,12 @@ export class AuthService {
       return account ? this.inviteCodes.reissue(tx, realm.id, account.id) : null;
     });
     if (code) {
-      // TODO(M1): deliver via SMS/Viber gateway through the worker. MOCK: log only.
-      this.codeDelivery.deliver('invite code', phone, code);
+      await this.outbox.send({
+        tenantId: realm.id,
+        purpose: 'invite_code',
+        recipient: phone,
+        secret: code,
+      });
     }
   }
 

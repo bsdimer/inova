@@ -7,30 +7,22 @@
 import type { INestApplication } from '@nestjs/common';
 import { ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { MockCodeDelivery } from '@inova/shared';
+import type { DeliveryJob } from '@inova/shared';
 import argon2 from 'argon2';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import pg from 'pg';
 import request from 'supertest';
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type MockInstance,
-} from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTestDb } from './db-helper';
 
 let app: INestApplication;
 let db: pg.Client;
 let disposeDb: () => Promise<void>;
 let inovaId: string;
-let delivered: MockInstance<MockCodeDelivery['deliver']>;
+/** The delivery queue, replaced at its boundary: what a person would be sent. */
+const delivered = vi.fn(async (_job: DeliveryJob) => undefined);
 
 const http = () => request(app.getHttpServer());
 const post = (url: string, body: object, token?: string) => {
@@ -39,7 +31,7 @@ const post = (url: string, body: object, token?: string) => {
 };
 const patch = (url: string, body: object, token: string) =>
   http().patch(url).set('Authorization', `Bearer ${token}`).send(body);
-const lastCode = (): string => delivered.mock.calls.at(-1)![2];
+const lastCode = (): string => delivered.mock.calls.at(-1)![0].secret;
 
 let counter = 0;
 /** An active resident with a password; returns a fresh session of theirs. */
@@ -79,11 +71,14 @@ beforeAll(async () => {
   process.env.AUTH_DEFAULT_REALM = 'inova';
 
   const { AppModule } = await import('../src/app.module');
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+  const { DeliveryJobs } = await import('../src/delivery/delivery-jobs');
+  const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
+    .overrideProvider(DeliveryJobs)
+    .useValue({ add: delivered })
+    .compile();
   app = moduleRef.createNestApplication();
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   await app.listen(0);
-  delivered = vi.spyOn(app.get(MockCodeDelivery), 'deliver');
 
   db = new pg.Client({ connectionString: testDb.migratorUrl });
   await db.connect();
@@ -252,7 +247,19 @@ describe('e-mail', () => {
     );
     expect(started.status).toBe(202);
     expect(started.body).toEqual({ status: 'ok', email: 'new@example.bg', expiresInMinutes: 10 });
-    expect(delivered.mock.calls.at(-1)![1]).toBe('new@example.bg');
+    // Recorded for the worker to the new address only; the code travels in the job alone.
+    const { deliveryId, secret } = delivered.mock.calls.at(-1)![0];
+    const [delivery] = (
+      await db.query('SELECT purpose, channel, recipient FROM message_deliveries WHERE id = $1', [
+        deliveryId,
+      ])
+    ).rows;
+    expect(delivery).toEqual({
+      purpose: 'email_change_code',
+      channel: 'email',
+      recipient: 'new@example.bg',
+    });
+    expect(JSON.stringify(delivery)).not.toContain(secret);
 
     // Not yet: the old address still signs in, the new one does not.
     expect(

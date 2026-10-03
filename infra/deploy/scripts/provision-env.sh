@@ -55,8 +55,8 @@ else
 fi
 
 # One-time codes are only ever written to the log in the seeded test
-# environment. Production never gets this key, so its services refuse to start
-# until a real delivery channel exists.
+# environment, by the worker, until it names a transport. Production never
+# gets this key: its worker refuses to start without a real channel (D41).
 if [ "$ENV_NAME" = "test" ] && ! grep -q '^CODE_DELIVERY=' "$STACK_DIR/.env"; then
   echo 'CODE_DELIVERY=log' >>"$STACK_DIR/.env"
   log "added CODE_DELIVERY=log (test only)"

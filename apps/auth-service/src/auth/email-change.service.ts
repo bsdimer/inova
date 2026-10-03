@@ -4,14 +4,10 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import {
-  MockCodeDelivery,
-  type AccessTokenClaims,
-  type AuthProfile,
-  type EmailChangeStarted,
-} from '@inova/shared';
+import { type AccessTokenClaims, type AuthProfile, type EmailChangeStarted } from '@inova/shared';
 import { and, eq, ne, sql } from 'drizzle-orm';
 import { createHash, randomInt, timingSafeEqual } from 'node:crypto';
+import { MessageOutbox } from '../delivery/message-outbox';
 import { DbService } from '../db/db.service';
 import { auditRecords, emailChanges, users } from '../db/schema';
 import { AuthService } from './auth.service';
@@ -40,7 +36,7 @@ export class EmailChangeService {
     private readonly auth: AuthService,
     private readonly passwords: PasswordHasher,
     private readonly policy: RecoveryPolicy,
-    private readonly codeDelivery: MockCodeDelivery,
+    private readonly outbox: MessageOutbox,
   ) {}
 
   async request(
@@ -104,8 +100,13 @@ export class EmailChangeService {
         expiresAt: this.policy.expiresAt('phone', new Date()),
       });
     });
-    // TODO(M1): e-mail the code through the worker. MOCK: log only.
-    this.codeDelivery.deliver('e-mail change code', email, code);
+    // To the new address only: whoever holds it proves it by entering the code.
+    await this.outbox.send({
+      tenantId,
+      purpose: 'email_change_code',
+      recipient: email,
+      secret: code,
+    });
     return { status: 'ok', email, expiresInMinutes: this.policy.codeMinutes };
   }
 
