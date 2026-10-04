@@ -392,6 +392,8 @@ class ImportRowErrorDto implements ImportRowError {
       'invalid',
       'duplicate_in_file',
       'inconsistent_building',
+      'ambiguous_building',
+      'duplicate_contact',
       'exists',
       'out_of_scope',
       'archived_building',
@@ -410,6 +412,21 @@ class ImportedBuildingDto {
   name!: string;
   @ApiProperty({ example: 2, description: 'The first row that named it' })
   row!: number;
+  @ApiProperty({ example: 'София' })
+  city!: string;
+  @ApiProperty({ example: 'Лозенец' })
+  district!: string;
+  @ApiProperty({ example: 'ул. Кораб планина 12' })
+  address!: string;
+  @ApiProperty({ example: 8 })
+  floors!: number;
+  @ApiProperty()
+  hasElevator!: boolean;
+  @ApiProperty({
+    enum: ['fixed', 'per_area', 'per_occupant', 'per_ideal_part', 'per_room'],
+    example: 'per_ideal_part',
+  })
+  assessmentBasis!: ImportReport['buildings'][number]['assessmentBasis'];
   @ApiProperty({
     enum: ['new', 'existing'],
     example: 'new',
@@ -421,6 +438,38 @@ class ImportedBuildingDto {
   entrancesCreated!: number;
   @ApiProperty({ example: 30 })
   propertiesCreated!: number;
+  @ApiProperty({ example: 52 })
+  residentsCreated!: number;
+  @ApiProperty({ example: 4, description: 'Of them, recorded by name only («без акаунт»)' })
+  withoutAccount!: number;
+  @ApiProperty({
+    example: 0,
+    description: 'Sent at once — only into a building that is already active (D40)',
+  })
+  invitesSent!: number;
+}
+
+class ImportedRowDto {
+  @ApiProperty({ example: 3 })
+  row!: number;
+  @ApiProperty({
+    example: 'бл. 3',
+    description: 'The building the row belongs to, after inheritance',
+  })
+  building!: string;
+  @ApiProperty({ example: 'А' })
+  entrance!: string;
+  @ApiProperty({ example: 1 })
+  floor!: number;
+  @ApiProperty({ example: '1' })
+  number!: string;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'Мария Петрова',
+    description: 'The resident the row adds; null for a property-only row',
+  })
+  resident!: string | null;
 }
 
 export class ImportReportDto implements ImportReport {
@@ -428,10 +477,14 @@ export class ImportReportDto implements ImportReport {
   dryRun!: boolean;
   @ApiProperty({ description: 'True only when a real run wrote everything; never partly' })
   committed!: boolean;
-  @ApiProperty({ example: 30, description: 'Property rows read from the sheet' })
+  @ApiProperty({ example: 30, description: 'Properties read from the sheet' })
   properties!: number;
+  @ApiProperty({ example: 52, description: 'Resident rows read from the sheet' })
+  residents!: number;
   @ApiProperty({ type: () => [ImportedBuildingDto] })
   buildings!: ImportedBuildingDto[];
+  @ApiProperty({ type: () => [ImportedRowDto] })
+  rows!: ImportedRowDto[];
   @ApiProperty({ type: () => [ImportRowErrorDto] })
   errors!: ImportRowErrorDto[];
 }

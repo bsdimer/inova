@@ -14,7 +14,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { and, asc, eq, isNull, ne, or, sql } from 'drizzle-orm';
+import { and, asc, eq, isNull, ne } from 'drizzle-orm';
 import { MessageOutbox } from '../../delivery/message-outbox';
 import { DbService, type TenantTx } from '../../db/db.service';
 import {
@@ -24,7 +24,6 @@ import {
   entrances,
   occupancies,
   pets,
-  staffMemberships,
   tenants,
   users,
 } from '../../db/schema';
@@ -32,10 +31,9 @@ import { AuditService } from '../audit/audit.service';
 import { InviteCodeIssuer } from '../invites/invite-code-issuer';
 import { BuildingScope } from './building-scope';
 import { effectiveOn, todayIn } from './occupancy-dates';
+import { ResidentAccounts } from './resident-accounts';
 import type { Actor } from './buildings.service';
 import type { AddOccupantDto, AddPetDto, AddResidentDto } from './residents.dto';
-
-type Account = typeof users.$inferSelect;
 
 /** Postgres unique violation, whether or not the driver error is wrapped. */
 function isUniqueViolation(error: unknown): boolean {
@@ -58,6 +56,7 @@ export class ResidentsService {
     private readonly inviteCodes: InviteCodeIssuer,
     private readonly outbox: MessageOutbox,
     private readonly scope: BuildingScope,
+    private readonly accounts: ResidentAccounts,
   ) {}
 
   async addResident(
@@ -76,7 +75,7 @@ export class ResidentsService {
     const result = await this.dbService
       .withTenant(tenantId, async (tx) => {
         const { buildingStatus } = await this.property(tx, tenantId, actor, buildingId, propertyId);
-        const account = hasContact ? await this.accountFor(tx, tenantId, input) : null;
+        const account = hasContact ? await this.accounts.findOrCreate(tx, tenantId, input) : null;
 
         const [occupancy] = await tx
           .insert(occupancies)
@@ -429,58 +428,6 @@ export class ResidentsService {
    * the resident membership that lets it sign in, unless it already has one
    * (a staff member may own a flat too).
    */
-  private async accountFor(
-    tx: TenantTx,
-    tenantId: string,
-    input: AddResidentDto,
-  ): Promise<Account> {
-    const matches = await tx
-      .select()
-      .from(users)
-      .where(
-        and(
-          eq(users.tenantId, tenantId),
-          or(
-            input.phone ? eq(users.phone, input.phone) : undefined,
-            input.email ? sql`lower(${users.email}) = lower(${input.email})` : undefined,
-          ),
-        ),
-      );
-    if (matches.length > 1) {
-      throw new ConflictException('The phone and the e-mail belong to two different accounts');
-    }
-    const account =
-      matches[0] ??
-      (
-        await tx
-          .insert(users)
-          .values({
-            tenantId,
-            phone: input.phone,
-            email: input.email,
-            salutation: input.salutation,
-            firstName: input.firstName.trim(),
-            lastName: input.lastName?.trim() ?? '',
-            status: 'pending',
-          })
-          .returning()
-      )[0];
-
-    const [membership] = await tx
-      .select({ userId: staffMemberships.userId })
-      .from(staffMemberships)
-      .where(and(eq(staffMemberships.tenantId, tenantId), eq(staffMemberships.userId, account.id)));
-    if (!membership) {
-      await tx.insert(staffMemberships).values({
-        tenantId,
-        userId: account.id,
-        roleKey: 'resident',
-        status: account.status === 'active' ? 'active' : 'invited',
-      });
-    }
-    return account;
-  }
-
   /** The property, or 404 — also when its building is outside the actor's scope. */
   private async property(
     tx: TenantTx,

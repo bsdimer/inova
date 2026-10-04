@@ -37,8 +37,8 @@ describe('parseCsv', () => {
 });
 
 describe('checkSheet', () => {
-  it('reads the template it hands out', () => {
-    const { buildings, properties, errors } = checkSheet(parseCsv(templateCsv()));
+  it('reads the template it hands out: a building named once, a property with two residents', () => {
+    const { buildings, properties, residents, rows, errors } = checkSheet(parseCsv(templateCsv()));
     expect(errors).toEqual([]);
     expect(buildings).toEqual([
       {
@@ -65,7 +65,7 @@ describe('checkSheet', () => {
         idealParts: '2.3456',
       },
       {
-        row: 3,
+        row: 4,
         building: 'бл. 3',
         entrance: 'А',
         floor: -1,
@@ -75,6 +75,33 @@ describe('checkSheet', () => {
         areaM2: '18',
         idealParts: '0.5000',
       },
+    ]);
+    expect(residents).toEqual([
+      {
+        row: 2,
+        propertyRow: 2,
+        firstName: 'Иван',
+        lastName: 'Петров',
+        role: 'owner',
+        phone: '+359888123456',
+        email: null,
+        validFrom: '2026-02-01',
+      },
+      {
+        row: 3,
+        propertyRow: 2,
+        firstName: 'Мария',
+        lastName: 'Петрова',
+        role: 'occupant',
+        phone: null,
+        email: null,
+        validFrom: null,
+      },
+    ]);
+    expect(rows.map((r) => [r.row, r.building, r.number, r.resident])).toEqual([
+      [2, 'бл. 3', '1', 'Иван Петров'],
+      [3, 'бл. 3', '1', 'Мария Петрова'],
+      [4, 'бл. 3', 'Г1', null],
     ]);
   });
 
@@ -186,5 +213,221 @@ describe('checkSheet', () => {
       row('А', '1', String(i), 'апартамент'),
     );
     expect(checkSheet([HEADER, ...many]).errors[0].code).toBe('too_many_rows');
+  });
+
+  const BLANK = ['', '', '', '', '', '', ''];
+  const OTHER = ['бл. 7', 'Варна', 'Чайка', 'ул. Морска 1', '5', 'не', 'по площ'];
+  const resident = (...cells: string[]) => cells;
+
+  it('inherits a building within its block and starts a new block at each name (D40)', () => {
+    const { buildings, properties, rows, errors } = checkSheet([
+      HEADER,
+      row('А', '1', '1', 'апартамент'),
+      [...BLANK, 'А', '1', '2', 'апартамент'],
+      [...OTHER, 'Б', '0', '1', 'магазин'],
+      [...BLANK, 'Б', '1', '2', 'апартамент'],
+      // The first building again, named but without its values: still the same one.
+      ['бл. 3', '', '', '', '', '', '', 'А', '2', '1', 'апартамент'],
+      [...BLANK, 'А', '2', '2', 'апартамент'],
+    ]);
+    expect(errors).toEqual([]);
+    expect(buildings.map((b) => [b.name, b.city, b.floors])).toEqual([
+      ['бл. 3', 'София', 8],
+      ['бл. 7', 'Варна', 5],
+    ]);
+    expect(rows.map((r) => [r.row, r.building])).toEqual([
+      [2, 'бл. 3'],
+      [3, 'бл. 3'],
+      [4, 'бл. 7'],
+      [5, 'бл. 7'],
+      [6, 'бл. 3'],
+      [7, 'бл. 3'],
+    ]);
+    expect(properties.filter((p) => p.building === 'бл. 3')).toHaveLength(4);
+  });
+
+  it('refuses a row with no building above it, and one that contradicts its block', () => {
+    const { errors, properties } = checkSheet([
+      HEADER,
+      [...BLANK, 'А', '1', '1', 'апартамент'],
+      row('А', '1', '2', 'апартамент'),
+      ['', 'Пловдив', '', '', '', '', '', 'А', '1', '3', 'апартамент'],
+      ['', 'София', '', '', '8', '', '', 'А', '1', '4', 'апартамент'],
+    ]);
+    expect(errors.map((e) => [e.row, e.column, e.code])).toEqual([
+      [2, 'Сграда', 'ambiguous_building'],
+      [4, 'Град', 'ambiguous_building'],
+    ]);
+    // Repeating the block's own values is fine.
+    expect(properties.map((p) => p.row)).toEqual([3, 5]);
+  });
+
+  it('needs the building values where a building first appears', () => {
+    const { errors } = checkSheet([
+      HEADER,
+      ['бл. 9', '', 'Център', '', '6', 'да', 'фиксирано', 'А', '1', '1', 'апартамент'],
+    ]);
+    expect(errors.map((e) => [e.column, e.code])).toEqual([
+      ['Град', 'required'],
+      ['Адрес', 'required'],
+    ]);
+  });
+
+  it('reads residents: role words, a Bulgarian phone, dates either way, a name-only person', () => {
+    const { residents, errors } = checkSheet([
+      HEADER,
+      row(
+        'А',
+        '1',
+        '1',
+        'апартамент',
+        '',
+        '',
+        '',
+        ...resident('Иван  Петров', 'Собственик', '0888 123 456', '', '2026-03-01'),
+      ),
+      [
+        ...BLANK,
+        'А',
+        '1',
+        '1',
+        '',
+        '',
+        '',
+        '',
+        ...resident('Ана Петрова', 'наемател', '', 'ana@example.bg', '1.4.2026'),
+      ],
+      [...BLANK, 'А', '1', '1', '', '', '', '', ...resident('Баба Цвета', 'живущ', '', '', '')],
+    ]);
+    expect(errors).toEqual([]);
+    expect(
+      residents.map((r) => [r.firstName, r.lastName, r.role, r.phone, r.email, r.validFrom]),
+    ).toEqual([
+      ['Иван', 'Петров', 'owner', '+359888123456', null, '2026-03-01'],
+      ['Ана', 'Петрова', 'tenant', null, 'ana@example.bg', '2026-04-01'],
+      ['Баба', 'Цвета', 'occupant', null, null, null],
+    ]);
+  });
+
+  it('needs a name and a role for a resident, and checks the phone, the e-mail and the date', () => {
+    const { errors } = checkSheet([
+      HEADER,
+      row(
+        'А',
+        '1',
+        '1',
+        'апартамент',
+        '',
+        '',
+        '',
+        ...resident('', 'собственик', '0888 123 456', '', ''),
+      ),
+      [
+        ...BLANK,
+        'А',
+        '1',
+        '2',
+        'апартамент',
+        '',
+        '',
+        '',
+        ...resident('Х', 'управител', '123', 'не-имейл', '31.02.2026'),
+      ],
+      [...BLANK, 'А', '1', '3', 'апартамент', '', '', '', ...resident('Й', '', '', '', '')],
+    ]);
+    expect(errors.map((e) => [e.row, e.column, e.code])).toEqual([
+      [2, 'Жител', 'required'],
+      [3, 'Роля', 'invalid'],
+      [3, 'Телефон', 'invalid'],
+      [3, 'Имейл', 'invalid'],
+      [3, 'От дата', 'invalid'],
+      [4, 'Роля', 'required'],
+    ]);
+  });
+
+  it('refuses one contact for two people and one person twice in a role; one person may hold two properties', () => {
+    const { errors, residents } = checkSheet([
+      HEADER,
+      row(
+        'А',
+        '1',
+        '1',
+        'апартамент',
+        '',
+        '',
+        '',
+        ...resident('Иван Петров', 'собственик', '0888123456', '', ''),
+      ),
+      [
+        ...BLANK,
+        'А',
+        '1',
+        '2',
+        'апартамент',
+        '',
+        '',
+        '',
+        ...resident('Иван Петров', 'собственик', '+359888123456', '', ''),
+      ],
+      [
+        ...BLANK,
+        'А',
+        '1',
+        '3',
+        'апартамент',
+        '',
+        '',
+        '',
+        ...resident('Петър Иванов', 'наемател', '0888 123 456', '', ''),
+      ],
+      [
+        ...BLANK,
+        'А',
+        '1',
+        '1',
+        '',
+        '',
+        '',
+        '',
+        ...resident('Иван Петров', 'собственик', '0888123456', '', ''),
+      ],
+    ]);
+    expect(errors.map((e) => [e.row, e.column, e.code])).toEqual([
+      [4, 'Телефон', 'duplicate_contact'],
+      [5, 'Жител', 'duplicate_in_file'],
+    ]);
+    expect(residents.map((r) => r.row)).toEqual([2, 3]);
+  });
+
+  it('takes a property again only for its next resident, and only as described the first time', () => {
+    const { errors } = checkSheet([
+      HEADER,
+      row(
+        'А',
+        '1',
+        '1',
+        'апартамент',
+        '3',
+        '',
+        '',
+        ...resident('Иван Петров', 'собственик', '', '', ''),
+      ),
+      [
+        ...BLANK,
+        'А',
+        '1',
+        '1',
+        'апартамент',
+        '4',
+        '',
+        '',
+        ...resident('Ана Петрова', 'живущ', '', '', ''),
+      ],
+      [...BLANK, 'А', '1', '1', '', '', '', ''],
+    ]);
+    expect(errors.map((e) => [e.row, e.column, e.code])).toEqual([
+      [3, 'Стаи', 'duplicate_in_file'],
+      [4, 'Номер', 'duplicate_in_file'],
+    ]);
   });
 });
