@@ -37,10 +37,38 @@ export interface BuildingRecord {
   updatedAt: string;
 }
 
+/**
+ * People living in a building today, by what their account allows (D40).
+ * An account with several properties in the building counts once.
+ */
+export interface ResidentCounts {
+  /** Signed in at least once: the account is active. */
+  active: number;
+  /** Invited, not activated yet. */
+  invited: number;
+  /** Recorded by name only — no app access («без акаунт»). */
+  withoutAccount: number;
+}
+
+/** A house manager as the buildings list names them. */
+export interface BuildingManagerSummary {
+  accountId: string;
+  fullName: string;
+  /** Not activated yet: the admin marks the manager «поканен». */
+  invited: boolean;
+}
+
 /** `GET /v1/buildings` — one row of the list. */
 export interface BuildingListItem extends BuildingRecord {
   entranceCount: number;
   propertyCounts: PropertyCounts;
+  // The server always sends the three below (WHI-156). TODO(M2): make them
+  // required when the admin «Сгради» reads them and its test fixtures carry them.
+  /** In the order they were added. */
+  entrances?: EntranceRecord[];
+  residents?: ResidentCounts;
+  /** The current house managers, earliest assignment first; usually one, possibly none. */
+  managers?: BuildingManagerSummary[];
 }
 
 export interface EntranceRecord {
@@ -112,6 +140,25 @@ export interface BuildingManager {
   /** Null for an account without a staff membership (a resident owner, say). */
   roleKey: string | null;
   since: string;
+}
+
+/** An account that may be assigned as the building's house manager (D40). */
+export interface ManagerCandidate {
+  accountId: string;
+  fullName: string;
+  email: string | null;
+  phone: string | null;
+  /** Null for an account without a staff membership (a resident owner, say). */
+  roleKey: string | null;
+  /** Not activated yet; may still be assigned, marked «поканен». */
+  invited: boolean;
+}
+
+/** `GET /v1/buildings/:id/manager-candidates` — one page, by name. */
+export interface ManagerCandidatePage {
+  items: ManagerCandidate[];
+  /** Pass as `after` for the next page; null on the last one. */
+  nextCursor: string | null;
 }
 
 export type RemovalSubject = 'occupancy' | 'account' | 'property';

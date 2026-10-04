@@ -227,6 +227,145 @@ describe('building-scoped house managers', () => {
   });
 });
 
+describe('the buildings list summaries and the manager search (D40)', () => {
+  it('counts residents by account status once per building, names entrances and managers', async () => {
+    const b = await activeBuilding('Обобщение');
+    expect((await admin.post(`/buildings/${b.id}/entrances`, { name: 'Б' })).status).toBe(201);
+
+    // Active, on two properties of the building: counted once.
+    const owner = await resident(b.id, b.flats[0], '+359881400001');
+    const again = await admin.post(`/buildings/${b.id}/properties/${b.flats[1]}/residents`, {
+      role: 'tenant',
+      firstName: 'Жител',
+      phone: '+359881400001',
+      validFrom: '2026-01-01',
+    });
+    expect(again.body.accountId).toBe(owner.accountId);
+    // Invited, not activated.
+    const invited = await admin.post(`/buildings/${b.id}/properties/${b.flats[1]}/residents`, {
+      role: 'owner',
+      firstName: 'Поканен',
+      phone: '+359881400002',
+      validFrom: '2026-01-01',
+    });
+    // Recorded by name only.
+    await admin.post(`/buildings/${b.id}/properties/${b.flats[2]}/residents`, {
+      role: 'occupant',
+      firstName: 'Дете',
+      validFrom: '2026-01-01',
+    });
+    // Not living there today: moves in later, or moved out.
+    await admin.post(`/buildings/${b.id}/properties/${b.flats[2]}/residents`, {
+      role: 'tenant',
+      firstName: 'Бъдещ',
+      phone: '+359881400003',
+      validFrom: '2099-01-01',
+    });
+    await admin.post(`/buildings/${b.id}/properties/${b.flats[2]}/residents`, {
+      role: 'occupant',
+      firstName: 'Изнесъл се',
+      validFrom: '2025-01-01',
+    });
+    await t.adminPool.query(
+      `UPDATE occupancies SET valid_to = '2025-12-31' WHERE tenant_id = $1 AND first_name = 'Изнесъл се'`,
+      [tenantA],
+    );
+
+    // An active staff manager first, then the invited resident.
+    expect(
+      (await admin.post(`/buildings/${b.id}/managers`, { accountId: manager.id })).status,
+    ).toBe(201);
+    expect(
+      (await admin.post(`/buildings/${b.id}/managers`, { accountId: invited.body.accountId }))
+        .status,
+    ).toBe(201);
+
+    const row = (await admin.get('/buildings')).body.find((x: { id: string }) => x.id === b.id);
+    expect(row.entrances.map((e: { name: string }) => e.name)).toEqual(['А', 'Б']);
+    expect(row.entranceCount).toBe(2);
+    expect(row.residents).toEqual({ active: 1, invited: 1, withoutAccount: 1 });
+    expect(row.managers).toEqual([
+      { accountId: manager.id, fullName: expect.any(String), invited: false },
+      { accountId: invited.body.accountId, fullName: 'Поканен', invited: true },
+    ]);
+
+    // The scoped manager sees the same summary for the building now in scope.
+    const seen = (await manager.client.get('/buildings')).body.find(
+      (x: { id: string }) => x.id === b.id,
+    );
+    expect(seen.residents).toEqual(row.residents);
+    // A building without anyone yet still has the summary, empty.
+    const empty = await admin.post('/buildings', building('Празна'));
+    const emptyRow = (await admin.get('/buildings')).body.find(
+      (x: { id: string }) => x.id === empty.body.id,
+    );
+    expect(emptyRow).toMatchObject({
+      residents: { active: 0, invited: 0, withoutAccount: 0 },
+      managers: [],
+    });
+  });
+
+  it('finds candidates by name, e-mail or phone, page by page, without suspended or current managers', async () => {
+    const b = await activeBuilding('Кандидати');
+    const ids: Record<string, string> = {};
+    for (const [key, first, phone] of [
+      ['one', 'Кандидатка Ана', '+359881500001'],
+      ['two', 'Кандидатка Бела', '+359881500002'],
+      ['three', 'Кандидатка Вера', '+359881577003'],
+      ['gone', 'Кандидатка Гергана', '+359881500004'],
+      ['current', 'Кандидатка Дана', '+359881500005'],
+    ]) {
+      ids[key] = (
+        await t.adminPool.query(
+          `INSERT INTO users (tenant_id, phone, email, first_name, status)
+           VALUES ($1, $2, $3, $4, 'active') RETURNING id`,
+          [tenantA, phone, `${key}.candidate@example.bg`, first],
+        )
+      ).rows[0].id;
+    }
+    await t.adminPool.query(`UPDATE users SET status = 'suspended' WHERE id = $1`, [ids.gone]);
+    await t.adminPool.query(`UPDATE users SET status = 'pending' WHERE id = $1`, [ids.three]);
+    await admin.post(`/buildings/${b.id}/managers`, { accountId: ids.current });
+
+    const url = (query: string) => `/buildings/${b.id}/manager-candidates?${query}`;
+    const names = (body: { items: Array<{ fullName: string }> }) =>
+      body.items.map((c) => c.fullName);
+
+    const first = await admin.get(url('q=кандидатка&limit=2'));
+    expect(first.status).toBe(200);
+    expect(names(first.body)).toEqual(['Кандидатка Ана', 'Кандидатка Бела']);
+    expect(first.body.nextCursor).toEqual(expect.any(String));
+    const second = await admin.get(url(`q=кандидатка&limit=2&after=${first.body.nextCursor}`));
+    expect(names(second.body)).toEqual(['Кандидатка Вера']);
+    expect(second.body.nextCursor).toBeNull();
+    expect(second.body.items[0]).toMatchObject({
+      accountId: ids.three,
+      email: 'three.candidate@example.bg',
+      phone: '+359881577003',
+      roleKey: null,
+      invited: true,
+    });
+
+    // By e-mail and by part of the phone, spaces and all.
+    expect(names((await admin.get(url('q=two.candidate'))).body)).toEqual(['Кандидатка Бела']);
+    expect(names((await admin.get(url(`q=${encodeURIComponent('881 577')}`))).body)).toEqual([
+      'Кандидатка Вера',
+    ]);
+    // Wildcards are text, not patterns; nothing found is a plain empty page.
+    expect((await admin.get(url('q=%25'))).body).toEqual({ items: [], nextCursor: null });
+    // Another organisation's account is not there (ivan@demo.bg lives in demo only).
+    expect((await admin.get(url('q=ivan@demo'))).body.items).toEqual([]);
+
+    expect((await admin.get(url('limit=0'))).status).toBe(400);
+    expect((await admin.get(url('limit=51'))).status).toBe(400);
+    expect((await admin.get(url('after=not a cursor'))).status).toBe(400);
+    expect((await admin.get(url('after=abc'))).status).toBe(400);
+    // staff.manage is needed; a scoped manager sees only their own buildings.
+    expect((await viewer.get(url(''))).status).toBe(403);
+    expect((await otherManager.client.get(url(''))).status).toBe(404);
+  });
+});
+
 describe('removal requests (B10, D27)', () => {
   let b: Awaited<ReturnType<typeof activeBuilding>>;
 

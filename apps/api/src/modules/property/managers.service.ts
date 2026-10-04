@@ -1,11 +1,16 @@
-import type { Accepted, BuildingManager } from '@inova/shared';
+import type {
+  Accepted,
+  BuildingManager,
+  ManagerCandidate,
+  ManagerCandidatePage,
+} from '@inova/shared';
 import {
   BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { and, asc, eq, isNull } from 'drizzle-orm';
+import { and, asc, eq, ilike, isNull, like, ne, notExists, or, sql } from 'drizzle-orm';
 import { DbService, type TenantTx } from '../../db/db.service';
 import { buildingManagerAssignments, buildings, staffMemberships, users } from '../../db/schema';
 import { AuditService } from '../audit/audit.service';
@@ -17,6 +22,31 @@ function isUniqueViolation(error: unknown): boolean {
   return [error, (error as { cause?: unknown } | null)?.cause].some(
     (candidate) => (candidate as { code?: string } | null)?.code === '23505',
   );
+}
+
+/** `%`, `_` and `\` stand for themselves in a search, not as LIKE wildcards. */
+const literal = (text: string) => text.replace(/[\\%_]/g, (c) => `\\${c}`);
+
+/** The opaque `after` of a candidate page: the last row's name and id. */
+const cursorOf = (row: { fullName: string; accountId: string }) =>
+  Buffer.from(JSON.stringify([row.fullName, row.accountId])).toString('base64url');
+
+function parseCursor(after: string): { fullName: string; accountId: string } {
+  try {
+    const [fullName, accountId] = JSON.parse(Buffer.from(after, 'base64url').toString('utf8'));
+    if (typeof fullName === 'string' && /^[0-9a-f-]{36}$/.test(accountId)) {
+      return { fullName, accountId };
+    }
+  } catch {
+    // Falls through to the refusal below.
+  }
+  throw new BadRequestException('after must be a cursor from a previous page');
+}
+
+export interface CandidateSearch {
+  q?: string;
+  limit?: number;
+  after?: string;
 }
 
 /**
@@ -131,6 +161,80 @@ export class ManagersService {
       )
       .orderBy(asc(buildingManagerAssignments.createdAt));
     return rows.map((row) => ({ ...row, since: row.since.toISOString() }));
+  }
+
+  /**
+   * Accounts that may be assigned to the building (D40): any account of the
+   * organisation that is not suspended and does not manage it already, by
+   * name, page by page. `q` matches part of the name or e-mail, or — three
+   * digits or more — of the phone.
+   */
+  async candidates(
+    tenantId: string,
+    actor: Actor,
+    buildingId: string,
+    search: CandidateSearch,
+  ): Promise<ManagerCandidatePage> {
+    const limit = search.limit ?? 20;
+    const after = search.after ? parseCursor(search.after) : undefined;
+    const text = search.q?.trim();
+    const pattern = text ? `%${literal(text)}%` : undefined;
+    const digits = text?.replace(/\D/g, '') ?? '';
+    return this.dbService.withTenant(tenantId, async (tx) => {
+      await this.buildingInScope(tx, tenantId, actor, buildingId);
+      const rows = await tx
+        .select({
+          accountId: users.id,
+          fullName: users.fullName,
+          email: users.email,
+          phone: users.phone,
+          roleKey: staffMemberships.roleKey,
+          status: users.status,
+        })
+        .from(users)
+        .leftJoin(
+          staffMemberships,
+          and(eq(staffMemberships.tenantId, users.tenantId), eq(staffMemberships.userId, users.id)),
+        )
+        .where(
+          and(
+            eq(users.tenantId, tenantId),
+            ne(users.status, 'suspended'),
+            notExists(
+              tx
+                .select({ one: sql`1` })
+                .from(buildingManagerAssignments)
+                .where(
+                  and(
+                    this.open(tenantId, buildingId),
+                    eq(buildingManagerAssignments.userId, users.id),
+                  ),
+                ),
+            ),
+            pattern
+              ? or(
+                  ilike(users.fullName, pattern),
+                  ilike(users.email, pattern),
+                  digits.length >= 3 ? like(users.phone, `%${digits}%`) : undefined,
+                )
+              : undefined,
+            after
+              ? sql`(${users.fullName}, ${users.id}) > (${after.fullName}, ${after.accountId}::uuid)`
+              : undefined,
+          ),
+        )
+        .orderBy(asc(users.fullName), asc(users.id))
+        .limit(limit + 1);
+      const page = rows.slice(0, limit);
+      const items: ManagerCandidate[] = page.map(({ status, ...row }) => ({
+        ...row,
+        invited: status === 'pending',
+      }));
+      return {
+        items,
+        nextCursor: rows.length > limit ? cursorOf(page[page.length - 1]) : null,
+      };
+    });
   }
 
   private open(tenantId: string, buildingId: string) {

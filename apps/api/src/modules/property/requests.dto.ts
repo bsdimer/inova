@@ -5,10 +5,14 @@ import {
   ArrayNotEmpty,
   IsArray,
   IsIn,
+  IsInt,
   IsOptional,
   IsString,
   IsUUID,
   Length,
+  Matches,
+  Max,
+  Min,
   ValidateBy,
 } from 'class-validator';
 import { LINK_STATUSES, REMOVAL_STATUSES, REMOVAL_SUBJECTS } from '../../db/schema';
@@ -183,4 +187,29 @@ export class AssignManagerDto {
   })
   @IsUUID()
   accountId!: string;
+}
+
+export class ManagerCandidatesQuery {
+  @ApiProperty({
+    required: false,
+    example: 'мария',
+    description: 'Part of the name, e-mail or phone; empty lists everyone, by name',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(1, 100)
+  q?: string;
+
+  @ApiProperty({ required: false, minimum: 1, maximum: 50, default: 20 })
+  @IsOptional()
+  @Transform(({ value }) => (value === undefined ? undefined : Number(value)))
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  limit?: number;
+
+  @ApiProperty({ required: false, description: 'The `nextCursor` of the previous page' })
+  @IsOptional()
+  @Matches(/^[A-Za-z0-9_-]{1,600}$/, { message: 'after must be a cursor from a previous page' })
+  after?: string;
 }

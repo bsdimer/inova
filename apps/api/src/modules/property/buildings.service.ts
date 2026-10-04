@@ -4,9 +4,11 @@ import {
   type Accepted,
   type BuildingDetail,
   type BuildingListItem,
+  type BuildingManagerSummary,
   type BuildingRecord,
   type EntranceRecord,
   type PropertyRecord,
+  type ResidentCounts,
 } from '@inova/shared';
 import {
   BadRequestException,
@@ -14,17 +16,20 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { and, asc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { DbService, type TenantTx } from '../../db/db.service';
 import {
   apartments,
   buildingManagerAssignments,
   buildings,
   entrances,
+  occupancies,
   PROPERTY_TYPES,
+  users,
 } from '../../db/schema';
 import { AuditService } from '../audit/audit.service';
 import { BuildingScope, type ScopedActor } from './building-scope';
+import { effectiveOn, todayIn } from './occupancy-dates';
 import type {
   CreateBuildingDto,
   CreatePropertyDto,
@@ -109,13 +114,22 @@ export class BuildingsService {
         )
         .orderBy(asc(buildings.name), asc(buildings.id));
       const ids = rows.map((row) => row.id);
-      const entranceCounts = await this.entranceCounts(tx, tenantId, ids);
+      // One grouped query per summary, whatever the number of buildings.
+      const entranceLists = await this.entranceLists(tx, tenantId, ids);
       const propertyCounts = await this.propertyCounts(tx, tenantId, ids);
-      return rows.map((row) => ({
-        ...toRecord(row),
-        entranceCount: entranceCounts.get(row.id) ?? 0,
-        propertyCounts: propertyCounts.get(row.id) ?? noProperties(),
-      }));
+      const residentCounts = await this.residentCounts(tx, tenantId, ids);
+      const managers = await this.managerSummaries(tx, tenantId, ids);
+      return rows.map((row) => {
+        const entranceList = entranceLists.get(row.id) ?? [];
+        return {
+          ...toRecord(row),
+          entranceCount: entranceList.length,
+          entrances: entranceList,
+          propertyCounts: propertyCounts.get(row.id) ?? noProperties(),
+          residents: residentCounts.get(row.id) ?? { active: 0, invited: 0, withoutAccount: 0 },
+          managers: managers.get(row.id) ?? [],
+        };
+      });
     });
   }
 
@@ -576,18 +590,108 @@ export class BuildingsService {
     if (!entrance) throw new BadRequestException('The entrance does not belong to this building');
   }
 
-  private async entranceCounts(
+  /** Each building's entrances, in the order they were added. */
+  private async entranceLists(
     tx: TenantTx,
     tenantId: string,
     buildingIds: string[],
-  ): Promise<Map<string, number>> {
-    if (buildingIds.length === 0) return new Map();
+  ): Promise<Map<string, EntranceRecord[]>> {
+    const lists = new Map<string, EntranceRecord[]>();
+    if (buildingIds.length === 0) return lists;
     const rows = await tx
-      .select({ buildingId: entrances.buildingId, count: sql<number>`count(*)::int` })
+      .select({ buildingId: entrances.buildingId, id: entrances.id, name: entrances.name })
       .from(entrances)
       .where(and(eq(entrances.tenantId, tenantId), inArray(entrances.buildingId, buildingIds)))
-      .groupBy(entrances.buildingId);
-    return new Map(rows.map((row) => [row.buildingId, row.count]));
+      .orderBy(asc(entrances.createdAt), asc(entrances.name));
+    for (const { buildingId, id, name } of rows) {
+      lists.set(buildingId, [...(lists.get(buildingId) ?? []), { id, name }]);
+    }
+    return lists;
+  }
+
+  /**
+   * Who lives in each building today, by account status (D40). An account
+   * counts once per building however many properties it holds there; a
+   * person recorded by name only is «без акаунт». A suspended account is in
+   * none of the three — it is being removed.
+   */
+  private async residentCounts(
+    tx: TenantTx,
+    tenantId: string,
+    buildingIds: string[],
+  ): Promise<Map<string, ResidentCounts>> {
+    if (buildingIds.length === 0) return new Map();
+    const today = await todayIn(tx, tenantId);
+    const rows = await tx
+      .select({
+        buildingId: apartments.buildingId,
+        active: sql<number>`(count(DISTINCT ${occupancies.userId}) FILTER (WHERE ${users.status} = 'active'))::int`,
+        invited: sql<number>`(count(DISTINCT ${occupancies.userId}) FILTER (WHERE ${users.status} = 'pending'))::int`,
+        withoutAccount: sql<number>`(count(*) FILTER (WHERE ${occupancies.userId} IS NULL))::int`,
+      })
+      .from(occupancies)
+      .innerJoin(
+        apartments,
+        and(
+          eq(apartments.tenantId, occupancies.tenantId),
+          eq(apartments.id, occupancies.apartmentId),
+        ),
+      )
+      .leftJoin(
+        users,
+        and(eq(users.tenantId, occupancies.tenantId), eq(users.id, occupancies.userId)),
+      )
+      .where(
+        and(
+          eq(occupancies.tenantId, tenantId),
+          inArray(apartments.buildingId, buildingIds),
+          effectiveOn(occupancies, today),
+        ),
+      )
+      .groupBy(apartments.buildingId);
+    return new Map(
+      rows.map(({ buildingId, ...counts }) => [buildingId, counts satisfies ResidentCounts]),
+    );
+  }
+
+  /** The current house managers of each building, earliest assignment first. */
+  private async managerSummaries(
+    tx: TenantTx,
+    tenantId: string,
+    buildingIds: string[],
+  ): Promise<Map<string, BuildingManagerSummary[]>> {
+    const summaries = new Map<string, BuildingManagerSummary[]>();
+    if (buildingIds.length === 0) return summaries;
+    const rows = await tx
+      .select({
+        buildingId: buildingManagerAssignments.buildingId,
+        accountId: users.id,
+        fullName: users.fullName,
+        status: users.status,
+      })
+      .from(buildingManagerAssignments)
+      .innerJoin(
+        users,
+        and(
+          eq(users.tenantId, buildingManagerAssignments.tenantId),
+          eq(users.id, buildingManagerAssignments.userId),
+        ),
+      )
+      .where(
+        and(
+          eq(buildingManagerAssignments.tenantId, tenantId),
+          inArray(buildingManagerAssignments.buildingId, buildingIds),
+          isNull(buildingManagerAssignments.endedAt),
+        ),
+      )
+      .orderBy(asc(buildingManagerAssignments.createdAt));
+    for (const { buildingId, accountId, fullName, status } of rows) {
+      summaries.set(buildingId, [
+        ...(summaries.get(buildingId) ?? []),
+        { accountId, fullName, invited: status === 'pending' },
+      ]);
+    }
+    return summaries;
   }
 
   /** Properties per type for each building — garages and parking spots are counted, not stored (D26). */
