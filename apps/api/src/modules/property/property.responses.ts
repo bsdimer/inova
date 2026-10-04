@@ -1,6 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import type {
+  ActivatedBuilding,
   AddedResident,
+  BuildingActivationPreview,
   BuildingDetail,
   BuildingListItem,
   BuildingManager,
@@ -122,6 +124,27 @@ class BuildingManagerSummaryDto implements BuildingManagerSummary {
   fullName!: string;
   @ApiProperty({ description: 'Not activated yet: shown as «поканен»' })
   invited!: boolean;
+}
+
+export class ActivatedBuildingDto extends BuildingRecordDto implements ActivatedBuilding {
+  @ApiProperty({
+    example: 46,
+    description: 'Invitations queued now for the residents added while it was a draft (D40)',
+  })
+  invitesSent!: number;
+}
+
+export class BuildingActivationPreviewDto implements BuildingActivationPreview {
+  @ApiProperty({ example: 48 })
+  properties!: number;
+  @ApiProperty({ example: 2 })
+  entrances!: number;
+  @ApiProperty({
+    example: 46,
+    description:
+      'Invitations activation would send: pending accounts with a phone or e-mail and no live code',
+  })
+  invites!: number;
 }
 
 export class BuildingListItemDto extends BuildingRecordDto implements BuildingListItem {

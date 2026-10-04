@@ -2,6 +2,8 @@ import {
   isValidIban,
   normalizeIban,
   type Accepted,
+  type ActivatedBuilding,
+  type BuildingActivationPreview,
   type BuildingDetail,
   type BuildingListItem,
   type BuildingManagerSummary,
@@ -27,7 +29,9 @@ import {
   PROPERTY_TYPES,
   users,
 } from '../../db/schema';
+import { MessageOutbox } from '../../delivery/message-outbox';
 import { AuditService } from '../audit/audit.service';
+import { BuildingInvitations } from './building-invitations';
 import { BuildingScope, type ScopedActor } from './building-scope';
 import { effectiveOn, todayIn } from './occupancy-dates';
 import type {
@@ -90,6 +94,8 @@ export class BuildingsService {
     private readonly dbService: DbService,
     private readonly audit: AuditService,
     private readonly scope: BuildingScope,
+    private readonly invitations: BuildingInvitations,
+    private readonly outbox: MessageOutbox,
   ) {}
 
   async list(
@@ -244,11 +250,38 @@ export class BuildingsService {
     });
   }
 
-  /** Draft → active. A building goes live with at least one entrance and one property. */
-  async activate(tenantId: string, actor: Actor, buildingId: string): Promise<BuildingRecord> {
+  /** What «Активирай» would do: the counts it confirms and the invitations it would send (D40). */
+  async activationPreview(
+    tenantId: string,
+    actor: Actor,
+    buildingId: string,
+  ): Promise<BuildingActivationPreview> {
     return this.dbService.withTenant(tenantId, async (tx) => {
-      const building = await this.building(tx, tenantId, buildingId, actor);
-      if (building.status !== 'draft') {
+      await this.building(tx, tenantId, buildingId, actor);
+      const [{ properties }] = await tx
+        .select({ properties: sql<number>`count(*)::int` })
+        .from(apartments)
+        .where(and(eq(apartments.tenantId, tenantId), eq(apartments.buildingId, buildingId)));
+      const [{ entrances: entranceTotal }] = await tx
+        .select({ entrances: sql<number>`count(*)::int` })
+        .from(entrances)
+        .where(and(eq(entrances.tenantId, tenantId), eq(entrances.buildingId, buildingId)));
+      const invites = (await this.invitations.eligible(tx, tenantId, buildingId)).length;
+      return { properties, entrances: entranceTotal, invites };
+    });
+  }
+
+  /**
+   * Draft → active, with at least one property. The residents added while it
+   * was a draft get their invitations now (D40): codes in the same
+   * transaction as the state change, messages queued once it has committed.
+   * Only the call that moves the building out of `draft` invites anyone, so a
+   * retry or a second click sends nothing twice.
+   */
+  async activate(tenantId: string, actor: Actor, buildingId: string): Promise<ActivatedBuilding> {
+    const { building, messages } = await this.dbService.withTenant(tenantId, async (tx) => {
+      const current = await this.building(tx, tenantId, buildingId, actor);
+      if (current.status !== 'draft') {
         throw new ConflictException('Only a draft building can be activated');
       }
       const [{ properties }] = await tx
@@ -262,13 +295,26 @@ export class BuildingsService {
       const [active] = await tx
         .update(buildings)
         .set({ status: 'active', activatedAt: new Date(), updatedAt: new Date() })
-        .where(and(eq(buildings.tenantId, tenantId), eq(buildings.id, buildingId)))
+        .where(
+          and(
+            eq(buildings.tenantId, tenantId),
+            eq(buildings.id, buildingId),
+            eq(buildings.status, 'draft'),
+          ),
+        )
         .returning();
+      // A concurrent activation got there first.
+      if (!active) throw new ConflictException('Only a draft building can be activated');
+
+      const queued = await this.invitations.issueAll(tx, tenantId, buildingId, actor.userId);
       await this.record(tx, tenantId, actor, 'building.activated', 'building', buildingId, {
         properties,
+        invitesSent: queued.length,
       });
-      return toRecord(active);
+      return { building: active, messages: queued };
     });
+    for (const message of messages) await this.outbox.send(message);
+    return { ...toRecord(building), invitesSent: messages.length };
   }
 
   async addEntrance(

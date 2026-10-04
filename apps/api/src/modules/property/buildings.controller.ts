@@ -14,6 +14,8 @@ import {
 } from '@nestjs/common';
 import type {
   Accepted,
+  ActivatedBuilding,
+  BuildingActivationPreview,
   BuildingDetail,
   BuildingListItem,
   BuildingRecord,
@@ -44,6 +46,8 @@ import { ApiErrors } from '../../openapi/api-errors';
 import { AcceptedDto } from '../../openapi/common.responses';
 import { BuildingsService, type Actor } from './buildings.service';
 import {
+  ActivatedBuildingDto,
+  BuildingActivationPreviewDto,
   BuildingDetailDto,
   BuildingListItemDto,
   BuildingRecordDto,
@@ -110,16 +114,33 @@ export class BuildingsController {
     return this.service.update(req.tenantId!, actorOf(req), buildingId, dto);
   }
 
+  @Get(':buildingId/activation-preview')
+  @RequirePermissions('property.write')
+  @ApiOperation({
+    summary: 'What «Активирай» would do: properties, entrances and the invitations it sends (D40)',
+  })
+  @ApiOkResponse({ type: BuildingActivationPreviewDto })
+  @ApiErrors(400, 401, 403, 404)
+  activationPreview(
+    @Req() req: AuthedRequest,
+    @Param('buildingId', ParseUUIDPipe) buildingId: string,
+  ): Promise<BuildingActivationPreview> {
+    return this.service.activationPreview(req.tenantId!, actorOf(req), buildingId);
+  }
+
   @Post(':buildingId/activate')
   @HttpCode(200)
   @RequirePermissions('property.write')
-  @ApiOperation({ summary: 'Activate a draft building that has at least one property' })
-  @ApiOkResponse({ type: BuildingRecordDto })
+  @ApiOperation({
+    summary:
+      'Activate a draft building that has at least one property; its residents are invited now (D40)',
+  })
+  @ApiOkResponse({ type: ActivatedBuildingDto })
   @ApiErrors(400, 401, 403, 404, 409)
   activate(
     @Req() req: AuthedRequest,
     @Param('buildingId', ParseUUIDPipe) buildingId: string,
-  ): Promise<BuildingRecord> {
+  ): Promise<ActivatedBuilding> {
     return this.service.activate(req.tenantId!, actorOf(req), buildingId);
   }
 

@@ -213,7 +213,7 @@ describe('setting a building up', () => {
     const audit = await auditOf(id);
     expect(audit.map((row) => row.action)).toEqual(['building.created', 'building.activated']);
     expect(audit[0]).toMatchObject({ actor_user_id: managerId, actor_type: 'user' });
-    expect(audit[1].payload).toEqual({ properties: 10 });
+    expect(audit[1].payload).toEqual({ properties: 10, invitesSent: 0 });
   });
 
   it('lists buildings with their counts and filters by city, district and status', async () => {
@@ -411,7 +411,7 @@ describe('the answers are the documented ones (WHI-144)', () => {
     expect(fieldsOf(corrected.body)).toEqual(documented('PropertyRecordDto'));
 
     const activated = await manager.post(`/buildings/${id}/activate`, {});
-    expect(fieldsOf(activated.body)).toEqual(documented('BuildingRecordDto'));
+    expect(fieldsOf(activated.body)).toEqual(documented('ActivatedBuildingDto'));
     expect(activated.body.activatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T.*Z$/);
 
     const one = await manager.get(`/buildings/${id}`);

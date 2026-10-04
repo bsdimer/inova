@@ -731,6 +731,88 @@
         "tags": ["property"]
       }
     },
+    "/v1/buildings/{buildingId}/activation-preview": {
+      "get": {
+        "operationId": "BuildingsController_activationPreview",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "buildingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildingActivationPreviewDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "What «Активирай» would do: properties, entrances and the invitations it sends (D40)",
+        "tags": ["property"]
+      }
+    },
     "/v1/buildings/{buildingId}/activate": {
       "post": {
         "operationId": "BuildingsController_activate",
@@ -758,7 +840,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BuildingRecordDto"
+                  "$ref": "#/components/schemas/ActivatedBuildingDto"
                 }
               }
             }
@@ -819,7 +901,7 @@
             "bearer": []
           }
         ],
-        "summary": "Activate a draft building that has at least one property",
+        "summary": "Activate a draft building that has at least one property; its residents are invited now (D40)",
         "tags": ["property"]
       }
     },
@@ -5588,6 +5670,116 @@
           "activatedAt",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "BuildingActivationPreviewDto": {
+        "type": "object",
+        "properties": {
+          "properties": {
+            "type": "number",
+            "example": 48
+          },
+          "entrances": {
+            "type": "number",
+            "example": 2
+          },
+          "invites": {
+            "type": "number",
+            "example": 46,
+            "description": "Invitations activation would send: pending accounts with a phone or e-mail and no live code"
+          }
+        },
+        "required": ["properties", "entrances", "invites"]
+      },
+      "ActivatedBuildingDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "бл. 12"
+          },
+          "city": {
+            "type": "string",
+            "example": "София"
+          },
+          "district": {
+            "type": "string",
+            "example": "Младост"
+          },
+          "address": {
+            "type": "string",
+            "example": "ул. Проф. Александър Фол 7"
+          },
+          "floors": {
+            "type": "number",
+            "example": 8
+          },
+          "hasElevator": {
+            "type": "boolean"
+          },
+          "assessmentBasis": {
+            "type": "string",
+            "enum": ["fixed", "per_area", "per_occupant", "per_ideal_part", "per_room"],
+            "example": "per_occupant"
+          },
+          "bankAccount": {
+            "type": "string",
+            "nullable": true,
+            "example": "BG80BNBG96611020345678",
+            "description": "IBAN"
+          },
+          "signatureName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Мария Стоянова"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["draft", "active", "archived"],
+            "example": "active"
+          },
+          "activatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:30:00.000Z"
+          },
+          "invitesSent": {
+            "type": "number",
+            "example": 46,
+            "description": "Invitations queued now for the residents added while it was a draft (D40)"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "city",
+          "district",
+          "address",
+          "floors",
+          "hasElevator",
+          "assessmentBasis",
+          "bankAccount",
+          "signatureName",
+          "status",
+          "activatedAt",
+          "createdAt",
+          "updatedAt",
+          "invitesSent"
         ]
       },
       "EntranceDto": {
