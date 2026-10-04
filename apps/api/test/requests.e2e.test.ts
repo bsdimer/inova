@@ -366,6 +366,132 @@ describe('the buildings list summaries and the manager search (D40)', () => {
   });
 });
 
+describe('invitations wait for activation (D40)', () => {
+  /** A draft building with flats 1–2, not activated. */
+  async function draftBuilding(name: string) {
+    const created = await admin.post('/buildings', building(name));
+    const id = created.body.id as string;
+    const entranceId = created.body.entrances[0].id as string;
+    const flats: string[] = [];
+    for (const number of ['1', '2']) {
+      const res = await admin.post(`/buildings/${id}/properties`, {
+        entranceId,
+        floor: Number(number),
+        number,
+        propertyType: 'apartment',
+      });
+      flats.push(res.body.id);
+    }
+    return { id, flats };
+  }
+
+  const add = (buildingId: string, flatId: string, body: object) =>
+    admin.post(`/buildings/${buildingId}/properties/${flatId}/residents`, {
+      firstName: 'Жител',
+      validFrom: '2026-01-01',
+      ...body,
+    });
+  const liveCodes = async (accountId: string) =>
+    (
+      await t.adminPool.query(
+        `SELECT count(*)::int AS n FROM invite_codes WHERE user_id = $1 AND status = 'active'`,
+        [accountId],
+      )
+    ).rows[0].n;
+
+  it('adds residents to a draft without codes, then invites each eligible account once on activation', async () => {
+    const b = await draftBuilding('Чернова Д40');
+    const queuedBefore = t.delivered.length;
+
+    const byPhone = await add(b.id, b.flats[0], { role: 'owner', phone: '+359881600001' });
+    const samePerson = await add(b.id, b.flats[1], { role: 'tenant', phone: '+359881600001' });
+    const byEmail = await add(b.id, b.flats[1], { role: 'owner', email: 'd40.owner@example.bg' });
+    const child = await add(b.id, b.flats[0], { role: 'occupant', firstName: 'Дете' });
+    // Already invited through an active building: keeps the code it has.
+    const elsewhere = await activeBuilding('Друга Д40');
+    const invitedElsewhere = await add(elsewhere.id, elsewhere.flats[0], {
+      role: 'owner',
+      phone: '+359881600002',
+    });
+    expect(invitedElsewhere.body.inviteSent).toBe(true);
+    await add(b.id, b.flats[0], { role: 'tenant', phone: '+359881600002' });
+    // Already active: needs no invitation.
+    const active = await resident(elsewhere.id, elsewhere.flats[1], '+359881600003');
+    await add(b.id, b.flats[1], { role: 'tenant', phone: '+359881600003' });
+    // Moved out before activation: not invited.
+    const gone = await add(b.id, b.flats[1], { role: 'tenant', phone: '+359881600004' });
+    await t.adminPool.query(`UPDATE occupancies SET valid_to = '2026-01-31' WHERE id = $1`, [
+      gone.body.occupancyId,
+    ]);
+
+    for (const res of [byPhone, samePerson, byEmail, child]) {
+      expect(res.status, JSON.stringify(res.body)).toBe(201);
+      expect(res.body.inviteSent).toBe(false);
+    }
+    expect(samePerson.body.accountId).toBe(byPhone.body.accountId);
+    expect(await liveCodes(byPhone.body.accountId)).toBe(0);
+    expect(await liveCodes(byEmail.body.accountId)).toBe(0);
+    // Only the two invites of the active building went out.
+    expect(t.delivered.length).toBe(queuedBefore + 2);
+
+    const preview = await admin.get(`/buildings/${b.id}/activation-preview`);
+    expect(preview.status).toBe(200);
+    expect(preview.body).toEqual({ properties: 2, entrances: 1, invites: 2 });
+
+    const codesOf = async (accountId: string) =>
+      (
+        await t.adminPool.query(`SELECT count(*)::int AS n FROM invite_codes WHERE user_id = $1`, [
+          accountId,
+        ])
+      ).rows[0].n;
+    const activeCodes = await codesOf(active.accountId);
+    const queued = t.delivered.length;
+    const activated = await admin.post(`/buildings/${b.id}/activate`);
+    expect(activated.status).toBe(200);
+    expect(activated.body).toMatchObject({ status: 'active', invitesSent: 2 });
+    expect(await liveCodes(byPhone.body.accountId)).toBe(1);
+    expect(await liveCodes(byEmail.body.accountId)).toBe(1);
+    expect(await liveCodes(invitedElsewhere.body.accountId)).toBe(1);
+    expect(await liveCodes(gone.body.accountId)).toBe(0);
+
+    const jobs = t.delivered.slice(queued);
+    expect(jobs).toHaveLength(2);
+    const recipients = (
+      await t.adminPool.query(
+        `SELECT recipient FROM message_deliveries WHERE id = ANY($1::uuid[]) ORDER BY recipient`,
+        [jobs.map((job) => job.deliveryId)],
+      )
+    ).rows.map((row) => row.recipient);
+    expect(recipients).toEqual(['+359881600001', 'd40.owner@example.bg']);
+    expect(await auditActions(b.id)).toContainEqual({
+      action: 'building.activated',
+      actor_type: 'user',
+    });
+
+    // A second activation is refused and sends nothing more.
+    expect((await admin.post(`/buildings/${b.id}/activate`)).status).toBe(409);
+    expect(t.delivered.length).toBe(queued + 2);
+    expect(await liveCodes(byPhone.body.accountId)).toBe(1);
+    expect((await admin.get(`/buildings/${b.id}/activation-preview`)).body.invites).toBe(0);
+
+    // From now on a new resident is invited at once.
+    const later = await add(b.id, b.flats[0], { role: 'tenant', phone: '+359881600005' });
+    expect(later.body.inviteSent).toBe(true);
+    expect(t.delivered.length).toBe(queued + 3);
+    // The active account added to the draft got no new code from the activation.
+    expect(await codesOf(active.accountId)).toBe(activeCodes);
+  });
+
+  it('keeps the preview to those who may change the building, inside their scope', async () => {
+    const b = await draftBuilding('Преглед Д40');
+    expect((await viewer.get(`/buildings/${b.id}/activation-preview`)).status).toBe(403);
+    expect((await otherManager.client.get(`/buildings/${b.id}/activation-preview`)).status).toBe(
+      404,
+    );
+    expect((await admin.get('/buildings/not-a-uuid/activation-preview')).status).toBe(400);
+  });
+});
+
 describe('removal requests (B10, D27)', () => {
   let b: Awaited<ReturnType<typeof activeBuilding>>;
 

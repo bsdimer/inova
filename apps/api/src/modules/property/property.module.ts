@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuditService } from '../audit/audit.service';
+import { BuildingInvitations } from './building-invitations';
 import { BuildingScope } from './building-scope';
 import { BuildingsController } from './buildings.controller';
 import { BuildingsService } from './buildings.service';
@@ -38,6 +39,7 @@ import { ResidentsService } from './residents.service';
     LinkRequestsService,
     PropertyImportService,
     BuildingScope,
+    BuildingInvitations,
     AuditService,
   ],
 })

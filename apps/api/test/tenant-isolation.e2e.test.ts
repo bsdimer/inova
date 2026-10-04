@@ -599,6 +599,7 @@ describe('Property hierarchy (M2) stays inside its tenant', () => {
       ['patch', `/buildings/${buildingA}/properties/${propertyA}`],
       ['delete', `/buildings/${buildingA}/properties/${propertyA}`],
       ['get', `/buildings/${buildingA}/manager-candidates`],
+      ['get', `/buildings/${buildingA}/activation-preview`],
     ];
     for (const [method, url] of routes) {
       // In its own tenant the building does not exist; with the other tenant's

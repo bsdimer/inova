@@ -58,6 +58,19 @@ export interface BuildingManagerSummary {
   invited: boolean;
 }
 
+/** `GET /v1/buildings/:id/activation-preview` — what «Активирай» would do (D40). */
+export interface BuildingActivationPreview {
+  properties: number;
+  entrances: number;
+  /** Invitations activation would send: pending accounts with a contact and no live code. */
+  invites: number;
+}
+
+/** `POST /v1/buildings/:id/activate` — the building, now active, and the invitations queued. */
+export interface ActivatedBuilding extends BuildingRecord {
+  invitesSent: number;
+}
+
 /** `GET /v1/buildings` — one row of the list. */
 export interface BuildingListItem extends BuildingRecord {
   entranceCount: number;

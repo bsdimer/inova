@@ -75,7 +75,7 @@ export class ResidentsService {
     let code: string | null = null;
     const result = await this.dbService
       .withTenant(tenantId, async (tx) => {
-        await this.property(tx, tenantId, actor, buildingId, propertyId);
+        const { buildingStatus } = await this.property(tx, tenantId, actor, buildingId, propertyId);
         const account = hasContact ? await this.accountFor(tx, tenantId, input) : null;
 
         const [occupancy] = await tx
@@ -92,7 +92,8 @@ export class ResidentsService {
           })
           .returning();
 
-        if (account?.status === 'pending') {
+        // A draft building keeps its residents uninvited until activation (D40).
+        if (account?.status === 'pending' && buildingStatus !== 'draft') {
           code = await this.inviteCodes.issue(tx, {
             tenantId,
             accountId: account.id,
@@ -487,7 +488,7 @@ export class ResidentsService {
     actor: Actor,
     buildingId: string,
     propertyId: string,
-  ): Promise<void> {
+  ): Promise<{ buildingStatus: (typeof buildings.$inferSelect)['status'] }> {
     const [row] = await tx
       .select({ status: buildings.status })
       .from(apartments)
@@ -506,6 +507,7 @@ export class ResidentsService {
     if (!row || !BuildingScope.covers(await this.scope.of(tx, tenantId, actor), buildingId)) {
       throw new NotFoundException('Property not found');
     }
+    return { buildingStatus: row.status };
   }
 
   private myRows(tx: TenantTx, tenantId: string, accountId: string, today: string) {
