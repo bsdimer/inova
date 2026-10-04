@@ -4,18 +4,22 @@ import type {
   BuildingDetail,
   BuildingListItem,
   BuildingManager,
+  BuildingManagerSummary,
   BuildingRecord,
   EntranceRecord,
   ImportReport,
   ImportRowError,
   LinkRequest,
   LinkRequestQueueItem,
+  ManagerCandidate,
+  ManagerCandidatePage,
   PlatformRemovalRequest,
   PropertyCounts,
   PropertyRecord,
   PropertyResident,
   PropertyResidents,
   RemovalRequest,
+  ResidentCounts,
 } from '@inova/shared';
 import { OPEN_TIMESTAMP, TIMESTAMP } from '../../openapi/common.responses';
 import { MyLinkRequestDto, PetRecordDto } from './me.responses';
@@ -95,18 +99,48 @@ export class BuildingRecordDto implements BuildingRecord {
   updatedAt!: string;
 }
 
-export class BuildingListItemDto extends BuildingRecordDto implements BuildingListItem {
-  @ApiProperty({ example: 2 })
-  entranceCount!: number;
-  @ApiProperty({ type: () => PropertyCountsDto })
-  propertyCounts!: PropertyCountsDto;
-}
-
 export class EntranceRecordDto implements EntranceRecord {
   @ApiProperty({ format: 'uuid' })
   id!: string;
   @ApiProperty({ example: 'А' })
   name!: string;
+}
+
+class ResidentCountsDto implements ResidentCounts {
+  @ApiProperty({ example: 41, description: 'Active accounts living there today' })
+  active!: number;
+  @ApiProperty({ example: 6, description: 'Invited, not activated yet' })
+  invited!: number;
+  @ApiProperty({ example: 3, description: 'Recorded by name only, no app access («без акаунт»)' })
+  withoutAccount!: number;
+}
+
+class BuildingManagerSummaryDto implements BuildingManagerSummary {
+  @ApiProperty({ format: 'uuid' })
+  accountId!: string;
+  @ApiProperty({ example: 'Мария Стоянова' })
+  fullName!: string;
+  @ApiProperty({ description: 'Not activated yet: shown as «поканен»' })
+  invited!: boolean;
+}
+
+export class BuildingListItemDto extends BuildingRecordDto implements BuildingListItem {
+  @ApiProperty({ example: 2 })
+  entranceCount!: number;
+  @ApiProperty({ type: () => [EntranceRecordDto], description: 'In the order they were added' })
+  entrances!: EntranceRecordDto[];
+  @ApiProperty({ type: () => PropertyCountsDto })
+  propertyCounts!: PropertyCountsDto;
+  @ApiProperty({
+    type: () => ResidentCountsDto,
+    description: 'People living there today; an account counts once per building',
+  })
+  residents!: ResidentCountsDto;
+  @ApiProperty({
+    type: () => [BuildingManagerSummaryDto],
+    description: 'Current house managers, earliest first; usually one, possibly none',
+  })
+  managers!: BuildingManagerSummaryDto[];
 }
 
 class EntranceWithCountDto extends EntranceRecordDto {
@@ -210,6 +244,37 @@ export class BuildingManagerDto implements BuildingManager {
   roleKey!: string | null;
   @ApiProperty({ ...TIMESTAMP, description: 'When the assignment began' })
   since!: string;
+}
+
+class ManagerCandidateDto implements ManagerCandidate {
+  @ApiProperty({ format: 'uuid' })
+  accountId!: string;
+  @ApiProperty({ example: 'Мария Стоянова' })
+  fullName!: string;
+  @ApiProperty({ type: String, nullable: true, example: 'maria@inova.bg' })
+  email!: string | null;
+  @ApiProperty({ type: String, nullable: true, example: '+359881234567' })
+  phone!: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'manager',
+    description: 'Null for an account without a staff membership',
+  })
+  roleKey!: string | null;
+  @ApiProperty({ description: 'Not activated yet; may still be assigned, marked «поканен»' })
+  invited!: boolean;
+}
+
+export class ManagerCandidatePageDto implements ManagerCandidatePage {
+  @ApiProperty({ type: () => [ManagerCandidateDto] })
+  items!: ManagerCandidateDto[];
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'Pass as `after` for the next page; null on the last one',
+  })
+  nextCursor!: string | null;
 }
 
 export class RemovalRequestDto implements RemovalRequest {

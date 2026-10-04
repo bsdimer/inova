@@ -14,7 +14,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { and, asc, eq, gte, isNull, lte, ne, or, sql, type SQL } from 'drizzle-orm';
+import { and, asc, eq, isNull, ne, or, sql } from 'drizzle-orm';
 import { MessageOutbox } from '../../delivery/message-outbox';
 import { DbService, type TenantTx } from '../../db/db.service';
 import {
@@ -31,6 +31,7 @@ import {
 import { AuditService } from '../audit/audit.service';
 import { InviteCodeIssuer } from '../invites/invite-code-issuer';
 import { BuildingScope } from './building-scope';
+import { effectiveOn, todayIn } from './occupancy-dates';
 import type { Actor } from './buildings.service';
 import type { AddOccupantDto, AddPetDto, AddResidentDto } from './residents.dto';
 
@@ -41,11 +42,6 @@ function isUniqueViolation(error: unknown): boolean {
   return [error, (error as { cause?: unknown } | null)?.cause].some(
     (candidate) => (candidate as { code?: string } | null)?.code === '23505',
   );
-}
-
-/** A dated record counts on `day`: valid_from ≤ day ≤ valid_to, open end included. */
-function effectiveOn(table: typeof occupancies | typeof pets, day: string): SQL | undefined {
-  return and(lte(table.validFrom, day), or(isNull(table.validTo), gte(table.validTo, day)));
 }
 
 /**
@@ -222,7 +218,7 @@ export class ResidentsService {
 
   async myProperties(tenantId: string, accountId: string): Promise<MyProperty[]> {
     return this.dbService.withTenant(tenantId, async (tx) => {
-      const today = await this.today(tx, tenantId);
+      const today = await todayIn(tx, tenantId);
       const rows = await this.myRows(tx, tenantId, accountId, today);
       const byProperty = new Map<string, MyProperty>();
       for (const row of rows) {
@@ -247,7 +243,7 @@ export class ResidentsService {
     propertyId: string,
   ): Promise<MyPropertyDetail> {
     return this.dbService.withTenant(tenantId, async (tx) => {
-      const today = await this.today(tx, tenantId);
+      const today = await todayIn(tx, tenantId);
       const property = await this.mine(tx, tenantId, accountId, propertyId, today);
       const household = await tx
         .select({ occupancy: occupancies, accountName: users.fullName })
@@ -319,7 +315,7 @@ export class ResidentsService {
         tenantId,
         accountId,
         propertyId,
-        await this.today(tx, tenantId),
+        await todayIn(tx, tenantId),
       );
       const [organisation] = await tx
         .select({ name: tenants.name })
@@ -512,15 +508,6 @@ export class ResidentsService {
     }
   }
 
-  /** Today in the organisation's time zone — the day occupancies are judged on. */
-  private async today(tx: TenantTx, tenantId: string): Promise<string> {
-    const [row] = await tx
-      .select({ today: sql<string>`((now() AT TIME ZONE ${tenants.timezone})::date)::text` })
-      .from(tenants)
-      .where(eq(tenants.id, tenantId));
-    return row.today;
-  }
-
   private myRows(tx: TenantTx, tenantId: string, accountId: string, today: string) {
     return tx
       .select({
@@ -606,7 +593,7 @@ export class ResidentsService {
       tenantId,
       accountId,
       propertyId,
-      await this.today(tx, tenantId),
+      await todayIn(tx, tenantId),
     );
     if (!property.roles.some((role) => role === 'owner' || role === 'tenant')) {
       throw new ForbiddenException('Only an owner or a tenant records the household');

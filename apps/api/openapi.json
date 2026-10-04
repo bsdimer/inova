@@ -2341,6 +2341,118 @@
         "tags": ["property"]
       }
     },
+    "/v1/buildings/{buildingId}/manager-candidates": {
+      "get": {
+        "operationId": "BuildingRequestsController_managerCandidates",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "The tenant of the account's token (`tid` claim)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "buildingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Part of the name, e-mail or phone; empty lists everyone, by name",
+            "schema": {
+              "example": "мария",
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "after",
+            "required": false,
+            "in": "query",
+            "description": "The `nextCursor` of the previous page",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagerCandidatePageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed: a field is missing or invalid (`message` lists them).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in, or the credentials, code or token are wrong. Always the same answer, whatever the reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Signed in, but not allowed here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — or not yours, which is answered the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Accounts that may manage the building: not suspended, not already its manager; by name, paged (D40)",
+        "tags": ["property"]
+      }
+    },
     "/v1/buildings/{buildingId}/managers/{accountId}": {
       "delete": {
         "operationId": "BuildingRequestsController_endManager",
@@ -4986,6 +5098,20 @@
         },
         "required": ["tenant", "adminInviteSent"]
       },
+      "EntranceRecordDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "А"
+          }
+        },
+        "required": ["id", "name"]
+      },
       "PropertyCountsDto": {
         "type": "object",
         "properties": {
@@ -5011,6 +5137,45 @@
           }
         },
         "required": ["apartment", "garage", "shop", "storage", "parking_spot"]
+      },
+      "ResidentCountsDto": {
+        "type": "object",
+        "properties": {
+          "active": {
+            "type": "number",
+            "example": 41,
+            "description": "Active accounts living there today"
+          },
+          "invited": {
+            "type": "number",
+            "example": 6,
+            "description": "Invited, not activated yet"
+          },
+          "withoutAccount": {
+            "type": "number",
+            "example": 3,
+            "description": "Recorded by name only, no app access («без акаунт»)"
+          }
+        },
+        "required": ["active", "invited", "withoutAccount"]
+      },
+      "BuildingManagerSummaryDto": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Мария Стоянова"
+          },
+          "invited": {
+            "type": "boolean",
+            "description": "Not activated yet: shown as «поканен»"
+          }
+        },
+        "required": ["accountId", "fullName", "invited"]
       },
       "BuildingListItemDto": {
         "type": "object",
@@ -5083,8 +5248,30 @@
             "type": "number",
             "example": 2
           },
+          "entrances": {
+            "description": "In the order they were added",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntranceRecordDto"
+            }
+          },
           "propertyCounts": {
             "$ref": "#/components/schemas/PropertyCountsDto"
+          },
+          "residents": {
+            "description": "People living there today; an account counts once per building",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ResidentCountsDto"
+              }
+            ]
+          },
+          "managers": {
+            "description": "Current house managers, earliest first; usually one, possibly none",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BuildingManagerSummaryDto"
+            }
           }
         },
         "required": [
@@ -5103,7 +5290,10 @@
           "createdAt",
           "updatedAt",
           "entranceCount",
-          "propertyCounts"
+          "entrances",
+          "propertyCounts",
+          "residents",
+          "managers"
         ]
       },
       "CreateBuildingDto": {
@@ -5409,20 +5599,6 @@
           }
         },
         "required": ["name"]
-      },
-      "EntranceRecordDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string",
-            "example": "А"
-          }
-        },
-        "required": ["id", "name"]
       },
       "AcceptedDto": {
         "type": "object",
@@ -6153,6 +6329,57 @@
           }
         },
         "required": ["accountId", "fullName", "phone", "email", "roleKey", "since"]
+      },
+      "ManagerCandidateDto": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Мария Стоянова"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "example": "maria@inova.bg"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+359881234567"
+          },
+          "roleKey": {
+            "type": "string",
+            "nullable": true,
+            "example": "manager",
+            "description": "Null for an account without a staff membership"
+          },
+          "invited": {
+            "type": "boolean",
+            "description": "Not activated yet; may still be assigned, marked «поканен»"
+          }
+        },
+        "required": ["accountId", "fullName", "email", "phone", "roleKey", "invited"]
+      },
+      "ManagerCandidatePageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ManagerCandidateDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Pass as `after` for the next page; null on the last one"
+          }
+        },
+        "required": ["items", "nextCursor"]
       },
       "AssignManagerDto": {
         "type": "object",

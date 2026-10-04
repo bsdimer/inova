@@ -26,6 +26,7 @@ import type {
   BuildingManager,
   LinkRequest,
   LinkRequestQueueItem,
+  ManagerCandidatePage,
   MyLinkRequest,
   PlatformRemovalRequest,
   RemovalRequest,
@@ -37,6 +38,7 @@ import {
   BuildingManagerDto,
   LinkRequestDto,
   LinkRequestQueueItemDto,
+  ManagerCandidatePageDto,
   PlatformRemovalRequestDto,
   RemovalRequestDto,
 } from './property.responses';
@@ -55,6 +57,7 @@ import {
   CreateRemovalRequestDto,
   DecisionDto,
   LinkListQuery,
+  ManagerCandidatesQuery,
   PlatformRemovalListQuery,
   RejectionDto,
   RemovalListQuery,
@@ -87,6 +90,22 @@ export class BuildingRequestsController {
     @Param('buildingId', ParseUUIDPipe) buildingId: string,
   ): Promise<BuildingManager[]> {
     return this.managers.list(req.tenantId!, actorOf(req), buildingId);
+  }
+
+  @Get('manager-candidates')
+  @RequirePermissions('staff.manage')
+  @ApiOperation({
+    summary:
+      'Accounts that may manage the building: not suspended, not already its manager; by name, paged (D40)',
+  })
+  @ApiOkResponse({ type: ManagerCandidatePageDto })
+  @ApiErrors(400, 401, 403, 404)
+  managerCandidates(
+    @Req() req: AuthedRequest,
+    @Param('buildingId', ParseUUIDPipe) buildingId: string,
+    @Query() query: ManagerCandidatesQuery,
+  ): Promise<ManagerCandidatePage> {
+    return this.managers.candidates(req.tenantId!, actorOf(req), buildingId, query);
   }
 
   @Post('managers')
