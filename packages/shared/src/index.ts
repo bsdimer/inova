@@ -4,6 +4,7 @@ export * from './money';
 export * from './runtime-env';
 export * from './login-form';
 export * from './sign-in-identifier';
+export * from './new-password';
 export * from './dashboard-format';
 export * from './daylight';
 export * from './tenant';

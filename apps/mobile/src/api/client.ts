@@ -2,6 +2,7 @@ import {
   identifierValue,
   type AuthProfile,
   type AuthSession,
+  type RecoveryStarted,
   type SignInIdentifier,
 } from '@inova/shared';
 import * as SecureStore from 'expo-secure-store';
@@ -177,6 +178,30 @@ export async function activate(identifier: SignInIdentifier, code: string): Prom
 
 export async function resendCode(phone: string): Promise<void> {
   await post('/auth/resend-code', { ...realmHint(), phone });
+}
+
+/**
+ * Password recovery (B13): a link by e-mail or a code by SMS. The answer is the
+ * same whether or not the account exists; it says how long the link or code lasts.
+ */
+export async function requestRecovery(identifier: SignInIdentifier): Promise<RecoveryStarted> {
+  const who =
+    identifier.kind === 'email' ? { email: identifier.email } : { phone: identifier.phone };
+  return post<RecoveryStarted>('/auth/recovery', { ...realmHint(), ...who });
+}
+
+/** The e-mailed link's token, or the phone and the SMS code. */
+export type RecoveryProof = { token: string } | { phone: string; code: string };
+
+/**
+ * Sets the new password. The server ends every session of the account, so any
+ * session kept on this device is dead too — drop it; the resident signs in anew.
+ */
+export async function confirmRecovery(proof: RecoveryProof, password: string): Promise<void> {
+  // The token names its organisation; the phone needs the realm to find the account.
+  const body = 'token' in proof ? { ...proof, password } : { ...realmHint(), ...proof, password };
+  await post('/auth/recovery/confirm', body);
+  await clearSession();
 }
 
 /**

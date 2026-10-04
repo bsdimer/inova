@@ -4,16 +4,16 @@ import React, { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MIN_PASSWORD_LENGTH, newPasswordProblem } from '@inova/shared';
 import { ApiError, setPassword } from '../../src/api/client';
 import { useRequireAuth } from '../../src/auth/AuthProvider';
+import { newPasswordMessage } from '../../src/auth/messages';
 import { AppBackground } from '../../src/components/AppBackground';
 import { GlassCircleButton } from '../../src/components/GlassCircleButton';
 import { GradientButton } from '../../src/components/GradientButton';
 import { TextField } from '../../src/components/TextField';
 import { metrics, rs } from '../../src/theme/responsive';
 import { glass, palette } from '../../src/theme/tokens';
-
-const MIN_PASSWORD_LENGTH = 8;
 
 export default function SetPassword() {
   const router = useRouter();
@@ -38,12 +38,9 @@ export default function SetPassword() {
     password.length >= MIN_PASSWORD_LENGTH && confirm.length >= MIN_PASSWORD_LENGTH && !loading;
 
   const submit = async () => {
-    if (password !== confirm) {
-      setError('Паролите не съвпадат.');
-      return;
-    }
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      setError(`Паролата трябва да е поне ${MIN_PASSWORD_LENGTH} символа.`);
+    const problem = newPasswordProblem(password, confirm);
+    if (problem) {
+      setError(newPasswordMessage(problem));
       return;
     }
 
