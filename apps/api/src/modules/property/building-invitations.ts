@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { MessageRequest } from '@inova/shared';
-import { and, eq, gte, isNull, notExists, or, sql } from 'drizzle-orm';
+import { and, eq, gte, inArray, isNull, notExists, or, sql } from 'drizzle-orm';
 import type { TenantTx } from '../../db/db.service';
 import { apartments, inviteCodes, occupancies, users } from '../../db/schema';
 import { InviteCodeIssuer } from '../invites/invite-code-issuer';
@@ -22,7 +22,9 @@ export class BuildingInvitations {
     tx: TenantTx,
     tenantId: string,
     buildingId: string,
+    onlyAccounts?: string[],
   ): Promise<Array<{ accountId: string; phone: string | null; email: string | null }>> {
+    if (onlyAccounts?.length === 0) return [];
     const today = await todayIn(tx, tenantId);
     return tx
       .selectDistinct({ accountId: users.id, phone: users.phone, email: users.email })
@@ -44,6 +46,7 @@ export class BuildingInvitations {
           eq(apartments.buildingId, buildingId),
           or(isNull(occupancies.validTo), gte(occupancies.validTo, today)),
           eq(users.status, 'pending'),
+          onlyAccounts ? inArray(users.id, onlyAccounts) : undefined,
           sql`(${users.phone} IS NOT NULL OR ${users.email} IS NOT NULL)`,
           notExists(
             tx
@@ -64,17 +67,19 @@ export class BuildingInvitations {
   }
 
   /**
-   * Issues one code per eligible account inside the activation's transaction
-   * and returns the messages to queue once it has committed.
+   * Issues one code per eligible account inside the caller's transaction and
+   * returns the messages to queue once it has committed. `onlyAccounts`
+   * narrows it to the accounts a change just added (the import).
    */
   async issueAll(
     tx: TenantTx,
     tenantId: string,
     buildingId: string,
     createdBy: string,
+    onlyAccounts?: string[],
   ): Promise<MessageRequest[]> {
     const messages: MessageRequest[] = [];
-    for (const account of await this.eligible(tx, tenantId, buildingId)) {
+    for (const account of await this.eligible(tx, tenantId, buildingId, onlyAccounts)) {
       const code = await this.inviteCodes.issue(tx, {
         tenantId,
         accountId: account.accountId,

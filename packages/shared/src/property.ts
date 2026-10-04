@@ -230,6 +230,8 @@ export interface ImportRowError {
     | 'invalid'
     | 'duplicate_in_file'
     | 'inconsistent_building'
+    | 'ambiguous_building'
+    | 'duplicate_contact'
     | 'exists'
     | 'out_of_scope'
     | 'archived_building'
@@ -244,13 +246,36 @@ export interface ImportReport {
   /** True only when a real run wrote everything; never partly. */
   committed: boolean;
   properties: number;
+  /** Resident rows read from the sheet (D40). */
+  residents: number;
   buildings: Array<{
     name: string;
     row: number;
+    /** The building's values as the sheet gives them — what its block's rows inherit. */
+    city: string;
+    district: string;
+    address: string;
+    floors: number;
+    hasElevator: boolean;
+    assessmentBasis: AssessmentBasis;
     /** `existing`: its details stay as they are; only entrances and properties are added. */
     status: 'new' | 'existing';
     entrancesCreated: number;
     propertiesCreated: number;
+    /** Residents recorded; `withoutAccount` of them by name only. */
+    residentsCreated: number;
+    withoutAccount: number;
+    /** Invitations sent at once: only into a building that is already active (D40). */
+    invitesSent: number;
+  }>;
+  /** Where each row landed: its building, after inheritance, and the resident it adds. */
+  rows: Array<{
+    row: number;
+    building: string;
+    entrance: string;
+    floor: number;
+    number: string;
+    resident: string | null;
   }>;
   errors: ImportRowError[];
 }

@@ -1,11 +1,21 @@
-import type { ImportReport } from '@inova/shared';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import type { ImportReport, MessageRequest } from '@inova/shared';
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { and, eq, sql } from 'drizzle-orm';
 import { readSheet } from 'read-excel-file/node';
 import { DbService, type TenantTx } from '../../../db/db.service';
-import { apartments, buildingManagerAssignments, buildings, entrances } from '../../../db/schema';
+import {
+  apartments,
+  buildingManagerAssignments,
+  buildings,
+  entrances,
+  occupancies,
+} from '../../../db/schema';
+import { MessageOutbox } from '../../../delivery/message-outbox';
 import { AuditService } from '../../audit/audit.service';
+import { BuildingInvitations } from '../building-invitations';
 import { BuildingScope } from '../building-scope';
+import { todayIn } from '../occupancy-dates';
+import { ResidentAccounts } from '../resident-accounts';
 import type { Actor } from '../buildings.service';
 import { checkSheet, parseCsv, type CheckedSheet } from './property-sheet';
 
@@ -25,11 +35,15 @@ class Rollback extends Error {
 const XLSX_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
 /**
- * Imports buildings, entrances and properties from the template (WHI-99).
- * A dry run executes the whole import and rolls it back, so it reports what a
- * real run would do — the database's answers included (a number that exists,
- * a building outside the manager's scope). A real run is all or nothing.
- * Residents are not imported: they come with invites, one by one (B7).
+ * Imports buildings, entrances, properties and their residents from the
+ * template (WHI-99, D40). A dry run executes the whole import and rolls it
+ * back, so it reports what a real run would do — the database's answers
+ * included (a number that exists, a building outside the manager's scope, a
+ * phone and an e-mail of two different accounts). A real run is all or
+ * nothing. A resident with a contact gets the organisation's account for it,
+ * new or existing; without one, a named occupancy «без акаунт». Invitations
+ * follow the building: none while it is a draft — activation sends them —
+ * and at once, after the commit, into a building that is already active.
  */
 @Injectable()
 export class PropertyImportService {
@@ -37,6 +51,9 @@ export class PropertyImportService {
     private readonly dbService: DbService,
     private readonly audit: AuditService,
     private readonly scope: BuildingScope,
+    private readonly accounts: ResidentAccounts,
+    private readonly invitations: BuildingInvitations,
+    private readonly outbox: MessageOutbox,
   ) {}
 
   async run(
@@ -50,18 +67,23 @@ export class PropertyImportService {
       dryRun,
       committed: false,
       properties: sheet.properties.length,
+      residents: sheet.residents.length,
       buildings: [],
+      rows: sheet.rows,
       errors: sheet.errors,
     };
     // Cells first: the database is asked only about a sheet that reads cleanly.
     if (sheet.errors.length > 0) return report;
 
     try {
-      await this.dbService.withTenant(tenantId, async (tx) => {
-        await this.write(tx, tenantId, actor, sheet, report);
+      const messages = await this.dbService.withTenant(tenantId, async (tx) => {
+        const queued = await this.write(tx, tenantId, actor, sheet, report);
         if (dryRun || report.errors.length > 0) throw new Rollback(report);
+        return queued;
       });
       report.committed = true;
+      // After the commit: the worker must find the codes it is asked to send.
+      for (const message of messages) await this.outbox.send(message);
       return report;
     } catch (error) {
       if (error instanceof Rollback) return error.report;
@@ -75,8 +97,10 @@ export class PropertyImportService {
     actor: Actor,
     sheet: CheckedSheet,
     report: ImportReport,
-  ): Promise<void> {
+  ): Promise<MessageRequest[]> {
     const scope = await this.scope.of(tx, tenantId, actor);
+    const today = await todayIn(tx, tenantId);
+    const messages: MessageRequest[] = [];
 
     for (const spec of sheet.buildings) {
       const [existing] = await tx
@@ -132,6 +156,8 @@ export class PropertyImportService {
 
       let entrancesCreated = 0;
       let propertiesCreated = 0;
+      /** The sheet row of each property created here → its id, for its residents. */
+      const created = new Map<number, string>();
       for (const property of sheet.properties.filter((p) => p.building === spec.name)) {
         const entranceKey = property.entrance.toLowerCase();
         let entranceId = entranceIds.get(entranceKey);
@@ -154,26 +180,91 @@ export class PropertyImportService {
           continue;
         }
         taken.add(key);
-        await tx.insert(apartments).values({
-          tenantId,
-          buildingId,
-          entranceId,
-          floor: property.floor,
-          number: property.number,
-          propertyType: property.propertyType,
-          rooms: property.rooms,
-          areaM2: property.areaM2,
-          idealParts: property.idealParts,
-        });
+        const [apartment] = await tx
+          .insert(apartments)
+          .values({
+            tenantId,
+            buildingId,
+            entranceId,
+            floor: property.floor,
+            number: property.number,
+            propertyType: property.propertyType,
+            rooms: property.rooms,
+            areaM2: property.areaM2,
+            idealParts: property.idealParts,
+          })
+          .returning({ id: apartments.id });
+        created.set(property.row, apartment.id);
         propertiesCreated += 1;
       }
+
+      let residentsCreated = 0;
+      let withoutAccount = 0;
+      const linked: string[] = [];
+      for (const resident of sheet.residents) {
+        const apartmentId = created.get(resident.propertyRow);
+        // Its property was refused above, or belongs to another building.
+        if (!apartmentId) continue;
+        const contact = {
+          phone: resident.phone ?? undefined,
+          email: resident.email ?? undefined,
+          firstName: resident.firstName,
+          lastName: resident.lastName,
+        };
+        let accountId: string | null = null;
+        if (resident.phone || resident.email) {
+          try {
+            accountId = (await this.accounts.findOrCreate(tx, tenantId, contact)).id;
+          } catch (error) {
+            if (!(error instanceof ConflictException)) throw error;
+            report.errors.push({
+              row: resident.row,
+              column: resident.phone ? 'Телефон' : 'Имейл',
+              code: 'duplicate_contact',
+              message: 'The phone and the e-mail belong to two different accounts',
+            });
+            continue;
+          }
+          linked.push(accountId);
+        } else {
+          withoutAccount += 1;
+        }
+        await tx.insert(occupancies).values({
+          tenantId,
+          apartmentId,
+          userId: accountId,
+          role: resident.role,
+          // A person with an account is named by it; one without, by the sheet.
+          firstName: accountId ? null : resident.firstName,
+          lastName: accountId ? null : resident.lastName || null,
+          validFrom: resident.validFrom ?? today,
+          createdBy: actor.userId,
+        });
+        residentsCreated += 1;
+      }
+
+      // A draft waits for its activation (D40); an active building invites now.
+      const invites =
+        existing?.status === 'active'
+          ? await this.invitations.issueAll(tx, tenantId, buildingId, actor.userId, linked)
+          : [];
+      messages.push(...invites);
 
       report.buildings.push({
         name: spec.name,
         row: spec.row,
+        city: spec.city,
+        district: spec.district,
+        address: spec.address,
+        floors: spec.floors,
+        hasElevator: spec.hasElevator,
+        assessmentBasis: spec.assessmentBasis,
         status: existing ? 'existing' : 'new',
         entrancesCreated,
         propertiesCreated,
+        residentsCreated,
+        withoutAccount,
+        invitesSent: invites.length,
       });
       await this.audit.record(tx, {
         tenantId,
@@ -182,9 +273,17 @@ export class PropertyImportService {
         action: 'building.imported',
         entityType: 'building',
         entityId: buildingId,
-        payload: { created: !existing, entrancesCreated, propertiesCreated },
+        payload: {
+          created: !existing,
+          entrancesCreated,
+          propertiesCreated,
+          residentsCreated,
+          withoutAccount,
+          invitesSent: invites.length,
+        },
       });
     }
+    return messages;
   }
 
   /** A new building starts as a draft; a building-scoped importer manages it. */

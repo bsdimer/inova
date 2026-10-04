@@ -1,22 +1,32 @@
-import type { ImportRowError } from '@inova/shared';
+import { splitFullName, toE164Phone, type ImportRowError } from '@inova/shared';
 
 /**
  * The property import template (WHI-99; the team lead chose our own template
- * over the pilot's spreadsheets, 01.10): one row per property, the building's
- * columns repeated on each of its rows. This file reads and checks a sheet —
- * no database, no clock — so every rule is a unit test.
+ * over the pilot's spreadsheets, 01.10). One row per property — or per
+ * resident of a property: a property with two residents takes two rows. A
+ * building's own columns are filled once, on the first row of its block; the
+ * rows below with «Сграда» empty belong to it and inherit them, and a row that
+ * cannot say which building it is in is refused (D40, WHI-37 45ca9f02). This
+ * file reads and checks a sheet — no database, no clock — so every rule is a
+ * unit test.
  */
 
-import { ASSESSMENT_BASES, PROPERTY_TYPES } from '../../../db/schema';
+import { ASSESSMENT_BASES, OCCUPANCY_ROLES, PROPERTY_TYPES } from '../../../db/schema';
 
 type AssessmentBasis = (typeof ASSESSMENT_BASES)[number];
 type PropertyType = (typeof PROPERTY_TYPES)[number];
+type OccupancyRole = (typeof OCCUPANCY_ROLES)[number];
+
+/** Which thing a column describes: the building, the property, or a resident of it. */
+type Level = 'building' | 'property' | 'resident';
 
 /** A column: the header the template writes, and other headers that mean the same. */
 interface Column {
   key: keyof SheetRow;
   header: string;
   aliases: string[];
+  level: Level;
+  /** The header must be present; resident columns may be left out of an older sheet. */
   required: boolean;
 }
 
@@ -35,39 +45,116 @@ export interface SheetRow {
   rooms: string;
   areaM2: string;
   idealParts: string;
+  residentName: string;
+  residentRole: string;
+  phone: string;
+  email: string;
+  validFrom: string;
 }
 
 export const COLUMNS: Column[] = [
-  { key: 'building', header: 'Сграда', aliases: ['building', 'блок'], required: true },
-  { key: 'city', header: 'Град', aliases: ['city'], required: true },
-  { key: 'district', header: 'Квартал', aliases: ['district'], required: true },
-  { key: 'address', header: 'Адрес', aliases: ['address'], required: true },
-  { key: 'floors', header: 'Етажи', aliases: ['floors', 'брой етажи'], required: true },
-  { key: 'hasElevator', header: 'Асансьор', aliases: ['elevator', 'has elevator'], required: true },
+  {
+    key: 'building',
+    header: 'Сграда',
+    aliases: ['building', 'блок'],
+    level: 'building',
+    required: true,
+  },
+  { key: 'city', header: 'Град', aliases: ['city'], level: 'building', required: true },
+  { key: 'district', header: 'Квартал', aliases: ['district'], level: 'building', required: true },
+  { key: 'address', header: 'Адрес', aliases: ['address'], level: 'building', required: true },
+  {
+    key: 'floors',
+    header: 'Етажи',
+    aliases: ['floors', 'брой етажи'],
+    level: 'building',
+    required: true,
+  },
+  {
+    key: 'hasElevator',
+    header: 'Асансьор',
+    aliases: ['elevator', 'has elevator'],
+    level: 'building',
+    required: true,
+  },
   {
     key: 'assessmentBasis',
     header: 'Разпределение на таксите',
     aliases: ['assessment basis', 'разпределение'],
+    level: 'building',
     required: true,
   },
-  { key: 'entrance', header: 'Вход', aliases: ['entrance'], required: true },
-  { key: 'floor', header: 'Етаж', aliases: ['floor'], required: true },
-  { key: 'number', header: 'Номер', aliases: ['number', 'номер на имот'], required: true },
-  { key: 'propertyType', header: 'Вид имот', aliases: ['property type', 'вид'], required: true },
-  { key: 'rooms', header: 'Стаи', aliases: ['rooms'], required: false },
+  { key: 'entrance', header: 'Вход', aliases: ['entrance'], level: 'property', required: true },
+  { key: 'floor', header: 'Етаж', aliases: ['floor'], level: 'property', required: true },
+  {
+    key: 'number',
+    header: 'Номер',
+    aliases: ['number', 'номер на имот'],
+    level: 'property',
+    required: true,
+  },
+  {
+    key: 'propertyType',
+    header: 'Вид имот',
+    aliases: ['property type', 'вид'],
+    level: 'property',
+    required: true,
+  },
+  { key: 'rooms', header: 'Стаи', aliases: ['rooms'], level: 'property', required: false },
   {
     key: 'areaM2',
     header: 'Площ (м²)',
     aliases: ['area', 'площ', 'площ м2', 'area m2'],
+    level: 'property',
     required: false,
   },
   {
     key: 'idealParts',
     header: 'Идеални части (%)',
     aliases: ['ideal parts', 'идеални части'],
+    level: 'property',
+    required: false,
+  },
+  {
+    key: 'residentName',
+    header: 'Жител',
+    aliases: ['resident', 'name', 'име', 'име на жител'],
+    level: 'resident',
+    required: false,
+  },
+  { key: 'residentRole', header: 'Роля', aliases: ['role'], level: 'resident', required: false },
+  {
+    key: 'phone',
+    header: 'Телефон',
+    aliases: ['phone', 'тел'],
+    level: 'resident',
+    required: false,
+  },
+  {
+    key: 'email',
+    header: 'Имейл',
+    aliases: ['email', 'e-mail', 'имейл адрес'],
+    level: 'resident',
+    required: false,
+  },
+  {
+    key: 'validFrom',
+    header: 'От дата',
+    aliases: ['valid from', 'от', 'дата'],
+    level: 'resident',
     required: false,
   },
 ];
+
+const BUILDING_FIELDS = [
+  'city',
+  'district',
+  'address',
+  'floors',
+  'hasElevator',
+  'assessmentBasis',
+] as const;
+const PROPERTY_FIELDS = ['propertyType', 'rooms', 'areaM2', 'idealParts'] as const;
 
 const BASIS_WORDS: Record<string, AssessmentBasis> = {
   фиксирано: 'fixed',
@@ -89,8 +176,20 @@ const TYPE_WORDS: Record<string, PropertyType> = {
   паркинг: 'parking_spot',
 };
 
+const ROLE_WORDS: Record<string, OccupancyRole> = {
+  собственик: 'owner',
+  собственичка: 'owner',
+  наемател: 'tenant',
+  наемателка: 'tenant',
+  живущ: 'occupant',
+  живуща: 'occupant',
+  обитател: 'occupant',
+  'член на домакинството': 'occupant',
+};
+
 const YES = new Set(['да', 'yes', 'y', '1', 'true', 'има']);
 const NO = new Set(['не', 'no', 'n', '0', 'false', 'няма', '']);
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** What is wrong with a row; `code` lets the screen say it in its own words. */
 /** One problem in the sheet; the shape is shared with the admin (`ImportRowError`). */
@@ -121,9 +220,36 @@ export interface PropertySpec {
   idealParts: string | null;
 }
 
+/** A resident of a property; without a phone and an e-mail, a name only («без акаунт»). */
+export interface ResidentSpec {
+  row: number;
+  /** The property's row: the first row that described it. */
+  propertyRow: number;
+  firstName: string;
+  lastName: string;
+  role: OccupancyRole;
+  phone: string | null;
+  email: string | null;
+  /** `YYYY-MM-DD`; null means the day of the import. */
+  validFrom: string | null;
+}
+
+/** Where a row landed: what the dry run shows for each row. */
+export interface RowPlacement {
+  row: number;
+  building: string;
+  entrance: string;
+  floor: number;
+  number: string;
+  /** The resident this row adds, by name; null for a property-only row. */
+  resident: string | null;
+}
+
 export interface CheckedSheet {
   buildings: BuildingSpec[];
   properties: PropertySpec[];
+  residents: ResidentSpec[];
+  rows: RowPlacement[];
   errors: RowError[];
 }
 
@@ -193,6 +319,22 @@ function integer(value: string, min: number, max: number): number | null {
   return number >= min && number <= max ? number : null;
 }
 
+/** `YYYY-MM-DD` or `DD.MM.YYYY` as `YYYY-MM-DD`, or null when it is no calendar day. */
+function calendarDay(value: string): string | null {
+  const text = value.trim();
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+  const bg = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(text);
+  const [y, m, d] = iso
+    ? [iso[1], iso[2], iso[3]]
+    : bg
+      ? [bg[3], bg[2].padStart(2, '0'), bg[1].padStart(2, '0')]
+      : [];
+  if (!y) return null;
+  const day = `${y}-${m}-${d}`;
+  const date = new Date(`${day}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(day) ? day : null;
+}
+
 /**
  * Checks a sheet (rows of cells, the header first) against the template. Every
  * problem is reported, not just the first, so one dry run lists them all.
@@ -206,20 +348,22 @@ export function checkSheet(rows: unknown[][]): CheckedSheet {
   const data = body
     .map((row, index) => ({ row: index + 2, cells: row }))
     .filter(({ cells: row }) => row.some((cell) => cell.trim() !== ''));
+  const nothing = (error: RowError): CheckedSheet => ({
+    buildings: [],
+    properties: [],
+    residents: [],
+    rows: [],
+    errors: [error],
+  });
 
-  if (data.length === 0) {
-    return {
-      buildings: [],
-      properties: [],
-      errors: [{ row: 1, code: 'empty', message: 'The sheet has no rows' }],
-    };
-  }
+  if (data.length === 0)
+    return nothing({ row: 1, code: 'empty', message: 'The sheet has no rows' });
   if (data.length > MAX_ROWS) {
-    return {
-      buildings: [],
-      properties: [],
-      errors: [{ row: 1, code: 'too_many_rows', message: `At most ${MAX_ROWS} rows per import` }],
-    };
+    return nothing({
+      row: 1,
+      code: 'too_many_rows',
+      message: `At most ${MAX_ROWS} rows per import`,
+    });
   }
 
   const position = new Map<keyof SheetRow, number>();
@@ -239,6 +383,8 @@ export function checkSheet(rows: unknown[][]): CheckedSheet {
     return {
       buildings: [],
       properties: [],
+      residents: [],
+      rows: [],
       errors: missing.map((column) => ({
         row: 1,
         column: column.header,
@@ -249,26 +395,47 @@ export function checkSheet(rows: unknown[][]): CheckedSheet {
   }
 
   const buildings = new Map<string, BuildingSpec>();
-  const properties: PropertySpec[] = [];
-  const naturalKeys = new Map<string, number>();
+  const properties = new Map<string, PropertySpec>();
+  const residents: ResidentSpec[] = [];
+  const placements: RowPlacement[] = [];
+  /** Contact → the name it was first given with, and where. */
+  const contacts = new Map<string, { name: string; row: number }>();
+  const occupancyKeys = new Map<string, number>();
+  /** The building the rows below belong to — named on the block's first row. */
+  let blockName: string | null = null;
 
   for (const { row, cells: line } of data) {
     const value = (key: keyof SheetRow) =>
       position.has(key) ? (line[position.get(key)!] ?? '').trim() : '';
+    const columnOf = (key: keyof SheetRow) =>
+      headerAt.get(key) ?? COLUMNS.find((c) => c.key === key)!.header;
     const fail = (key: keyof SheetRow, code: RowError['code'], message: string) =>
-      errors.push({
-        row,
-        column: headerAt.get(key) ?? COLUMNS.find((c) => c.key === key)!.header,
-        code,
-        message,
-      });
+      errors.push({ row, column: columnOf(key), code, message });
     const before = errors.length;
 
-    for (const column of COLUMNS) {
-      if (column.required && value(column.key) === '') fail(column.key, 'required', 'Required');
+    // Which building: named on this row, or the block above.
+    const named = value('building');
+    const known = named ? buildings.get(normalize(named)) : undefined;
+    // The block starts here even when this row has errors of its own, so one
+    // mistake on a building's first row does not orphan the rows below it.
+    if (named) blockName = named;
+    if (!named && !blockName) {
+      fail(
+        'building',
+        'ambiguous_building',
+        'No building above this row: write its name in «Сграда»',
+      );
+      continue;
     }
 
-    const floors = integer(value('floors'), 1, 200);
+    // The building's own cells: required where a building first appears.
+    const firstOfBuilding = Boolean(named) && !known;
+    if (firstOfBuilding) {
+      for (const key of BUILDING_FIELDS) {
+        if (value(key) === '') fail(key, 'required', 'Required on the first row of a building');
+      }
+    }
+    const floors = value('floors') ? integer(value('floors'), 1, 200) : null;
     if (value('floors') && floors === null)
       fail('floors', 'invalid', 'A whole number from 1 to 200');
     const elevatorWord = normalize(value('hasElevator'));
@@ -280,6 +447,11 @@ export function checkSheet(rows: unknown[][]): CheckedSheet {
       (ASSESSMENT_BASES as readonly string[]).find((b) => b === basisWord);
     if (value('assessmentBasis') && !basis) {
       fail('assessmentBasis', 'invalid', `One of: ${Object.keys(BASIS_WORDS).join(', ')}`);
+    }
+
+    // The property's cells.
+    for (const key of ['entrance', 'floor', 'number'] as const) {
+      if (value(key) === '') fail(key, 'required', 'Required');
     }
     const floor = integer(value('floor'), -10, 200);
     if (value('floor') && floor === null)
@@ -301,82 +473,207 @@ export function checkSheet(rows: unknown[][]): CheckedSheet {
       fail('idealParts', 'invalid', 'A percentage up to 100, up to four decimals');
     }
     if (value('number').length > 20) fail('number', 'invalid', 'At most 20 characters');
+
+    // The resident's cells, when the row has a resident at all.
+    const hasResident = (
+      ['residentName', 'residentRole', 'phone', 'email', 'validFrom'] as const
+    ).some((key) => value(key) !== '');
+    const roleWord = normalize(value('residentRole'));
+    const role =
+      ROLE_WORDS[roleWord] ?? (OCCUPANCY_ROLES as readonly string[]).find((r) => r === roleWord);
+    const phone = value('phone') ? toE164Phone(value('phone')) : null;
+    const email = value('email') || null;
+    const validFrom = value('validFrom') ? calendarDay(value('validFrom')) : null;
+    if (hasResident) {
+      if (value('residentName') === '')
+        fail('residentName', 'required', 'The resident needs a name');
+      if (value('residentName').length > 200)
+        fail('residentName', 'invalid', 'At most 200 characters');
+      if (roleWord === '') fail('residentRole', 'required', 'собственик, наемател or живущ');
+      else if (!role) fail('residentRole', 'invalid', 'собственик, наемател or живущ');
+      if (value('phone') && !phone) fail('phone', 'invalid', 'A phone number such as 0888 123 456');
+      if (email && (!EMAIL.test(email) || email.length > 320)) {
+        fail('email', 'invalid', 'An e-mail address');
+      }
+      if (value('validFrom') && !validFrom)
+        fail('validFrom', 'invalid', 'A date such as 01.02.2026');
+    }
     if (errors.length > before) continue;
 
-    const name = value('building');
-    const spec: BuildingSpec = {
-      name,
-      city: value('city'),
-      district: value('district'),
-      address: value('address'),
-      floors: floors!,
-      hasElevator: hasElevator!,
-      assessmentBasis: basis as AssessmentBasis,
-      row,
-    };
-    const known = buildings.get(normalize(name));
-    if (!known) {
-      buildings.set(normalize(name), spec);
+    // The building: a new one, the same one again, or the block's.
+    let building: BuildingSpec;
+    if (firstOfBuilding) {
+      building = {
+        name: named,
+        city: value('city'),
+        district: value('district'),
+        address: value('address'),
+        floors: floors!,
+        hasElevator: hasElevator!,
+        assessmentBasis: basis as AssessmentBasis,
+        row,
+      };
+      buildings.set(normalize(named), building);
     } else {
-      const differs = (
-        ['city', 'district', 'address', 'floors', 'hasElevator', 'assessmentBasis'] as const
-      ).filter((key) => known[key] !== spec[key]);
+      const resolved = known ?? buildings.get(normalize(blockName!));
+      // The block's first row was refused; its own errors say why.
+      if (!resolved) continue;
+      building = resolved;
+      const given = {
+        city: value('city') || undefined,
+        district: value('district') || undefined,
+        address: value('address') || undefined,
+        floors: floors ?? undefined,
+        hasElevator: value('hasElevator') ? hasElevator! : undefined,
+        assessmentBasis: (basis as AssessmentBasis | undefined) ?? undefined,
+      };
+      const differs = BUILDING_FIELDS.filter(
+        (key) => given[key] !== undefined && given[key] !== building[key],
+      );
       if (differs.length > 0) {
-        errors.push({
-          row,
-          column: headerAt.get(differs[0]),
-          code: 'inconsistent_building',
-          message: `«${name}» is described differently on row ${known.row}`,
-        });
+        errors.push(
+          named
+            ? {
+                row,
+                column: columnOf(differs[0]),
+                code: 'inconsistent_building',
+                message: `«${named}» is described differently on row ${building.row}`,
+              }
+            : {
+                row,
+                column: columnOf(differs[0]),
+                code: 'ambiguous_building',
+                message: `Differs from «${building.name}» above: write the building's name to start its block`,
+              },
+        );
         continue;
       }
     }
 
+    // The property: new, or the same one again for its next resident.
     const key = [
-      normalize(name),
+      normalize(building.name),
       normalize(value('entrance')),
       floor,
       normalize(value('number')),
     ].join('|');
-    const first = naturalKeys.get(key);
-    if (first !== undefined) {
-      errors.push({
+    let property = properties.get(key);
+    if (property) {
+      const restated = {
+        propertyType: (type as PropertyType | undefined) ?? undefined,
+        rooms: rooms ?? undefined,
+        areaM2: area ?? undefined,
+        idealParts: ideal ?? undefined,
+      };
+      const differs = PROPERTY_FIELDS.filter(
+        (field) => restated[field] !== undefined && restated[field] !== property![field],
+      );
+      if (!hasResident || differs.length > 0) {
+        errors.push({
+          row,
+          column: columnOf(hasResident ? (differs[0] ?? 'number') : 'number'),
+          code: 'duplicate_in_file',
+          message: hasResident
+            ? `The same property as row ${property.row}, described differently`
+            : `The same entrance, floor and number as row ${property.row}`,
+        });
+        continue;
+      }
+    } else {
+      if (!type) {
+        fail('propertyType', 'required', 'Required on the first row of a property');
+        continue;
+      }
+      property = {
         row,
-        column: headerAt.get('number'),
-        code: 'duplicate_in_file',
-        message: `The same entrance, floor and number as row ${first}`,
-      });
-      continue;
+        building: building.name,
+        entrance: value('entrance'),
+        floor: floor!,
+        number: value('number'),
+        propertyType: type as PropertyType,
+        rooms,
+        areaM2: area,
+        idealParts: ideal,
+      };
+      properties.set(key, property);
     }
-    naturalKeys.set(key, row);
-    properties.push({
+
+    // The resident: one person per contact, once per role on a property.
+    if (hasResident) {
+      const name = value('residentName').replace(/\s+/g, ' ');
+      const contactKeys = [phone, email?.toLowerCase()].filter((c): c is string => Boolean(c));
+      const clash = contactKeys
+        .map((contact) => ({ contact, seen: contacts.get(contact) }))
+        .find(({ seen }) => seen && normalize(seen.name) !== normalize(name));
+      if (clash) {
+        fail(
+          clash.contact.includes('@') ? 'email' : 'phone',
+          'duplicate_contact',
+          `Given to «${clash.seen!.name}» on row ${clash.seen!.row}`,
+        );
+        continue;
+      }
+      const who = contactKeys[0] ?? `name:${normalize(name)}`;
+      const occupancyKey = `${key}|${role}|${who}`;
+      const firstRow = occupancyKeys.get(occupancyKey);
+      if (firstRow !== undefined) {
+        fail('residentName', 'duplicate_in_file', `The same resident and role as row ${firstRow}`);
+        continue;
+      }
+      occupancyKeys.set(occupancyKey, row);
+      for (const contact of contactKeys) {
+        if (!contacts.has(contact)) contacts.set(contact, { name, row });
+      }
+      residents.push({
+        row,
+        propertyRow: property.row,
+        ...splitFullName(name),
+        role: role as OccupancyRole,
+        phone,
+        email,
+        validFrom,
+      });
+    }
+
+    placements.push({
       row,
-      building: buildings.get(normalize(name))!.name,
-      entrance: value('entrance'),
-      floor: floor!,
-      number: value('number'),
-      propertyType: type as PropertyType,
-      rooms,
-      areaM2: area,
-      idealParts: ideal,
+      building: building.name,
+      entrance: property.entrance,
+      floor: property.floor,
+      number: property.number,
+      resident: hasResident ? value('residentName').replace(/\s+/g, ' ') : null,
     });
   }
 
-  return { buildings: [...buildings.values()], properties, errors };
+  return {
+    buildings: [...buildings.values()],
+    properties: [...properties.values()],
+    residents,
+    rows: placements,
+    errors,
+  };
 }
 
-/** The template a manager fills in: the header and two example rows, for Excel. */
+/**
+ * The template a manager fills in, for Excel: the header and example rows — a
+ * building named once with its block below it, a property with two residents,
+ * one without a phone or e-mail («без акаунт»), and a garage without anyone.
+ */
 export function templateCsv(): string {
+  const building = [
+    'бл. 3',
+    'София',
+    'Лозенец',
+    'ул. Кораб планина 12',
+    '8',
+    'да',
+    'по идеални части',
+  ];
+  const inherited = ['', '', '', '', '', '', ''];
   const rows = [
     COLUMNS.map((column) => column.header),
     [
-      'бл. 3',
-      'София',
-      'Лозенец',
-      'ул. Кораб планина 12',
-      '8',
-      'да',
-      'по идеални части',
+      ...building,
       'А',
       '1',
       '1',
@@ -384,23 +681,14 @@ export function templateCsv(): string {
       '3',
       '65,40',
       '2,3456',
-    ],
-    [
-      'бл. 3',
-      'София',
-      'Лозенец',
-      'ул. Кораб планина 12',
-      '8',
-      'да',
-      'по идеални части',
-      'А',
-      '-1',
-      'Г1',
-      'гараж',
+      'Иван Петров',
+      'собственик',
+      '0888 123 456',
       '',
-      '18',
-      '0,5000',
+      '01.02.2026',
     ],
+    [...inherited, 'А', '1', '1', '', '', '', '', 'Мария Петрова', 'живущ', '', '', ''],
+    [...inherited, 'А', '-1', 'Г1', 'гараж', '', '18', '0,5000', '', '', '', '', ''],
   ];
   const quote = (cell: string) => (/[;"\n]/.test(cell) ? `"${cell.replace(/"/g, '""')}"` : cell);
   // BOM + semicolons: Excel with Bulgarian settings opens it in columns, in Cyrillic.

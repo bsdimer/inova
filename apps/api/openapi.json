@@ -7227,6 +7227,30 @@
             "example": 2,
             "description": "The first row that named it"
           },
+          "city": {
+            "type": "string",
+            "example": "София"
+          },
+          "district": {
+            "type": "string",
+            "example": "Лозенец"
+          },
+          "address": {
+            "type": "string",
+            "example": "ул. Кораб планина 12"
+          },
+          "floors": {
+            "type": "number",
+            "example": 8
+          },
+          "hasElevator": {
+            "type": "boolean"
+          },
+          "assessmentBasis": {
+            "type": "string",
+            "enum": ["fixed", "per_area", "per_occupant", "per_ideal_part", "per_room"],
+            "example": "per_ideal_part"
+          },
           "status": {
             "type": "string",
             "enum": ["new", "existing"],
@@ -7240,9 +7264,71 @@
           "propertiesCreated": {
             "type": "number",
             "example": 30
+          },
+          "residentsCreated": {
+            "type": "number",
+            "example": 52
+          },
+          "withoutAccount": {
+            "type": "number",
+            "example": 4,
+            "description": "Of them, recorded by name only («без акаунт»)"
+          },
+          "invitesSent": {
+            "type": "number",
+            "example": 0,
+            "description": "Sent at once — only into a building that is already active (D40)"
           }
         },
-        "required": ["name", "row", "status", "entrancesCreated", "propertiesCreated"]
+        "required": [
+          "name",
+          "row",
+          "city",
+          "district",
+          "address",
+          "floors",
+          "hasElevator",
+          "assessmentBasis",
+          "status",
+          "entrancesCreated",
+          "propertiesCreated",
+          "residentsCreated",
+          "withoutAccount",
+          "invitesSent"
+        ]
+      },
+      "ImportedRowDto": {
+        "type": "object",
+        "properties": {
+          "row": {
+            "type": "number",
+            "example": 3
+          },
+          "building": {
+            "type": "string",
+            "example": "бл. 3",
+            "description": "The building the row belongs to, after inheritance"
+          },
+          "entrance": {
+            "type": "string",
+            "example": "А"
+          },
+          "floor": {
+            "type": "number",
+            "example": 1
+          },
+          "number": {
+            "type": "string",
+            "example": "1"
+          },
+          "resident": {
+            "type": "string",
+            "nullable": true,
+            "example": "Мария Петрова",
+            "description": "The resident the row adds; null for a property-only row"
+          }
+        },
+        "required": ["row", "building", "entrance", "floor", "number", "resident"]
       },
       "ImportRowErrorDto": {
         "type": "object",
@@ -7265,6 +7351,8 @@
               "invalid",
               "duplicate_in_file",
               "inconsistent_building",
+              "ambiguous_building",
+              "duplicate_contact",
               "exists",
               "out_of_scope",
               "archived_building",
@@ -7293,12 +7381,23 @@
           "properties": {
             "type": "number",
             "example": 30,
-            "description": "Property rows read from the sheet"
+            "description": "Properties read from the sheet"
+          },
+          "residents": {
+            "type": "number",
+            "example": 52,
+            "description": "Resident rows read from the sheet"
           },
           "buildings": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ImportedBuildingDto"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportedRowDto"
             }
           },
           "errors": {
@@ -7308,7 +7407,15 @@
             }
           }
         },
-        "required": ["dryRun", "committed", "properties", "buildings", "errors"]
+        "required": [
+          "dryRun",
+          "committed",
+          "properties",
+          "residents",
+          "buildings",
+          "rows",
+          "errors"
+        ]
       },
       "TenantContextDto": {
         "type": "object",
