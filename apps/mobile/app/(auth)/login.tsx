@@ -1,7 +1,6 @@
 import { useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -51,11 +50,7 @@ export default function Login() {
   };
 
   const forgotPassword = () => {
-    Alert.alert(
-      'Забравена парола',
-      'Няма самообслужване за нулиране още. Свържете се с домоуправителя си, за да възстановите достъпа.',
-      [{ text: 'Разбрах' }],
-    );
+    router.push({ pathname: '/forgot-password', params: { identifier: identifier.trim() } });
   };
 
   return (
@@ -73,7 +68,8 @@ export default function Login() {
           <View style={styles.backRow}>
             <GlassCircleButton
               icon="arrow-back"
-              onPress={() => router.back()}
+              // After a recovery link the app may open straight onto this screen.
+              onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
               accessibilityLabel="Назад"
             />
           </View>
@@ -121,7 +117,12 @@ export default function Login() {
                 if (error) setError(null);
               }}
             />
-            <PressableScale haptic={false} onPress={forgotPassword} style={styles.forgot}>
+            <PressableScale
+              haptic={false}
+              onPress={forgotPassword}
+              style={styles.forgot}
+              accessibilityRole="button"
+            >
               <Text style={styles.forgotText}>Забравена парола?</Text>
             </PressableScale>
             {error ? (

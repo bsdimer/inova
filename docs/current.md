@@ -1,6 +1,6 @@
 # Current status
 
-**Last updated:** 2026-10-03
+**Last updated:** 2026-10-04
 **Current milestone:** M2 Property hierarchy — backend done 2026-10-01 (#59, #61, #75, #77); the admin screens next
 **Focus:** B8 tenant-account realms and invite-code hardening landed 2026-09-30 (#57, #58); M1's last pre-M2 item, password recovery, landed 2026-10-01 (#74), and so did the whole M2 backend (#59, #61, #75, #77), so mobile can drop mock building/apartment data and the admin «Сгради» screens can start.
 
@@ -26,11 +26,12 @@ This is the only living status file. History: [work-log/](work-log/). Scope: [mi
 - Core API (`:4000`): JWKS JWT verify, `X-Tenant-Id` must equal the token's `tid`, then the DB membership re-check; permission guards, RLS via `SET LOCAL app.tenant_id`. Tenant profile/staff/audit, staff+roles CRUD (admin-role lock, last-admin guard), super_admin tenant provisioning — a platform operator entering an organisation writes `platform.access` to its audit trail — public brand config, health. `GET /v1/tenant` names the caller's role (`roleName`, #50). **M2 (#59, #61, migrations `0006`, `0007`):** buildings, entrances and properties (draft → active, IBAN check, audited corrections), residents on a property with an invite, occupancies and pets with an inclusive `valid_to`, and `GET /v1/me/properties` for the resident app with the building's managers and bank account (#79); removal and link requests decided without deleting anything, house managers scoped to their assigned buildings, and a spreadsheet import to our own template with a dry run (#75, #77, migration `0009`). The seed has an active building per organisation (Elena in inova, Georgi in demo) and a scoped manager on each.
 - Passwords: argon2id (2026-09-22; the code had used bcrypt while the plan said argon2id). A legacy bcrypt hash is verified once and upgraded on that login. `pnpm install` now needs to build one native module (`argon2`, prebuilt binaries for macOS/Linux/Alpine).
 - Hardening (2026-09-21, defects in running code — not phase work): auth-service connects as its own `inova_auth` DB role and the cross-tenant identity-scope policies are granted to it alone (migration `0003`), so core-api's `inova_app` can no longer read other tenants' memberships or invite codes by setting a session variable; the strict limit on login/activate/resend really applies (the deployed value `'true'` had parsed to `NaN` and disabled it — malformed settings now stop the service); rate limiting is per client behind the edge proxy (`TRUST_PROXY_HOPS=1`); one-time codes are logged only when `CODE_DELIVERY=log` is set on purpose, otherwise a production process refuses to start.
-- Password recovery (B13, #74): e-mail link or phone code, single use, five tries, every session revoked, audited; `RECOVERY_LINK_TTL_MINUTES` / `RECOVERY_CODE_TTL_MINUTES`. Sign-in takes e-mail or phone + password (#78). Still missing: real delivery (worker + Infobip / e-mail) and the mobile activation screen's identifier field — the shipped screen sends the code alone and gets 400.
+- Password recovery (B13, #74): e-mail link or phone code, single use, five tries, every session revoked, audited; `RECOVERY_LINK_TTL_MINUTES` / `RECOVERY_CODE_TTL_MINUTES`. Sign-in takes e-mail or phone + password (#78). The worker sends the link and the code (#101); the link opens the reset page (#102), which hands over to the app (`inova://reset`). The resident app activates by identifier + code (#97) and recovers by e-mail link or SMS code (WHI-157). Still missing: Infobip SMS before the pilot; recovery on the admin sign-in page.
 - Worker (`apps/worker`, #81): BullMQ on Redis, its own `inova_worker` role without BYPASSRLS, one transaction per tenant; the first job retires lapsed invite codes and password resets every night at 02:15 Europe/Sofia. `develop` builds its image (#86) and the test stack runs it (#95); the deploy waits for it to be healthy. Fee generation in M3 is its next job.
 - Resident app API (#82–#85): profile, password change (current password, ends every session) and e-mail change by code (#84); push-token registration `/v1/me/devices`, ahead of M7 (#85); both OpenAPI documents describe every auth and `/me` answer and error, the types are in `@inova/shared`, and a contract test keeps the committed `openapi.json` in step (#83).
 - Mobile: production-ready auth against live auth-service — activate → set-password,
-  login, resend-code (phone → E.164), silent refresh, logout, session gate on tabs;
+  login, resend-code (phone → E.164), forgot password (e-mail link or SMS code, WHI-157),
+  silent refresh, logout, session gate on tabs;
   release builds default to `https://portal.whitenova.tech/auth/v1` (`EXPO_PUBLIC_AUTH_URL`
   overrides; `__DEV__` keeps localhost). Home greets the signed-in user. The multi-account
   portfolio / tenant switcher is M10 (moved 2026-09-21). Building/home/dues/issues
@@ -164,13 +165,12 @@ Architecture scripts: `check:routes`, `check:stubs`, `check:brands`, `check:migr
    manager assignment («Обхват» in «Роли и обхват»), «Импорт на имоти» with
    resident rows and deferred draft invites; the mobile app reads
    `GET /v1/me/properties`. See [milestones/M2-property.md](milestones/M2-property.md).
-2. **Mobile activation and recovery screens** — the identifier field on activation, forgot-password by e-mail first, phone second (B13, #74). See [milestones/M1-identity.md](milestones/M1-identity.md).
-3. Rebuild the resident app on the real API (`/auth/docs`, `/api/docs`, types from `@inova/shared`; test accounts of #82).
-4. Deferred M1 (before pilot): Redis denylist, Infobip Email onboarding and
+2. Rebuild the resident app on the real API (`/auth/docs`, `/api/docs`, types from `@inova/shared`; test accounts of #82).
+3. Deferred M1 (before pilot): Redis denylist, Infobip Email onboarding and
    real recovery/e-mail-change/invite delivery through the worker (D41),
    SMS/Viber delivery, audit viewer.
-5. Self-contained Testcontainers for integration tests (harness Phase 2 remainder).
-6. Before production exists: provision the pilot host per **D19** (a single VM
+4. Self-contained Testcontainers for integration tests (harness Phase 2 remainder).
+5. Before production exists: provision the pilot host per **D19** (a single VM
    with the compose stack, its own database and secrets, nightly off-box
    `pg_dump`, one rehearsed restore — EKS deferred), re-enable `main` deploys in `ci.yml`, move edge maintenance to production deploys,
    and remove the leftover `/opt/inova` stack and `portal.whitenova.tech` site

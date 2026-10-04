@@ -76,9 +76,11 @@ occupancies, and the shared-app realm item (M10).
 identifier + code, `resend-code`, the invite lifetime setting
 (`INVITE_CODE_TTL_DAYS`, 1–90 days). **Done 2026-10-01 (#74):** recovery by e-mail link or phone code
 (`RECOVERY_LINK_TTL_MINUTES` 60, 15–1440; `RECOVERY_CODE_TTL_MINUTES` 10, 5–30),
-single use, five tries, every session revoked, audited. **Left:** the
-real delivery, the URL the e-mailed recovery link opens (decided with the screens, #74), the recovery and activation
-screens (mobile identifier field).
+single use, five tries, every session revoked, audited. **Done since:** the
+worker sends the link and code (#101); the link opens `/auth/v1/auth/reset`,
+which hands over to the app as `inova://reset?token=…` (#102); the mobile
+activation identifier field (#97) and the mobile recovery screens (WHI-157).
+**Left:** Infobip SMS, and recovery on the admin sign-in page.
 
 - Forward migration on `invite_codes`: `status` column, partial unique indexes
   `(tenant_id, code_hash)` and `(tenant_id, user_id)` on active rows; a

@@ -1,4 +1,9 @@
-import { loginFailure } from '@inova/shared';
+import {
+  MIN_PASSWORD_LENGTH,
+  loginFailure,
+  recoveryFailure,
+  type NewPasswordProblem,
+} from '@inova/shared';
 import { ApiError } from '../api/client';
 
 /** Shown when the typed text is neither a phone nor an e-mail. */
@@ -41,4 +46,45 @@ export function activationErrorMessage(error: unknown): string {
   }
   if (status === 429) return THROTTLED;
   return UNAVAILABLE;
+}
+
+export function newPasswordMessage(problem: NewPasswordProblem): string {
+  return problem === 'too-short'
+    ? `Паролата трябва да е поне ${MIN_PASSWORD_LENGTH} символа.`
+    : 'Паролите не съвпадат.';
+}
+
+/** Asking for a recovery link or code; only a malformed address can be refused. */
+export function recoveryRequestErrorMessage(error: unknown, hint: string): string {
+  const status = failureStatus(error);
+  if (status === null) return (error as ApiError).message;
+  switch (recoveryFailure(status)) {
+    case 'invalid-input':
+      return hint;
+    case 'throttled':
+      return THROTTLED;
+    default:
+      return UNAVAILABLE;
+  }
+}
+
+/**
+ * Setting the new password: a wrong, used or expired link or code reads the
+ * same (B13). The screen checks the password and the code's shape first, so a
+ * 400 here is a mangled link or code — the same answer again.
+ */
+export function recoveryConfirmErrorMessage(error: unknown, via: 'link' | 'code'): string {
+  const status = failureStatus(error);
+  if (status === null) return (error as ApiError).message;
+  switch (recoveryFailure(status)) {
+    case 'invalid-proof':
+    case 'invalid-input':
+      return via === 'link'
+        ? 'Линкът е изтекъл или вече е използван. Поискайте нов.'
+        : 'Кодът е грешен или е изтекъл. Поискайте нов код.';
+    case 'throttled':
+      return THROTTLED;
+    default:
+      return UNAVAILABLE;
+  }
 }
